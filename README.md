@@ -26,6 +26,8 @@ La connexion MIDI et l’analyse de jeu sont le prochain chantier. Le mapping r�
 - [Architecture cible](docs/ARCHITECTURE.md)
 - [Mise en route Windows](docs/MISE_EN_ROUTE_WINDOWS.md)
 - [État du projet](docs/ETAT_DU_PROJET.md)
+- [Parcours des 39 exercices](exercises/PARCOURS_EXERCICES_V1.md)
+- [Catalogue machine des exercices](exercises/catalogue-exercices-v1.json)
 - [Atlas de finger-drumming](handbook/EP133_ATLAS_FINGER_DRUMMING.md)
 
 ## Organisation
