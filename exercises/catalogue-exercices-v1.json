@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "unit": "one-bar-16-steps",
+  "success": {"loops": 8, "starting_speed_percent": 70, "speed_increment_percent": 5},
+  "pads": {"kick": "A-7", "snare": "A-9", "hat": "A-5", "perc": "A-1"},
+  "exercises": [
+    {"id":1,"key":"boom","level":1,"bpm":86,"skill":"pulse kick/snare"}, {"id":2,"key":"house","level":1,"bpm":124,"skill":"kick 4/4"}, {"id":3,"key":"rock","level":1,"bpm":110,"skill":"alternance simple"}, {"id":4,"key":"reggae","level":1,"bpm":92,"skill":"contretemps"}, {"id":5,"key":"minimal","level":1,"bpm":120,"skill":"silences"},
+    {"id":6,"key":"funk","level":2,"bpm":108,"skill":"accents"}, {"id":7,"key":"disco","level":2,"bpm":120,"skill":"charley continu"}, {"id":8,"key":"afro","level":2,"bpm":105,"skill":"appuis croisés"}, {"id":9,"key":"latin","level":2,"bpm":100,"skill":"clave"}, {"id":10,"key":"trap","level":2,"bpm":140,"skill":"half-time"}, {"id":11,"key":"soul","level":2,"bpm":94,"skill":"backbeat"},
+    {"id":12,"key":"boomSwing","level":3,"bpm":92,"skill":"swing"}, {"id":13,"key":"dancehall","level":3,"bpm":96,"skill":"rebond"}, {"id":14,"key":"garage","level":3,"bpm":132,"skill":"2-step"}, {"id":15,"key":"breaks","level":3,"bpm":132,"skill":"break"}, {"id":16,"key":"electro","level":3,"bpm":118,"skill":"couches"}, {"id":17,"key":"drill","level":3,"bpm":142,"skill":"snare décalée"},
+    {"id":18,"key":"dnb","level":4,"bpm":174,"skill":"vitesse"}, {"id":19,"key":"jungle","level":4,"bpm":168,"skill":"accents rapides"}, {"id":20,"key":"punk","level":4,"bpm":180,"skill":"énergie"}, {"id":21,"key":"metal","level":4,"bpm":160,"skill":"double-kick"}, {"id":22,"key":"samba","level":4,"bpm":100,"skill":"indépendance"},
+    {"id":23,"key":"glitch","level":5,"bpm":118,"skill":"repère"}, {"id":24,"key":"dubstep","level":5,"bpm":140,"skill":"impact"}, {"id":25,"key":"grime","level":5,"bpm":140,"skill":"silences"}, {"id":26,"key":"bigbeat","level":5,"bpm":128,"skill":"chute"}, {"id":27,"key":"funkCarioca","level":5,"bpm":130,"skill":"boucle"},
+    {"id":28,"key":"boomGhost","level":2,"bpm":86,"skill":"ghost notes"}, {"id":29,"key":"houseBounce","level":2,"bpm":126,"skill":"rebond"}, {"id":30,"key":"funkFill","level":3,"bpm":108,"skill":"fill"}, {"id":31,"key":"trapRoll","level":3,"bpm":145,"skill":"hat roll"}, {"id":32,"key":"afroCross","level":3,"bpm":108,"skill":"réponses croisées"}, {"id":33,"key":"dnbRoll","level":4,"bpm":174,"skill":"roulement"}, {"id":34,"key":"jungleRush","level":4,"bpm":176,"skill":"poussée"}, {"id":35,"key":"garageShuffle","level":4,"bpm":134,"skill":"shuffle"}, {"id":36,"key":"electroFill","level":4,"bpm":122,"skill":"anticipation"}, {"id":37,"key":"glitchChaos","level":5,"bpm":124,"skill":"densité"}, {"id":38,"key":"dubstepStomp","level":5,"bpm":144,"skill":"impacts"}, {"id":39,"key":"metalBlast","level":5,"bpm":180,"skill":"endurance"}
+  ]
+}
