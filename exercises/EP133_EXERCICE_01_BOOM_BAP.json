@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0",
+  "title": "EXERCICE_01_BOOM_BAP",
+  "kind": "exercise",
+  "bpm": 86,
+  "time_signature": "4/4",
+  "bars": 1,
+  "source": {
+    "provider": "none",
+    "audio_file": null,
+    "prompt_style": "",
+    "prompt_arrangement": ""
+  },
+  "pads": [
+    {"group": "A", "pad": "7", "role": "kick", "sample": "KICK_001.wav"},
+    {"group": "A", "pad": "9", "role": "snare", "sample": "SNARE_001.wav"},
+    {"group": "A", "pad": "5", "role": "closed_hat", "sample": "HAT_CLOSED_001.wav"},
+    {"group": "A", "pad": "1", "role": "perc", "sample": "PERC_001.wav"}
+  ],
+  "events": [
+    {"bar": 1, "beat": 1, "step": 0, "group": "A", "pad": "7", "velocity": 110},
+    {"bar": 1, "beat": 2, "step": 2, "group": "A", "pad": "7", "velocity": 90},
+    {"bar": 1, "beat": 2, "step": 0, "group": "A", "pad": "9", "velocity": 112},
+    {"bar": 1, "beat": 3, "step": 0, "group": "A", "pad": "7", "velocity": 105},
+    {"bar": 1, "beat": 4, "step": 3, "group": "A", "pad": "7", "velocity": 92},
+    {"bar": 1, "beat": 4, "step": 0, "group": "A", "pad": "9", "velocity": 108}
+  ],
+  "exports": {"wav": false, "pad_hero": true, "ppak": false}
+}
