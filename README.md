@@ -1,33 +1,43 @@
 # EP-133 Rhythm Hero
 
-Interactive finger-drumming coach for the Teenage Engineering EP-133 K.O. II.
+Coach de finger-drumming interactif pour le Teenage Engineering EP-133 K.O. II.
 
-## Current milestone
+L’objectif : apprendre un groove sur une mesure, le rejouer sur la vraie machine, comprendre précisément les erreurs, puis augmenter le tempo sans perdre le plaisir.
 
-- EP-133-inspired pad player
-- 39 progressive rhythm exercises, organised from level 1 to level 5
-- Visual one-bar notation with the pad number to play
-- Recommended finger placement
-- Tempo multiplier from 10% to 150%
-- Basic training sounds and reactive old-school VU meter
-- Printable finger-drumming booklet source
+## État actuel
 
-## Run the player
+- Player visuel inspiré du K.O. II
+- 39 rythmes progressifs, du niveau 1 au niveau 5
+- Partition sur une mesure avec le numéro du pad à jouer
+- Doigt conseillé pour chaque frappe
+- Tempo de 10 % à 150 %
+- Sons d’entraînement et VU-mètre réactif
+- Cahier imprimable généré depuis une source versionnée
 
-Open `docs/ep133-pad-player.html` in a recent Chromium-based browser.
+## Essayer le player
 
-> MIDI input and score validation are the next milestone. We will first capture and validate the real EP-133 MIDI mapping on the connected machine.
+Ouvrir `docs/ep133-pad-player.html` dans Chrome ou Edge.
 
-## Repository layout
+La connexion MIDI et l’analyse de jeu sont le prochain chantier. Le mapping réel du EP-133 sera d’abord mesuré sur la machine, jamais deviné.
 
-- `docs/ep133-pad-player.html` - standalone player
-- `src/ep133-pad-player.fragment.html` - editable interactive source
-- `exercises/EP133_EXERCICE_01_BOOM_BAP.json` - exercise source example
-- `handbook/EP133_ATLAS_FINGER_DRUMMING.md` - printable rhythm atlas source
-- `tools/make_cahier_ep133.py` - generates the PDF booklet
+## Documentation
 
-## License
+- [Feuille de route](docs/ROADMAP.md)
+- [Architecture cible](docs/ARCHITECTURE.md)
+- [Mise en route Windows](docs/MISE_EN_ROUTE_WINDOWS.md)
+- [État du projet](docs/ETAT_DU_PROJET.md)
+- [Atlas de finger-drumming](handbook/EP133_ATLAS_FINGER_DRUMMING.md)
 
-Project code: MIT, unless a future dependency states otherwise.
+## Organisation
 
-Teenage Engineering, EP-133 and K.O. II are trademarks of their respective owner. This is an independent community project.
+- `docs/` : documentation et player autonome
+- `src/` : source éditable du player
+- `exercises/` : exercices en JSON
+- `handbook/` : partitions et cahier
+- `tools/` : générateurs et vérifications
+
+## Licence
+
+Code du projet : MIT, sauf dépendance future précisant autre chose.
+
+Teenage Engineering, EP-133 et K.O. II sont des marques de leurs propriétaires. Projet communautaire indépendant.
