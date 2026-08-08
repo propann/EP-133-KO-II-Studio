@@ -823,17 +823,18 @@ svg {
 <div id="ko-player">
   <style>
     #ko-player{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#1a1a1a;max-width:860px;margin:0 auto}.ko-controls{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.ko-controls select,.ko-controls input,.ko-controls button,.ko-controls label,.ko-controls output{font:inherit;color:#1a1a1a!important}.ko-controls select{max-width:155px;background:#e7e5df;border:2px solid #1a1a1a;padding:6px}.ko-controls button{padding:7px 10px;border:2px solid #1a1a1a;background:#ff4400;color:#1a1a1a;font-weight:700}.ko-controls label{display:flex;gap:6px;align-items:center;font-size:11px;font-weight:700}.ko-controls output{min-width:82px;background:#e7e5df;padding:3px}.machine{background:#d9d7d1;border:3px solid #1a1a1a;border-radius:12px;padding:13px;box-shadow:7px 7px 0 #1a1a1a}.top-strip{display:grid;grid-template-columns:2.2fr 1fr .75fr;gap:10px;margin-bottom:12px;align-items:center}.lcd{background:#242a1b;color:#ffb000;padding:8px;border:2px solid #1a1a1a;text-align:center;letter-spacing:1px}.fader{height:28px;background:#444;border:2px solid #1a1a1a;position:relative}.fader i{position:absolute;left:57%;top:-5px;width:12px;height:36px;background:#ff4400;border:2px solid #1a1a1a}.ko-face{display:grid;grid-template-columns:74px 1fr;gap:11px;align-items:end}.group-stack{display:grid;gap:6px;margin-top:93px}.group-stack button{height:40px;border:2px solid #1a1a1a;background:#babbb8;font:700 19px ui-monospace;cursor:pointer;color:#1a1a1a}.pad-zone{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.pad{height:68px;border:3px solid #1a1a1a;background:#e7e5df;border-radius:6px;font:700 26px ui-monospace;cursor:pointer;position:relative;color:#1a1a1a;padding:4px}.pad .role,.pad .finger{display:block;color:#1a1a1a}.pad .role{font-size:10px;line-height:12px;margin-top:1px}.pad .finger{font-size:8px;line-height:10px;margin-top:2px}.pad.active{background:#ff4400;color:#1a1a1a;box-shadow:0 0 0 4px #ffb000}.pad.kick,.pad.snare,.pad.hat{background:#ffb000}.partition{margin-top:15px;border:3px solid #1a1a1a;background:#f1efe9;padding:10px}.partition-head{display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:7px}.track{display:grid;grid-template-columns:74px repeat(16,1fr);gap:2px;align-items:center;margin:3px 0}.track strong{font-size:10px}.step{height:22px;background:#d9d7d1;border:1px solid #8b8984;text-align:center;font-size:10px;line-height:22px;font-weight:700}.step.on{background:#ff4400}.step.now{outline:3px solid #ffb000;z-index:1}.legend{font-size:10px;margin-top:8px;display:flex;justify-content:space-between}.note{font-size:11px;margin-top:7px;color:#1a1a1a}@media(max-width:680px){.top-strip{grid-template-columns:1fr}.ko-face{grid-template-columns:54px 1fr}.group-stack{margin-top:0}.pad{height:64px;font-size:21px}.track{grid-template-columns:52px repeat(16,1fr)}.track strong{font-size:8px}}
-    .ko-controls select,.ko-controls button,.ko-controls output,.lcd,.fader,.group-stack button,.pad,.partition,.step{border-radius:6px}.ko-controls label{background:#e7e5df;border:2px solid #1a1a1a;border-radius:6px;padding:5px 7px}.ko-controls input[type=range]{accent-color:#ff4400;width:110px}.ko-vu{display:flex;align-items:end;gap:2px;height:30px;background:#242a1b;border:2px solid #1a1a1a;border-radius:6px;padding:3px 5px}.ko-vu i{display:block;width:5px;height:4px;background:#4d5639;border-radius:2px}.ko-vu i.lit{background:#ffb000}.ko-vu i.hot{background:#ff4400}
+    .ko-controls select,.ko-controls button,.ko-controls output,.lcd,.fader,.group-stack button,.pad,.partition,.step{border-radius:6px}.ko-controls label{background:#e7e5df;border:2px solid #1a1a1a;border-radius:6px;padding:5px 7px}.ko-controls input[type=range]{accent-color:#ff4400;width:110px}.ko-vu{display:flex;align-items:end;gap:2px;height:30px;background:#242a1b;border:2px solid #1a1a1a;border-radius:6px;padding:3px 5px}.ko-vu i{display:block;width:5px;height:4px;background:#4d5639;border-radius:2px}.ko-vu i.lit{background:#ffb000}.ko-vu i.hot{background:#ff4400}.ko-face{display:block}.pad-zone{max-width:510px;margin:0 auto}.pad{height:56px}.game-window{display:grid;grid-template-columns:1.7fr repeat(3,1fr);gap:6px;margin-top:10px;background:#242a1b;border:3px solid #1a1a1a;border-radius:8px;padding:8px;color:#ffb000}.game-window div{min-width:0}.game-window small{display:block;color:#d9d7d1;font-size:8px}.game-window b{font-size:13px;white-space:nowrap}.game-window .target{color:#ffb000}.game-window .wait{color:#d9d7d1}@media(max-width:680px){.pad{height:52px}.game-window{grid-template-columns:1fr 1fr}.game-window .target{grid-column:1/-1}}
   </style>
   <section class="machine" aria-label="EP-133 K.O. II pad player">
     <div class="top-strip"><div class="ko-controls"><select id="ko-difficulty" aria-label="Difficulté"><option value="all">TOUS NIVEAUX</option><option value="1">NIVEAU 1</option><option value="2">NIVEAU 2</option><option value="3">NIVEAU 3</option><option value="4">NIVEAU 4</option><option value="5">NIVEAU 5</option></select><select id="ko-style"><optgroup label="NIVEAU 1 · FONDATIONS"><option value="boom">01 BOOM-BAP FONDATION</option><option value="house">02 HOUSE 4/4</option><option value="rock">03 ROCK DROIT</option><option value="reggae">04 REGGAE ONE DROP</option><option value="minimal">05 MINIMAL PULSE</option></optgroup><optgroup label="NIVEAU 2 · GROOVE"><option value="funk">06 FUNK POCKET</option><option value="disco">07 DISCO HAT</option><option value="afro">08 AFROBEAT SHAKER</option><option value="latin">09 LATIN CLAVE</option><option value="trap">10 TRAP HALF TIME</option><option value="soul">11 SOUL R&amp;B</option></optgroup><optgroup label="NIVEAU 3 · SYNCOPE"><option value="boomSwing">12 BOOM-BAP SWING</option><option value="dancehall">13 DANCEHALL BOUNCE</option><option value="garage">14 UK GARAGE 2-STEP</option><option value="breaks">15 BREAKBEAT</option><option value="electro">16 ELECTRO MACHINE</option><option value="drill">17 DRILL</option></optgroup><optgroup label="NIVEAU 4 · VITESSE"><option value="dnb">18 DRUM'N'BASS</option><option value="jungle">19 JUNGLE BREAK</option><option value="punk">20 PUNK</option><option value="metal">21 METAL DOUBLE</option><option value="samba">22 SAMBA</option></optgroup><optgroup label="NIVEAU 5 · CHALLENGE"><option value="glitch">23 GLITCH ROLL</option><option value="dubstep">24 DUBSTEP</option><option value="grime">25 GRIME</option><option value="bigbeat">26 BIG BEAT</option><option value="funkCarioca">27 FUNK CARIOCA</option></optgroup></select><button id="ko-play" type="button">▶ JOUER</button><button id="ko-stop" type="button">■ STOP</button><div id="ko-vu" class="ko-vu" aria-label="VU meter"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><label>VITESSE <input id="ko-speed" type="range" min="10" max="150" value="100"><output id="ko-tempo"></output></label></div><div id="ko-lcd" class="lcd">READY / 86 BPM</div><div class="fader" aria-label="EP-133 fader"><i></i></div></div>
-    <div class="ko-face"><div class="group-stack" aria-label="Groupes"><button>A</button><button>B</button><button>C</button><button>D</button></div><div id="ko-pads" class="pad-zone" aria-label="Pavé de jeu"></div></div>
+    <div class="ko-face"><div id="ko-pads" class="pad-zone" aria-label="Pavé de jeu"></div></div>
     <div class="partition"><div class="partition-head"><span>PARTITION · 1 MESURE · 16 PAS</span><span id="ko-level"></span><span id="ko-count">1 e &amp; a</span></div><div id="ko-partition"></div><div class="legend"><span>■ frappe</span><span>□ silence</span><span>orange = pad / pas en cours</span></div></div>
     <div id="ko-note" class="note">A-7 Kick · pouce gauche | A-9 Snare · index droit | A-5 Hat · index gauche</div>
+    <section class="game-window" aria-label="Jeu du joueur"><div class="target"><small>À JOUER</small><b id="ko-target">PRÊT</b></div><div><small>COMBO</small><b id="ko-combo">--</b></div><div><small>PRÉCISION</small><b id="ko-accuracy">MIDI À VENIR</b></div><div><small>ÉTAT</small><b id="ko-game-state" class="wait">ATTENTE</b></div></section>
   </section>
   <script>
     (function(){
-      var root=document.getElementById('ko-player'), pads=root.querySelector('#ko-pads'), part=root.querySelector('#ko-partition'), difficulty=root.querySelector('#ko-difficulty'), style=root.querySelector('#ko-style'), speed=root.querySelector('#ko-speed'), tempo=root.querySelector('#ko-tempo'), lcd=root.querySelector('#ko-lcd'), level=root.querySelector('#ko-level'), count=root.querySelector('#ko-count'), play=root.querySelector('#ko-play'), stop=root.querySelector('#ko-stop'), vu=root.querySelector('#ko-vu'), timer=null,pos=0,audio=null,analyser=null,meterData=null;
+      var root=document.getElementById('ko-player'), pads=root.querySelector('#ko-pads'), part=root.querySelector('#ko-partition'), difficulty=root.querySelector('#ko-difficulty'), style=root.querySelector('#ko-style'), speed=root.querySelector('#ko-speed'), tempo=root.querySelector('#ko-tempo'), lcd=root.querySelector('#ko-lcd'), level=root.querySelector('#ko-level'), count=root.querySelector('#ko-count'), play=root.querySelector('#ko-play'), stop=root.querySelector('#ko-stop'), vu=root.querySelector('#ko-vu'), target=root.querySelector('#ko-target'), combo=root.querySelector('#ko-combo'), gameState=root.querySelector('#ko-game-state'), timer=null,pos=0,audio=null,analyser=null,meterData=null;
       var buttons=[['7','KICK','POUCE G'],['8','GHOST','INDEX G'],['9','SNARE','INDEX D'],['4','CLAP','MAJEUR D'],['5','HAT','INDEX G'],['6','OPEN HAT','MAJEUR D'],['1','PERC','ANNULAIRE G'],['2','RIM','MAJEUR G'],['3','CRASH','ANNULAIRE D'],['.','DOT','POUCE G'],['0','SUB','POUCE D'],['ENTER','ENTER','INDEX D']];
       var H=[0,2,4,6,8,10,12,14], X=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
       var grooves={boom:{b:86,d:1,s:{'7':[0,6,8,15],'9':[4,12],'5':[0,2,4,6,8,10,12,14,15],'1':[6,12]}},house:{b:124,d:1,s:{'7':[0,4,8,12],'9':[4,12],'5':[2,6,10,14],'6':[6,14]}},rock:{b:110,d:1,s:{'7':[0,8],'9':[4,12],'5':H,'1':[2,6,10,14]}},reggae:{b:92,d:1,s:{'7':[0,10],'9':[4,12],'5':H,'1':[3,7,11,15]}},minimal:{b:120,d:1,s:{'7':[0,8],'9':[12],'5':[2,6,10,14],'1':[7,15]}},funk:{b:108,d:2,s:{'7':[0,3,6,8,11,14],'9':[4,12,15],'5':[0,2,3,4,6,7,8,10,11,12,14,15],'1':[2,6,10,13]}},disco:{b:120,d:2,s:{'7':[0,4,8,12],'9':[4,12],'5':X,'1':[1,5,9,13]}},afro:{b:105,d:2,s:{'7':[0,7,8,14],'9':[4,12],'5':X,'1':[2,6,10,13]}},latin:{b:100,d:2,s:{'7':[0,3,8,11],'9':[4,12],'5':H,'1':[2,5,8,10,13,15]}},trap:{b:140,d:2,s:{'7':[0,8,11,15],'9':[8],'5':X,'1':[6,7]}},soul:{b:94,d:2,s:{'7':[0,7,8,14],'9':[4,12],'5':H,'1':[3,11]}},boomSwing:{b:92,d:3,s:{'7':[0,3,8,11],'9':[4,12],'5':[0,3,6,7,10,14],'1':[2,6,13]}},dancehall:{b:96,d:3,s:{'7':[0,6,8,15],'9':[4,12],'5':H,'1':[2,7,10,15]}},garage:{b:132,d:3,s:{'7':[0,7,10,15],'9':[4,12],'5':H,'1':[3,7,11,15]}},breaks:{b:132,d:3,s:{'7':[0,6,8,11,15],'9':[4,12],'5':[0,2,3,6,8,10,11,14],'1':[3,7,13]}},electro:{b:118,d:3,s:{'7':[0,6,8,15],'9':[4,12,15],'5':X,'1':[1,3,6,9,11,14]}},drill:{b:142,d:3,s:{'7':[0,3,8,11,14],'9':[8],'5':H,'1':[3,7,11,15]}},dnb:{b:174,d:4,s:{'7':[0,8,11],'9':[4,12],'5':[0,2,3,4,6,7,8,10,11,12,14,15],'1':[3,6,11,14]}},jungle:{b:168,d:4,s:{'7':[0,3,6,10,15],'9':[4,12],'5':X,'1':[2,7,11,14]}},punk:{b:180,d:4,s:{'7':[0,4,8,12],'9':[4,12],'5':X,'1':[6,14]}},metal:{b:160,d:4,s:{'7':[0,3,6,8,11,14],'9':[4,12],'5':X,'1':[2,7,10,15]}},samba:{b:100,d:4,s:{'7':[0,6,8,14],'9':[4,12],'5':X,'1':[2,5,8,10,13,15]}},glitch:{b:118,d:5,s:{'7':[0,6,8,15],'9':[4,12,15],'5':X,'1':[1,3,6,9,11,14]}},dubstep:{b:140,d:5,s:{'7':[0,7,8,14],'9':[4,12],'5':[0,4,8,12],'1':[3,7,11,15]}},grime:{b:140,d:5,s:{'7':[0,5,8,13],'9':[4,12],'5':H,'1':[3,6,11,14]}},bigbeat:{b:128,d:5,s:{'7':[0,6,8,11,14],'9':[4,12],'5':X,'1':[3,7,11,15]}},funkCarioca:{b:130,d:5,s:{'7':[0,3,6,8,11,14],'9':[4,12],'5':H,'1':[1,5,9,13]}}};
@@ -843,9 +844,9 @@ svg {
       function build(){part.innerHTML='';var g=grooves[style.value],s=g.s;level.textContent='NIVEAU '+g.d+' / 5';[['7','KICK A-7'],['9','SNARE A-9'],['5','HAT A-5'],['1','PERC A-1']].forEach(function(r){var t=document.createElement('div');t.className='track';var label=document.createElement('strong');label.textContent=r[1];t.appendChild(label);for(var i=0;i<16;i++){var on=(s[r[0]]||[]).indexOf(i)>-1;var cell=document.createElement('i');cell.className='step'+(on?' on':'');cell.dataset.pad=r[0];cell.dataset.step=i;cell.textContent=on?r[0]:'';t.appendChild(cell)}part.appendChild(t)});updateTempo()}
       function drawMeter(){if(analyser){analyser.getByteFrequencyData(meterData);var sum=0;for(var j=0;j<meterData.length;j++)sum+=meterData[j];var lit=Math.round(sum/meterData.length/255*10);Array.prototype.forEach.call(vu.children,function(bar,i){bar.className=i<lit?(i>7?'hot':'lit'):'';bar.style.height=(5+i*2)+'px'});}requestAnimationFrame(drawMeter)}
       function hit(n){if(!audio){audio=new (window.AudioContext||window.webkitAudioContext)();analyser=audio.createAnalyser();analyser.fftSize=32;meterData=new Uint8Array(analyser.frequencyBinCount);analyser.connect(audio.destination);drawMeter()}var now=audio.currentTime,o=audio.createOscillator(),g=audio.createGain(),f=audio.createBiquadFilter();o.connect(f);f.connect(g);g.connect(analyser);if(n==='7'){o.type='sine';o.frequency.setValueAtTime(135,now);o.frequency.exponentialRampToValueAtTime(52,now+.13);g.gain.setValueAtTime(.45,now);g.gain.exponentialRampToValueAtTime(.001,now+.2)}else if(n==='9'){o.type='triangle';o.frequency.value=190;g.gain.setValueAtTime(.22,now);g.gain.exponentialRampToValueAtTime(.001,now+.11)}else{f.type='highpass';f.frequency.value=3600;o.type='square';o.frequency.value=6800;g.gain.setValueAtTime(.09,now);g.gain.exponentialRampToValueAtTime(.001,now+.05)}o.start();o.stop(now+.22)}
-      function frame(){var s=grooves[style.value].s;root.querySelectorAll('.active,.now').forEach(function(e){e.classList.remove('active','now')});Object.keys(s).forEach(function(k){if(s[k].indexOf(pos)>-1){root.querySelector('.pad[data-pad="'+k+'"]').classList.add('active');root.querySelectorAll('.step[data-pad="'+k+'"][data-step="'+pos+'"]').forEach(function(e){e.classList.add('now')});hit(k)}});count.textContent=Math.floor(pos/4)+1+' '+['1','e','&','a'][pos%4];pos=(pos+1)%16;timer=setTimeout(frame,60000/bpm()/4)}
+      function frame(){var s=grooves[style.value].s,nowPads=[];root.querySelectorAll('.active,.now').forEach(function(e){e.classList.remove('active','now')});Object.keys(s).forEach(function(k){if(s[k].indexOf(pos)>-1){nowPads.push('A-'+k);root.querySelector('.pad[data-pad="'+k+'"]').classList.add('active');root.querySelectorAll('.step[data-pad="'+k+'"][data-step="'+pos+'"]').forEach(function(e){e.classList.add('now')});hit(k)}});target.textContent=nowPads.length?'FRAPPE '+nowPads.join(' + '):'SILENCE';gameState.textContent='LECTURE';gameState.className='';count.textContent=Math.floor(pos/4)+1+' '+['1','e','&','a'][pos%4];pos=(pos+1)%16;timer=setTimeout(frame,60000/bpm()/4)}
       function filterDifficulty(){var wanted=difficulty.value,first=null;Array.prototype.forEach.call(style.options,function(o){var visible=wanted==='all'||String(grooves[o.value].d)===wanted;o.hidden=!visible;o.disabled=!visible;if(visible&&!first)first=o});if(style.selectedOptions[0].disabled){style.value=first.value}stop.click();build()}
-      play.onclick=function(){if(!timer){pos=0;frame()}};stop.onclick=function(){clearTimeout(timer);timer=null;pos=0;root.querySelectorAll('.active,.now').forEach(function(e){e.classList.remove('active','now')});lcd.textContent='READY / '+bpm()+' BPM'};style.onchange=function(){stop.click();build()};difficulty.onchange=filterDifficulty;speed.oninput=function(){updateTempo()};filterDifficulty();
+      play.onclick=function(){if(!timer){pos=0;combo.textContent='--';frame()}};stop.onclick=function(){clearTimeout(timer);timer=null;pos=0;root.querySelectorAll('.active,.now').forEach(function(e){e.classList.remove('active','now')});target.textContent='PRÊT';gameState.textContent='ATTENTE';gameState.className='wait';lcd.textContent='READY / '+bpm()+' BPM'};style.onchange=function(){stop.click();build()};difficulty.onchange=filterDifficulty;speed.oninput=function(){updateTempo()};filterDifficulty();
     })();
   </script>
 </div>
@@ -997,3 +998,96 @@ svg {
   };
   const requestOpen = (trigger, immediate = false) => {
     if (
+      getContent(trigger).length === 0 ||
+      activeTrigger === trigger ||
+      pendingTrigger === trigger
+    ) {
+      return;
+    }
+    clearOpenTimeout();
+    pendingTrigger = trigger;
+    const delay =
+      immediate || activeTrigger != null || Date.now() < skipDelayUntil
+        ? 0
+        : hoverDelay;
+    if (delay === 0) {
+      openTooltip(trigger);
+      return;
+    }
+    openTimeout = window.setTimeout(() => {
+      openTimeout = null;
+      pendingTrigger = null;
+      openTooltip(trigger);
+    }, delay);
+  };
+  const handlePointerOpen = (event) => {
+    if (event.pointerType === "touch") {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    requestOpen(trigger);
+  };
+  const handleLeave = (event) => {
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const handleFocusIn = (event) => {
+    const trigger = getTrigger(event.target);
+    if (trigger?.matches(":focus-visible")) {
+      requestOpen(trigger, true);
+    }
+  };
+  const handleKeyDown = (event) => {
+    if (event.key === "Escape") {
+      closeTooltip();
+    }
+  };
+  const handleContextMenu = (event) => {
+    const trigger = getTrigger(event.target);
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const destroy = () => {
+    closeTooltip(false);
+    document.removeEventListener("pointerover", handlePointerOpen);
+    document.removeEventListener("pointerout", handleLeave);
+    document.removeEventListener("focusin", handleFocusIn);
+    document.removeEventListener("focusout", handleLeave);
+    document.removeEventListener("keydown", handleKeyDown);
+    document.removeEventListener("contextmenu", handleContextMenu);
+    tooltip = null;
+  };
+
+  document.addEventListener("pointerover", handlePointerOpen);
+  document.addEventListener("pointerout", handleLeave);
+  document.addEventListener("focusin", handleFocusIn);
+  document.addEventListener("focusout", handleLeave);
+  document.addEventListener("keydown", handleKeyDown);
+  document.addEventListener("contextmenu", handleContextMenu);
+  window.addEventListener("pagehide", destroy, { once: true });
+})();
+</script>
+<script id="codex-visualization-lucide-initialization">(() => {
+  const initialize = () => {
+    globalThis.lucide?.createIcons({ attrs: { width: 16, height: 16 } });
+  };
+  if (globalThis.lucide != null) {
+    initialize();
+    return;
+  }
+  document
+    .getElementById("codex-visualization-lucide")
+    ?.addEventListener("load", initialize, { once: true });
+})();
+</script>
+</body>
+</html>
