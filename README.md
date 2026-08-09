@@ -52,6 +52,7 @@ lecture seule tant que les protections de transfert ne sont pas finalisées.
 - [Bibliothèque documentaire et droits](docs/BIBLIOTHEQUE_DOCUMENTAIRE.md)
 - [Point d'étape Jeu et Studio](docs/POINT_JEU_ET_STUDIO.md)
 - [Validation du Save/Load Studio](docs/VALIDATION_SAVE_LOAD_STUDIO.md)
+- [Structure du morceau et Song mode](docs/STRUCTURE_SONG_MODE.md)
 - [Gestion des fichiers et des sons](docs/GESTION_FICHIERS_ET_SONS.md)
 - [Décision sur les formats de projet](docs/DECISION_FORMATS_PROJET.md)
 - [Vision future OP-1](docs/VISION_OP1.md)

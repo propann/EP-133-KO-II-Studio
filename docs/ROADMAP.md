@@ -88,6 +88,15 @@ Transformer `SAVE` en menu de fichiers :
 **Validation :** quitter, rouvrir une sauvegarde machine et retrouver une
 composition identique sans machine connectée ; échanger ses notes en MIDI.
 
+### Song mode et découpage du morceau
+
+- [x] Afficher les repères machine `L.01`, `S.01`, `A01–D01`.
+- [x] Calculer la longueur d'une position depuis le pattern le plus long.
+- [ ] Gérer réellement les patterns A01–D99.
+- [ ] Créer et éditer les scènes S.01–S.99.
+- [ ] Ordonner les Song Positions L.01–L.99.
+- [ ] Faire suivre la Song Position active par le transport et l'export.
+
 ## Phase 3 — deux banques de sons hors ligne
 
 ### Banque ordinateur

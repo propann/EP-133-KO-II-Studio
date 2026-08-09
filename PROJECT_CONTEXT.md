@@ -160,6 +160,10 @@ Le player HTML historique reste disponible comme référence fonctionnelle penda
   Renommer, Dupliquer, Supprimer et Exporter.
 - Priorités suivantes : import de fichier, Annuler/Rétablir, puis édition
   visuelle vélocité/gate.
+- Le bandeau `SongModeBar` suit la hiérarchie du manuel : Song Position,
+  Scène, puis patterns A–D. Voir `docs/STRUCTURE_SONG_MODE.md`. Ne jamais
+  dessiner de fausses positions : la prochaine étape doit faire évoluer le
+  modèle et le transport vers de vraies scènes multiples.
 
 ## Priorités
 

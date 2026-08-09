@@ -79,6 +79,9 @@
 - Les commandes Studio sont regroupées dans le menu `FICHIER` : Nouveau,
   Ouvrir, Enregistrer, Enregistrer sous, Renommer, Dupliquer, Supprimer et
   Exporter. La suppression demande une confirmation explicite.
+- Le Studio affiche la première structure Song mode avec les repères natifs
+  `L.01`, `S.01` et `A01–D01`. La durée de la position reprend celle du pattern
+  le plus long. Les positions et scènes multiples restent à implémenter.
 - Export MIDI ou description `ep.project.v1` JSON.
 - Scan SysEx en lecture seule validé sur la machine : 527 sons, 56,21 Mo,
   affectations de pads, noms, modes et notes racines.

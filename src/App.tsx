@@ -37,6 +37,7 @@ import { PianoRoll } from './components/editor/PianoRoll';
 import { RhythmGrid } from './components/editor/RhythmGrid';
 import { PadStrip } from './components/editor/PadStrip';
 import { EditorToolbar } from './components/editor/EditorToolbar';
+import { SongModeBar } from './components/editor/SongModeBar';
 import './style.css';
 import catalogue from '../exercises/catalogue-exercices-v1.json';
 
@@ -597,6 +598,7 @@ export default function App() {
     {phase === 'countin' && <div className="countdown" aria-live="assertive"><small>1 MESURE POUR SE PRÉPARER</small><b>{countdown}</b></div>}
     {editorOpen && <div className="editor-overlay"><section className="exercise-editor">
       <EditorToolbar mode={editorMode} name={editorName} group={editorGroup} playing={editorPlaying} loop={editorLoop} exportFormat={editorExportFormat} canSave={Boolean(editorName.trim() && (editorMode === 'complete' || editorTargets.length || Object.values(editorGroupTargets).some((groupTargets) => groupTargets.length)))} midiConnected={midi.outputConnected} scannedProject={deviceInventory?.project} localProjects={studioLibrary.map((project) => ({ id: project.id, title: String((project.document.metadata as { title?: string } | undefined)?.title || 'PROJET SANS NOM') }))} selectedLocalProject={selectedStudioProject} onHome={goHome} onNameChange={setEditorName} onGroupChange={changeEditorGroup} onConnectMidi={() => void connectMidi()} onNew={newStudioProject} onSelectedLocalProjectChange={setSelectedStudioProject} onLoad={loadSelectedStudioProject} onSave={saveEditor} onSaveAs={saveStudioProjectAs} onRename={renameSelectedStudioProject} onDuplicate={duplicateSelectedStudioProject} onDelete={deleteSelectedStudioProject} onPlayback={() => void toggleEditorPlayback()} onLoopChange={setEditorLoop} onExportFormatChange={setEditorExportFormat} onExport={exportEditor} />
+      {editorMode === 'complete' && <SongModeBar activeGroup={editorGroup} patterns={currentEditorPatterns()} onGroupChange={changeEditorGroup} />}
       {editorMode === 'complete' && <PadStrip group={editorGroup} selectedPad={editorSelectedPad} padModes={editorPadModes} padName={devicePadName} padSlot={(pad) => devicePadInfo(pad)?.slot} onSelect={(pad) => { setEditorSelectedPad(pad); setKeyEditorOpen((editorPadModes[`${editorGroup}:${pad}`] || 'ONE') === 'KEYS'); }} onPreview={(pad) => midi.sendPad(pad, EDITOR_GROUPS.indexOf(editorGroup), 110)} onModeChange={(pad, mode) => { setEditorPadModes((current) => ({ ...current, [`${editorGroup}:${pad}`]: mode })); setKeyEditorOpen(mode === 'KEYS'); }} onOpenKeys={() => setKeyEditorOpen(true)} />}
       {keyEditorOpen && editorMode === 'complete'
         ? <PianoRoll gridRef={editorGrid} group={editorGroup} selectedPad={editorSelectedPad} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} targets={editorTargets} onClose={() => setKeyEditorOpen(false)} onPreviewNote={(note) => midi.sendNote(note, 110)} onToggleNote={toggleKeyStep} />

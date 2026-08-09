@@ -262,3 +262,17 @@ Statut : terminé le 9 août 2026.
 - [x] choix du projet local intégré au menu ;
 - [x] export MIDI et `ep.project.v1` intégré au même menu ;
 - [x] opérations de bibliothèque couvertes par les tests.
+
+## Étape 2.3 — repères Song mode dans le Studio
+
+Statut : première intégration terminée le 9 août 2026.
+
+- [x] section 6.2 du manuel local relue ;
+- [x] hiérarchie Projet → Patterns → Scène → Song Position documentée ;
+- [x] repères `L.01`, `S.01` et `A01–D01` visibles dans l'éditeur ;
+- [x] longueur de chaque pattern calculée ;
+- [x] longueur de la position alignée sur le pattern le plus long ;
+- [x] sélection du groupe directement depuis la structure du morceau ;
+- [ ] vrais patterns, scènes et positions multiples de 01 à 99.
+
+Voir `docs/STRUCTURE_SONG_MODE.md`.
