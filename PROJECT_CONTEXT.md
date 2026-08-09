@@ -186,6 +186,10 @@ Le player HTML historique reste disponible comme référence fonctionnelle penda
 - Les sélecteurs utilisent l'accès natif aux dossiers de Chrome/Chromium. Ne
   jamais employer « upload » : les PCM restent sur le HDD et seul le manifeste
   est écrit dans `clone/nom-machine/` par le navigateur.
+- Premier clone privé validé : 9 projets, 527 PCM, 527 métadonnées, 536 hashes
+  conformes et aucune erreur. Durée 25 min 20 s. Voir
+  `docs/VALIDATION_CLONE_REEL.md`. Prochaine priorité : pont local et progression
+  directement dans la fenêtre Studio.
 
 ## Priorités
 

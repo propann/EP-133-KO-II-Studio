@@ -105,8 +105,8 @@ composition identique sans machine connectée ; échanger ses notes en MIDI.
 - [x] Inventaire global en lecture seule des slots occupés et de leur taille.
 - [x] Association explicite d'un dossier local de samples.
 - [ ] Identifier automatiquement et durablement chaque machine.
-- [ ] Scanner les 9 projets et toutes les métadonnées sonores.
-- [ ] Copier les fichiers audio dans le dossier privé avec reprise et hash.
+- [x] Scanner les 9 projets et toutes les métadonnées sonores.
+- [x] Copier les fichiers audio dans le dossier privé avec reprise et hash.
 - [x] Moteur local de copie des 9 projets, PCM, métadonnées et hashes.
 - [ ] Relier la fenêtre web au moteur par un pont local installé.
 - [ ] Créer l'instantané initial immuable.

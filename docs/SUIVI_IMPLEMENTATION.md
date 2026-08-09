@@ -304,7 +304,7 @@ Statut : première fondation terminée le 9 août 2026.
 - [x] jauge calculée depuis la capacité déclarée ;
 - [x] pads du projet séparés de l'inventaire global ;
 - [x] modèle base machine → copie de travail → patch documenté ;
-- [ ] copie des fichiers audio et métadonnées détaillées ;
+- [x] copie réelle des fichiers audio et métadonnées détaillées ;
 - [ ] moteur de patch et synchronisation avec relecture.
 
 Voir `docs/ARCHITECTURE_MIROIR_MACHINE.md`.
@@ -323,7 +323,7 @@ Statut : fondation terminée le 9 août 2026.
 
 ## Étape 3.3 — moteur de clonage intégral
 
-Statut : moteur terminé, branchement UI en attente le 9 août 2026.
+Statut : moteur et clone réel validés, branchement UI en attente au 10 août 2026.
 
 - [x] lecture des neuf projets ;
 - [x] lecture de tous les slots sonores occupés ;
@@ -339,6 +339,9 @@ Statut : moteur terminé, branchement UI en attente le 9 août 2026.
 - [x] campagne réelle complète sur les 527 sons, 9 projets et 0 erreur.
 
 Voir `docs/CLONAGE_COMPLET_MACHINE.md`.
+
+Contrôle indépendant des 536 hashes et 527 JSON :
+`docs/VALIDATION_CLONE_REEL.md`.
 
 ## Étape 3.4 — banque machine hors ligne dans le Studio
 

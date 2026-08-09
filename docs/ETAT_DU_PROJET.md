@@ -86,7 +86,8 @@
   charge l'instantané de `L.01/S.01` en lecture seule, sans écrire sur l'EP-133.
 - La page Sons & Transfert initialise maintenant un profil de machine nommé,
   son modèle mémoire 64/128 Mo, son dossier privé de samples et un miroir global
-  des 527 slots occupés (56,21 Mo). Les fichiers audio ne sont pas encore copiés.
+  des 527 slots occupés (56,21 Mo). Les fichiers audio sont maintenant copiés
+  dans le clone privé validé.
 - `FICHIER → CLONER LA MACHINE` ouvre une fenêtre de préparation et crée un
   manifeste avec un instantané initial. La future Time Machine est documentée ;
   comparaison et restauration ne sont pas encore actives.
@@ -96,6 +97,8 @@
 - Le premier clone matériel complet est validé : 9 projets, 527 PCM, 527
   métadonnées, 56 214 010 octets audio et aucune erreur. Durée mesurée :
   25 min 20 s ; l'interface doit annoncer 20 à 30 minutes avant la première copie.
+- Contrôle ultérieur réussi : 536 hashes conformes, aucun fichier manquant et
+  527 métadonnées JSON valides. Voir `VALIDATION_CLONE_REEL.md`.
 - Le menu FICHIER permet de choisir séparément la banque samples d'un clone.
   Le Studio joue alors les PCM locaux quand la machine est absente et garde le
   MIDI matériel prioritaire quand elle est connectée.
