@@ -148,6 +148,7 @@ export default function App() {
   const [editorExportFormat, setEditorExportFormat] = useState<'midi' | 'json'>('midi');
   const [studioLibrary, setStudioLibrary] = useState<StudioProjectRecord[]>(() => loadStudioLibrary(localStorage));
   const [selectedStudioProject, setSelectedStudioProject] = useState('');
+  const [machineProjectDocument, setMachineProjectDocument] = useState<Record<string, unknown> | null>(null);
   const targets = useRef(activeExercise.targets.map((target, index) => ({ ...target, id: `target-${index}` })));
   const frame = useRef<number | undefined>(undefined);
   const flashTimer = useRef<number | undefined>(undefined);
@@ -170,6 +171,10 @@ export default function App() {
       .then((response) => response.ok ? response.json() as Promise<DeviceInventory> : Promise.reject())
       .then(setDeviceInventory)
       .catch(() => setDeviceInventory(null));
+    fetch('/ep133-project-1.json', { cache: 'no-store' })
+      .then((response) => response.ok ? response.json() as Promise<Record<string, unknown>> : Promise.reject())
+      .then(setMachineProjectDocument)
+      .catch(() => setMachineProjectDocument(null));
   }, []);
 
   const onHit = useCallback((hit: MidiHit) => {
@@ -560,6 +565,21 @@ export default function App() {
     setKeyEditorOpen(false);
   };
 
+  const loadMachineProject = () => {
+    if (!machineProjectDocument || !confirmStudioReplacement()) return;
+    stopEditorTransport();
+    const loaded = studioStateFromDocument(machineProjectDocument);
+    setEditorName(loaded.title.toUpperCase());
+    setTempo(loaded.bpm);
+    setEditorGroup('A');
+    setEditorGroupTargets(loaded.patterns);
+    setEditorTargets(loaded.patterns.A);
+    setEditorPadModes(loaded.padModes);
+    setEditorBars(Math.max(1, usedBars(EDITOR_GROUPS.flatMap((group) => loaded.patterns[group])) + 1));
+    setSelectedStudioProject('');
+    setKeyEditorOpen(false);
+  };
+
   const saveEditor = () => editorMode === 'complete' ? saveStudioProject() : saveEditorExercise();
 
   const songBeat = songTime * activeExercise.bpm / 60;
@@ -597,7 +617,7 @@ export default function App() {
     <GameToolbar difficulty={difficulty} tempo={tempo} activeBpm={activeExercise.bpm} styleId={styleId} styles={STYLES} userExercises={userExercises} phase={phase} sessionActive={sessionActive} midiConnected={midi.connected} onDifficultyChange={setDifficulty} onTempoChange={setTempo} onStyleChange={changeStyle} onHome={goHome} onOpenEditor={openEditor} onConnectMidi={() => void connectMidi()} onPreview={() => void togglePreview()} onPlay={() => void toggle()} />
     {phase === 'countin' && <div className="countdown" aria-live="assertive"><small>1 MESURE POUR SE PRÉPARER</small><b>{countdown}</b></div>}
     {editorOpen && <div className="editor-overlay"><section className="exercise-editor">
-      <EditorToolbar mode={editorMode} name={editorName} group={editorGroup} playing={editorPlaying} loop={editorLoop} exportFormat={editorExportFormat} canSave={Boolean(editorName.trim() && (editorMode === 'complete' || editorTargets.length || Object.values(editorGroupTargets).some((groupTargets) => groupTargets.length)))} midiConnected={midi.outputConnected} scannedProject={deviceInventory?.project} localProjects={studioLibrary.map((project) => ({ id: project.id, title: String((project.document.metadata as { title?: string } | undefined)?.title || 'PROJET SANS NOM') }))} selectedLocalProject={selectedStudioProject} onHome={goHome} onNameChange={setEditorName} onGroupChange={changeEditorGroup} onConnectMidi={() => void connectMidi()} onNew={newStudioProject} onSelectedLocalProjectChange={setSelectedStudioProject} onLoad={loadSelectedStudioProject} onSave={saveEditor} onSaveAs={saveStudioProjectAs} onRename={renameSelectedStudioProject} onDuplicate={duplicateSelectedStudioProject} onDelete={deleteSelectedStudioProject} onPlayback={() => void toggleEditorPlayback()} onLoopChange={setEditorLoop} onExportFormatChange={setEditorExportFormat} onExport={exportEditor} />
+      <EditorToolbar mode={editorMode} name={editorName} group={editorGroup} playing={editorPlaying} loop={editorLoop} exportFormat={editorExportFormat} canSave={Boolean(editorName.trim() && (editorMode === 'complete' || editorTargets.length || Object.values(editorGroupTargets).some((groupTargets) => groupTargets.length)))} midiConnected={midi.outputConnected} scannedProject={deviceInventory?.project} machineProjectAvailable={Boolean(machineProjectDocument)} localProjects={studioLibrary.map((project) => ({ id: project.id, title: String((project.document.metadata as { title?: string } | undefined)?.title || 'PROJET SANS NOM') }))} selectedLocalProject={selectedStudioProject} onHome={goHome} onNameChange={setEditorName} onGroupChange={changeEditorGroup} onConnectMidi={() => void connectMidi()} onNew={newStudioProject} onSelectedLocalProjectChange={setSelectedStudioProject} onLoad={loadSelectedStudioProject} onLoadMachineProject={loadMachineProject} onSave={saveEditor} onSaveAs={saveStudioProjectAs} onRename={renameSelectedStudioProject} onDuplicate={duplicateSelectedStudioProject} onDelete={deleteSelectedStudioProject} onPlayback={() => void toggleEditorPlayback()} onLoopChange={setEditorLoop} onExportFormatChange={setEditorExportFormat} onExport={exportEditor} />
       {editorMode === 'complete' && <SongModeBar activeGroup={editorGroup} patterns={currentEditorPatterns()} onGroupChange={changeEditorGroup} />}
       {editorMode === 'complete' && <PadStrip group={editorGroup} selectedPad={editorSelectedPad} padModes={editorPadModes} padName={devicePadName} padSlot={(pad) => devicePadInfo(pad)?.slot} onSelect={(pad) => { setEditorSelectedPad(pad); setKeyEditorOpen((editorPadModes[`${editorGroup}:${pad}`] || 'ONE') === 'KEYS'); }} onPreview={(pad) => midi.sendPad(pad, EDITOR_GROUPS.indexOf(editorGroup), 110)} onModeChange={(pad, mode) => { setEditorPadModes((current) => ({ ...current, [`${editorGroup}:${pad}`]: mode })); setKeyEditorOpen(mode === 'KEYS'); }} onOpenKeys={() => setKeyEditorOpen(true)} />}
       {keyEditorOpen && editorMode === 'complete'

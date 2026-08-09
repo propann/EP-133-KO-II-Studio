@@ -53,6 +53,7 @@ lecture seule tant que les protections de transfert ne sont pas finalisées.
 - [Point d'étape Jeu et Studio](docs/POINT_JEU_ET_STUDIO.md)
 - [Validation du Save/Load Studio](docs/VALIDATION_SAVE_LOAD_STUDIO.md)
 - [Structure du morceau et Song mode](docs/STRUCTURE_SONG_MODE.md)
+- [Chargement du projet 1 de la machine](docs/CHARGEMENT_PROJET_MACHINE.md)
 - [Gestion des fichiers et des sons](docs/GESTION_FICHIERS_ET_SONS.md)
 - [Décision sur les formats de projet](docs/DECISION_FORMATS_PROJET.md)
 - [Vision future OP-1](docs/VISION_OP1.md)

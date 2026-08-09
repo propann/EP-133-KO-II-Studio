@@ -276,3 +276,18 @@ Statut : première intégration terminée le 9 août 2026.
 - [ ] vrais patterns, scènes et positions multiples de 01 à 99.
 
 Voir `docs/STRUCTURE_SONG_MODE.md`.
+
+## Étape 2.4 — chargement du projet 1 de l'EP-133
+
+Statut : terminé le 9 août 2026.
+
+- [x] projet 1 relu en lecture seule depuis la machine ;
+- [x] 11 patterns et 3 scènes décodés sans avertissement ;
+- [x] Song Position `L.01 → S.01` respectée au chargement ;
+- [x] patterns absents laissés vides ;
+- [x] bouton `PROJET 1 MACHINE` ajouté au menu FICHIER ;
+- [x] ouverture protégée contre l'écrasement de la composition affichée ;
+- [x] données réelles A01/B01/C01/D01 couvertes par les tests ;
+- [x] aucune écriture MIDI/SysEx envoyée à l'EP-133.
+
+Voir `docs/CHARGEMENT_PROJET_MACHINE.md`.

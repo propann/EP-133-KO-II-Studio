@@ -277,6 +277,8 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .file-menu-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:9px; }
 .file-menu-grid button { width:100%; }
 .file-menu-grid .file-delete { background:#d8d2c8; }
+.file-menu-grid .machine-project-load { background:var(--ko-amber); }
+.machine-project-state { display:flex; align-items:center; padding:0 6px; border:1px solid #8d8982; background:#dedbd5; font-size:7px; font-weight:bold; }
 .file-export { display:grid; grid-template-columns:1fr auto; align-items:end; gap:8px; margin-top:10px; padding-top:10px; border-top:1px solid var(--ko-black); }
 .file-export label { display:grid; gap:5px; }
 .song-mode-bar { flex:0 0 auto; display:flex; align-items:stretch; gap:8px; min-height:96px; padding:7px 9px; border-bottom:2px solid var(--ko-black); background:#d5d3ce; overflow-x:auto; }

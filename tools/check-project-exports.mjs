@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { createEp133ProjectDocument, createMidiFile } from '../src/core/project/exporters.ts';
 import { decodeEp133ProjectTar, inspectEp133Archive, readEp133ProjectDocument, readMidiFile } from '../src/core/project/importers.ts';
 import { exerciseTargetsToNotes, normalizeSequencerNote, notesToExerciseTargets } from '../src/core/project/model.ts';
@@ -72,6 +73,14 @@ assert.equal(duplicatedStudio.library.find((item) => item.id === duplicatedStudi
 const deletedLibrary = deleteStudioProject(memoryStorage, duplicatedStudio.library, duplicatedStudio.id);
 assert.equal(deletedLibrary.length, 1);
 assert.equal(loadStudioLibrary(memoryStorage)[0].document.metadata.title, 'TEST RENOMMÉ');
+
+const machineProject = JSON.parse(fs.readFileSync('public/ep133-project-1.json', 'utf8'));
+const loadedMachineProject = studioStateFromDocument(machineProject);
+assert.equal(loadedMachineProject.bpm, 120);
+assert.equal(loadedMachineProject.patterns.A.length, 25, 'L.01/S.01 doit charger A01');
+assert.equal(loadedMachineProject.patterns.B.length, 0, 'un pattern B01 absent doit rester vide');
+assert.equal(loadedMachineProject.patterns.C.length, 0, 'L.01/S.01 doit charger C01 et non C03');
+assert.equal(loadedMachineProject.patterns.D.length, 6, 'L.01/S.01 doit charger D01');
 
 assert.equal(readEp133ProjectDocument(JSON.stringify(project)).schema, 'ep.project.v1');
 assert.throws(() => readEp133ProjectDocument('{"schema":"inconnu"}'), /ep\.project\.v1/);

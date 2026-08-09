@@ -1,0 +1,1336 @@
+{
+  "schema": "ep.project.v1",
+  "product": "ep133",
+  "metadata": {
+    "title": "EP-133 · PROJET 01",
+    "source": "device-readonly",
+    "project": 1
+  },
+  "settings": {
+    "bpm": 120
+  },
+  "pads": [
+    {
+      "group": "A",
+      "pad": 1,
+      "slot": 324,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "A",
+      "pad": 2,
+      "slot": 323,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "A",
+      "pad": 3,
+      "slot": 332,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "A",
+      "pad": 4,
+      "slot": 301,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "A",
+      "pad": 5,
+      "slot": 340,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "A",
+      "pad": 6,
+      "slot": 349,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "A",
+      "pad": 7,
+      "slot": 205,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "A",
+      "pad": 8,
+      "slot": 206,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "A",
+      "pad": 9,
+      "slot": 207,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "A",
+      "pad": 10,
+      "slot": 49,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "A",
+      "pad": 11,
+      "slot": 104,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "A",
+      "pad": 12,
+      "slot": 103,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "B",
+      "pad": 1,
+      "slot": 466,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "B",
+      "pad": 2,
+      "slot": 450,
+      "playMode": 0,
+      "rootNote": 24
+    },
+    {
+      "group": "B",
+      "pad": 3,
+      "slot": 455,
+      "playMode": 2,
+      "rootNote": 36
+    },
+    {
+      "group": "B",
+      "pad": 4,
+      "slot": 447,
+      "playMode": 2,
+      "rootNote": 31
+    },
+    {
+      "group": "B",
+      "pad": 5,
+      "slot": 435,
+      "playMode": 2,
+      "rootNote": 24
+    },
+    {
+      "group": "B",
+      "pad": 6,
+      "slot": 440,
+      "playMode": 0,
+      "rootNote": 31
+    },
+    {
+      "group": "B",
+      "pad": 7,
+      "slot": 471,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "B",
+      "pad": 8,
+      "slot": 473,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "B",
+      "pad": 9,
+      "slot": 425,
+      "playMode": 0,
+      "rootNote": 35
+    },
+    {
+      "group": "B",
+      "pad": 10,
+      "slot": 400,
+      "playMode": 2,
+      "rootNote": 60
+    },
+    {
+      "group": "B",
+      "pad": 11,
+      "slot": 444,
+      "playMode": 2,
+      "rootNote": 26
+    },
+    {
+      "group": "B",
+      "pad": 12,
+      "slot": 410,
+      "playMode": 2,
+      "rootNote": 24
+    },
+    {
+      "group": "C",
+      "pad": 1,
+      "slot": 545,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "C",
+      "pad": 2,
+      "slot": 550,
+      "playMode": 1,
+      "rootNote": 60
+    },
+    {
+      "group": "C",
+      "pad": 3,
+      "slot": 555,
+      "playMode": 0,
+      "rootNote": 48
+    },
+    {
+      "group": "C",
+      "pad": 4,
+      "slot": 570,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "C",
+      "pad": 5,
+      "slot": 535,
+      "playMode": 1,
+      "rootNote": 55
+    },
+    {
+      "group": "C",
+      "pad": 6,
+      "slot": 540,
+      "playMode": 1,
+      "rootNote": 84
+    },
+    {
+      "group": "C",
+      "pad": 7,
+      "slot": 515,
+      "playMode": 1,
+      "rootNote": 72
+    },
+    {
+      "group": "C",
+      "pad": 8,
+      "slot": 520,
+      "playMode": 1,
+      "rootNote": 31
+    },
+    {
+      "group": "C",
+      "pad": 9,
+      "slot": 525,
+      "playMode": 1,
+      "rootNote": 48
+    },
+    {
+      "group": "C",
+      "pad": 10,
+      "slot": 500,
+      "playMode": 1,
+      "rootNote": 60
+    },
+    {
+      "group": "C",
+      "pad": 11,
+      "slot": 514,
+      "playMode": 2,
+      "rootNote": 60
+    },
+    {
+      "group": "C",
+      "pad": 12,
+      "slot": 532,
+      "playMode": 1,
+      "rootNote": 57
+    },
+    {
+      "group": "D",
+      "pad": 1,
+      "slot": 743,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "D",
+      "pad": 2,
+      "slot": 744,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "D",
+      "pad": 3,
+      "slot": 769,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "D",
+      "pad": 4,
+      "slot": 742,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "D",
+      "pad": 5,
+      "slot": 741,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "D",
+      "pad": 6,
+      "slot": 737,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "D",
+      "pad": 7,
+      "slot": 736,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "D",
+      "pad": 8,
+      "slot": 735,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "D",
+      "pad": 9,
+      "slot": 734,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "D",
+      "pad": 10,
+      "slot": 724,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "D",
+      "pad": 11,
+      "slot": 729,
+      "playMode": 0,
+      "rootNote": 60
+    },
+    {
+      "group": "D",
+      "pad": 12,
+      "slot": 732,
+      "playMode": 0,
+      "rootNote": 60
+    }
+  ],
+  "patterns": [
+    {
+      "id": "A01",
+      "bars": 2,
+      "events": [
+        {
+          "tick": 0,
+          "pad": 10,
+          "note": 60,
+          "velocity": 100,
+          "duration": 17
+        },
+        {
+          "tick": 0,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 66,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 10
+        },
+        {
+          "tick": 96,
+          "pad": 11,
+          "note": 60,
+          "velocity": 100,
+          "duration": 17
+        },
+        {
+          "tick": 96,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 162,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 192,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 258,
+          "pad": 10,
+          "note": 60,
+          "velocity": 100,
+          "duration": 15
+        },
+        {
+          "tick": 258,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 288,
+          "pad": 11,
+          "note": 60,
+          "velocity": 100,
+          "duration": 15
+        },
+        {
+          "tick": 288,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 354,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 384,
+          "pad": 10,
+          "note": 60,
+          "velocity": 100,
+          "duration": 17
+        },
+        {
+          "tick": 384,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 450,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 480,
+          "pad": 11,
+          "note": 60,
+          "velocity": 100,
+          "duration": 16
+        },
+        {
+          "tick": 480,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 15
+        },
+        {
+          "tick": 546,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 576,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 642,
+          "pad": 10,
+          "note": 60,
+          "velocity": 100,
+          "duration": 15
+        },
+        {
+          "tick": 642,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 672,
+          "pad": 11,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 672,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 672,
+          "pad": 7,
+          "note": 60,
+          "velocity": 100,
+          "duration": 25
+        },
+        {
+          "tick": 738,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 12
+        }
+      ]
+    },
+    {
+      "id": "A02",
+      "bars": 2,
+      "events": [
+        {
+          "tick": 0,
+          "pad": 10,
+          "note": 60,
+          "velocity": 100,
+          "duration": 17
+        },
+        {
+          "tick": 0,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 66,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 10
+        },
+        {
+          "tick": 96,
+          "pad": 11,
+          "note": 60,
+          "velocity": 100,
+          "duration": 17
+        },
+        {
+          "tick": 96,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 162,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 192,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 258,
+          "pad": 10,
+          "note": 60,
+          "velocity": 100,
+          "duration": 15
+        },
+        {
+          "tick": 258,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 288,
+          "pad": 11,
+          "note": 60,
+          "velocity": 100,
+          "duration": 15
+        },
+        {
+          "tick": 288,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 354,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 384,
+          "pad": 10,
+          "note": 60,
+          "velocity": 100,
+          "duration": 17
+        },
+        {
+          "tick": 384,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 450,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 480,
+          "pad": 11,
+          "note": 60,
+          "velocity": 100,
+          "duration": 16
+        },
+        {
+          "tick": 480,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 15
+        },
+        {
+          "tick": 546,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 576,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 642,
+          "pad": 10,
+          "note": 60,
+          "velocity": 100,
+          "duration": 15
+        },
+        {
+          "tick": 642,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 672,
+          "pad": 11,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 672,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 672,
+          "pad": 7,
+          "note": 60,
+          "velocity": 100,
+          "duration": 25
+        },
+        {
+          "tick": 738,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 12
+        }
+      ]
+    },
+    {
+      "id": "A03",
+      "bars": 2,
+      "events": [
+        {
+          "tick": 0,
+          "pad": 10,
+          "note": 60,
+          "velocity": 100,
+          "duration": 17
+        },
+        {
+          "tick": 0,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 66,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 10
+        },
+        {
+          "tick": 96,
+          "pad": 11,
+          "note": 60,
+          "velocity": 100,
+          "duration": 17
+        },
+        {
+          "tick": 96,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 162,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 192,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 258,
+          "pad": 10,
+          "note": 60,
+          "velocity": 100,
+          "duration": 15
+        },
+        {
+          "tick": 258,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 288,
+          "pad": 11,
+          "note": 60,
+          "velocity": 100,
+          "duration": 15
+        },
+        {
+          "tick": 288,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 354,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 384,
+          "pad": 10,
+          "note": 60,
+          "velocity": 100,
+          "duration": 17
+        },
+        {
+          "tick": 384,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 450,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 480,
+          "pad": 11,
+          "note": 60,
+          "velocity": 100,
+          "duration": 16
+        },
+        {
+          "tick": 480,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 15
+        },
+        {
+          "tick": 546,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 576,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 642,
+          "pad": 10,
+          "note": 60,
+          "velocity": 100,
+          "duration": 15
+        },
+        {
+          "tick": 642,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 672,
+          "pad": 11,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 672,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 13
+        },
+        {
+          "tick": 672,
+          "pad": 7,
+          "note": 60,
+          "velocity": 100,
+          "duration": 25
+        },
+        {
+          "tick": 738,
+          "pad": 8,
+          "note": 60,
+          "velocity": 100,
+          "duration": 12
+        }
+      ]
+    },
+    {
+      "id": "B02",
+      "bars": 2,
+      "events": []
+    },
+    {
+      "id": "B03",
+      "bars": 2,
+      "events": []
+    },
+    {
+      "id": "C01",
+      "bars": 1,
+      "events": []
+    },
+    {
+      "id": "C02",
+      "bars": 4,
+      "events": [
+        {
+          "tick": 0,
+          "pad": 3,
+          "note": 45,
+          "velocity": 100,
+          "duration": 19
+        },
+        {
+          "tick": 66,
+          "pad": 3,
+          "note": 45,
+          "velocity": 100,
+          "duration": 18
+        },
+        {
+          "tick": 162,
+          "pad": 3,
+          "note": 45,
+          "velocity": 100,
+          "duration": 19
+        },
+        {
+          "tick": 258,
+          "pad": 3,
+          "note": 45,
+          "velocity": 100,
+          "duration": 19
+        },
+        {
+          "tick": 384,
+          "pad": 3,
+          "note": 49,
+          "velocity": 100,
+          "duration": 16
+        },
+        {
+          "tick": 450,
+          "pad": 3,
+          "note": 49,
+          "velocity": 100,
+          "duration": 16
+        },
+        {
+          "tick": 546,
+          "pad": 3,
+          "note": 49,
+          "velocity": 100,
+          "duration": 20
+        },
+        {
+          "tick": 642,
+          "pad": 3,
+          "note": 49,
+          "velocity": 100,
+          "duration": 23
+        },
+        {
+          "tick": 768,
+          "pad": 3,
+          "note": 48,
+          "velocity": 100,
+          "duration": 20
+        },
+        {
+          "tick": 834,
+          "pad": 3,
+          "note": 48,
+          "velocity": 100,
+          "duration": 20
+        },
+        {
+          "tick": 930,
+          "pad": 3,
+          "note": 48,
+          "velocity": 100,
+          "duration": 24
+        },
+        {
+          "tick": 1026,
+          "pad": 3,
+          "note": 48,
+          "velocity": 100,
+          "duration": 23
+        },
+        {
+          "tick": 1152,
+          "pad": 3,
+          "note": 48,
+          "velocity": 100,
+          "duration": 17
+        },
+        {
+          "tick": 1218,
+          "pad": 3,
+          "note": 48,
+          "velocity": 100,
+          "duration": 20
+        },
+        {
+          "tick": 1314,
+          "pad": 3,
+          "note": 48,
+          "velocity": 100,
+          "duration": 17
+        },
+        {
+          "tick": 1410,
+          "pad": 3,
+          "note": 48,
+          "velocity": 100,
+          "duration": 19
+        }
+      ]
+    },
+    {
+      "id": "C03",
+      "bars": 4,
+      "events": [
+        {
+          "tick": 0,
+          "pad": 3,
+          "note": 45,
+          "velocity": 100,
+          "duration": 19
+        },
+        {
+          "tick": 66,
+          "pad": 3,
+          "note": 45,
+          "velocity": 100,
+          "duration": 18
+        },
+        {
+          "tick": 162,
+          "pad": 3,
+          "note": 45,
+          "velocity": 100,
+          "duration": 19
+        },
+        {
+          "tick": 258,
+          "pad": 3,
+          "note": 45,
+          "velocity": 100,
+          "duration": 19
+        },
+        {
+          "tick": 384,
+          "pad": 3,
+          "note": 49,
+          "velocity": 100,
+          "duration": 16
+        },
+        {
+          "tick": 450,
+          "pad": 3,
+          "note": 49,
+          "velocity": 100,
+          "duration": 16
+        },
+        {
+          "tick": 546,
+          "pad": 3,
+          "note": 49,
+          "velocity": 100,
+          "duration": 20
+        },
+        {
+          "tick": 642,
+          "pad": 3,
+          "note": 49,
+          "velocity": 100,
+          "duration": 23
+        },
+        {
+          "tick": 768,
+          "pad": 3,
+          "note": 48,
+          "velocity": 100,
+          "duration": 20
+        },
+        {
+          "tick": 834,
+          "pad": 3,
+          "note": 48,
+          "velocity": 100,
+          "duration": 20
+        },
+        {
+          "tick": 930,
+          "pad": 3,
+          "note": 48,
+          "velocity": 100,
+          "duration": 24
+        },
+        {
+          "tick": 1026,
+          "pad": 3,
+          "note": 48,
+          "velocity": 100,
+          "duration": 23
+        },
+        {
+          "tick": 1152,
+          "pad": 3,
+          "note": 48,
+          "velocity": 100,
+          "duration": 17
+        },
+        {
+          "tick": 1218,
+          "pad": 3,
+          "note": 48,
+          "velocity": 100,
+          "duration": 20
+        },
+        {
+          "tick": 1314,
+          "pad": 3,
+          "note": 48,
+          "velocity": 100,
+          "duration": 17
+        },
+        {
+          "tick": 1410,
+          "pad": 3,
+          "note": 48,
+          "velocity": 100,
+          "duration": 19
+        }
+      ]
+    },
+    {
+      "id": "D01",
+      "bars": 2,
+      "events": [
+        {
+          "tick": 0,
+          "pad": 10,
+          "note": 60,
+          "velocity": 100,
+          "duration": 17
+        },
+        {
+          "tick": 162,
+          "pad": 9,
+          "note": 60,
+          "velocity": 100,
+          "duration": 15
+        },
+        {
+          "tick": 384,
+          "pad": 10,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 384,
+          "pad": 7,
+          "note": 60,
+          "velocity": 100,
+          "duration": 18
+        },
+        {
+          "tick": 546,
+          "pad": 9,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 546,
+          "pad": 10,
+          "note": 60,
+          "velocity": 100,
+          "duration": 15
+        }
+      ]
+    },
+    {
+      "id": "D02",
+      "bars": 2,
+      "events": [
+        {
+          "tick": 0,
+          "pad": 10,
+          "note": 60,
+          "velocity": 100,
+          "duration": 17
+        },
+        {
+          "tick": 162,
+          "pad": 9,
+          "note": 60,
+          "velocity": 100,
+          "duration": 15
+        },
+        {
+          "tick": 384,
+          "pad": 10,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 384,
+          "pad": 7,
+          "note": 60,
+          "velocity": 100,
+          "duration": 18
+        },
+        {
+          "tick": 546,
+          "pad": 9,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 546,
+          "pad": 10,
+          "note": 60,
+          "velocity": 100,
+          "duration": 15
+        }
+      ]
+    },
+    {
+      "id": "D03",
+      "bars": 2,
+      "events": [
+        {
+          "tick": 0,
+          "pad": 10,
+          "note": 60,
+          "velocity": 100,
+          "duration": 17
+        },
+        {
+          "tick": 162,
+          "pad": 9,
+          "note": 60,
+          "velocity": 100,
+          "duration": 15
+        },
+        {
+          "tick": 384,
+          "pad": 10,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 384,
+          "pad": 7,
+          "note": 60,
+          "velocity": 100,
+          "duration": 18
+        },
+        {
+          "tick": 546,
+          "pad": 9,
+          "note": 60,
+          "velocity": 100,
+          "duration": 14
+        },
+        {
+          "tick": 546,
+          "pad": 10,
+          "note": 60,
+          "velocity": 100,
+          "duration": 15
+        }
+      ]
+    }
+  ],
+  "scenes": [
+    {
+      "scene": 1,
+      "groupPatterns": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "timeSignature": [
+        4,
+        4
+      ]
+    },
+    {
+      "scene": 2,
+      "groupPatterns": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "timeSignature": [
+        4,
+        4
+      ]
+    },
+    {
+      "scene": 3,
+      "groupPatterns": [
+        3,
+        3,
+        3,
+        3
+      ],
+      "timeSignature": [
+        4,
+        4
+      ]
+    }
+  ],
+  "song": [
+    1
+  ],
+  "currentScene": 3,
+  "warnings": []
+}

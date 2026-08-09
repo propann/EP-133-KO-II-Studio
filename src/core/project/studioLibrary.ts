@@ -66,12 +66,19 @@ export function studioStateFromDocument(document: Record<string, unknown>): Stud
   if (document.schema !== 'ep.project.v1' || document.product !== 'ep133') throw new Error('Projet EP-133 incompatible.');
   const patterns = emptyProjectPatterns();
   if (!Array.isArray(document.patterns)) throw new Error('Patterns absents du projet.');
+  const scenes = Array.isArray(document.scenes) ? document.scenes : [];
+  const song = Array.isArray(document.song) ? document.song : [];
+  const firstSceneNumber = Number(song[0]) || Number(document.currentScene) || 1;
+  const firstScene = scenes.find((candidate) => candidate && typeof candidate === 'object' && Number((candidate as Record<string, unknown>).scene || scenes.indexOf(candidate) + 1) === firstSceneNumber) as Record<string, unknown> | undefined;
+  const selectedPatterns = Array.isArray(firstScene?.groupPatterns) ? firstScene.groupPatterns.map(Number) : [1, 1, 1, 1];
   document.patterns.forEach((candidate) => {
     if (!candidate || typeof candidate !== 'object') return;
     const pattern = candidate as Record<string, unknown>;
     const match = /^([A-D])\d{2}$/.exec(String(pattern.id || ''));
     if (!match || !Array.isArray(pattern.events)) return;
     const group = match[1] as keyof ProjectPatterns;
+    const groupIndex = EDITOR_GROUPS.indexOf(group);
+    if (Number(String(pattern.id).slice(1)) !== (selectedPatterns[groupIndex] || 1)) return;
     patterns[group] = pattern.events.flatMap((candidateEvent, index) => {
       if (!candidateEvent || typeof candidateEvent !== 'object') return [];
       const event = candidateEvent as Record<string, unknown>;

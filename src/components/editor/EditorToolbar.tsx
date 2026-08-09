@@ -10,6 +10,7 @@ interface EditorToolbarProps {
   canSave: boolean;
   midiConnected: boolean;
   scannedProject?: number;
+  machineProjectAvailable: boolean;
   localProjects: Array<{ id: string; title: string }>;
   selectedLocalProject: string;
   onHome: () => void;
@@ -24,6 +25,7 @@ interface EditorToolbarProps {
   onRename: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onLoadMachineProject: () => void;
   onPlayback: () => void;
   onLoopChange: (loop: boolean) => void;
   onExportFormatChange: (format: 'midi' | 'json') => void;
@@ -40,6 +42,7 @@ export function EditorToolbar(props: EditorToolbarProps) {
           <label>PROJET LOCAL<select value={props.selectedLocalProject} onChange={(event) => props.onSelectedLocalProjectChange(event.target.value)}><option value="">— CHOISIR —</option>{props.localProjects.map((project) => <option value={project.id} key={project.id}>{project.title}</option>)}</select></label>
           <div className="file-menu-grid">
             <button onClick={props.onNew}>＋ NOUVEAU</button><button disabled={!props.selectedLocalProject} onClick={props.onLoad}>OUVRIR</button>
+            <button className="machine-project-load" disabled={!props.machineProjectAvailable} onClick={props.onLoadMachineProject}>↓ PROJET 1 MACHINE</button><span className="machine-project-state">{props.machineProjectAvailable ? 'SCAN LECTURE SEULE PRÊT' : 'AUCUN PROJET SCANNÉ'}</span>
             <button className="save" disabled={!props.canSave} onClick={props.onSave}>● ENREGISTRER</button><button disabled={!props.canSave} onClick={props.onSaveAs}>ENREGISTRER SOUS</button>
             <button disabled={!props.selectedLocalProject} onClick={props.onRename}>RENOMMER</button><button disabled={!props.selectedLocalProject} onClick={props.onDuplicate}>DUPLIQUER</button>
             <button className="file-delete" disabled={!props.selectedLocalProject} onClick={props.onDelete}>SUPPRIMER</button>

@@ -164,6 +164,9 @@ Le player HTML historique reste disponible comme référence fonctionnelle penda
   Scène, puis patterns A–D. Voir `docs/STRUCTURE_SONG_MODE.md`. Ne jamais
   dessiner de fausses positions : la prochaine étape doit faire évoluer le
   modèle et le transport vers de vraies scènes multiples.
+- `public/ep133-project-1.json` est l'instantané décodé du projet 1 réel. Le
+  Studio charge la scène référencée par la première Song Position, jamais le
+  dernier pattern trouvé. Voir `docs/CHARGEMENT_PROJET_MACHINE.md`.
 
 ## Priorités
 
