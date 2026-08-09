@@ -125,6 +125,12 @@ une vraie gestion Save/Load. La feuille de route détaillée se trouve dans
 - Les calculs de mesure ont été sortis des clics React vers
   `src/core/project/editor.ts`, ce qui évite les divergences entre grille pads
   et piano-roll.
+- L'accueil possède un quatrième module Documentation. Il indexe six guides du
+  projet, explique les conventions PRESS/HOLD/SLIDE avec des dessins HTML/CSS
+  originaux et renvoie vers le guide officiel.
+- Le manuel OS 2.0 local a servi à analyser la charte, mais n'est pas copié dans
+  le dépôt : sa section de propriété intellectuelle interdit la redistribution
+  de ses images et contenus protégés.
 - Le noyau sait désormais relire les MIDI formats 0/1 qu'il exporte, conserver
   tempo, position, vélocité et durée, puis les répartir sur les groupes A–D.
 - Un inspecteur ouvre les conteneurs ZIP `.pak/.ppak`, valide `meta.json` et

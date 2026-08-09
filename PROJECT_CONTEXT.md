@@ -147,6 +147,10 @@ Le player HTML historique reste disponible comme référence fonctionnelle penda
 - Les règles d'extension de grille vivent dans `src/core/project/editor.ts` et
   le score dans `src/core/engine/scoring.ts`. Les deux sont contrôlés par
   `npm run test:engine`; voir `docs/VALIDATION_SCORE_ET_EXTENSION.md`.
+- La page `DocumentationPage` expose nos guides français et une charte visuelle
+  originale inspirée des principes généraux du manuel. Ne jamais versionner le
+  PDF officiel ou ses illustrations sans licence explicite. Voir
+  `docs/BIBLIOTHEQUE_DOCUMENTAIRE.md`.
 
 ## Priorités
 

@@ -27,6 +27,7 @@ import {
 import { barsAfterStepEdit, measureFromGlobalStep, usedBars } from './core/project/editor';
 import { HomePage } from './pages/HomePage';
 import { SoundsPage } from './pages/SoundsPage';
+import { DocumentationPage } from './pages/DocumentationPage';
 import { ScoreView } from './components/game/ScoreView';
 import { PerformancePanel } from './components/game/PerformancePanel';
 import { PadSoundEditor } from './components/game/PadSoundEditor';
@@ -109,7 +110,7 @@ function loadUserExercises(): Exercise[] {
 }
 
 export default function App() {
-  const [workspaceView, setWorkspaceView] = useState<'home' | 'game' | 'sounds'>('home');
+  const [workspaceView, setWorkspaceView] = useState<'home' | 'game' | 'sounds' | 'docs'>('home');
   const [styleId, setStyleId] = useState('boom');
   const [difficulty, setDifficulty] = useState(1);
   const [tempo, setTempo] = useState<number>(STYLES[0].bpm);
@@ -495,9 +496,11 @@ export default function App() {
     editorGrid.current.scrollLeft = editorGrid.current.scrollWidth;
   }, [editorBars, editorOpen]);
 
-  if (workspaceView === 'home') return <HomePage connected={midi.connected || midi.outputConnected} project={deviceInventory?.project} scannedSoundCount={deviceInventory ? Object.keys(deviceInventory.sounds).length : 0} onOpenGame={() => setWorkspaceView('game')} onOpenStudio={openCompleteEditor} onOpenSounds={() => setWorkspaceView('sounds')} />;
+  if (workspaceView === 'home') return <HomePage connected={midi.connected || midi.outputConnected} project={deviceInventory?.project} scannedSoundCount={deviceInventory ? Object.keys(deviceInventory.sounds).length : 0} onOpenGame={() => setWorkspaceView('game')} onOpenStudio={openCompleteEditor} onOpenSounds={() => setWorkspaceView('sounds')} onOpenDocumentation={() => setWorkspaceView('docs')} />;
 
   if (workspaceView === 'sounds') return <SoundsPage inventory={deviceInventory} midiConnected={midi.outputConnected} onBack={goHome} onConnectMidi={() => void connectMidi()} />;
+
+  if (workspaceView === 'docs') return <DocumentationPage onBack={goHome} />;
 
   return <main className={last ? `impact impact-${last.grade.toLowerCase()}` : ''}>
     <GameToolbar difficulty={difficulty} tempo={tempo} activeBpm={activeExercise.bpm} styleId={styleId} styles={STYLES} userExercises={userExercises} phase={phase} sessionActive={sessionActive} midiConnected={midi.connected} onDifficultyChange={setDifficulty} onTempoChange={setTempo} onStyleChange={changeStyle} onHome={goHome} onOpenEditor={openEditor} onConnectMidi={() => void connectMidi()} onPreview={() => void togglePreview()} onPlay={() => void toggle()} />

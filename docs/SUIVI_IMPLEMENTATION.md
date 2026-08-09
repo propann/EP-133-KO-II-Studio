@@ -210,3 +210,18 @@ Statut : terminé le 9 août 2026.
 - [x] tests transport, formats et build toujours réussis.
 
 Voir `docs/VALIDATION_SCORE_ET_EXTENSION.md`.
+
+## Module Documentation — première version
+
+Statut : terminé le 9 août 2026.
+
+- [x] manuel OS 2.0 local analysé, 258 pages ;
+- [x] restriction de redistribution identifiée et respectée ;
+- [x] quatrième module ajouté à l'accueil ;
+- [x] page documentaire responsive créée ;
+- [x] six guides français essentiels indexés ;
+- [x] lien vers le guide officiel ;
+- [x] afficheur, pads, groupes, touches et fader redessinés en HTML/CSS ;
+- [x] principes graphiques consignés sans copier les illustrations protégées.
+
+Voir `docs/BIBLIOTHEQUE_DOCUMENTAIRE.md`.
