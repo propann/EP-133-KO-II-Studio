@@ -16,6 +16,9 @@ import {
   type EditorGroup,
   type EditorPadMode,
 } from './core/project/exporters';
+import type { DeviceInventory } from './core/project/device';
+import { HomePage } from './pages/HomePage';
+import { SoundsPage } from './pages/SoundsPage';
 import './style.css';
 import catalogue from '../exercises/catalogue-exercices-v1.json';
 
@@ -87,15 +90,6 @@ interface PlayerNote {
   beat: number;
   pad: number;
   grade: Grade;
-}
-
-interface DeviceInventory {
-  readOnly: boolean;
-  scannedAt: string;
-  project: number;
-  projectName?: string;
-  pads: Array<{ group: EditorGroup; pad: number; slot: number; playMode: number; rootNote: number }>;
-  sounds: Record<string, { name: string; playMode?: string; rootNote?: number; bpm?: number }>;
 }
 
 const USER_EXERCISES_KEY = 'ep133-rhythm-hero:user-exercises:v1';
@@ -493,23 +487,9 @@ export default function App() {
     editorGrid.current.scrollLeft = editorGrid.current.scrollWidth;
   }, [editorBars, editorOpen]);
 
-  if (workspaceView === 'home') return <main className="home-screen">
-    <header className="home-brand"><span>EP‑133</span><b>RHYTHM HERO</b><small>JEU · CRÉATION · MACHINE</small></header>
-    <section className="home-intro"><p>Apprends le rythme, construis tes propres partitions et transforme ton EP‑133 en véritable instrument de création.</p><div className="home-machine-status"><i className={midi.connected || midi.outputConnected ? 'online' : ''} /><span>{midi.connected || midi.outputConnected ? 'EP‑133 CONNECTÉ' : 'EP‑133 PRÊT À CONNECTER'}</span>{deviceInventory && <small>PROJET {deviceInventory.project} · {Object.keys(deviceInventory.sounds).length} SONS SCANNÉS</small>}</div></section>
-    <section className="home-tools">
-      <article className="home-card game-card" role="button" tabIndex={0} onClick={() => setWorkspaceView('game')} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') setWorkspaceView('game'); }}><span className="home-number">01</span><small>APPRENDRE</small><h2>RHYTHM HERO</h2><p>Exercices progressifs, partitions animées, score et entraînement avec les pads de l’EP‑133.</p></article>
-      <article className="home-card studio-card" role="button" tabIndex={0} onClick={openCompleteEditor} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') openCompleteEditor(); }}><span className="home-number">02</span><small>CRÉER</small><h2>STUDIO EP‑133</h2><p>Quatre groupes, séquenceur, piano-roll KEYS, boucle, horloge MIDI et exports compatibles.</p></article>
-      <article className="home-card sounds-card" role="button" tabIndex={0} onClick={() => setWorkspaceView('sounds')} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') setWorkspaceView('sounds'); }}><span className="home-number">03</span><small>GÉRER</small><h2>SONS & TRANSFERT</h2><p>Inspecte la bibliothèque réelle, prépare les samples et maîtrise précisément les emplacements de la machine.</p></article>
-    </section>
-    <footer className="home-footer"><span>EP‑133 RHYTHM HERO</span><a href="https://teenage.engineering/guides/ep-133" target="_blank" rel="noreferrer">GUIDE OFFICIEL EP‑133 ↗</a><span>LOCAL · SANS COMPTE</span></footer>
-  </main>;
+  if (workspaceView === 'home') return <HomePage connected={midi.connected || midi.outputConnected} project={deviceInventory?.project} scannedSoundCount={deviceInventory ? Object.keys(deviceInventory.sounds).length : 0} onOpenGame={() => setWorkspaceView('game')} onOpenStudio={openCompleteEditor} onOpenSounds={() => setWorkspaceView('sounds')} />;
 
-  if (workspaceView === 'sounds') return <main className="sound-library-page">
-    <header className="module-header"><button onClick={() => setWorkspaceView('home')}>← ACCUEIL</button><div><small>MODULE 03</small><h1>SONS & TRANSFERT EP‑133</h1></div><span className={deviceInventory ? 'ready' : ''}>{deviceInventory ? `PROJET ${deviceInventory.project} · LECTURE SEULE` : 'AUCUN SCAN'}</span></header>
-    <section className="sound-library-summary"><div><b>{deviceInventory ? Object.keys(deviceInventory.sounds).length : 0}</b><small>SONS UTILISÉS</small></div><div><b>{deviceInventory?.pads.length || 0}</b><small>PADS AFFECTÉS</small></div><div><b>A–D</b><small>GROUPES</small></div><button onClick={() => void connectMidi()}>{midi.outputConnected ? 'MIDI CONNECTÉ ✓' : 'CONNECTER EP‑133'}</button></section>
-    <section className="sound-transfer-zone"><div><small>TRANSFERT SÉCURISÉ</small><h2>PRÉPARER UN NOUVEAU SON</h2><p>Le transfert écrira dans la mémoire globale de la machine. La prochaine étape ajoutera la conversion 46 875 Hz, la pré-écoute, le choix d’un emplacement libre et une confirmation explicite avant toute écriture.</p><button disabled>＋ IMPORTER WAV — BIENTÔT</button></div><aside><b>AUCUNE ÉCRITURE AUTOMATIQUE</b><span>Un emplacement occupé ne sera jamais remplacé sans validation.</span></aside></section>
-    <section className="sound-inventory"><header><h2>INVENTAIRE DU PROJET</h2><span>NOMS ET PARAMÈTRES LUS SUR LA MACHINE</span></header><div>{deviceInventory?.pads.map((pad) => { const sound = deviceInventory.sounds[String(pad.slot)]; return <article key={`${pad.group}-${pad.pad}`}><b>{pad.group}{pad.pad.toString().padStart(2, '0')}</b><div><strong>{sound?.name || `SON ${pad.slot}`}</strong><small>SLOT {pad.slot} · {pad.playMode === 1 ? 'KEYS' : pad.playMode === 2 ? 'LEGATO' : 'ONE'} · ROOT {midiNoteName(pad.rootNote)}</small></div></article>; }) || <p>Aucun inventaire disponible.</p>}</div></section>
-  </main>;
+  if (workspaceView === 'sounds') return <SoundsPage inventory={deviceInventory} midiConnected={midi.outputConnected} onBack={goHome} onConnectMidi={() => void connectMidi()} />;
 
   return <main className={last ? `impact impact-${last.grade.toLowerCase()}` : ''}>
     <header className="toolbar">

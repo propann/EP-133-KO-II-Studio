@@ -132,6 +132,9 @@ Le player HTML historique reste disponible comme référence fonctionnelle penda
 - Les transports jeu et studio possèdent des timers séparés et des arrêts
   centralisés. Toute session asynchrone arrêtée est invalidée ; le PANIC MIDI
   agit sur 16 canaux. Voir `docs/VALIDATION_TRANSPORT.md`.
+- L'accueil et Sons & Transfert vivent dans `src/pages`. L'état et les actions
+  matérielles restent orchestrés dans `App.tsx` jusqu'à l'extraction complète
+  du jeu et du studio. Voir `docs/DECOUPAGE_INTERFACE.md`.
 
 ## Priorités
 

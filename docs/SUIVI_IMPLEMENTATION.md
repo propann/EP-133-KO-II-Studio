@@ -44,7 +44,9 @@ Décisions :
 
 ## Étapes suivantes
 
-- 1.4 : découpage des pages Accueil, Jeu, Studio et Sons. **Prochaine étape.**
+- 1.4a : pages Accueil et Sons. **Terminée.**
+- 1.4b : composants visuels du Jeu. **Prochaine étape.**
+- 1.4c : isolation de l'éditeur Studio.
 - 2.1 : premier menu SAVE avec Nouveau, Sauvegarder et Charger.
 
 ## Décision d'architecture — étude « compagnon ultime »
@@ -134,3 +136,17 @@ Statut : terminé le 9 août 2026.
 
 Le détail des risques et des garanties est dans
 `docs/VALIDATION_TRANSPORT.md`.
+
+## Étape 1.4a — pages Accueil et Sons
+
+Statut : terminé le 9 août 2026.
+
+- [x] `HomePage` extraite avec navigation par callbacks ;
+- [x] `SoundsPage` extraite sans déplacer les accès MIDI ;
+- [x] contrat `DeviceInventory` centralisé dans le noyau projet ;
+- [x] classes CSS et contenu existants conservés ;
+- [x] activation Entrée/Espace rendue explicite et sans défilement parasite ;
+- [x] tests transport, formats et build réussis.
+
+La stratégie et les frontières restantes sont décrites dans
+`docs/DECOUPAGE_INTERFACE.md`.

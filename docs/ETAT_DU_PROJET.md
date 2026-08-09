@@ -101,6 +101,11 @@ une vraie gestion Save/Load. La feuille de route détaillée se trouve dans
 - Le PANIC MIDI couvre désormais les 16 canaux avec All Notes Off et All Sound
   Off ; une disparition du port pendant l'arrêt est tolérée.
 - Vérification dédiée : `npm run test:transport`.
+- Premier découpage React terminé : `HomePage` et `SoundsPage` sont sorties de
+  `App.tsx`, et le contrat de l'inventaire machine est centralisé dans
+  `src/core/project/device.ts`.
+- Le jeu puis le studio seront extraits par composants visuels avant tout
+  déplacement supplémentaire de la logique de transport.
 - Le noyau sait désormais relire les MIDI formats 0/1 qu'il exporte, conserver
   tempo, position, vélocité et durée, puis les répartir sur les groupes A–D.
 - Un inspecteur ouvre les conteneurs ZIP `.pak/.ppak`, valide `meta.json` et
