@@ -20,6 +20,10 @@ Ouvrir `docs/ep133-pad-player.html` dans Chrome ou Edge.
 
 La connexion MIDI et l’analyse de jeu sont le prochain chantier. Le mapping réel du EP-133 sera d’abord mesuré sur la machine, jamais deviné.
 
+## Reprise par une autre IA
+
+Lire d'abord [la passation complète](docs/AI_HANDOFF.md) : état réel, contraintes, matériel et prochaine mission.
+
 ## Documentation
 
 - [Feuille de route](docs/ROADMAP.md)
