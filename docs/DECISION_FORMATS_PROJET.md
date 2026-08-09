@@ -53,6 +53,7 @@ Le module `src/core/project/importers.ts` prend maintenant en charge :
 - inspection non destructive du ZIP `.pak/.ppak`, de `meta.json`, de la liste
   des projets TAR et des sons WAV.
 
-Cette inspection n'est pas encore un import musical complet : le TAR interne
-et ses structures binaires seront décodés séparément avant tout branchement au
-menu SAVE.
+Le TAR interne et ses structures prouvées sont également décodés en lecture
+seule : pads, notes, automations, scènes, song et tempo. Les membres et champs
+bruts sont conservés. Le branchement au menu SAVE reste séparé afin de tester
+d'abord le transport et le cycle de vie des fichiers.

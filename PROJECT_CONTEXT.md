@@ -125,6 +125,10 @@ Le player HTML historique reste disponible comme référence fonctionnelle penda
   projet de test, jamais les fichiers audio de la machine.
 - L'export MIDI fonctionne. L'export JSON suit le contrat `ep.project.v1` ; la
   compilation `.ppak` et l'écriture matérielle restent à valider.
+- Le lecteur TypeScript ouvre MIDI, `.pak/.ppak` et le TAR interne. Il décode
+  pads, patterns, automations, scènes, song et tempo en conservant les octets
+  bruts. Le projet 1 réel a été relu sans avertissement ; voir
+  `docs/VALIDATION_LECTEUR_PROJET_EP133.md`.
 
 ## Priorités
 

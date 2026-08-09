@@ -44,10 +44,8 @@ Décisions :
 
 ## Étapes suivantes
 
-- 1.2b : décodage en lecture seule des TAR de projet. **Prochaine étape.** Aucun
-  format propriétaire Rhythm Hero ne sera créé ; voir
-  `DECISION_FORMATS_PROJET.md`.
 - 1.3 : tests du transport et nettoyage garanti des timers MIDI/audio.
+  **Prochaine étape.**
 - 1.4 : découpage des pages Accueil, Jeu, Studio et Sons.
 - 2.1 : premier menu SAVE avec Nouveau, Sauvegarder et Charger.
 
@@ -85,7 +83,24 @@ SAVE/LOAD, sans écrire sur la machine.
 - [x] tests aller-retour avec un MIDI et une archive synthétique ;
 - [x] build de production.
 
-Limite volontaire : le contenu binaire des TAR de projet n'est pas encore
-décodé dans le navigateur. L'étape 1.2b devra lire les pads, patterns et scènes
-en conservant chaque champ inconnu ; l'inspecteur actuel ne compile et ne
-réécrit aucune archive.
+Limite à la clôture de cette sous-étape : le contenu binaire du TAR restait à
+décoder. Ce point est traité par l'étape 1.2b ci-dessous. L'inspecteur ne compile
+et ne réécrit toujours aucune archive.
+
+## Étape 1.2b — décodage du TAR de projet
+
+Statut : terminé le 9 août 2026.
+
+- [x] lecteur TAR compatible avec le dialecte de la machine et contrôle des
+  sommes de contrôle lorsqu'elles sont présentes ;
+- [x] décodage des 48 pads, formats natifs 26 octets et variante 27 octets ;
+- [x] décodage des patterns à 96 PPQN, notes et automations intercalées ;
+- [x] décodage des scènes, signatures, scène courante et liste song ;
+- [x] lecture du tempo dans `settings` ;
+- [x] conservation des membres et enregistrements bruts ;
+- [x] test synthétique et build ;
+- [x] validation sur une copie en lecture seule du projet 1 réel.
+
+Résultat réel : TAR de 68 096 octets, 68 membres, 48 pads, 11 patterns,
+125 notes, 3 scènes, tempo 120 BPM et aucun avertissement. Le compte rendu est
+dans `docs/VALIDATION_LECTEUR_PROJET_EP133.md`.

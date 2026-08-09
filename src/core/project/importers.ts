@@ -23,12 +23,88 @@ export interface Ep133ArchiveSummary {
   projects: string[];
   sounds: string[];
   entries: string[];
+  decodedProjects: Ep133ProjectArchive[];
+  warnings: string[];
+}
+
+export interface Ep133PadRecord {
+  group: EditorGroup;
+  pad: number;
+  size: 26 | 27;
+  slot: number;
+  midiChannel: number;
+  trimStart: number;
+  trimLength: number;
+  sampleBpm: number;
+  amplitude: number;
+  pitch: number;
+  pitchFraction: number | null;
+  pan: number;
+  attack: number;
+  release: number;
+  timeMode: number;
+  muteGroup: number;
+  playMode: number;
+  rootNote: number;
+  raw: Uint8Array;
+}
+
+export interface Ep133NoteRecord {
+  kind: 'note';
+  tick: number;
+  pad: number;
+  note: number;
+  velocity: number;
+  duration: number;
+  flag: number;
+  raw: Uint8Array;
+}
+
+export interface Ep133AutomationRecord {
+  kind: 'automation';
+  tick: number;
+  parameter: number;
+  value: number;
+  recordType: number;
+  flag: number;
+  raw: Uint8Array;
+}
+
+export interface Ep133PatternRecord {
+  group: EditorGroup;
+  pattern: number;
+  bars: number;
+  reserved: number;
+  notes: Ep133NoteRecord[];
+  automation: Ep133AutomationRecord[];
+  raw: Uint8Array;
+}
+
+export interface Ep133SceneRecord {
+  scene: number;
+  groupPatterns: [number, number, number, number];
+  timeSignature: [number, number];
+}
+
+export interface Ep133ProjectArchive {
+  path: string;
+  pads: Ep133PadRecord[];
+  patterns: Ep133PatternRecord[];
+  scenes: Ep133SceneRecord[];
+  song: number[];
+  currentScene: number | null;
+  bpm: number | null;
+  members: Record<string, Uint8Array>;
   warnings: string[];
 }
 
 const textDecoder = new TextDecoder();
 const readU16 = (data: Uint8Array, offset: number) => (data[offset] << 8) | data[offset + 1];
 const readU32 = (data: Uint8Array, offset: number) => ((data[offset] * 0x1000000) + (data[offset + 1] << 16) + (data[offset + 2] << 8) + data[offset + 3]) >>> 0;
+const readLeU16 = (data: Uint8Array, offset: number) => data[offset] | (data[offset + 1] << 8);
+const readLeU32 = (data: Uint8Array, offset: number) => (data[offset] + data[offset + 1] * 0x100 + data[offset + 2] * 0x10000 + data[offset + 3] * 0x1000000) >>> 0;
+const readLeF32 = (data: Uint8Array, offset: number) => new DataView(data.buffer, data.byteOffset + offset, 4).getFloat32(0, true);
+const signedByte = (value: number) => value > 127 ? value - 256 : value;
 
 const expectAscii = (data: Uint8Array, offset: number, expected: string) => {
   if (textDecoder.decode(data.subarray(offset, offset + expected.length)) !== expected) {
@@ -179,14 +255,143 @@ export function inspectEp133Archive(data: Uint8Array, filename = 'project.ppak')
   const projects = [...normalized.keys()].filter((entry) => /^projects\/P\d{2}\.tar$/i.test(entry)).sort();
   const sounds = [...normalized.keys()].filter((entry) => /^sounds\/[^/]+\.wav$/i.test(entry)).sort();
   if (!projects.length) warnings.push('Aucune archive de projet /projects/Pxx.tar trouvée.');
+  const decodedProjects = projects.map((path) => decodeEp133ProjectTar(archive[normalized.get(path)!], path));
   return {
     kind: filename.toLowerCase().endsWith('.pak') && !filename.toLowerCase().endsWith('.ppak') ? 'pak' : 'ppak',
     meta,
     projects,
     sounds,
     entries,
+    decodedProjects,
     warnings,
   };
+}
+
+function readTarMembers(data: Uint8Array) {
+  const members: Record<string, Uint8Array> = {};
+  const warnings: string[] = [];
+  let offset = 0;
+  while (offset + 512 <= data.length) {
+    const header = data.subarray(offset, offset + 512);
+    if (header.every((byte) => byte === 0)) break;
+    const name = textDecoder.decode(header.subarray(0, 100)).replace(/\0.*$/, '');
+    const sizeText = textDecoder.decode(header.subarray(124, 136)).replace(/\0.*$/, '').trim();
+    if (!name || !/^[0-7]*$/.test(sizeText)) {
+      warnings.push(`En-tête TAR invalide à l’octet ${offset}.`);
+      break;
+    }
+    const size = sizeText ? Number.parseInt(sizeText, 8) : 0;
+    const payloadStart = offset + 512;
+    const payloadEnd = payloadStart + size;
+    if (!Number.isSafeInteger(size) || payloadEnd > data.length) {
+      warnings.push(`Membre TAR ${name} tronqué.`);
+      break;
+    }
+    const checksumText = textDecoder.decode(header.subarray(148, 156)).replace(/\0.*$/, '').trim();
+    if (/^[0-7]+$/.test(checksumText)) {
+      const expected = Number.parseInt(checksumText, 8);
+      const actual = header.reduce((sum, byte, index) => sum + (index >= 148 && index < 156 ? 32 : byte), 0);
+      if (expected !== actual) warnings.push(`Somme de contrôle TAR incorrecte pour ${name}.`);
+    }
+    if (members[name]) warnings.push(`Membre TAR dupliqué : ${name}.`);
+    members[name] = data.slice(payloadStart, payloadEnd);
+    offset = payloadStart + Math.ceil(size / 512) * 512;
+  }
+  return { members, warnings };
+}
+
+function decodePad(raw: Uint8Array, group: EditorGroup, pad: number, warnings: string[]): Ep133PadRecord | null {
+  if (raw.length !== 26 && raw.length !== 27) {
+    warnings.push(`Pad ${group}-${pad} ignoré : ${raw.length} octets au lieu de 26 ou 27.`);
+    return null;
+  }
+  if (raw[0] !== 0) warnings.push(`Pad ${group}-${pad} : octet de validité non nul (${raw[0]}).`);
+  return {
+    group, pad, size: raw.length, slot: readLeU16(raw, 1), midiChannel: raw[3],
+    trimStart: readLeU32(raw, 4), trimLength: readLeU32(raw, 8), sampleBpm: readLeF32(raw, 12),
+    amplitude: raw[16], pitch: signedByte(raw[17]), pitchFraction: raw.length === 27 ? raw[26] : null,
+    pan: signedByte(raw[18]), attack: raw[19], release: raw[20], timeMode: raw[21],
+    muteGroup: raw[22], playMode: raw[23], rootNote: raw[24], raw,
+  };
+}
+
+function decodePattern(raw: Uint8Array, group: EditorGroup, pattern: number, warnings: string[]): Ep133PatternRecord | null {
+  if (raw.length < 4) {
+    warnings.push(`Pattern ${group}${String(pattern).padStart(2, '0')} trop court.`);
+    return null;
+  }
+  if (raw[0] !== 0) warnings.push(`Pattern ${group}${String(pattern).padStart(2, '0')} : octet de sécurité non nul.`);
+  const count = raw[2];
+  if (raw.length !== 4 + count * 8) warnings.push(`Pattern ${group}${String(pattern).padStart(2, '0')} : taille ${raw.length}, ${4 + count * 8} attendus selon le compteur.`);
+  const notes: Ep133NoteRecord[] = [];
+  const automation: Ep133AutomationRecord[] = [];
+  const available = Math.min(count, Math.floor((raw.length - 4) / 8));
+  for (let index = 0; index < available; index += 1) {
+    const record = raw.slice(4 + index * 8, 12 + index * 8);
+    const tick = readLeU16(record, 0);
+    if (record[2] === 1 || record[2] === 5) {
+      const value = readLeU16(record, 5);
+      if (record[3] > 11) warnings.push(`Automation ${group}${String(pattern).padStart(2, '0')} : paramètre ${record[3]} inconnu.`);
+      if (value > 32767) warnings.push(`Automation ${group}${String(pattern).padStart(2, '0')} : valeur ${value} hors plage sûre.`);
+      automation.push({ kind: 'automation', tick, recordType: record[2], parameter: record[3], value, flag: record[7], raw: record });
+    } else if (record[2] % 8 === 0 && record[2] <= 88) {
+      notes.push({ kind: 'note', tick, pad: record[2] / 8 + 1, note: record[3], velocity: record[4], duration: readLeU16(record, 5), flag: record[7], raw: record });
+    } else warnings.push(`Pattern ${group}${String(pattern).padStart(2, '0')} : type d’événement 0x${record[2].toString(16).padStart(2, '0')} conservé mais non décodé.`);
+  }
+  return { group, pattern, bars: raw[1], reserved: raw[3], notes, automation, raw };
+}
+
+export function decodeEp133ProjectTar(data: Uint8Array, path = 'projects/P01.tar'): Ep133ProjectArchive {
+  const tar = readTarMembers(data);
+  const warnings = [...tar.warnings];
+  const pads: Ep133PadRecord[] = [];
+  const patterns: Ep133PatternRecord[] = [];
+  Object.entries(tar.members).forEach(([name, raw]) => {
+    const padMatch = /^pads\/([a-d])\/p(\d{2})$/i.exec(name);
+    if (padMatch) {
+      const decoded = decodePad(raw, padMatch[1].toUpperCase() as EditorGroup, Number(padMatch[2]), warnings);
+      if (decoded) pads.push(decoded);
+      return;
+    }
+    const patternMatch = /^patterns\/([a-d])(\d{2})$/i.exec(name);
+    if (patternMatch) {
+      const decoded = decodePattern(raw, patternMatch[1].toUpperCase() as EditorGroup, Number(patternMatch[2]), warnings);
+      if (decoded) patterns.push(decoded);
+    }
+  });
+  pads.sort((a, b) => EDITOR_GROUPS.indexOf(a.group) - EDITOR_GROUPS.indexOf(b.group) || a.pad - b.pad);
+  patterns.sort((a, b) => EDITOR_GROUPS.indexOf(a.group) - EDITOR_GROUPS.indexOf(b.group) || a.pattern - b.pattern);
+
+  const scenes: Ep133SceneRecord[] = [];
+  let song: number[] = [];
+  let currentScene: number | null = null;
+  const sceneRaw = tar.members.scenes;
+  if (sceneRaw) {
+    if (sceneRaw.length !== 712) warnings.push(`Membre scenes de ${sceneRaw.length} octets au lieu de 712.`);
+    if (sceneRaw.length >= 601) {
+      for (let index = 0; index < 99 && 7 + index * 6 + 6 <= sceneRaw.length; index += 1) {
+        const chunk = sceneRaw.subarray(7 + index * 6, 13 + index * 6);
+        if (chunk.subarray(0, 4).some((value) => value !== 0)) {
+          scenes.push({ scene: index + 1, groupPatterns: [chunk[0], chunk[1], chunk[2], chunk[3]], timeSignature: [chunk[4], chunk[5]] });
+        } else if ((chunk[4] !== 4 || chunk[5] !== 4) && chunk.some((value) => value !== 0)) warnings.push(`Scène inutilisée ${index + 1} avec signature inattendue.`);
+      }
+      const trailer = 7 + 99 * 6;
+      currentScene = sceneRaw.length > trailer + 3 ? sceneRaw[trailer + 3] || null : null;
+      const songLength = sceneRaw.length > trailer + 11 ? sceneRaw[trailer + 11] : 0;
+      song = [...sceneRaw.subarray(trailer + 12, Math.min(sceneRaw.length, trailer + 12 + songLength))];
+      if (song.length !== songLength) warnings.push('Liste song tronquée dans le membre scenes.');
+    }
+  }
+  const settings = tar.members.settings;
+  let bpm: number | null = null;
+  if (settings) {
+    if (settings.length >= 8) {
+      const candidate = readLeF32(settings, 4);
+      if (Number.isFinite(candidate) && candidate > 0) bpm = candidate;
+      else warnings.push('Tempo du membre settings invalide.');
+    } else warnings.push('Membre settings trop court pour lire le tempo.');
+  }
+  return { path, pads, patterns, scenes, song, currentScene, bpm, members: tar.members, warnings };
 }
 
 export function readEp133ProjectDocument(json: string) {

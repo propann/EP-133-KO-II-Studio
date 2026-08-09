@@ -101,7 +101,12 @@ une vraie gestion Save/Load. La feuille de route détaillée se trouve dans
 - Un inspecteur ouvre les conteneurs ZIP `.pak/.ppak`, valide `meta.json` et
   inventorie les projets TAR et les WAV sans modifier l'archive.
 - La prochaine sous-étape est le décodage en lecture seule des pads, patterns et
-  scènes contenus dans un TAR de projet réel.
+  scènes contenus dans un TAR de projet réel. **Étape terminée.**
+- Le lecteur TAR expose maintenant les pads 26/27 octets, les notes et
+  automations des patterns, les scènes, la liste song et le tempo, tout en
+  conservant les octets bruts.
+- Validation sur le projet 1 réel : 48 pads, 11 patterns, 125 notes, 3 scènes,
+  tempo 120 BPM et aucun avertissement. Aucun accès en écriture n'a été fait.
 
 ## Étude technique externe analysée
 
