@@ -106,6 +106,10 @@ une vraie gestion Save/Load. La feuille de route détaillée se trouve dans
   `src/core/project/device.ts`.
 - Le jeu puis le studio seront extraits par composants visuels avant tout
   déplacement supplémentaire de la logique de transport.
+- Le jeu est maintenant séparé en `GameToolbar`, `ScoreView`,
+  `PerformancePanel` et `PadSoundEditor`. Ces composants sont visuels et ne
+  deviennent pas propriétaires de l'horloge.
+- L'ordre physique des 12 pads est centralisé dans `core/project/pads.ts`.
 - Le noyau sait désormais relire les MIDI formats 0/1 qu'il exporte, conserver
   tempo, position, vélocité et durée, puis les répartir sur les groupes A–D.
 - Un inspecteur ouvre les conteneurs ZIP `.pak/.ppak`, valide `meta.json` et

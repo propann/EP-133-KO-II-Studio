@@ -135,6 +135,8 @@ Le player HTML historique reste disponible comme référence fonctionnelle penda
 - L'accueil et Sons & Transfert vivent dans `src/pages`. L'état et les actions
   matérielles restent orchestrés dans `App.tsx` jusqu'à l'extraction complète
   du jeu et du studio. Voir `docs/DECOUPAGE_INTERFACE.md`.
+- Les composants visuels du jeu vivent dans `src/components/game`. Les
+  constantes des pads viennent exclusivement de `src/core/project/pads.ts`.
 
 ## Priorités
 

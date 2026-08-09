@@ -31,3 +31,19 @@ Espace sans faire défiler la page.
 
 Le transport et les accès MIDI restent dans `App.tsx` pendant ces extractions
 afin d'éviter deux propriétaires concurrents de l'horloge.
+
+## Sous-étape 1.4b — composants visuels du jeu
+
+Statut : terminé le 9 août 2026.
+
+- `GameToolbar` possède uniquement les interactions visuelles de la barre ; les
+  actions de transport restent des callbacks fournis par `App.tsx`.
+- `ScoreView` affiche les deux mesures, les frappes et le curseur sans connaître
+  Tone.js ni Web MIDI.
+- `PerformancePanel` affiche les pads et VU-mètres puis remonte les clics.
+- `PadSoundEditor` édite un réglage reçu sans posséder la banque sonore.
+- `core/project/pads.ts` devient la source unique pour l'ordre physique, les
+  touches et les noms des 12 pads.
+
+La prochaine extraction porte sur `EditorOverlay`, sa grille de pads et son
+piano-roll. Elle sera faite avant de déplacer l'état de l'éditeur dans un hook.

@@ -19,6 +19,11 @@ import {
 import type { DeviceInventory } from './core/project/device';
 import { HomePage } from './pages/HomePage';
 import { SoundsPage } from './pages/SoundsPage';
+import { ScoreView } from './components/game/ScoreView';
+import { PerformancePanel } from './components/game/PerformancePanel';
+import { PadSoundEditor } from './components/game/PadSoundEditor';
+import { GameToolbar } from './components/game/GameToolbar';
+import { EP133_PADS as PADS, EP133_SCORE_TRACKS as SCORE_TRACKS } from './core/project/pads';
 import './style.css';
 import catalogue from '../exercises/catalogue-exercices-v1.json';
 
@@ -76,14 +81,7 @@ function createSixBarExercise(styleId: string, difficulty: number, tempo: number
   return { id: `${style.id}-${difficulty}`, title: style.label, description: `Niveau ${difficulty} · 6 mesures progressives`, bpm: tempo, bars: 6, timeSignature: '4/4', countInBars: 1, backingTrack: null, grading: { perfectMs: 35, goodMs: 90 }, targets: uniqueTargets };
 }
 
-const PADS = [
-  { key: '7', name: 'KICK' }, { key: '8', name: 'CLAP' }, { key: '9', name: 'SNARE' },
-  { key: '4', name: 'OPEN HAT' }, { key: '5', name: 'CLOSED HAT' }, { key: '6', name: 'RIDE' },
-  { key: '1', name: 'PERC 1' }, { key: '2', name: 'PERC 2' }, { key: '3', name: 'PERC 3' },
-  { key: '·', name: 'SHAKER' }, { key: '0', name: 'BASS' }, { key: 'ENTER', name: 'FX' },
-];
 const audio = new AudioEngine();
-const SCORE_TRACKS = PADS.map((pad, index) => ({ pad: index, label: `${pad.name} · A-${pad.key}` }));
 
 interface PlayerNote {
   id: number;
@@ -147,8 +145,6 @@ export default function App() {
   const editorEndTimer = useRef<number | undefined>(undefined);
   const gameRun = useRef(0);
   const editorRun = useRef(0);
-  const tempoDrag = useRef<{ y: number; tempo: number } | null>(null);
-  const difficultyDrag = useRef<{ y: number; difficulty: number } | null>(null);
   const running = phase === 'playing';
   const sessionActive = phase !== 'idle';
   const transportActive = phase === 'playing' || phase === 'preview';
@@ -492,17 +488,7 @@ export default function App() {
   if (workspaceView === 'sounds') return <SoundsPage inventory={deviceInventory} midiConnected={midi.outputConnected} onBack={goHome} onConnectMidi={() => void connectMidi()} />;
 
   return <main className={last ? `impact impact-${last.grade.toLowerCase()}` : ''}>
-    <header className="toolbar">
-      <button className="home-back compact" onClick={goHome}>← ACCUEIL</button>
-      <strong className="brand">EP‑133 <span>RHYTHM HERO</span></strong>
-      <button className="editor-button compact" disabled={sessionActive} onClick={openEditor}>ÉDITEUR</button>
-      <div className={`difficulty-control ${sessionActive ? 'locked' : ''}`} title="Maintenir et glisser verticalement" onPointerDown={(event) => { if (sessionActive) return; event.currentTarget.setPointerCapture(event.pointerId); difficultyDrag.current = { y: event.clientY, difficulty }; }} onPointerMove={(event) => { if (!difficultyDrag.current || sessionActive) return; setDifficulty(Math.max(1, Math.min(5, Math.round(difficultyDrag.current.difficulty + (difficultyDrag.current.y - event.clientY) / 24)))); }} onPointerUp={() => { difficultyDrag.current = null; }} onPointerCancel={() => { difficultyDrag.current = null; }}><small>NIVEAU ↕</small><b>{difficulty}</b></div>
-      <label className="mode-select">STYLE <select value={styleId} disabled={sessionActive} onChange={(event) => changeStyle(event.target.value)}><optgroup label="STYLES">{STYLES.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}</optgroup>{userExercises.length > 0 && <optgroup label="USER">{userExercises.map((item) => <option value={`user:${item.id}`} key={item.id}>{item.title}</option>)}</optgroup>}</select></label>
-      <div className={`tempo-control ${sessionActive ? 'locked' : ''}`} title="Maintenir et glisser verticalement" onPointerDown={(event) => { if (sessionActive) return; event.currentTarget.setPointerCapture(event.pointerId); tempoDrag.current = { y: event.clientY, tempo }; }} onPointerMove={(event) => { if (!tempoDrag.current || sessionActive) return; setTempo(Math.max(50, Math.min(200, Math.round(tempoDrag.current.tempo + (tempoDrag.current.y - event.clientY) / 2)))); }} onPointerUp={() => { tempoDrag.current = null; }} onPointerCancel={() => { tempoDrag.current = null; }}><small>BPM ↕</small><b>{activeExercise.bpm}</b></div>
-      <button className={`connect compact ${midi.connected ? 'connected' : ''}`} onClick={() => void connectMidi()}>{midi.connected ? 'MIDI ✓' : 'MIDI'}</button>
-      <button className={`preview compact ${phase === 'preview' ? 'active' : ''}`} disabled={sessionActive && phase !== 'preview'} onClick={() => void togglePreview()}>{phase === 'preview' ? '■ STOP' : '▶ LECTURE'}</button>
-      <button onClick={toggle} disabled={phase === 'preview'} className="start compact">{phase === 'playing' || phase === 'countin' ? '■ STOP' : '▶ JOUER'}</button>
-    </header>
+    <GameToolbar difficulty={difficulty} tempo={tempo} activeBpm={activeExercise.bpm} styleId={styleId} styles={STYLES} userExercises={userExercises} phase={phase} sessionActive={sessionActive} midiConnected={midi.connected} onDifficultyChange={setDifficulty} onTempoChange={setTempo} onStyleChange={changeStyle} onHome={goHome} onOpenEditor={openEditor} onConnectMidi={() => void connectMidi()} onPreview={() => void togglePreview()} onPlay={() => void toggle()} />
     {phase === 'countin' && <div className="countdown" aria-live="assertive"><small>1 MESURE POUR SE PRÉPARER</small><b>{countdown}</b></div>}
     {editorOpen && <div className="editor-overlay"><section className="exercise-editor">
       <header><button className="editor-home-button" onClick={goHome}>← ACCUEIL</button><div><small>{editorMode === 'game' ? 'ÉDITEUR JEU' : 'ÉDITEUR EP‑133 COMPLET'}</small><input value={editorName} maxLength={32} onChange={(event) => setEditorName(event.target.value.toUpperCase())} aria-label="Nom de l'exercice" /></div>{editorMode === 'complete' && <><div className="editor-groups" aria-label="Groupes EP-133">{EDITOR_GROUPS.map((group) => <button className={editorGroup === group ? 'active' : ''} onClick={() => changeEditorGroup(group)} key={group}>{group}</button>)}</div><span className={`device-scan-state ${deviceInventory ? 'active' : ''}`}>{deviceInventory ? `PROJET ${deviceInventory.project} · SCAN LECTURE SEULE` : 'AUCUN SCAN'}</span><button className={`editor-midi-out ${midi.outputConnected ? 'active' : ''}`} onClick={() => void connectMidi()}>{midi.outputConnected ? 'MIDI OUT ✓' : 'CONNECTER EP‑133'}</button></>}<div className={`editor-vu ${editorPlaying ? 'active' : ''}`}><span>-20</span><span>-6</span><span>0</span><i /><b>VU</b></div></header>
@@ -522,49 +508,10 @@ export default function App() {
       <footer><span>{editorMode === 'complete' ? `${midi.outputConnected ? `SON EP‑133 · ${midi.outputNames.join(' + ')}` : 'EP‑133 NON CONNECTÉ'} · ` : ''}GROUPE {editorGroup} · {editorTargets.length} FRAPPE(S) · {effectiveEditorBars} MESURE(S) · {tempo} BPM · AJOUT AUTOMATIQUE ACTIF</span></footer>
     </section></div>}
 
-    <section className="score-view" aria-label="Partition sur deux mesures">
-      <div className="score-heading"><span>MESURES {Math.floor(pageStart / 4) + 1}–{Math.floor(pageStart / 4) + 2}</span><span>32 PAS · 12 PISTES</span></div>
-      <div className="sequencer-scroll" ref={scoreScroll}>
-        <div className="sequencer">
-          <section className="sequence-block combined">
-            <h2>PARTITION MODÈLE + JOUEUR</h2>
-            <div className="measure-titles"><span /><b>MESURE {Math.floor(pageStart / 4) + 1}</b><b>MESURE {Math.floor(pageStart / 4) + 2}</b></div>
-            <div className="step-numbers"><span />{Array.from({ length: 32 }, (_, step) => <i key={step}>{step % 16 + 1}</i>)}</div>
-            {SCORE_TRACKS.map((track) => <div className="sequence-track" key={track.pad}>
-              <strong>{track.label}</strong>
-              {Array.from({ length: 32 }, (_, step) => {
-                const expected = visibleTargets.find((target) => target.pad === track.pad && Math.round((target.beat - pageStart) * 4) === step);
-                const played = visiblePlayerNotes.filter((note) => note.pad === track.pad && Math.max(0, Math.min(31, Math.floor((note.beat - pageStart) * 4))) === step);
-                const activeStep = transportActive && Math.floor((songBeat - pageStart) * 4) === step;
-                const grade = played.at(-1)?.grade.toLowerCase();
-                return <i key={step} className={`sequence-step ${expected ? 'filled' : ''} ${played.length ? 'played' : ''} ${grade || ''} ${activeStep ? 'current' : ''}`}>{expected ? PADS[track.pad].key : ''}{played.length > 0 && <b className="player-mark" />}</i>;
-              })}
-            </div>)}
-            {transportActive && <div className="sequence-cursor" style={{ left: `calc(132px + (100% - 132px) * ${playheadProgress})` }} />}
-          </section>
-        </div>
-      </div>
-      <div className="score-legend"><span><i className="legend-model" /> modèle</span><span><i className="legend-perfect" /> PERFECT</span><span><i className="legend-good" /> GOOD</span><span><i className="legend-miss" /> MISS</span>{last && <strong className={last.grade.toLowerCase()}>{last.grade} {Number.isFinite(last.deltaMs) ? `${last.deltaMs > 0 ? '+' : ''}${last.deltaMs.toFixed(0)} ms` : ''}</strong>}</div>
-    </section>
+    <ScoreView viewportRef={scoreScroll} pageStart={pageStart} songBeat={songBeat} transportActive={transportActive} playheadProgress={playheadProgress} expectedTargets={visibleTargets} playedNotes={visiblePlayerNotes} last={last} />
 
-    <section className="performance-panel">
-      <aside className="side-display analog-display model-vu"><small>SON DU JEU</small><div className="analog-vu"><div className="vu-scale"><span>-20</span><span>-6</span><span>0</span><span>+3</span></div><i className="vu-needle" style={{ transform: `rotate(${expectedPad !== undefined ? 48 : -42}deg)` }} /><b>VU</b></div><span>PARTITION · ORANGE</span></aside>
-      <section className="pads">{PADS.map((pad, index) => {
-      const expected = transportActive && expectedPad === index;
-      const played = flashedPad?.pad === index;
-      return <button key={pad.key} onClick={(event) => { if (event.detail === 1) clickPad(index); }} onDoubleClick={() => editPad(index)} className={`${expected ? 'expected-pad ' : ''}${played && flashedPad ? `played-pad ${flashedPad.grade.toLowerCase()}` : ''}`}>
-        <b>{pad.key}</b>{pad.name}
-        <em>MAPPING MIDI AUTOMATIQUE</em>
-      </button>;
-      })}</section>
-      <aside className="side-display analog-display player-vu"><small>SON DU JOUEUR</small><div className="analog-vu"><div className="vu-scale"><span>-20</span><span>-6</span><span>0</span><span>+3</span></div><i className="vu-needle" style={{ transform: `rotate(${flashedPad ? Math.min(52, -30 + (lastMidi?.velocity || 100) * .65) : -42}deg)` }} /><b>VU</b></div><span>FRAPPES · AMBRE</span><b className="mini-combo">COMBO {score.combo}</b></aside>
-    </section>
-    {soundPad !== null && <section className="sound-editor">
-      <div><small>RÉGLAGE DU PAD</small><strong>{PADS[soundPad].key} · {PADS[soundPad].name}</strong></div>
-      <label>SON DU JEU <input type="range" min="0" max="140" value={soundSettings[soundPad].modelVolume} onChange={(event) => updateSound(soundPad, { modelVolume: Number(event.target.value) })} /><output>{soundSettings[soundPad].modelVolume}%</output></label>
-      <label>SON DU JOUEUR <input type="range" min="0" max="140" value={soundSettings[soundPad].playerVolume} onChange={(event) => updateSound(soundPad, { playerVolume: Number(event.target.value) })} /><output>{soundSettings[soundPad].playerVolume}%</output></label>
-      <label>HAUTEUR <input type="range" min="-12" max="12" value={soundSettings[soundPad].tune} onChange={(event) => updateSound(soundPad, { tune: Number(event.target.value) })} /><output>{soundSettings[soundPad].tune > 0 ? '+' : ''}{soundSettings[soundPad].tune}</output></label>
-      <button onClick={() => void audio.previewPad(soundPad)}>ÉCOUTER</button><button onClick={() => setSoundPad(null)}>FERMER</button>
-    </section>}
+    <PerformancePanel transportActive={transportActive} expectedPad={expectedPad} flashedPad={flashedPad} midiVelocity={lastMidi?.velocity || 100} combo={score.combo} onPlayPad={clickPad} onEditPad={editPad} />
+
+    {soundPad !== null && <PadSoundEditor pad={soundPad} settings={soundSettings[soundPad]} onChange={(patch) => updateSound(soundPad, patch)} onPreview={() => void audio.previewPad(soundPad)} onClose={() => setSoundPad(null)} />}
   </main>;
 }

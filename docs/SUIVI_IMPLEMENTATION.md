@@ -45,8 +45,8 @@ Décisions :
 ## Étapes suivantes
 
 - 1.4a : pages Accueil et Sons. **Terminée.**
-- 1.4b : composants visuels du Jeu. **Prochaine étape.**
-- 1.4c : isolation de l'éditeur Studio.
+- 1.4b : composants visuels du Jeu. **Terminée.**
+- 1.4c : isolation de l'éditeur Studio. **Prochaine étape.**
 - 2.1 : premier menu SAVE avec Nouveau, Sauvegarder et Charger.
 
 ## Décision d'architecture — étude « compagnon ultime »
@@ -150,3 +150,15 @@ Statut : terminé le 9 août 2026.
 
 La stratégie et les frontières restantes sont décrites dans
 `docs/DECOUPAGE_INTERFACE.md`.
+
+## Étape 1.4b — composants visuels du jeu
+
+Statut : terminé le 9 août 2026.
+
+- [x] barre supérieure extraite ;
+- [x] partition modèle/joueur extraite ;
+- [x] panneau des 12 pads et VU-mètres extrait ;
+- [x] mini-éditeur sonore extrait ;
+- [x] ordre et libellés des pads centralisés ;
+- [x] transport conservé dans un seul orchestrateur ;
+- [x] tests transport, formats et build réussis.
