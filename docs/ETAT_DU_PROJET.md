@@ -1,30 +1,39 @@
 # État du projet
 
-## Fait
+## Socle validé
 
-- Dépôt initialisé et documentation française
-- Player autonome
-- Façade K.O. II et pads A-D
-- Choix de difficulté
-- 39 rythmes
-- Partition complète sur une mesure
-- Tempo de 10 % à 150 %
-- Doigtés, sons de repère et VU-mètre
-- Atlas et générateur de cahier
+- Player autonome, sans dépendance JavaScript externe
+- Interface inspirée du EP-133 K.O. II, pads et doigtés visibles
+- 39 exercices classés sur 5 niveaux
+- Tempo de 10 % à 150 %, sons de repère et VU-mètre
+- Partition modèle sur 16 pas avec numéro de pad
+- Parcours de 1 à 4 mesures ; les mesures 2 à 4 apportent des variations
+- Partition joueur sur la mesure en cours ; les frappes du pad à l'écran s'y écrivent
+- Lancement local préparé pour Windows et Raspberry Pi
 
-## À faire maintenant
+## Vérification du 9 août 2026
 
-1. Tester l’EP-133 en USB-MIDI sous Windows.
-2. Capturer le mapping réel des pads.
-3. Connecter les frappes au pad virtuel.
-4. Ajouter le compte à rebours et la mesure de timing.
-5. Ajouter score, combo et rapport de fin d’exercice.
+| Contrôle | Résultat |
+|---|---|
+| Syntaxe JavaScript du player | OK |
+| Syntaxe JavaScript de la version autonome | OK |
+| Catalogue de 39 exercices | OK |
+| Sélecteur 1 à 4 mesures | OK |
+| Partition joueur / variations | OK |
+| Scripts Windows et Pi | OK (validation de syntaxe) |
 
-## Hors périmètre immédiat
+## Prochaine brique : le vrai jeu
 
-- Import automatique de sauvegardes `.ppak`
-- Génération complète de morceaux
-- Back-end ou compte utilisateur
-- Hébergement public
+1. Brancher le EP-133 par USB au PC Windows.
+2. Relever les notes, canaux et vélocités réellement envoyés par chaque pad.
+3. Connecter ces messages à la partition joueur.
+4. Mesurer avance/retard et erreurs de pad.
+5. Calculer score, combo et bilan d'exercice.
 
-Ces sujets viendront après un premier exercice réellement jouable avec le K.O. II connecté.
+## Limites actuelles assumées
+
+- La partition joueur enregistre pour l'instant les clics sur le pad visuel ; elle n'est pas encore alimentée par le EP-133.
+- Le serveur Raspberry Pi est un serveur d'entraînement sur le réseau local. Il ne peut pas capturer tout seul le MIDI USB branché à un autre PC.
+- Le score affiché reste indicatif tant que le mapping physique n'a pas été mesuré.
+
+Le projet a désormais une vraie base de jeu. La prochaine étape n'est plus graphique : c'est le test matériel, là où les notes cessent de faire semblant.
