@@ -177,6 +177,9 @@ Le player HTML historique reste disponible comme référence fonctionnelle penda
 - `tools/clone_ep133_readonly.py` est le moteur du vrai clone complet. Il copie
   projets, PCM et métadonnées avec hashes et reprise. L'UI ne doit pas prétendre
   l'avoir exécuté avant le retour d'un pont local confirmé.
+- Arborescence impérative des sauvegardes :
+  `dossier choisi/clone/nom-machine/`. Ne jamais écrire les fichiers du clone
+  directement à la racine choisie.
 
 ## Priorités
 

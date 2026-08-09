@@ -49,7 +49,9 @@ def main() -> int:
     target_parent = args.out.expanduser().resolve()
     if target_parent == Path("/") or target_parent == Path.home():
         raise SystemExit("Refus d'utiliser la racine ou le dossier personnel comme cible directe.")
-    target = target_parent / safe_name(args.name)
+    # Arborescence canonique : le dossier choisi reste propre et tous les
+    # miroirs de machines vivent sous clone/<nom-machine>/.
+    target = target_parent / "clone" / safe_name(args.name)
     projects_dir = target / "projects"
     samples_dir = target / "samples"
     metadata_dir = target / "metadata"

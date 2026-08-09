@@ -330,6 +330,7 @@ Statut : moteur terminé, branchement UI en attente le 9 août 2026.
 - [x] stockage PCM et métadonnées dans le dossier cible ;
 - [x] hash SHA-256 de chaque fichier ;
 - [x] manifeste atomique et progression récupérable ;
+- [x] arborescence canonique `clone/nom-machine/` créée automatiquement ;
 - [x] reprise des samples déjà copiés et de taille identique ;
 - [x] aucune commande d'écriture vers la machine ;
 - [ ] boîte de dialogue native et pont local pour lancer le moteur depuis l'UI ;

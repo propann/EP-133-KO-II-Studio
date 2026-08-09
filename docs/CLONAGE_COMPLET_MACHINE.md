@@ -20,18 +20,23 @@ machine. Il reçoit obligatoirement un dossier cible explicite et crée :
 
 ```text
 dossier-choisi/
-└── nom-de-la-machine/
-    ├── manifest.json
-    ├── projects/
-    │   ├── P01.tar
-    │   └── … P09.tar
-    ├── samples/
-    │   ├── 001.pcm
-    │   └── …
-    └── metadata/
-        ├── 001.json
-        └── …
+└── clone/
+    └── nom-de-la-machine/
+        ├── manifest.json
+        ├── projects/
+        │   ├── P01.tar
+        │   └── … P09.tar
+        ├── samples/
+        │   ├── 001.pcm
+        │   └── …
+        └── metadata/
+            ├── 001.json
+            └── …
 ```
+
+Le dossier `clone` est créé automatiquement s'il n'existe pas. S'il existe,
+il est réutilisé sans suppression. Chaque machine possède obligatoirement son
+propre sous-dossier normalisé afin d'éviter de mélanger deux appareils.
 
 Le manifeste est écrit atomiquement après chaque élément. Une reprise conserve
 un sample existant lorsque sa taille correspond, puis recalcule son hash. Les

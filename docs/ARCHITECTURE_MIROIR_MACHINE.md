@@ -28,6 +28,10 @@ La même préparation est accessible dans le Studio par
 `FICHIER → CLONER LA MACHINE`. Elle crée un manifeste local et son
 `INSTANTANÉ INITIAL`.
 
+Tous les fichiers suivent l'arborescence obligatoire
+`dossier choisi/clone/nom de la machine/`. Le dossier `clone` est créé
+automatiquement et n'est jamais vidé lors d'une nouvelle opération.
+
 ## Trois couches de données
 
 ### 1. Base machine
