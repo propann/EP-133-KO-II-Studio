@@ -96,6 +96,8 @@
 - Le menu FICHIER permet de choisir séparément la banque samples d'un clone.
   Le Studio joue alors les PCM locaux quand la machine est absente et garde le
   MIDI matériel prioritaire quand elle est connectée.
+- La banque est maintenant ouverte directement sur le HDD : aucun sample n'est
+  envoyé au site. La fenêtre Clone écrit déjà son manifeste dans le dossier PC.
 - Export MIDI ou description `ep.project.v1` JSON.
 - Scan SysEx en lecture seule validé sur la machine : 527 sons, 56,21 Mo,
   affectations de pads, noms, modes et notes racines.

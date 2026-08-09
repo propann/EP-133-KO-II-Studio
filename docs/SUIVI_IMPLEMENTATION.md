@@ -351,5 +351,7 @@ Statut : première version terminée le 9 août 2026.
 - [x] priorité au MIDI matériel lorsque l'EP-133 est connecté ;
 - [x] arrêt des sources locales avec le transport ;
 - [ ] autorisation de dossier persistante via le pont local.
+- [x] accès direct au HDD par boîte de dialogue native, sans upload ;
+- [x] manifeste initial écrit dans `clone/nom-machine/` sur le disque ;
 
 Voir `docs/BANQUE_SAMPLES_STUDIO.md`.

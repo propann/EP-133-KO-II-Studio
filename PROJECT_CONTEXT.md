@@ -183,6 +183,9 @@ Le player HTML historique reste disponible comme référence fonctionnelle penda
 - `MachineSampleBank` résout les slots depuis le dossier de clone sélectionné.
   Priorité audio : MIDI machine connectée, sinon PCM local. Voir
   `docs/BANQUE_SAMPLES_STUDIO.md`.
+- Les sélecteurs utilisent l'accès natif aux dossiers de Chrome/Chromium. Ne
+  jamais employer « upload » : les PCM restent sur le HDD et seul le manifeste
+  est écrit dans `clone/nom-machine/` par le navigateur.
 
 ## Priorités
 

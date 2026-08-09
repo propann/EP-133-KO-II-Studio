@@ -28,7 +28,7 @@ interface EditorToolbarProps {
   onDelete: () => void;
   onLoadMachineProject: () => void;
   onCloneMachine: () => void;
-  onChooseSampleFolder: (files: FileList | null) => void;
+  onOpenSampleFolder: () => void;
   onPlayback: () => void;
   onLoopChange: (loop: boolean) => void;
   onExportFormatChange: (format: 'midi' | 'json') => void;
@@ -47,7 +47,7 @@ export function EditorToolbar(props: EditorToolbarProps) {
             <button onClick={props.onNew}>＋ NOUVEAU</button><button disabled={!props.selectedLocalProject} onClick={props.onLoad}>OUVRIR</button>
             <button className="machine-project-load" disabled={!props.machineProjectAvailable} onClick={props.onLoadMachineProject}>↓ PROJET 1 MACHINE</button><span className="machine-project-state">{props.machineProjectAvailable ? 'SCAN LECTURE SEULE PRÊT' : 'AUCUN PROJET SCANNÉ'}</span>
             <button className="clone-machine" onClick={props.onCloneMachine}>▣ CLONER LA MACHINE</button><span className="machine-project-state">MIROIR + FUTURE TIME MACHINE</span>
-            <label className="studio-sample-folder">DOSSIER SAMPLES<input type="file" multiple {...({ webkitdirectory: '', directory: '' } as Record<string, string>)} onChange={(event) => props.onChooseSampleFolder(event.currentTarget.files)} /></label><span className={`machine-project-state ${props.machineSampleCount ? 'ready' : ''}`}>{props.machineSampleCount ? `${props.machineSampleCount} SAMPLES PC PRÊTS` : 'AUCUNE BANQUE LOCALE'}</span>
+            <button className="studio-sample-folder" onClick={props.onOpenSampleFolder}>▤ OUVRIR BANQUE LOCALE</button><span className={`machine-project-state ${props.machineSampleCount ? 'ready' : ''}`}>{props.machineSampleCount ? `${props.machineSampleCount} SAMPLES HDD · AUCUN UPLOAD` : 'AUCUN DOSSIER LOCAL OUVERT'}</span>
             <button className="save" disabled={!props.canSave} onClick={props.onSave}>● ENREGISTRER</button><button disabled={!props.canSave} onClick={props.onSaveAs}>ENREGISTRER SOUS</button>
             <button disabled={!props.selectedLocalProject} onClick={props.onRename}>RENOMMER</button><button disabled={!props.selectedLocalProject} onClick={props.onDuplicate}>DUPLIQUER</button>
             <button className="file-delete" disabled={!props.selectedLocalProject} onClick={props.onDelete}>SUPPRIMER</button>

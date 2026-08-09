@@ -94,7 +94,8 @@ restauration trompeur n'est activé.
 ## Limite de l'application web
 
 Le navigateur peut demander à l'utilisateur de choisir un dossier, mais il ne
-peut pas lancer librement un scan SysEx complet ni conserver partout un chemin
-filesystem exploitable. Le produit complet aura donc besoin d'un pont local
+peut pas lancer librement un scan SysEx complet. Chrome/Chromium permet déjà de
+lire les samples et d'écrire le manifeste directement sur le disque, sans les
+envoyer au site. Le produit complet aura néanmoins besoin d'un pont local
 sécurisé ou d'une application installable. Le frontend web demeure l'interface
 et le moteur d'édition communs.

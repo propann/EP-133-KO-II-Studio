@@ -40,6 +40,7 @@ import { PadStrip } from './components/editor/PadStrip';
 import { EditorToolbar } from './components/editor/EditorToolbar';
 import { SongModeBar } from './components/editor/SongModeBar';
 import { MachineCloneDialog } from './components/editor/MachineCloneDialog';
+import { chooseLocalDirectory, collectLocalFiles } from './core/storage/localFolders';
 import './style.css';
 import catalogue from '../exercises/catalogue-exercices-v1.json';
 
@@ -266,9 +267,13 @@ export default function App() {
     await midi.connect();
   };
 
-  const chooseStudioSampleFolder = async (files: FileList | null) => {
-    if (!files) return;
-    setMachineSampleCount(await machineSampleBank.load(files));
+  const openStudioSampleFolder = async () => {
+    try {
+      const directory = await chooseLocalDirectory();
+      setMachineSampleCount(await machineSampleBank.load(await collectLocalFiles(directory)));
+    } catch (error) {
+      if ((error as { name?: string }).name !== 'AbortError') window.alert(error instanceof Error ? error.message : 'Impossible d’ouvrir le dossier local.');
+    }
   };
 
   useEffect(() => {
@@ -650,7 +655,7 @@ export default function App() {
     <GameToolbar difficulty={difficulty} tempo={tempo} activeBpm={activeExercise.bpm} styleId={styleId} styles={STYLES} userExercises={userExercises} phase={phase} sessionActive={sessionActive} midiConnected={midi.connected} onDifficultyChange={setDifficulty} onTempoChange={setTempo} onStyleChange={changeStyle} onHome={goHome} onOpenEditor={openEditor} onConnectMidi={() => void connectMidi()} onPreview={() => void togglePreview()} onPlay={() => void toggle()} />
     {phase === 'countin' && <div className="countdown" aria-live="assertive"><small>1 MESURE POUR SE PRÉPARER</small><b>{countdown}</b></div>}
     {editorOpen && <div className="editor-overlay"><section className="exercise-editor">
-      <EditorToolbar mode={editorMode} name={editorName} group={editorGroup} playing={editorPlaying} loop={editorLoop} exportFormat={editorExportFormat} canSave={Boolean(editorName.trim() && (editorMode === 'complete' || editorTargets.length || Object.values(editorGroupTargets).some((groupTargets) => groupTargets.length)))} midiConnected={midi.outputConnected} scannedProject={deviceInventory?.project} machineProjectAvailable={Boolean(machineProjectDocument)} machineSampleCount={machineSampleCount} localProjects={studioLibrary.map((project) => ({ id: project.id, title: String((project.document.metadata as { title?: string } | undefined)?.title || 'PROJET SANS NOM') }))} selectedLocalProject={selectedStudioProject} onHome={goHome} onNameChange={setEditorName} onGroupChange={changeEditorGroup} onConnectMidi={() => void connectMidi()} onNew={newStudioProject} onSelectedLocalProjectChange={setSelectedStudioProject} onLoad={loadSelectedStudioProject} onLoadMachineProject={loadMachineProject} onCloneMachine={() => setMachineCloneOpen(true)} onChooseSampleFolder={(files) => void chooseStudioSampleFolder(files)} onSave={saveEditor} onSaveAs={saveStudioProjectAs} onRename={renameSelectedStudioProject} onDuplicate={duplicateSelectedStudioProject} onDelete={deleteSelectedStudioProject} onPlayback={() => void toggleEditorPlayback()} onLoopChange={setEditorLoop} onExportFormatChange={setEditorExportFormat} onExport={exportEditor} />
+      <EditorToolbar mode={editorMode} name={editorName} group={editorGroup} playing={editorPlaying} loop={editorLoop} exportFormat={editorExportFormat} canSave={Boolean(editorName.trim() && (editorMode === 'complete' || editorTargets.length || Object.values(editorGroupTargets).some((groupTargets) => groupTargets.length)))} midiConnected={midi.outputConnected} scannedProject={deviceInventory?.project} machineProjectAvailable={Boolean(machineProjectDocument)} machineSampleCount={machineSampleCount} localProjects={studioLibrary.map((project) => ({ id: project.id, title: String((project.document.metadata as { title?: string } | undefined)?.title || 'PROJET SANS NOM') }))} selectedLocalProject={selectedStudioProject} onHome={goHome} onNameChange={setEditorName} onGroupChange={changeEditorGroup} onConnectMidi={() => void connectMidi()} onNew={newStudioProject} onSelectedLocalProjectChange={setSelectedStudioProject} onLoad={loadSelectedStudioProject} onLoadMachineProject={loadMachineProject} onCloneMachine={() => setMachineCloneOpen(true)} onOpenSampleFolder={() => void openStudioSampleFolder()} onSave={saveEditor} onSaveAs={saveStudioProjectAs} onRename={renameSelectedStudioProject} onDuplicate={duplicateSelectedStudioProject} onDelete={deleteSelectedStudioProject} onPlayback={() => void toggleEditorPlayback()} onLoopChange={setEditorLoop} onExportFormatChange={setEditorExportFormat} onExport={exportEditor} />
       {editorMode === 'complete' && <SongModeBar activeGroup={editorGroup} patterns={currentEditorPatterns()} onGroupChange={changeEditorGroup} />}
       {editorMode === 'complete' && <PadStrip group={editorGroup} selectedPad={editorSelectedPad} padModes={editorPadModes} padName={devicePadName} padSlot={(pad) => devicePadInfo(pad)?.slot} onSelect={(pad) => { setEditorSelectedPad(pad); setKeyEditorOpen((editorPadModes[`${editorGroup}:${pad}`] || 'ONE') === 'KEYS'); }} onPreview={(pad) => { const info = devicePadInfo(pad); if (midi.outputConnected) midi.sendPad(pad, EDITOR_GROUPS.indexOf(editorGroup), 110); else if (info?.slot) void machineSampleBank.play(info.slot, 110, performance.now(), undefined, info.rootNote); }} onModeChange={(pad, mode) => { setEditorPadModes((current) => ({ ...current, [`${editorGroup}:${pad}`]: mode })); setKeyEditorOpen(mode === 'KEYS'); }} onOpenKeys={() => setKeyEditorOpen(true)} />}
       {keyEditorOpen && editorMode === 'complete'

@@ -314,6 +314,7 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .clone-form input,.clone-form select,.clone-folder span { height:38px; padding:7px 9px; border:2px solid var(--ko-black); background:#f2efe9; font:inherit; }
 .clone-folder { position:relative; grid-column:1 / -1; }
 .clone-folder input { position:absolute; width:1px; height:1px; opacity:0; }
+.clone-folder button { height:38px; padding:7px 9px; border:2px solid var(--ko-black); background:var(--ko-amber); font-weight:bold; text-align:left; }
 .clone-folder span { display:flex; align-items:center; cursor:pointer; }
 .clone-scope { display:grid; grid-template-columns:repeat(3,1fr); border-block:2px solid var(--ko-black); }
 .clone-scope article { display:grid; padding:12px 14px; border-right:1px solid var(--ko-black); }

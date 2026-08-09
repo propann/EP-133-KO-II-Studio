@@ -51,11 +51,12 @@ Exécution locale prévue :
 
 ## Branchement à terminer
 
-La fenêtre `FICHIER → CLONER LA MACHINE` prépare actuellement le profil et le
-manifeste logique. Un navigateur web ne transmet pas le chemin système complet
-du dossier sélectionné et ne peut pas lancer Python. Le prochain composant est
-donc un pont local installé, limité à cette commande de lecture et affichant sa
-progression. Il recevra le dossier sélectionné via une boîte de dialogue native.
+La fenêtre `FICHIER → CLONER LA MACHINE` utilise une boîte de dialogue de dossier
+native sur Chrome/Chromium. Elle crée réellement
+`clone/nom-machine/manifest.json` sur le disque dur, sans upload vers le site.
+Le navigateur ne peut toutefois pas lancer le moteur Python qui dialogue avec
+le protocole fichier de la machine. Le prochain composant reste donc un pont
+local installé, limité à la commande de clonage et affichant sa progression.
 
 Le bouton ne devra annoncer « clone complet » qu'après contrôle des 9 projets,
 du nombre de samples, des tailles et de tous les hashes.

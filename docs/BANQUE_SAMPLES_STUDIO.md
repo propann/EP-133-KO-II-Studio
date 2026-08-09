@@ -2,7 +2,7 @@
 
 ## Sélection
 
-Le menu `FICHIER` possède une ligne indépendante `DOSSIER SAMPLES`. Il faut
+Le menu `FICHIER` possède une ligne indépendante `OUVRIR BANQUE LOCALE`. Il faut
 sélectionner le dossier de la machine créé dans :
 
 ```text
@@ -12,6 +12,10 @@ dossier choisi/clone/nom-machine/
 Le navigateur parcourt ses sous-dossiers `samples/` et `metadata/`. Les PCM
 sont associés à leur numéro de slot, par exemple `samples/324.pcm`, et les
 métadonnées correspondantes sont lues depuis `metadata/324.json`.
+
+Les fichiers ne sont pas téléversés vers le site, un serveur ou GitHub. Le
+Studio reçoit une autorisation temporaire du navigateur et lit directement les
+fichiers sur le disque dur.
 
 ## Lecture
 
@@ -29,6 +33,6 @@ métadonnées.
 
 ## Limite du navigateur
 
-Pour des raisons de sécurité, le navigateur redemande le dossier après un
+Pour des raisons de sécurité, le navigateur redemande actuellement le dossier après un
 rechargement de page. Le futur pont local conservera l'autorisation associée au
 profil de machine et reconnectera automatiquement sa banque privée.
