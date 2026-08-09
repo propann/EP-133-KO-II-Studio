@@ -108,7 +108,8 @@ composition identique sans machine connectée ; échanger ses notes en MIDI.
 - [x] Scanner les 9 projets et toutes les métadonnées sonores.
 - [x] Copier les fichiers audio dans le dossier privé avec reprise et hash.
 - [x] Moteur local de copie des 9 projets, PCM, métadonnées et hashes.
-- [ ] Relier la fenêtre web au moteur par un pont local installé.
+- [x] Relier la fenêtre web au moteur par un pont HTTP local.
+- [ ] Installer et démarrer automatiquement le pont comme service utilisateur.
 - [ ] Créer l'instantané initial immuable.
 - [ ] Calculer un patch entre instantané et copie de travail.
 - [ ] Détecter les conflits avant toute synchronisation.

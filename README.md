@@ -58,6 +58,7 @@ lecture seule tant que les protections de transfert ne sont pas finalisées.
 - [Clonage complet des projets et samples](docs/CLONAGE_COMPLET_MACHINE.md)
 - [Banque de samples machine dans le Studio](docs/BANQUE_SAMPLES_STUDIO.md)
 - [Validation du premier clone matériel](docs/VALIDATION_CLONE_REEL.md)
+- [Pont local et progression du clonage](docs/PONT_LOCAL_CLONAGE.md)
 - [Gestion des fichiers et des sons](docs/GESTION_FICHIERS_ET_SONS.md)
 - [Décision sur les formats de projet](docs/DECISION_FORMATS_PROJET.md)
 - [Vision future OP-1](docs/VISION_OP1.md)

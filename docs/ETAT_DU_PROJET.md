@@ -99,6 +99,9 @@
   25 min 20 s ; l'interface doit annoncer 20 à 30 minutes avant la première copie.
 - Contrôle ultérieur réussi : 536 hashes conformes, aucun fichier manquant et
   527 métadonnées JSON valides. Voir `VALIDATION_CLONE_REEL.md`.
+- Le bouton du Studio est maintenant raccordé au moteur par un pont HTTP local
+  sur `127.0.0.1:8765`. La progression du manifeste est affichée chaque seconde.
+  Le pont répond et attend le test de la seconde sauvegarde depuis l'interface.
 - Le menu FICHIER permet de choisir séparément la banque samples d'un clone.
   Le Studio joue alors les PCM locaux quand la machine est absente et garde le
   MIDI matériel prioritaire quand elle est connectée.

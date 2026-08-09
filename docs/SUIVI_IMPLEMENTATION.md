@@ -343,6 +343,22 @@ Voir `docs/CLONAGE_COMPLET_MACHINE.md`.
 Contrôle indépendant des 536 hashes et 527 JSON :
 `docs/VALIDATION_CLONE_REEL.md`.
 
+## Étape 3.5 — bouton Studio raccordé au cloneur
+
+Statut : raccord terminé, test par bouton à effectuer le 10 août 2026.
+
+- [x] pont limité à `127.0.0.1` ;
+- [x] dossier racine fixé au démarrage du pont ;
+- [x] lancement du moteur par le bouton ;
+- [x] refus d'un second clone concurrent ;
+- [x] suivi du manifeste chaque seconde ;
+- [x] phase, compteur, pourcentage, temps et estimation dans la fenêtre ;
+- [x] journal persistant `clone.log` ;
+- [x] pont démarré et contrôle `/health` réussi ;
+- [ ] seconde sauvegarde déclenchée depuis le bouton et validée.
+
+Voir `docs/PONT_LOCAL_CLONAGE.md`.
+
 ## Étape 3.4 — banque machine hors ligne dans le Studio
 
 Statut : première version terminée le 9 août 2026.

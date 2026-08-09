@@ -190,6 +190,9 @@ Le player HTML historique reste disponible comme référence fonctionnelle penda
   conformes et aucune erreur. Durée 25 min 20 s. Voir
   `docs/VALIDATION_CLONE_REEL.md`. Prochaine priorité : pont local et progression
   directement dans la fenêtre Studio.
+- `tools/local_clone_bridge.py` raccorde le bouton au cloneur sur localhost.
+  Vite proxifie `/bridge`. Le dossier racine est fixé au lancement et ne peut
+  pas être choisi par une requête web. Voir `docs/PONT_LOCAL_CLONAGE.md`.
 
 ## Priorités
 
