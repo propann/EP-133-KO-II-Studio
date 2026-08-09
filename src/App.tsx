@@ -5,6 +5,7 @@ import {
   type MidiObservation,
 } from './core/midi/useWebMidi';
 import { AudioEngine, type PadSoundSettings } from './core/audio/AudioEngine';
+import { MachineSampleBank } from './core/audio/MachineSampleBank';
 import { emptyScore, scoreHit } from './core/engine/scoring';
 import type { Exercise, Grade, Score } from './core/engine/types';
 import {
@@ -97,6 +98,7 @@ function createSixBarExercise(styleId: string, difficulty: number, tempo: number
 }
 
 const audio = new AudioEngine();
+const machineSampleBank = new MachineSampleBank();
 
 interface PlayerNote {
   id: number;
@@ -152,6 +154,7 @@ export default function App() {
   const [selectedStudioProject, setSelectedStudioProject] = useState('');
   const [machineProjectDocument, setMachineProjectDocument] = useState<Record<string, unknown> | null>(null);
   const [machineCloneOpen, setMachineCloneOpen] = useState(false);
+  const [machineSampleCount, setMachineSampleCount] = useState(0);
   const targets = useRef(activeExercise.targets.map((target, index) => ({ ...target, id: `target-${index}` })));
   const frame = useRef<number | undefined>(undefined);
   const flashTimer = useRef<number | undefined>(undefined);
@@ -238,6 +241,7 @@ export default function App() {
     gameRun.current += 1;
     clearGameTimers();
     audio.stop();
+    machineSampleBank.stopAll();
     setPhase('idle');
   }, [clearGameTimers]);
 
@@ -260,6 +264,11 @@ export default function App() {
   const connectMidi = async () => {
     await audio.unlock();
     await midi.connect();
+  };
+
+  const chooseStudioSampleFolder = async (files: FileList | null) => {
+    if (!files) return;
+    setMachineSampleCount(await machineSampleBank.load(files));
   };
 
   useEffect(() => {
@@ -411,7 +420,13 @@ export default function App() {
     setEditorTargets((current) => exists
       ? current.filter((target) => !(target.pad === pad && target.beat === beat))
       : [...current, { id: `editor-${measure}-${pad}-${step}`, group: editorGroup, beat, pad, velocity: DEFAULT_NOTE_VELOCITY, duration: DEFAULT_NOTE_DURATION }]);
-    if (!exists && editorMode === 'complete') midi.sendPad(pad, EDITOR_GROUPS.indexOf(editorGroup), 110);
+    if (!exists && editorMode === 'complete') {
+      if (midi.outputConnected) midi.sendPad(pad, EDITOR_GROUPS.indexOf(editorGroup), 110);
+      else {
+        const machinePad = deviceInventory?.pads.find((candidate) => candidate.group === editorGroup && candidate.pad === pad + 1);
+        if (machinePad?.slot) void machineSampleBank.play(machinePad.slot, 110, performance.now(), undefined, machinePad.rootNote);
+      }
+    }
     setEditorBars((bars) => barsAfterStepEdit(bars, measure, exists));
   };
 
@@ -421,7 +436,13 @@ export default function App() {
     setEditorTargets((current) => exists
       ? current.filter((target) => !(target.pad === editorSelectedPad && target.beat === beat && target.note === note))
       : [...current, { id: `key-${editorGroup}-${editorSelectedPad}-${note}-${globalStep}`, group: editorGroup, beat, pad: editorSelectedPad, note, velocity: DEFAULT_NOTE_VELOCITY, duration: DEFAULT_NOTE_DURATION }]);
-    if (!exists) midi.sendNote(note, 110);
+    if (!exists) {
+      if (midi.outputConnected) midi.sendNote(note, 110);
+      else {
+        const machinePad = deviceInventory?.pads.find((candidate) => candidate.group === editorGroup && candidate.pad === editorSelectedPad + 1);
+        if (machinePad?.slot) void machineSampleBank.play(machinePad.slot, 110, performance.now(), note, machinePad.rootNote);
+      }
+    }
     setEditorBars((bars) => barsAfterStepEdit(bars, measureFromGlobalStep(globalStep), exists));
   };
 
@@ -457,15 +478,20 @@ export default function App() {
       const startAt = playbackStart;
       const cycleMs = 60000 / tempo * playbackBars * 4;
       const scheduleCycle = (cycleStart: number) => {
-        midi.sendClockWindow(tempo, cycleStart, cycleMs);
+        if (midi.outputConnected) midi.sendClockWindow(tempo, cycleStart, cycleMs);
         EDITOR_GROUPS.forEach((group, groupIndex) => patterns[group].forEach((target) => {
           const at = cycleStart + target.beat * 60000 / tempo;
           const duration = target.duration * 60000 / tempo;
-          if (target.note !== undefined) midi.sendNote(target.note, target.velocity, at, duration);
-          else midi.sendPad(target.pad, groupIndex, target.velocity, at, duration);
+          if (midi.outputConnected) {
+            if (target.note !== undefined) midi.sendNote(target.note, target.velocity, at, duration);
+            else midi.sendPad(target.pad, groupIndex, target.velocity, at, duration);
+          } else {
+            const pad = deviceInventory?.pads.find((candidate) => candidate.group === group && candidate.pad === target.pad + 1);
+            if (pad?.slot) void machineSampleBank.play(pad.slot, target.velocity, at, target.note, pad.rootNote);
+          }
         }));
       };
-      midi.startOutputTransport(startAt);
+      if (midi.outputConnected) midi.startOutputTransport(startAt);
       scheduleCycle(startAt);
       if (editorLoop) editorLoopTimer.current = window.setInterval(() => scheduleCycle(performance.now() + 80), cycleMs);
     } else {
@@ -624,11 +650,11 @@ export default function App() {
     <GameToolbar difficulty={difficulty} tempo={tempo} activeBpm={activeExercise.bpm} styleId={styleId} styles={STYLES} userExercises={userExercises} phase={phase} sessionActive={sessionActive} midiConnected={midi.connected} onDifficultyChange={setDifficulty} onTempoChange={setTempo} onStyleChange={changeStyle} onHome={goHome} onOpenEditor={openEditor} onConnectMidi={() => void connectMidi()} onPreview={() => void togglePreview()} onPlay={() => void toggle()} />
     {phase === 'countin' && <div className="countdown" aria-live="assertive"><small>1 MESURE POUR SE PRÉPARER</small><b>{countdown}</b></div>}
     {editorOpen && <div className="editor-overlay"><section className="exercise-editor">
-      <EditorToolbar mode={editorMode} name={editorName} group={editorGroup} playing={editorPlaying} loop={editorLoop} exportFormat={editorExportFormat} canSave={Boolean(editorName.trim() && (editorMode === 'complete' || editorTargets.length || Object.values(editorGroupTargets).some((groupTargets) => groupTargets.length)))} midiConnected={midi.outputConnected} scannedProject={deviceInventory?.project} machineProjectAvailable={Boolean(machineProjectDocument)} localProjects={studioLibrary.map((project) => ({ id: project.id, title: String((project.document.metadata as { title?: string } | undefined)?.title || 'PROJET SANS NOM') }))} selectedLocalProject={selectedStudioProject} onHome={goHome} onNameChange={setEditorName} onGroupChange={changeEditorGroup} onConnectMidi={() => void connectMidi()} onNew={newStudioProject} onSelectedLocalProjectChange={setSelectedStudioProject} onLoad={loadSelectedStudioProject} onLoadMachineProject={loadMachineProject} onCloneMachine={() => setMachineCloneOpen(true)} onSave={saveEditor} onSaveAs={saveStudioProjectAs} onRename={renameSelectedStudioProject} onDuplicate={duplicateSelectedStudioProject} onDelete={deleteSelectedStudioProject} onPlayback={() => void toggleEditorPlayback()} onLoopChange={setEditorLoop} onExportFormatChange={setEditorExportFormat} onExport={exportEditor} />
+      <EditorToolbar mode={editorMode} name={editorName} group={editorGroup} playing={editorPlaying} loop={editorLoop} exportFormat={editorExportFormat} canSave={Boolean(editorName.trim() && (editorMode === 'complete' || editorTargets.length || Object.values(editorGroupTargets).some((groupTargets) => groupTargets.length)))} midiConnected={midi.outputConnected} scannedProject={deviceInventory?.project} machineProjectAvailable={Boolean(machineProjectDocument)} machineSampleCount={machineSampleCount} localProjects={studioLibrary.map((project) => ({ id: project.id, title: String((project.document.metadata as { title?: string } | undefined)?.title || 'PROJET SANS NOM') }))} selectedLocalProject={selectedStudioProject} onHome={goHome} onNameChange={setEditorName} onGroupChange={changeEditorGroup} onConnectMidi={() => void connectMidi()} onNew={newStudioProject} onSelectedLocalProjectChange={setSelectedStudioProject} onLoad={loadSelectedStudioProject} onLoadMachineProject={loadMachineProject} onCloneMachine={() => setMachineCloneOpen(true)} onChooseSampleFolder={(files) => void chooseStudioSampleFolder(files)} onSave={saveEditor} onSaveAs={saveStudioProjectAs} onRename={renameSelectedStudioProject} onDuplicate={duplicateSelectedStudioProject} onDelete={deleteSelectedStudioProject} onPlayback={() => void toggleEditorPlayback()} onLoopChange={setEditorLoop} onExportFormatChange={setEditorExportFormat} onExport={exportEditor} />
       {editorMode === 'complete' && <SongModeBar activeGroup={editorGroup} patterns={currentEditorPatterns()} onGroupChange={changeEditorGroup} />}
-      {editorMode === 'complete' && <PadStrip group={editorGroup} selectedPad={editorSelectedPad} padModes={editorPadModes} padName={devicePadName} padSlot={(pad) => devicePadInfo(pad)?.slot} onSelect={(pad) => { setEditorSelectedPad(pad); setKeyEditorOpen((editorPadModes[`${editorGroup}:${pad}`] || 'ONE') === 'KEYS'); }} onPreview={(pad) => midi.sendPad(pad, EDITOR_GROUPS.indexOf(editorGroup), 110)} onModeChange={(pad, mode) => { setEditorPadModes((current) => ({ ...current, [`${editorGroup}:${pad}`]: mode })); setKeyEditorOpen(mode === 'KEYS'); }} onOpenKeys={() => setKeyEditorOpen(true)} />}
+      {editorMode === 'complete' && <PadStrip group={editorGroup} selectedPad={editorSelectedPad} padModes={editorPadModes} padName={devicePadName} padSlot={(pad) => devicePadInfo(pad)?.slot} onSelect={(pad) => { setEditorSelectedPad(pad); setKeyEditorOpen((editorPadModes[`${editorGroup}:${pad}`] || 'ONE') === 'KEYS'); }} onPreview={(pad) => { const info = devicePadInfo(pad); if (midi.outputConnected) midi.sendPad(pad, EDITOR_GROUPS.indexOf(editorGroup), 110); else if (info?.slot) void machineSampleBank.play(info.slot, 110, performance.now(), undefined, info.rootNote); }} onModeChange={(pad, mode) => { setEditorPadModes((current) => ({ ...current, [`${editorGroup}:${pad}`]: mode })); setKeyEditorOpen(mode === 'KEYS'); }} onOpenKeys={() => setKeyEditorOpen(true)} />}
       {keyEditorOpen && editorMode === 'complete'
-        ? <PianoRoll gridRef={editorGrid} group={editorGroup} selectedPad={editorSelectedPad} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} targets={editorTargets} onClose={() => setKeyEditorOpen(false)} onPreviewNote={(note) => midi.sendNote(note, 110)} onToggleNote={toggleKeyStep} />
+        ? <PianoRoll gridRef={editorGrid} group={editorGroup} selectedPad={editorSelectedPad} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} targets={editorTargets} onClose={() => setKeyEditorOpen(false)} onPreviewNote={(note) => { const info = devicePadInfo(editorSelectedPad); if (midi.outputConnected) midi.sendNote(note, 110); else if (info?.slot) void machineSampleBank.play(info.slot, 110, performance.now(), note, info.rootNote); }} onToggleNote={toggleKeyStep} />
         : <RhythmGrid gridRef={editorGrid} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} mode={editorMode} group={editorGroup} selectedPad={editorSelectedPad} targets={editorTargets} padModes={editorPadModes} padName={devicePadName} scannedPlayMode={(pad) => devicePadInfo(pad)?.playMode} onSelectPad={setEditorSelectedPad} onOpenKeys={() => setKeyEditorOpen(true)} onToggleStep={toggleEditorStep} />}
       <footer><span>{editorMode === 'complete' ? `${midi.outputConnected ? `SON EP‑133 · ${midi.outputNames.join(' + ')}` : 'EP‑133 NON CONNECTÉ'} · ` : ''}GROUPE {editorGroup} · {editorTargets.length} FRAPPE(S) · {effectiveEditorBars} MESURE(S) · {tempo} BPM · AJOUT AUTOMATIQUE ACTIF</span></footer>
       {machineCloneOpen && <MachineCloneDialog inventory={deviceInventory} soundIndex={deviceSoundIndex} onClose={() => setMachineCloneOpen(false)} />}

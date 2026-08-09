@@ -180,6 +180,9 @@ Le player HTML historique reste disponible comme référence fonctionnelle penda
 - Arborescence impérative des sauvegardes :
   `dossier choisi/clone/nom-machine/`. Ne jamais écrire les fichiers du clone
   directement à la racine choisie.
+- `MachineSampleBank` résout les slots depuis le dossier de clone sélectionné.
+  Priorité audio : MIDI machine connectée, sinon PCM local. Voir
+  `docs/BANQUE_SAMPLES_STUDIO.md`.
 
 ## Priorités
 

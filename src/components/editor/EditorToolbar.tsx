@@ -11,6 +11,7 @@ interface EditorToolbarProps {
   midiConnected: boolean;
   scannedProject?: number;
   machineProjectAvailable: boolean;
+  machineSampleCount: number;
   localProjects: Array<{ id: string; title: string }>;
   selectedLocalProject: string;
   onHome: () => void;
@@ -27,6 +28,7 @@ interface EditorToolbarProps {
   onDelete: () => void;
   onLoadMachineProject: () => void;
   onCloneMachine: () => void;
+  onChooseSampleFolder: (files: FileList | null) => void;
   onPlayback: () => void;
   onLoopChange: (loop: boolean) => void;
   onExportFormatChange: (format: 'midi' | 'json') => void;
@@ -45,6 +47,7 @@ export function EditorToolbar(props: EditorToolbarProps) {
             <button onClick={props.onNew}>＋ NOUVEAU</button><button disabled={!props.selectedLocalProject} onClick={props.onLoad}>OUVRIR</button>
             <button className="machine-project-load" disabled={!props.machineProjectAvailable} onClick={props.onLoadMachineProject}>↓ PROJET 1 MACHINE</button><span className="machine-project-state">{props.machineProjectAvailable ? 'SCAN LECTURE SEULE PRÊT' : 'AUCUN PROJET SCANNÉ'}</span>
             <button className="clone-machine" onClick={props.onCloneMachine}>▣ CLONER LA MACHINE</button><span className="machine-project-state">MIROIR + FUTURE TIME MACHINE</span>
+            <label className="studio-sample-folder">DOSSIER SAMPLES<input type="file" multiple {...({ webkitdirectory: '', directory: '' } as Record<string, string>)} onChange={(event) => props.onChooseSampleFolder(event.currentTarget.files)} /></label><span className={`machine-project-state ${props.machineSampleCount ? 'ready' : ''}`}>{props.machineSampleCount ? `${props.machineSampleCount} SAMPLES PC PRÊTS` : 'AUCUNE BANQUE LOCALE'}</span>
             <button className="save" disabled={!props.canSave} onClick={props.onSave}>● ENREGISTRER</button><button disabled={!props.canSave} onClick={props.onSaveAs}>ENREGISTRER SOUS</button>
             <button disabled={!props.selectedLocalProject} onClick={props.onRename}>RENOMMER</button><button disabled={!props.selectedLocalProject} onClick={props.onDuplicate}>DUPLIQUER</button>
             <button className="file-delete" disabled={!props.selectedLocalProject} onClick={props.onDelete}>SUPPRIMER</button>
@@ -52,7 +55,7 @@ export function EditorToolbar(props: EditorToolbarProps) {
           <div className="file-export"><label>FORMAT<select value={props.exportFormat} onChange={(event) => props.onExportFormatChange(event.target.value as 'midi' | 'json')}><option value="midi">MIDI (.mid)</option><option value="json">PROJET EP‑133 (.json)</option></select></label><button className="midi-export" onClick={props.onExport}>⇩ EXPORTER</button></div>
         </div>
       </details> : <><button className="save" disabled={!props.canSave} onClick={props.onSave}>● SAVE</button><label className="export-select">EXPORT <select value={props.exportFormat} onChange={(event) => props.onExportFormatChange(event.target.value as 'midi' | 'json')}><option value="midi">MIDI (.mid)</option><option value="json">PROJET EP‑133 (.json)</option></select></label><button className="midi-export" onClick={props.onExport}>⇩ EXPORTER</button></>}
-      <button className="transport-play" disabled={props.mode === 'complete' && !props.midiConnected} onClick={props.onPlayback}>{props.playing ? '■ STOP' : '▶ LECTURE'}</button><button className={`loop-toggle ${props.loop ? 'active' : ''}`} disabled={props.mode !== 'complete' || props.playing} onClick={() => props.onLoopChange(!props.loop)}>↻ BOUCLE {props.loop ? 'ON' : 'OFF'}</button>
+      <button className="transport-play" disabled={props.mode === 'complete' && !props.midiConnected && !props.machineSampleCount} onClick={props.onPlayback}>{props.playing ? '■ STOP' : '▶ LECTURE'}</button><button className={`loop-toggle ${props.loop ? 'active' : ''}`} disabled={props.mode !== 'complete' || props.playing} onClick={() => props.onLoopChange(!props.loop)}>↻ BOUCLE {props.loop ? 'ON' : 'OFF'}</button>
     </div>
   </>;
 }

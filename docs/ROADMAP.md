@@ -130,6 +130,10 @@ composition identique sans machine connectée ; échanger ses notes en MIDI.
   de l'utilisateur ; aucune banque constructeur distribuée dans Git.
 - Indication claire : métadonnées seules, audio disponible localement ou son
   manquant.
+- [x] Sélection séparée du dossier de samples depuis le menu FICHIER.
+- [x] Lecture PCM locale des pads et de la partition lorsque la machine est
+  débranchée.
+- [ ] Réouverture automatique du dossier autorisé via le pont local.
 
 ### Résolution des sons
 

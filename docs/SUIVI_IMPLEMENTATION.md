@@ -337,3 +337,19 @@ Statut : moteur terminé, branchement UI en attente le 9 août 2026.
 - [ ] campagne réelle complète sur les 527 sons.
 
 Voir `docs/CLONAGE_COMPLET_MACHINE.md`.
+
+## Étape 3.4 — banque machine hors ligne dans le Studio
+
+Statut : première version terminée le 9 août 2026.
+
+- [x] ligne `DOSSIER SAMPLES` ajoutée dans FICHIER ;
+- [x] détection de `samples/NNN.pcm` et `metadata/NNN.json` ;
+- [x] décodage PCM 16 bits mono/stéréo à la demande ;
+- [x] préécoute des pads sans machine ;
+- [x] lecture de la partition Studio sans machine ;
+- [x] vélocité et transposition KEY prises en compte ;
+- [x] priorité au MIDI matériel lorsque l'EP-133 est connecté ;
+- [x] arrêt des sources locales avec le transport ;
+- [ ] autorisation de dossier persistante via le pont local.
+
+Voir `docs/BANQUE_SAMPLES_STUDIO.md`.

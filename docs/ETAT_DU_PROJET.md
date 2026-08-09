@@ -93,6 +93,9 @@
 - Le moteur local de clone complet sait copier les neuf projets, tous les PCM,
   leurs métadonnées et hashes dans un dossier explicite avec reprise. Son
   lancement depuis la fenêtre web attend encore le pont local natif.
+- Le menu FICHIER permet de choisir séparément la banque samples d'un clone.
+  Le Studio joue alors les PCM locaux quand la machine est absente et garde le
+  MIDI matériel prioritaire quand elle est connectée.
 - Export MIDI ou description `ep.project.v1` JSON.
 - Scan SysEx en lecture seule validé sur la machine : 527 sons, 56,21 Mo,
   affectations de pads, noms, modes et notes racines.

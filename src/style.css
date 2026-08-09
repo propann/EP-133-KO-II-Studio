@@ -280,6 +280,9 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .file-menu-grid .machine-project-load { background:var(--ko-amber); }
 .file-menu-grid .clone-machine { background:var(--ko-orange); }
 .machine-project-state { display:flex; align-items:center; padding:0 6px; border:1px solid #8d8982; background:#dedbd5; font-size:7px; font-weight:bold; }
+.machine-project-state.ready { background:var(--ko-amber); }
+.studio-sample-folder { position:relative; display:flex !important; justify-content:center; min-height:34px; padding:6px 10px; border:1px solid var(--ko-black); background:#d8d5cf; box-shadow:2px 2px 0 var(--ko-black); cursor:pointer; }
+.studio-sample-folder input { position:absolute; width:1px; height:1px; opacity:0; }
 .file-export { display:grid; grid-template-columns:1fr auto; align-items:end; gap:8px; margin-top:10px; padding-top:10px; border-top:1px solid var(--ko-black); }
 .file-export label { display:grid; gap:5px; }
 .song-mode-bar { flex:0 0 auto; display:flex; align-items:stretch; gap:8px; min-height:96px; padding:7px 9px; border-bottom:2px solid var(--ko-black); background:#d5d3ce; overflow-x:auto; }
