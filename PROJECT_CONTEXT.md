@@ -155,7 +155,8 @@ La vision détaillée est dans `docs/ROADMAP.md`, la gestion des données dans
 - Avant chaque livraison : lancer le build, vérifier l'état Git et documenter les limites restantes.
 - Chaque étape est enregistrée dans `docs/SUIVI_IMPLEMENTATION.md`.
 - Les sérialisations MIDI et EP-133 vivent dans
-  `src/core/project/exporters.ts` et sont vérifiées par
+  `src/core/project/exporters.ts`; les lecteurs et inspecteurs vivent dans
+  `src/core/project/importers.ts`. Ils sont vérifiés par
   `npm run test:exports`; ne pas les remettre dans les composants React.
 - Ne pas créer de format de composition propriétaire Rhythm Hero. Les formats
   de référence sont `.pak/.ppak`, `.mid` et `ep.project.v1.json` comme source

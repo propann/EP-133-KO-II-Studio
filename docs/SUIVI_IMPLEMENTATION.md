@@ -44,8 +44,9 @@ Décisions :
 
 ## Étapes suivantes
 
-- 1.2 : lecture des formats machine et MIDI. **Prochaine étape.** Aucun format
-  propriétaire Rhythm Hero ne sera créé ; voir `DECISION_FORMATS_PROJET.md`.
+- 1.2b : décodage en lecture seule des TAR de projet. **Prochaine étape.** Aucun
+  format propriétaire Rhythm Hero ne sera créé ; voir
+  `DECISION_FORMATS_PROJET.md`.
 - 1.3 : tests du transport et nettoyage garanti des timers MIDI/audio.
 - 1.4 : découpage des pages Accueil, Jeu, Studio et Sons.
 - 2.1 : premier menu SAVE avec Nouveau, Sauvegarder et Charger.
@@ -66,3 +67,25 @@ Statut : analysée le 9 août 2026.
 Le rapport complet est dans
 `docs/ANALYSE_ETUDE_CAHIER_CHARGES.md`. Il fait foi lorsqu'une proposition de
 l'étude contredit une structure observée ou le guide officiel.
+
+## Étape 1.2a — lecteurs MIDI et conteneur EP-133
+
+Statut : terminé le 9 août 2026.
+
+Objectif : reconnaître et contrôler les fichiers avant de construire le menu
+SAVE/LOAD, sans écrire sur la machine.
+
+- [x] lecteur MIDI standard formats 0 et 1 à résolution PPQN ;
+- [x] lecture du tempo, des Note On/Off, vélocités et durées ;
+- [x] conversion des notes 36–83 vers les groupes et pads EP-133 ;
+- [x] avertissement pour les notes étrangères et les notes ouvertes ;
+- [x] validation du JSON intermédiaire `ep.project.v1` ;
+- [x] ouverture ZIP `.pak/.ppak`, lecture de `meta.json` et inventaire des
+  projets TAR et sons WAV ;
+- [x] tests aller-retour avec un MIDI et une archive synthétique ;
+- [x] build de production.
+
+Limite volontaire : le contenu binaire des TAR de projet n'est pas encore
+décodé dans le navigateur. L'étape 1.2b devra lire les pads, patterns et scènes
+en conservant chaque champ inconnu ; l'inspecteur actuel ne compile et ne
+réécrit aucune archive.

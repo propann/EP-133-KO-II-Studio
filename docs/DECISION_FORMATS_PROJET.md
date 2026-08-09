@@ -43,3 +43,16 @@ compiler un projet ; ce n'est pas un nouveau format musical concurrent.
   contaminent pas le fichier machine.
 - Aucun `.ppak` n'est annoncé valide avant compilation, contrôle et essai sur un
   emplacement de projet sauvegardé.
+
+## État du lecteur
+
+Le module `src/core/project/importers.ts` prend maintenant en charge :
+
+- MIDI formats 0 et 1 avec tempo, notes, vélocités et durées ;
+- validation du document intermédiaire `ep.project.v1` ;
+- inspection non destructive du ZIP `.pak/.ppak`, de `meta.json`, de la liste
+  des projets TAR et des sons WAV.
+
+Cette inspection n'est pas encore un import musical complet : le TAR interne
+et ses structures binaires seront décodés séparément avant tout branchement au
+menu SAVE.

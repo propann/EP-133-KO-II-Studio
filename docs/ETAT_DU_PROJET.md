@@ -96,6 +96,12 @@ une vraie gestion Save/Load. La feuille de route détaillée se trouve dans
 - Décision prise : ne pas créer de format natif Rhythm Hero. Le menu Save/Load
   utilisera `.pak/.ppak`, MIDI et le JSON technique `ep.project.v1`.
 - Prochaine étape : charger ces formats avant de construire le menu complet.
+- Le noyau sait désormais relire les MIDI formats 0/1 qu'il exporte, conserver
+  tempo, position, vélocité et durée, puis les répartir sur les groupes A–D.
+- Un inspecteur ouvre les conteneurs ZIP `.pak/.ppak`, valide `meta.json` et
+  inventorie les projets TAR et les WAV sans modifier l'archive.
+- La prochaine sous-étape est le décodage en lecture seule des pads, patterns et
+  scènes contenus dans un TAR de projet réel.
 
 ## Étude technique externe analysée
 

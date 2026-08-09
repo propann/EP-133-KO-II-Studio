@@ -3,7 +3,23 @@
   "private": true,
   "version": "0.2.0",
   "type": "module",
-  "scripts": { "dev": "vite", "build": "tsc -b && vite build", "test:exports": "node --experimental-strip-types tools/check-project-exports.mjs", "preview": "vite preview" },
-  "dependencies": { "@vitejs/plugin-react": "latest", "react": "latest", "react-dom": "latest", "tone": "latest", "vite": "latest" },
-  "devDependencies": { "@types/react": "latest", "@types/react-dom": "latest", "typescript": "latest" }
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "test:exports": "node --experimental-strip-types tools/check-project-exports.mjs",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "fflate": "^0.8.3",
+    "react": "latest",
+    "react-dom": "latest",
+    "tone": "latest",
+    "vite": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "typescript": "latest"
+  }
 }
