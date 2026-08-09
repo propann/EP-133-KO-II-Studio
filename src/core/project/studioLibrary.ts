@@ -34,6 +34,34 @@ export function storeStudioProject(storage: Pick<Storage, 'setItem'>, library: S
   return { id, library: next };
 }
 
+function writeStudioLibrary(storage: Pick<Storage, 'setItem'>, library: StudioProjectRecord[]) {
+  storage.setItem(STUDIO_LIBRARY_KEY, JSON.stringify(library));
+  return library;
+}
+
+export function renameStudioProject(storage: Pick<Storage, 'setItem'>, library: StudioProjectRecord[], id: string, title: string) {
+  const cleanTitle = title.trim();
+  if (!cleanTitle) return library;
+  const next = library.map((record) => record.id !== id ? record : {
+    ...record,
+    updatedAt: new Date().toISOString(),
+    document: { ...record.document, metadata: { ...((record.document.metadata as Record<string, unknown> | undefined) || {}), title: cleanTitle } },
+  }).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  return writeStudioLibrary(storage, next);
+}
+
+export function duplicateStudioProject(storage: Pick<Storage, 'setItem'>, library: StudioProjectRecord[], id: string, title: string) {
+  const source = library.find((record) => record.id === id);
+  if (!source) return null;
+  const document = structuredClone(source.document);
+  document.metadata = { ...((document.metadata as Record<string, unknown> | undefined) || {}), title: title.trim() || 'COPIE DU PROJET' };
+  return storeStudioProject(storage, library, document);
+}
+
+export function deleteStudioProject(storage: Pick<Storage, 'setItem'>, library: StudioProjectRecord[], id: string) {
+  return writeStudioLibrary(storage, library.filter((record) => record.id !== id));
+}
+
 export function studioStateFromDocument(document: Record<string, unknown>): StudioProjectState {
   if (document.schema !== 'ep.project.v1' || document.product !== 'ep133') throw new Error('Projet EP-133 incompatible.');
   const patterns = emptyProjectPatterns();

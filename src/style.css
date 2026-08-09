@@ -267,6 +267,18 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .editor-commandbar .local-project-select select { min-width:150px; max-width:230px; }
 .editor-commandbar select { height:34px; padding:5px 8px; border:1px solid var(--ko-black); background:#f3f1ec; font:inherit; }
 .editor-commandbar .midi-export { background:var(--ko-amber); }
+.file-menu { position:relative; flex:0 0 auto; }
+.file-menu > summary { min-height:34px; display:flex; align-items:center; padding:6px 18px 6px 12px; border:1px solid var(--ko-black); background:var(--ko-orange); box-shadow:2px 2px 0 var(--ko-black); font-size:10px; font-weight:bold; cursor:pointer; list-style:none; }
+.file-menu > summary::after { content:'▾'; margin-left:10px; }
+.file-menu[open] > summary::after { content:'▴'; }
+.file-menu-panel { position:fixed; z-index:30; top:112px; left:14px; width:min(430px, calc(100vw - 28px)); padding:12px; border:2px solid var(--ko-black); background:var(--ko-panel); box-shadow:5px 5px 0 rgba(30,29,27,.55); }
+.file-menu-panel > label { display:grid; gap:5px; }
+.file-menu-panel select { width:100%; }
+.file-menu-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:9px; }
+.file-menu-grid button { width:100%; }
+.file-menu-grid .file-delete { background:#d8d2c8; }
+.file-export { display:grid; grid-template-columns:1fr auto; align-items:end; gap:8px; margin-top:10px; padding-top:10px; border-top:1px solid var(--ko-black); }
+.file-export label { display:grid; gap:5px; }
 .editor-pad-strip { flex:0 0 auto; display:grid; grid-template-columns:65px 1fr 190px; align-items:stretch; gap:7px; padding:7px 0; border-bottom:2px solid var(--ko-black); }
 .editor-pad-strip > strong { display:grid; place-items:center; background:var(--ko-black); color:var(--ko-orange); font-size:13px; }
 .editor-pad-buttons { display:grid; grid-template-columns:repeat(12,minmax(44px,1fr)); gap:4px; }

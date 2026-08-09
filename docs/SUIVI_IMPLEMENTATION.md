@@ -250,3 +250,15 @@ Statut : terminé le 9 août 2026.
 - [x] aller-retour Save/Load couvert par les tests.
 
 Voir `docs/VALIDATION_SAVE_LOAD_STUDIO.md`.
+
+## Étape 2.2 — menu FICHIER du Studio
+
+Statut : terminé le 9 août 2026.
+
+- [x] commandes de projet regroupées sous `FICHIER` ;
+- [x] Enregistrer et Enregistrer sous ;
+- [x] Renommer et Dupliquer ;
+- [x] Supprimer avec confirmation explicite ;
+- [x] choix du projet local intégré au menu ;
+- [x] export MIDI et `ep.project.v1` intégré au même menu ;
+- [x] opérations de bibliothèque couvertes par les tests.

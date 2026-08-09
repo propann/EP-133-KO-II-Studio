@@ -73,10 +73,10 @@ stables, restauration correcte d'une session locale.
 Transformer `SAVE` en menu de fichiers :
 
 - [x] Nouveau projet quatre groupes avec protection avant remplacement.
-- [ ] Sauvegarder et Sauvegarder sous (`SAVE` local est opérationnel ;
-  `Sauvegarder sous` reste à faire).
+- [x] Sauvegarder et Sauvegarder sous.
 - [x] Charger un projet local `ep.project.v1` depuis la bibliothèque.
-- [ ] Renommer, dupliquer, archiver et supprimer avec confirmation.
+- [ ] Renommer, dupliquer, archiver et supprimer avec confirmation (tout est
+  opérationnel sauf l'archivage).
 - [ ] Ouvrir et sauvegarder des projets `.pak/.ppak`.
 - [ ] Importer et exporter du MIDI standard.
 - [ ] Garder `ep.project.v1` comme représentation technique intermédiaire.

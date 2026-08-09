@@ -25,7 +25,7 @@ import {
   type SequencerNote,
 } from './core/project/model';
 import { barsAfterStepEdit, measureFromGlobalStep, usedBars } from './core/project/editor';
-import { loadStudioLibrary, storeStudioProject, studioStateFromDocument, type StudioProjectRecord } from './core/project/studioLibrary';
+import { deleteStudioProject, duplicateStudioProject, loadStudioLibrary, renameStudioProject, storeStudioProject, studioStateFromDocument, type StudioProjectRecord } from './core/project/studioLibrary';
 import { HomePage } from './pages/HomePage';
 import { SoundsPage } from './pages/SoundsPage';
 import { DocumentationPage } from './pages/DocumentationPage';
@@ -504,6 +504,46 @@ export default function App() {
     setSelectedStudioProject(stored.id);
   };
 
+  const saveStudioProjectAs = () => {
+    const title = window.prompt('Nom de la nouvelle copie :', editorName);
+    if (!title?.trim()) return;
+    const patterns = currentEditorPatterns();
+    const document = createEp133ProjectDocument({ title, bpm: tempo, patterns, pads: deviceInventory?.pads || [], padModes: editorPadModes });
+    const stored = storeStudioProject(localStorage, studioLibrary, document);
+    setEditorName(title.trim().toUpperCase());
+    setEditorGroupTargets(patterns);
+    setStudioLibrary(stored.library);
+    setSelectedStudioProject(stored.id);
+  };
+
+  const renameSelectedStudioProject = () => {
+    if (!selectedStudioProject) return;
+    const title = window.prompt('Nouveau nom du projet :', editorName);
+    if (!title?.trim()) return;
+    setStudioLibrary(renameStudioProject(localStorage, studioLibrary, selectedStudioProject, title));
+    setEditorName(title.trim().toUpperCase());
+  };
+
+  const duplicateSelectedStudioProject = () => {
+    if (!selectedStudioProject) return;
+    const title = window.prompt('Nom de la copie :', `${editorName} COPIE`);
+    if (!title?.trim()) return;
+    const stored = duplicateStudioProject(localStorage, studioLibrary, selectedStudioProject, title);
+    if (!stored) return;
+    setStudioLibrary(stored.library);
+    setSelectedStudioProject(stored.id);
+    setEditorName(title.trim().toUpperCase());
+  };
+
+  const deleteSelectedStudioProject = () => {
+    if (!selectedStudioProject) return;
+    const record = studioLibrary.find((project) => project.id === selectedStudioProject);
+    const title = String((record?.document.metadata as { title?: string } | undefined)?.title || 'ce projet');
+    if (!window.confirm(`Supprimer définitivement « ${title} » de la bibliothèque locale ?`)) return;
+    setStudioLibrary(deleteStudioProject(localStorage, studioLibrary, selectedStudioProject));
+    setSelectedStudioProject('');
+  };
+
   const loadSelectedStudioProject = () => {
     const record = studioLibrary.find((project) => project.id === selectedStudioProject);
     if (!record || !confirmStudioReplacement()) return;
@@ -556,7 +596,7 @@ export default function App() {
     <GameToolbar difficulty={difficulty} tempo={tempo} activeBpm={activeExercise.bpm} styleId={styleId} styles={STYLES} userExercises={userExercises} phase={phase} sessionActive={sessionActive} midiConnected={midi.connected} onDifficultyChange={setDifficulty} onTempoChange={setTempo} onStyleChange={changeStyle} onHome={goHome} onOpenEditor={openEditor} onConnectMidi={() => void connectMidi()} onPreview={() => void togglePreview()} onPlay={() => void toggle()} />
     {phase === 'countin' && <div className="countdown" aria-live="assertive"><small>1 MESURE POUR SE PRÉPARER</small><b>{countdown}</b></div>}
     {editorOpen && <div className="editor-overlay"><section className="exercise-editor">
-      <EditorToolbar mode={editorMode} name={editorName} group={editorGroup} playing={editorPlaying} loop={editorLoop} exportFormat={editorExportFormat} canSave={Boolean(editorName.trim() && (editorMode === 'complete' || editorTargets.length || Object.values(editorGroupTargets).some((groupTargets) => groupTargets.length)))} midiConnected={midi.outputConnected} scannedProject={deviceInventory?.project} localProjects={studioLibrary.map((project) => ({ id: project.id, title: String((project.document.metadata as { title?: string } | undefined)?.title || 'PROJET SANS NOM') }))} selectedLocalProject={selectedStudioProject} onHome={goHome} onNameChange={setEditorName} onGroupChange={changeEditorGroup} onConnectMidi={() => void connectMidi()} onNew={newStudioProject} onSelectedLocalProjectChange={setSelectedStudioProject} onLoad={loadSelectedStudioProject} onSave={saveEditor} onPlayback={() => void toggleEditorPlayback()} onLoopChange={setEditorLoop} onExportFormatChange={setEditorExportFormat} onExport={exportEditor} />
+      <EditorToolbar mode={editorMode} name={editorName} group={editorGroup} playing={editorPlaying} loop={editorLoop} exportFormat={editorExportFormat} canSave={Boolean(editorName.trim() && (editorMode === 'complete' || editorTargets.length || Object.values(editorGroupTargets).some((groupTargets) => groupTargets.length)))} midiConnected={midi.outputConnected} scannedProject={deviceInventory?.project} localProjects={studioLibrary.map((project) => ({ id: project.id, title: String((project.document.metadata as { title?: string } | undefined)?.title || 'PROJET SANS NOM') }))} selectedLocalProject={selectedStudioProject} onHome={goHome} onNameChange={setEditorName} onGroupChange={changeEditorGroup} onConnectMidi={() => void connectMidi()} onNew={newStudioProject} onSelectedLocalProjectChange={setSelectedStudioProject} onLoad={loadSelectedStudioProject} onSave={saveEditor} onSaveAs={saveStudioProjectAs} onRename={renameSelectedStudioProject} onDuplicate={duplicateSelectedStudioProject} onDelete={deleteSelectedStudioProject} onPlayback={() => void toggleEditorPlayback()} onLoopChange={setEditorLoop} onExportFormatChange={setEditorExportFormat} onExport={exportEditor} />
       {editorMode === 'complete' && <PadStrip group={editorGroup} selectedPad={editorSelectedPad} padModes={editorPadModes} padName={devicePadName} padSlot={(pad) => devicePadInfo(pad)?.slot} onSelect={(pad) => { setEditorSelectedPad(pad); setKeyEditorOpen((editorPadModes[`${editorGroup}:${pad}`] || 'ONE') === 'KEYS'); }} onPreview={(pad) => midi.sendPad(pad, EDITOR_GROUPS.indexOf(editorGroup), 110)} onModeChange={(pad, mode) => { setEditorPadModes((current) => ({ ...current, [`${editorGroup}:${pad}`]: mode })); setKeyEditorOpen(mode === 'KEYS'); }} onOpenKeys={() => setKeyEditorOpen(true)} />}
       {keyEditorOpen && editorMode === 'complete'
         ? <PianoRoll gridRef={editorGrid} group={editorGroup} selectedPad={editorSelectedPad} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} targets={editorTargets} onClose={() => setKeyEditorOpen(false)} onPreviewNote={(note) => midi.sendNote(note, 110)} onToggleNote={toggleKeyStep} />

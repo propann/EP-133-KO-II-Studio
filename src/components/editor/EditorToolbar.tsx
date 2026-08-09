@@ -20,6 +20,10 @@ interface EditorToolbarProps {
   onNew: () => void;
   onSelectedLocalProjectChange: (id: string) => void;
   onLoad: () => void;
+  onSaveAs: () => void;
+  onRename: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
   onPlayback: () => void;
   onLoopChange: (loop: boolean) => void;
   onExportFormatChange: (format: 'midi' | 'json') => void;
@@ -29,6 +33,21 @@ interface EditorToolbarProps {
 export function EditorToolbar(props: EditorToolbarProps) {
   return <>
     <header><button className="editor-home-button" onClick={props.onHome}>← ACCUEIL</button><div><small>{props.mode === 'game' ? 'ÉDITEUR JEU' : 'ÉDITEUR EP‑133 COMPLET'}</small><input value={props.name} maxLength={32} onChange={(event) => props.onNameChange(event.target.value.toUpperCase())} aria-label="Nom de l'exercice" /></div>{props.mode === 'complete' && <><div className="editor-groups" aria-label="Groupes EP-133">{EDITOR_GROUPS.map((group) => <button className={props.group === group ? 'active' : ''} onClick={() => props.onGroupChange(group)} key={group}>{group}</button>)}</div><span className={`device-scan-state ${props.scannedProject !== undefined ? 'active' : ''}`}>{props.scannedProject !== undefined ? `PROJET ${props.scannedProject} · SCAN LECTURE SEULE` : 'AUCUN SCAN'}</span><button className={`editor-midi-out ${props.midiConnected ? 'active' : ''}`} onClick={props.onConnectMidi}>{props.midiConnected ? 'MIDI OUT ✓' : 'CONNECTER EP‑133'}</button></>}<div className={`editor-vu ${props.playing ? 'active' : ''}`}><span>-20</span><span>-6</span><span>0</span><i /><b>VU</b></div></header>
-    <div className="editor-commandbar">{props.mode === 'complete' && <><button onClick={props.onNew}>＋ NOUVEAU</button><label className="local-project-select">PROJET <select value={props.selectedLocalProject} onChange={(event) => props.onSelectedLocalProjectChange(event.target.value)}><option value="">— LOCAL —</option>{props.localProjects.map((project) => <option value={project.id} key={project.id}>{project.title}</option>)}</select></label><button disabled={!props.selectedLocalProject} onClick={props.onLoad}>OUVRIR</button></>}<button className="save" disabled={!props.canSave} onClick={props.onSave}>● SAVE</button><button className="transport-play" disabled={props.mode === 'complete' && !props.midiConnected} onClick={props.onPlayback}>{props.playing ? '■ STOP' : '▶ LECTURE'}</button><button className={`loop-toggle ${props.loop ? 'active' : ''}`} disabled={props.mode !== 'complete' || props.playing} onClick={() => props.onLoopChange(!props.loop)}>↻ BOUCLE {props.loop ? 'ON' : 'OFF'}</button><label className="export-select">EXPORT <select value={props.exportFormat} onChange={(event) => props.onExportFormatChange(event.target.value as 'midi' | 'json')}><option value="midi">MIDI (.mid)</option><option value="json">PROJET EP‑133 (.json)</option></select></label><button className="midi-export" onClick={props.onExport}>⇩ EXPORTER</button></div>
+    <div className="editor-commandbar">
+      {props.mode === 'complete' ? <details className="file-menu">
+        <summary>FICHIER</summary>
+        <div className="file-menu-panel">
+          <label>PROJET LOCAL<select value={props.selectedLocalProject} onChange={(event) => props.onSelectedLocalProjectChange(event.target.value)}><option value="">— CHOISIR —</option>{props.localProjects.map((project) => <option value={project.id} key={project.id}>{project.title}</option>)}</select></label>
+          <div className="file-menu-grid">
+            <button onClick={props.onNew}>＋ NOUVEAU</button><button disabled={!props.selectedLocalProject} onClick={props.onLoad}>OUVRIR</button>
+            <button className="save" disabled={!props.canSave} onClick={props.onSave}>● ENREGISTRER</button><button disabled={!props.canSave} onClick={props.onSaveAs}>ENREGISTRER SOUS</button>
+            <button disabled={!props.selectedLocalProject} onClick={props.onRename}>RENOMMER</button><button disabled={!props.selectedLocalProject} onClick={props.onDuplicate}>DUPLIQUER</button>
+            <button className="file-delete" disabled={!props.selectedLocalProject} onClick={props.onDelete}>SUPPRIMER</button>
+          </div>
+          <div className="file-export"><label>FORMAT<select value={props.exportFormat} onChange={(event) => props.onExportFormatChange(event.target.value as 'midi' | 'json')}><option value="midi">MIDI (.mid)</option><option value="json">PROJET EP‑133 (.json)</option></select></label><button className="midi-export" onClick={props.onExport}>⇩ EXPORTER</button></div>
+        </div>
+      </details> : <><button className="save" disabled={!props.canSave} onClick={props.onSave}>● SAVE</button><label className="export-select">EXPORT <select value={props.exportFormat} onChange={(event) => props.onExportFormatChange(event.target.value as 'midi' | 'json')}><option value="midi">MIDI (.mid)</option><option value="json">PROJET EP‑133 (.json)</option></select></label><button className="midi-export" onClick={props.onExport}>⇩ EXPORTER</button></>}
+      <button className="transport-play" disabled={props.mode === 'complete' && !props.midiConnected} onClick={props.onPlayback}>{props.playing ? '■ STOP' : '▶ LECTURE'}</button><button className={`loop-toggle ${props.loop ? 'active' : ''}`} disabled={props.mode !== 'complete' || props.playing} onClick={() => props.onLoopChange(!props.loop)}>↻ BOUCLE {props.loop ? 'ON' : 'OFF'}</button>
+    </div>
   </>;
 }

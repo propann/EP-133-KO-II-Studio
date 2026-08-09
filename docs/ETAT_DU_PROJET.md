@@ -76,6 +76,9 @@
   basé sur `ep.project.v1`. Il conserve les quatre groupes, le BPM, la hauteur,
   la vélocité, la durée et les modes de pad sans fermer l'éditeur.
 - La sauvegarde des exercices USER reste séparée de celle des projets Studio.
+- Les commandes Studio sont regroupées dans le menu `FICHIER` : Nouveau,
+  Ouvrir, Enregistrer, Enregistrer sous, Renommer, Dupliquer, Supprimer et
+  Exporter. La suppression demande une confirmation explicite.
 - Export MIDI ou description `ep.project.v1` JSON.
 - Scan SysEx en lecture seule validé sur la machine : 527 sons, 56,21 Mo,
   affectations de pads, noms, modes et notes racines.

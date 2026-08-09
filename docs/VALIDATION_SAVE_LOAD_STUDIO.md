@@ -12,6 +12,8 @@ l'éditeur. Cette action ne représentait donc pas un véritable projet Studio.
 - `SAVE` sérialise le projet complet dans la bibliothèque locale du navigateur ;
 - un second `SAVE` met à jour le projet ouvert au lieu de créer un doublon ;
 - le sélecteur et `OUVRIR` restaurent le projet choisi ;
+- le menu `FICHIER` rassemble Nouveau, Ouvrir, Enregistrer, Enregistrer sous,
+  Renommer, Dupliquer, Supprimer et Exporter ;
 - une confirmation protège le projet affiché avant `NOUVEAU` ou `OUVRIR` s'il
   contient des notes ;
 - la sauvegarde `USER` de l'éditeur pédagogique reste indépendante.
@@ -39,7 +41,6 @@ groupes, des vélocités, des durées et des modes de pad.
 
 ## Limites encore visibles
 
-- pas encore de `Sauvegarder sous`, renommage, duplication ou suppression ;
 - pas encore d'import de fichier depuis l'interface ;
 - `.pak/.ppak` restent en lecture seule et ne sont pas encore ouverts dans le
   Studio ;
