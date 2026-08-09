@@ -1,0 +1,1 @@
+epsysex @ git+https://github.com/kmorrill/ep-series-sysex.git@main

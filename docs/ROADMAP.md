@@ -1,85 +1,158 @@
-# Feuille de route - EP-133 Rhythm Hero
+# Feuille de route — EP-133 Rhythm Hero
 
 ## Vision
 
-Un coach de finger-drumming qui transforme le EP-133 K.O. II en instrument d'apprentissage : il montre quoi jouer, écoute les frappes réelles, explique les erreurs et fait monter le joueur en difficulté sans le noyer.
+Construire une suite locale en français autour du Teenage Engineering EP-133 :
 
-## Règle de conception
+1. apprendre le rythme avec un jeu pédagogique ;
+2. créer des exercices simples ;
+3. composer dans un éditeur complet raccordé à la machine ;
+4. gérer projets, partitions et banques de sons sans dépendre du matériel ;
+5. préparer des fichiers contrôlés avant tout transfert vers l'appareil.
 
-Une session doit répondre à trois questions :
+L'application doit rester utile lorsque l'EP-133 est déconnecté. Le matériel
+apporte ses pads, ses sons et son séquenceur, mais ne doit pas être une condition
+pour ouvrir, écouter ou modifier un projet.
 
-1. Quel pad dois-je frapper ?
-2. Est-ce que je l'ai frappé au bon moment et avec la bonne intensité ?
-3. Quel est le prochain petit geste à maîtriser ?
+## Principes non négociables
 
-Chaque exercice tient d'abord sur une mesure. Une seule nouveauté rythmique est introduite à la fois.
+- Lecture seule par défaut lors d'un scan de la machine.
+- Aucune écriture ou suppression sans cible précise, sauvegarde et confirmation.
+- Ne jamais présenter un export expérimental comme garanti compatible.
+- Une seule horloge pilote le son, le curseur, la boucle et le MIDI.
+- Les données de projet restent ouvertes et documentées en JSON.
+- Les sons de la machine ne sont pas copiés ou redistribués sans droit explicite.
+- Le jeu et le studio restent deux outils séparés sur la page d'accueil.
 
-## Objectifs immédiats
+## État consolidé — 9 août 2026
 
-### Objectif 1 - socle jouable
+### Disponible
 
-- [x] Pavé inspiré du EP-133 avec groupes A-D et pads numérotés
-- [x] Partition 16 pas avec numéro du pad à jouer
-- [x] 39 exercices classés niveau 1 à 5
-- [x] Doigt conseillé par pad
-- [x] Tempo de 10 % à 150 %
-- [x] Sons de repère et VU-mètre
+- Accueil modulaire : Rhythm Hero, Studio EP-133, Sons & Transfert.
+- Jeu avec 39 styles, cinq difficultés, compte à rebours, score et Web MIDI.
+- Éditeur du jeu à mesures extensibles et sauvegarde locale.
+- Studio quatre groupes A–D, 12 pads par groupe et piano-roll KEYS.
+- Lecture des sons par l'ordinateur ou par la sortie MIDI de l'EP-133.
+- Lecture synchronisée, curseur, défilement, boucle et horloge MIDI.
+- Export MIDI et description `ep.project.v1` JSON.
+- Scan matériel en lecture seule : projet, pads, slots, noms, modes et notes
+  racines. Le scan validé a trouvé 527 sons et 56,21 Mo sur la machine testée.
+- Cache local de l'inventaire du projet 1, sans contenu audio.
 
-**Validation :** choisir un rythme, ralentir, écouter et rejouer la mesure sans matériel connecté.
+### Expérimental ou incomplet
 
-### Objectif 2 - connexion MIDI réelle
+- Le JSON EP-133 doit encore être compilé et vérifié en `.ppak` sur une copie
+  de projet de test.
+- Le mode KEYS écrit les hauteurs MIDI, mais la durée, la vélocité et les
+  articulations ne disposent pas encore de leurs éditeurs complets.
+- Les modes ONE, KEYS et LEGATO lus sur la machine ne sont pas tous modifiables
+  et persistés de bout en bout.
+- Le bouton de transfert WAV reste volontairement désactivé.
+- Les autres styles que Boom-Bap utilisent encore des partitions générées
+  provisoires.
+- Les tests automatisés sont insuffisants.
 
-- [ ] Détecter le EP-133 en USB-MIDI sur Windows et Linux
-- [ ] Afficher les messages MIDI reçus : note, vélocité, canal, horodatage
-- [ ] Relever et confirmer le mapping réel de chaque pad A-D
-- [ ] Créer un fichier de mapping versionné
-- [ ] Tester note-on, note-off et vélocité
+## Phase 1 — stabiliser avant d'ajouter
 
-**Validation :** une frappe sur le K.O. II allume exactement le bon pad virtuel.
+- [ ] Découper `App.tsx` en pages et composants testables.
+- [ ] Définir un modèle de données unique pour jeu, studio, groupes et notes.
+- [ ] Ajouter tests du score, des conversions MIDI et de l'extension automatique.
+- [ ] Ajouter une gestion centralisée du transport et nettoyer tous les timers.
+- [ ] Tester manuellement Chrome/Chromium, écran large et petit écran.
+- [ ] Mettre à jour systématiquement l'état du projet après chaque livraison.
 
-### Objectif 3 - juge rythmique
+**Validation :** build reproductible, aucune note bloquée, navigation et boucle
+stables, restauration correcte d'une session locale.
 
-- [ ] Départ avec compte à rebours de quatre temps
-- [ ] Horloge unique pour audio, animation et analyse
-- [ ] Comparaison frappe attendue / frappe reçue
-- [ ] Fenêtres : parfait <= 35 ms, bon <= 80 ms, acceptable <= 130 ms
-- [ ] Gestion des pads incorrects et des frappes manquées
-- [ ] Score, combo, précision et meilleur BPM
+## Phase 2 — menu SAVE / LOAD et bibliothèque de partitions
 
-**Validation :** terminer un boom-bap niveau 1 avec score détaillé, sans dérive de tempo.
+Transformer `SAVE` en menu de fichiers :
 
-### Objectif 4 - parcours pédagogique
+- [ ] Nouveau projet.
+- [ ] Sauvegarder et Sauvegarder sous.
+- [ ] Charger un projet local.
+- [ ] Renommer, dupliquer, archiver et supprimer avec confirmation.
+- [ ] Exporter/importer un fichier Rhythm Hero JSON versionné.
+- [ ] Lister les exercices officiels du jeu dans la même bibliothèque, en
+  lecture seule, avec action « Dupliquer pour modifier ».
+- [ ] Miniatures, date de modification, BPM, longueur et groupes utilisés.
+- [ ] Autosauvegarde de secours et historique Annuler/Rétablir.
 
-- [ ] Parcours débutant : kick/snare, puis hats, puis contretemps
-- [ ] Déblocage du niveau suivant après 90 % de précision
-- [ ] Variante lente automatique après trois échecs
-- [ ] Conseils ciblés : pad, temps, main ou doigt à retravailler
-- [ ] Historique local des scores
+**Validation :** quitter, rouvrir et retrouver une composition identique sans
+machine connectée.
 
-**Validation :** un débutant peut passer de 60 BPM à 100 % du tempo sur cinq exercices.
+## Phase 3 — deux banques de sons hors ligne
 
-### Objectif 5 - cours, création et studio
+### Banque ordinateur
 
-- [ ] Onglet Cours : parcours, partitions et démonstrations
-- [ ] Onglet Jeu : entraînement MIDI et analyse
-- [ ] Onglet Studio : kits, samples, patterns et import MIDI
-- [ ] Import de partitions propres depuis MIDI ou stems nettoyés
-- [ ] Export de manifestes JSON pour les exercices
+- Sons libres ou créés par l'utilisateur, versionnés par identifiant et hash.
+- Pré-écoute Web Audio, tags, favoris et recherche.
+- Kit de secours permettant de jouer tous les projets hors ligne.
 
-**Validation :** créer une nouvelle leçon complète sans modifier le moteur du jeu.
+### Banque miroir EP-133
 
-## Décisions techniques
+- Inventaire des 999 slots et de la mémoire disponible.
+- Noms, métadonnées et affectations des pads issus du scan.
+- Audio téléchargé uniquement à la demande et conservé localement avec accord
+  de l'utilisateur ; aucune banque constructeur distribuée dans Git.
+- Indication claire : métadonnées seules, audio disponible localement ou son
+  manquant.
 
-- Application web locale, Chrome ou Edge pour Web MIDI.
-- L'horloge du jeu est maîtresse ; les animations ne décident jamais du timing.
-- Les exercices sont des manifestes JSON versionnés.
-- Le vrai mapping MIDI est mesuré sur la machine avant d'être figé.
-- Aucun .ppak importable n'est promis avant test réel sur le firmware de la machine.
+### Résolution des sons
 
-## Premier test matériel à faire
+Chaque pad référence un son logique et deux sources possibles : son ordinateur
+et slot EP-133. Le projet peut donc être écouté hors ligne puis rejoué avec le
+son matériel quand la machine revient.
 
-1. Connecter le EP-133 au PC par USB.
-2. Sélectionner son port MIDI dans l'application.
-3. Frapper A-7, A-9, A-5 puis les autres pads.
-4. Enregistrer les messages reçus.
-5. Valider le mapping avant d'ouvrir le chantier du score.
+**Validation :** un projet scanné reste audible après déconnexion, sans intégrer
+de fichiers audio propriétaires au dépôt.
+
+## Phase 4 — éditeur et préparateur de sons
+
+- [ ] Import WAV/AIFF et enregistrement local.
+- [ ] Forme d'onde, trim, normalisation, fondu et détection du silence.
+- [ ] Mono/stéréo, fréquence, hauteur racine, BPM, ONE/KEYS/LEGATO.
+- [ ] Pré-écoute avant/après conversion.
+- [ ] Conversion contrôlée vers le format accepté par l'EP-133.
+- [ ] Estimation exacte du poids et jauge de mémoire avant transfert.
+- [ ] Choix prioritaire d'un slot libre.
+- [ ] Paquet de sons préparé, manifeste et contrôles d'intégrité.
+- [ ] Sauvegarde du slot remplacé, confirmation explicite, écriture sérialisée
+  puis lecture de vérification.
+
+**Validation :** aucun transfert ne démarre si l'espace est insuffisant ou si
+la cible occupée n'a pas été explicitement confirmée.
+
+## Phase 5 — projets EP-133 complets
+
+- [ ] Compiler le JSON avec `kmorrill/ep-series-sysex` (MIT).
+- [ ] Générer `.ppak` hors ligne avec rapport de validation.
+- [ ] Charger une sauvegarde existante comme base afin de préserver les champs
+  inconnus et réglages non édités.
+- [ ] Gérer patterns, scènes, song mode, vélocité, durée et automation.
+- [ ] Associer les dépendances sonores et détecter les slots absents.
+- [ ] Écrire uniquement dans un projet brouillon choisi par l'utilisateur.
+- [ ] Checkpoint avant écriture, relecture binaire et restauration possible.
+
+**Validation :** projet de test exporté, chargé, joué et relu sur le firmware de
+la machine sans toucher aux autres projets.
+
+## Phase 6 — contenu pédagogique
+
+- [ ] Finaliser cinq partitions validées par style, par blocs de cinq.
+- [ ] Historique local des scores et progression.
+- [ ] Conseils ciblés sur timing, main, doigt et pad.
+- [ ] Importer une composition du studio comme exercice du jeu.
+- [ ] Dupliquer un exercice officiel vers USER sans modifier l'original.
+
+## Phase 7 — extension OP-1
+
+Le futur outil OP-1 reprendra la page d'accueil et les briques génériques, mais
+gardera son protocole, ses moteurs et ses formats dans un module indépendant.
+Voir [VISION_OP1.md](VISION_OP1.md).
+
+## Fonctions de DAW reportées
+
+Ces fonctions sont utiles, mais ne doivent pas retarder la solidité : console de
+mixage avancée, plugins, mastering, automation complexe, time-stretch avancé,
+arrangement audio multipiste et collaboration en ligne.

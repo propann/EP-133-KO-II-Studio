@@ -1,0 +1,19 @@
+{
+  "id": "zik-01-basic",
+  "title": "ZIK 01 // MIDNIGHT CONCRETE // PULSE 01",
+  "bpm": 88,
+  "bars": 4,
+  "description": "Premier contact : kick sur les temps forts, rim sur les contretemps. Respire, garde le béton dans le tempo.",
+  "backingTrack": null,
+  "sourceMidi": "Midnight Concrete (Drums).mid",
+  "offsetMs": 0,
+  "countInBars": 4,
+  "timeSignature": "4/4",
+  "targets": [
+    {"beat":0,"pad":0},{"beat":1,"pad":2},{"beat":2,"pad":0},{"beat":3,"pad":2},
+    {"beat":4,"pad":0},{"beat":5,"pad":2},{"beat":6,"pad":0},{"beat":7,"pad":2},
+    {"beat":8,"pad":0},{"beat":9,"pad":2},{"beat":10,"pad":0},{"beat":11,"pad":2},
+    {"beat":12,"pad":0},{"beat":13,"pad":2},{"beat":14,"pad":0},{"beat":15,"pad":2}
+  ],
+  "grading": {"perfectMs":20,"goodMs":50}
+}

@@ -1,0 +1,11 @@
+{
+  "id": "zik-01-midnight-concrete",
+  "title": "Midnight Concrete",
+  "status": "sources-imported",
+  "files": {
+    "drums": "Midnight Concrete (Drums).mid",
+    "bass": "Midnight Concrete (Bass).mid",
+    "keyboard": "Midnight Concrete (Keyboard).mid"
+  },
+  "nextStep": "analyze-midi-and-generate-exercises"
+}
