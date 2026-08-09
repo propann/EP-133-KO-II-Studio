@@ -110,6 +110,11 @@ une vraie gestion Save/Load. La feuille de route détaillée se trouve dans
   `PerformancePanel` et `PadSoundEditor`. Ces composants sont visuels et ne
   deviennent pas propriétaires de l'horloge.
 - L'ordre physique des 12 pads est centralisé dans `core/project/pads.ts`.
+- Le studio est séparé en `EditorToolbar`, `PadStrip`, `RhythmGrid` et
+  `PianoRoll`. Les patterns et actions restent fournis par `App.tsx` afin de ne
+  pas dupliquer l'état.
+- Le découpage visuel prévu par l'étape 1.4 est terminé. La prochaine étape est
+  l'unification du modèle de données avant l'extraction d'un hook d'éditeur.
 - Le noyau sait désormais relire les MIDI formats 0/1 qu'il exporte, conserver
   tempo, position, vélocité et durée, puis les répartir sur les groupes A–D.
 - Un inspecteur ouvre les conteneurs ZIP `.pak/.ppak`, valide `meta.json` et

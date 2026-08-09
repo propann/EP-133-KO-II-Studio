@@ -46,7 +46,9 @@ Décisions :
 
 - 1.4a : pages Accueil et Sons. **Terminée.**
 - 1.4b : composants visuels du Jeu. **Terminée.**
-- 1.4c : isolation de l'éditeur Studio. **Prochaine étape.**
+- 1.4c : isolation visuelle de l'éditeur Studio. **Terminée.**
+- 1.5 : modèle de données unique pour notes, patterns et groupes.
+  **Prochaine étape.**
 - 2.1 : premier menu SAVE avec Nouveau, Sauvegarder et Charger.
 
 ## Décision d'architecture — étude « compagnon ultime »
@@ -161,4 +163,16 @@ Statut : terminé le 9 août 2026.
 - [x] mini-éditeur sonore extrait ;
 - [x] ordre et libellés des pads centralisés ;
 - [x] transport conservé dans un seul orchestrateur ;
+- [x] tests transport, formats et build réussis.
+
+## Étape 1.4c — composants visuels du studio
+
+Statut : terminé le 9 août 2026.
+
+- [x] barre de l'éditeur extraite ;
+- [x] bande des 12 pads extraite ;
+- [x] grille rythmique extraite ;
+- [x] piano-roll extrait ;
+- [x] composants limités au rendu et aux callbacks ;
+- [x] état, transport et sauvegarde maintenus dans l'orchestrateur unique ;
 - [x] tests transport, formats et build réussis.

@@ -57,7 +57,7 @@ pour ouvrir, écouter ou modifier un projet.
 
 ## Phase 1 — stabiliser avant d'ajouter
 
-- [ ] Découper `App.tsx` en pages et composants testables.
+- [x] Découper `App.tsx` en pages et composants visuels isolés.
 - [ ] Définir un modèle de données unique pour jeu, studio, groupes et notes.
 - [ ] Ajouter tests du score, des conversions MIDI et de l'extension automatique.
 - [x] Ajouter une gestion centralisée du transport et nettoyer tous les timers.

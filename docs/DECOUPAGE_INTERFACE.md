@@ -47,3 +47,20 @@ Statut : terminé le 9 août 2026.
 
 La prochaine extraction porte sur `EditorOverlay`, sa grille de pads et son
 piano-roll. Elle sera faite avant de déplacer l'état de l'éditeur dans un hook.
+
+## Sous-étape 1.4c — composants visuels du studio
+
+Statut : terminé le 9 août 2026.
+
+- `EditorToolbar` affiche le nom, les groupes, le transport, la boucle et les
+  exports à partir de propriétés et callbacks.
+- `PadStrip` rend les 12 pads, leur nom réel et leur mode ONE/KEYS.
+- `RhythmGrid` affiche les pistes continues et transmet les modifications de
+  pas sans posséder les patterns.
+- `PianoRoll` affiche les hauteurs et transmet les modifications de notes.
+- La grille et le piano-roll partagent toujours la même référence de viewport,
+  nécessaire au suivi automatique de la lecture.
+
+L'état complexe n'est pas déplacé artificiellement : le prochain chantier doit
+d'abord unifier le modèle de notes et de projets, puis un hook d'éditeur pourra
+être extrait avec une API cohérente.

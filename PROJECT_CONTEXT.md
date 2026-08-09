@@ -137,6 +137,9 @@ Le player HTML historique reste disponible comme référence fonctionnelle penda
   du jeu et du studio. Voir `docs/DECOUPAGE_INTERFACE.md`.
 - Les composants visuels du jeu vivent dans `src/components/game`. Les
   constantes des pads viennent exclusivement de `src/core/project/pads.ts`.
+- Les composants visuels du studio vivent dans `src/components/editor`.
+  `App.tsx` conserve encore l'état de l'éditeur par décision explicite, jusqu'à
+  l'adoption d'un modèle de projet unique.
 
 ## Priorités
 
