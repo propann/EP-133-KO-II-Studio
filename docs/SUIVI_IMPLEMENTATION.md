@@ -330,11 +330,13 @@ Statut : moteur terminé, branchement UI en attente le 9 août 2026.
 - [x] stockage PCM et métadonnées dans le dossier cible ;
 - [x] hash SHA-256 de chaque fichier ;
 - [x] manifeste atomique et progression récupérable ;
+- [x] phase, compteur, temps écoulé et estimation restante dans le manifeste ;
+- [x] durée réelle mesurée : 25 min 20 s, annonce initiale fixée à 20–30 min ;
 - [x] arborescence canonique `clone/nom-machine/` créée automatiquement ;
 - [x] reprise des samples déjà copiés et de taille identique ;
 - [x] aucune commande d'écriture vers la machine ;
 - [ ] boîte de dialogue native et pont local pour lancer le moteur depuis l'UI ;
-- [ ] campagne réelle complète sur les 527 sons.
+- [x] campagne réelle complète sur les 527 sons, 9 projets et 0 erreur.
 
 Voir `docs/CLONAGE_COMPLET_MACHINE.md`.
 

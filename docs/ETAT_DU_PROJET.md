@@ -93,6 +93,9 @@
 - Le moteur local de clone complet sait copier les neuf projets, tous les PCM,
   leurs métadonnées et hashes dans un dossier explicite avec reprise. Son
   lancement depuis la fenêtre web attend encore le pont local natif.
+- Le premier clone matériel complet est validé : 9 projets, 527 PCM, 527
+  métadonnées, 56 214 010 octets audio et aucune erreur. Durée mesurée :
+  25 min 20 s ; l'interface doit annoncer 20 à 30 minutes avant la première copie.
 - Le menu FICHIER permet de choisir séparément la banque samples d'un clone.
   Le Studio joue alors les PCM locaux quand la machine est absente et garde le
   MIDI matériel prioritaire quand elle est connectée.

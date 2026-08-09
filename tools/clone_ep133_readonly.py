@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import json
 import re
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -68,12 +69,15 @@ def main() -> int:
     client = FileClient(product_byte=EP133_PRODUCT, port_hint=args.port,
                         lock_owner="rhythm_hero_full_clone_readonly")
     created_at = datetime.now(timezone.utc).isoformat()
+    started_monotonic = time.monotonic()
     manifest = {
         "schema": "ep133.rhythm-hero.clone.v1",
         "readOnly": True,
         "machine": {"name": args.name, "capacityMb": args.capacity_mb},
         "createdAt": created_at,
         "status": "running",
+        "progress": {"phase": "projects", "current": 0, "total": last_project - first_project + 1,
+                     "elapsedSeconds": 0, "estimatedRemainingSeconds": None},
         "projects": [], "sounds": [], "errors": [],
     }
     manifest_path = target / "manifest.json"
@@ -87,12 +91,19 @@ def main() -> int:
             manifest["projects"].append({"project": number, "file": str(path.relative_to(target)),
                                          "bytes": len(data), "sha256": sha256(path),
                                          "deviceName": meta.get("name")})
-            print(f"projet {number}/9 : {len(data)} octets")
+            print(f"projet {number}/9 : {len(data)} octets", flush=True)
         except Exception as error:  # garder les autres projets récupérables
             manifest["errors"].append({"kind": "project", "id": number, "error": str(error)})
+        elapsed = time.monotonic() - started_monotonic
+        completed = number - first_project + 1
+        manifest["progress"] = {"phase": "projects", "current": completed,
+                                "total": last_project - first_project + 1,
+                                "elapsedSeconds": round(elapsed, 1),
+                                "estimatedRemainingSeconds": round(elapsed / completed * (last_project - number), 1)}
         atomic_json(manifest_path, manifest)
 
     nodes = sorted(client.list_sounds(), key=lambda node: int(node["id"]))
+    sounds_started = time.monotonic()
     for index, node in enumerate(nodes, 1):
         slot = int(node["id"])
         expected_size = int(node["size"])
@@ -108,13 +119,21 @@ def main() -> int:
             manifest["sounds"].append({"slot": slot, "file": str(path.relative_to(target)),
                                        "metadata": str(metadata_path.relative_to(target)),
                                        "bytes": path.stat().st_size, "sha256": sha256(path)})
-            print(f"son {index}/{len(nodes)} · slot {slot:03d}")
+            print(f"son {index}/{len(nodes)} · slot {slot:03d}", flush=True)
         except Exception as error:
             manifest["errors"].append({"kind": "sound", "id": slot, "error": str(error)})
+        phase_elapsed = time.monotonic() - sounds_started
+        manifest["progress"] = {"phase": "samples", "current": index,
+                                "total": len(nodes),
+                                "elapsedSeconds": round(time.monotonic() - started_monotonic, 1),
+                                "estimatedRemainingSeconds": round(phase_elapsed / index * (len(nodes) - index), 1)}
         atomic_json(manifest_path, manifest)
 
     manifest["finishedAt"] = datetime.now(timezone.utc).isoformat()
     manifest["status"] = "complete" if not manifest["errors"] else "partial"
+    manifest["progress"] = {"phase": "complete", "current": len(nodes), "total": len(nodes),
+                            "elapsedSeconds": round(time.monotonic() - started_monotonic, 1),
+                            "estimatedRemainingSeconds": 0}
     manifest["summary"] = {
         "projectCount": len(manifest["projects"]),
         "soundCount": len(manifest["sounds"]),
@@ -122,7 +141,7 @@ def main() -> int:
         "errorCount": len(manifest["errors"]),
     }
     atomic_json(manifest_path, manifest)
-    print(f"clone {manifest['status']} -> {target}")
+    print(f"clone {manifest['status']} -> {target}", flush=True)
     return 0 if manifest["status"] == "complete" else 2
 
 

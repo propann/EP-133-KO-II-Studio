@@ -42,6 +42,35 @@ Le manifeste est écrit atomiquement après chaque élément. Une reprise conser
 un sample existant lorsque sa taille correspond, puis recalcule son hash. Les
 erreurs isolées sont consignées sans rendre les données déjà copiées inutiles.
 
+## Durée et progression
+
+Le premier clone réel de 527 sons a duré **25 minutes et 20 secondes**. Il faut
+donc annoncer une fourchette prudente de **20 à 30 minutes** avant la première
+copie. Le coût vient principalement des sessions de lecture SysEx, pas seulement
+des 56,21 Mo transférés.
+
+Le manifeste expose pendant l'opération :
+
+- la phase `projects` ou `samples` ;
+- le numéro courant et le total ;
+- le temps écoulé ;
+- une estimation du temps restant ;
+- les erreurs déjà rencontrées.
+
+La console affiche chaque projet et chaque slot immédiatement. Une reprise est
+normalement plus rapide, car les PCM présents et de taille identique ne sont pas
+retéléchargés.
+
+### Validation matérielle du 9 août 2026
+
+- statut final : `complete` ;
+- 9 projets sur disque ;
+- 527 fichiers PCM, soit 56 214 010 octets ;
+- 527 fichiers de métadonnées ;
+- aucune erreur ;
+- dossier total : environ 58 Mo ;
+- destination : `Musique/OP-133/clone/MON-EP-133/`.
+
 Exécution locale prévue :
 
 ```bash
