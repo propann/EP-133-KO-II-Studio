@@ -85,3 +85,13 @@ Le développement fonctionnel est temporairement ralenti pour découper le gros
 composant d'interface, ajouter les tests, documenter les formats et construire
 une vraie gestion Save/Load. La feuille de route détaillée se trouve dans
 [`ROADMAP.md`](ROADMAP.md).
+
+## Solidification en cours
+
+- Étape 1.1 terminée : la génération MIDI et `ep.project.v1` est sortie de
+  `App.tsx` vers `src/core/project/exporters.ts`.
+- Une vérification automatisée couvre l'en-tête MIDI, le mapping d'un pad, une
+  hauteur KEYS, les quatre patterns et le mode de pad exporté.
+- Commande : `npm run test:exports`.
+- Prochaine étape : définir le format de sauvegarde natif Rhythm Hero avant de
+  construire le menu Save/Load.

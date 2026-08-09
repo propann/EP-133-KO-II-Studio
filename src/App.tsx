@@ -7,6 +7,15 @@ import {
 import { AudioEngine, type PadSoundSettings } from './core/audio/AudioEngine';
 import { emptyScore, scoreHit } from './core/engine/scoring';
 import type { Exercise, Grade, Score } from './core/engine/types';
+import {
+  createEp133ProjectDocument,
+  createMidiFile,
+  EDITOR_GROUPS,
+  KEY_EDITOR_NOTES,
+  midiNoteName,
+  type EditorGroup,
+  type EditorPadMode,
+} from './core/project/exporters';
 import './style.css';
 import catalogue from '../exercises/catalogue-exercices-v1.json';
 
@@ -90,36 +99,6 @@ interface DeviceInventory {
 }
 
 const USER_EXERCISES_KEY = 'ep133-rhythm-hero:user-exercises:v1';
-type EditorGroup = 'A' | 'B' | 'C' | 'D';
-const EDITOR_GROUPS: EditorGroup[] = ['A', 'B', 'C', 'D'];
-const PAD_MIDI_NOTES = [45, 46, 47, 42, 43, 44, 39, 40, 41, 36, 37, 38];
-const KEY_EDITOR_NOTES = Array.from({ length: 25 }, (_, index) => 72 - index);
-const midiNoteName = (note: number) => `${['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'][note % 12]}${Math.floor(note / 12) - 1}`;
-
-const variableLength = (value: number) => {
-  const bytes = [value & 0x7f];
-  while ((value >>= 7)) bytes.unshift((value & 0x7f) | 0x80);
-  return bytes;
-};
-
-function createMidiFile(patterns: Record<EditorGroup, Exercise['targets']>, bpm: number) {
-  const ppqn = 96;
-  const events: { tick: number; data: number[]; order: number }[] = [];
-  EDITOR_GROUPS.forEach((group, groupIndex) => patterns[group].forEach((target) => {
-    const tick = Math.round(target.beat * ppqn);
-    const note = target.note ?? PAD_MIDI_NOTES[target.pad] + groupIndex * 12;
-    events.push({ tick, data: [0x90, note, 100], order: 1 }, { tick: tick + 24, data: [0x80, note, 0], order: 0 });
-  }));
-  events.sort((a, b) => a.tick - b.tick || a.order - b.order);
-  const microseconds = Math.round(60000000 / bpm);
-  const track = [0, 0xff, 0x51, 3, (microseconds >> 16) & 255, (microseconds >> 8) & 255, microseconds & 255];
-  let previousTick = 0;
-  events.forEach((event) => { track.push(...variableLength(event.tick - previousTick), ...event.data); previousTick = event.tick; });
-  track.push(0, 0xff, 0x2f, 0);
-  const word = (value: number) => [(value >> 8) & 255, value & 255];
-  const long = (value: number) => [(value >> 24) & 255, (value >> 16) & 255, (value >> 8) & 255, value & 255];
-  return new Uint8Array([...'MThd'].map((c) => c.charCodeAt(0)).concat(long(6), word(0), word(1), word(ppqn), [...'MTrk'].map((c) => c.charCodeAt(0)), long(track.length), track));
-}
 
 function loadUserExercises(): Exercise[] {
   try { return JSON.parse(localStorage.getItem(USER_EXERCISES_KEY) || '[]') as Exercise[]; }
@@ -156,7 +135,7 @@ export default function App() {
   const [editorGroupTargets, setEditorGroupTargets] = useState<Record<EditorGroup, Exercise['targets']>>({ A: [], B: [], C: [], D: [] });
   const [editorPlaybackBeat, setEditorPlaybackBeat] = useState(0);
   const [editorSelectedPad, setEditorSelectedPad] = useState(0);
-  const [editorPadModes, setEditorPadModes] = useState<Record<string, 'ONE' | 'KEYS'>>({});
+  const [editorPadModes, setEditorPadModes] = useState<Record<string, EditorPadMode>>({});
   const [keyEditorOpen, setKeyEditorOpen] = useState(false);
   const [deviceInventory, setDeviceInventory] = useState<DeviceInventory | null>(null);
   const [editorLoop, setEditorLoop] = useState(false);
@@ -345,13 +324,7 @@ export default function App() {
 
   const exportEditorProjectJson = () => {
     const patterns = { ...editorGroupTargets, [editorGroup]: editorTargets };
-    const projectDocument = {
-      schema: 'ep.project.v1', product: 'ep133',
-      metadata: { title: editorName.trim() || 'RHYTHM HERO' },
-      pads: deviceInventory?.pads.map((pad) => ({ group: pad.group, pad: pad.pad, slot: pad.slot, playMode: editorPadModes[`${pad.group}:${pad.pad - 1}`] === 'KEYS' ? 1 : pad.playMode, rootNote: pad.rootNote })) || [],
-      patterns: EDITOR_GROUPS.map((group) => ({ id: `${group}01`, bars: Math.max(1, patterns[group].length ? Math.floor(Math.max(...patterns[group].map((target) => target.beat)) / 4) + 1 : 1), events: patterns[group].map((target) => ({ tick: Math.round(target.beat * 96), pad: target.pad + 1, note: target.note ?? 60, velocity: 100, duration: 18 })) })),
-      scenes: [{ groupPatterns: [1, 1, 1, 1], timeSignature: [4, 4] }], song: [1],
-    };
+    const projectDocument = createEp133ProjectDocument({ title: editorName, patterns, pads: deviceInventory?.pads || [], padModes: editorPadModes });
     const blob = new Blob([JSON.stringify(projectDocument, null, 2)], { type: 'application/json' });
     const link = window.document.createElement('a'); link.href = URL.createObjectURL(blob);
     link.download = `${(editorName.trim() || 'ep133-project').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.ep133.json`;

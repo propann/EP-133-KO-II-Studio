@@ -30,6 +30,12 @@ Le build de production se génère avec `npm run build`. Le player autonome
 historique reste accessible dans `docs/ep133-pad-player.html` pendant la
 migration de ses 39 exercices vers l'application React.
 
+Les vérifications des formats de projet se lancent avec :
+
+```bash
+npm run test:exports
+```
+
 La connexion Web MIDI, le scoring et le mapping officiel des groupes A–D sont
 intégrés et ont été validés avec la machine. Les opérations SysEx restent en
 lecture seule tant que les protections de transfert ne sont pas finalisées.
@@ -39,6 +45,7 @@ lecture seule tant que les protections de transfert ne sont pas finalisées.
 - [Feuille de route](docs/ROADMAP.md)
 - [Gestion des fichiers et des sons](docs/GESTION_FICHIERS_ET_SONS.md)
 - [Vision future OP-1](docs/VISION_OP1.md)
+- [Journal de suivi des étapes](docs/SUIVI_IMPLEMENTATION.md)
 - [Architecture cible](docs/ARCHITECTURE.md)
 - [Mise en route Windows](docs/MISE_EN_ROUTE_WINDOWS.md)
 - [Mise en route Linux — chemin principal](docs/MISE_EN_ROUTE_LINUX.md)
