@@ -104,3 +104,19 @@ Statut : terminé le 9 août 2026.
 Résultat réel : TAR de 68 096 octets, 68 membres, 48 pads, 11 patterns,
 125 notes, 3 scènes, tempo 120 BPM et aucun avertissement. Le compte rendu est
 dans `docs/VALIDATION_LECTEUR_PROJET_EP133.md`.
+
+## Décision produit — registre des idées
+
+Statut : créé le 9 août 2026 après la deuxième version de l'étude.
+
+- [x] toutes les propositions audio, fichiers, séquenceur, contrôle live,
+  exports et architecture possèdent un identifiant durable ;
+- [x] les nouveaux gestes et raccourcis DAW sont triés par faisabilité ;
+- [x] les conflits souris et clavier sont consignés avant implémentation ;
+- [x] les valeurs techniques erronées sont corrigées sans perdre l'intention ;
+- [x] la feuille de route reçoit uniquement les fonctions retenues ;
+- [x] les fonctions reportées, expérimentales ou écartées restent visibles dans
+  `docs/REGISTRE_IDEES.md`.
+
+Cette décision documentaire ne change pas la prochaine étape technique : la
+stabilisation du transport reste prioritaire.

@@ -1,0 +1,122 @@
+# Registre des idées produit
+
+Ce registre conserve toutes les idées issues des études, même lorsqu'elles ne
+sont pas intégrées à la feuille de route active. Une idée écartée n'est pas
+effacée : son motif reste consultable et la décision peut être réexaminée si de
+nouvelles preuves apparaissent.
+
+## Statuts
+
+- **RETENU** : prévu dans une phase de la feuille de route.
+- **EXPÉRIMENTER** : prototype ou mesure nécessaire avant décision.
+- **REPORTÉ** : intéressant, mais hors du chemin critique actuel.
+- **ÉCARTÉ V1** : ne fait pas partie de la version 1.
+- **CORRIGÉ** : intention conservée avec une base technique rectifiée.
+- **RÉALISÉ** : présent et vérifié dans le projet.
+
+## Fichiers, machine et sécurité
+
+| ID | Idée | Statut | Décision ou condition |
+|---|---|---|---|
+| F-01 | Détection automatique et Web MIDI | RÉALISÉ | Connexion entrées/sorties déjà disponible |
+| F-02 | Lecture de l'identité/SKU | RETENU | Préserver `meta.json` d'une base réelle ; ne pas dépendre uniquement de l'Identity Reply |
+| F-03 | Décodeur `.pak/.ppak` ZIP + TAR | RÉALISÉ | Lecture seule validée sur le projet 1 réel |
+| F-04 | Encodeur `.pak/.ppak` | RETENU | Seulement par modification d'une copie réelle avec comparaison binaire |
+| F-05 | Sauvegarde « projets seulement » | RETENU | Mesurer le temps réel, ne pas promettre arbitrairement moins de 60 secondes |
+| F-06 | Restauration locale | RETENU | Checkpoint, projet brouillon, relecture après écriture |
+| F-07 | Monitoring mémoire | RETENU | Capacité détectée, jamais supposée à 64 ou 128 Mo |
+| F-08 | Sons orphelins | RETENU | Analyse de tous les projets, proposition seulement |
+| F-09 | Déduplication SHA-256 | EXPÉRIMENTER | Hash du signal décodé ; aucune fusion automatique |
+| F-10 | Écriture directe flash | REPORTÉ | Verrouillée jusqu'aux tests aller-retour et procédure de restauration |
+
+## Samples et audio
+
+| ID | Idée | Statut | Décision ou condition |
+|---|---|---|---|
+| A-01 | Import WAV/AIFF | RETENU | Première étape du préparateur audio |
+| A-02 | Import MP3/FLAC/OGG | RETENU | Après sélection et test du décodeur |
+| A-03 | Conversion 44,1 kHz | CORRIGÉ | Cible native observée : PCM 16 bits à 46 875 Hz |
+| A-04 | Dither TPDF | RETENU | Uniquement lors d'une réduction effective de profondeur |
+| A-05 | Mono, stéréo, gauche ou droite | RETENU | Inclure contrôle de phase et pré-écoute |
+| A-06 | Normalisation Peak/RMS/LUFS | RETENU | Peak d'abord ; LUFS utile surtout aux contenus longs |
+| A-07 | Limiteur de sécurité | RETENU | Option explicite et comparaison avant/après |
+| A-08 | Auto-trim avec seuil | RETENU | Seuil, garde d'attaque et relâchement configurables |
+| A-09 | Forme d'onde et trim au sample | RETENU | Édition non destructive avant conversion |
+| A-10 | Slicing sur grille/nombre fixe | RETENU | Manuel avant les algorithmes automatiques |
+| A-11 | Détection de transitoires | REPORTÉ | Flux spectral après validation du slicing manuel |
+| A-12 | Préécoute au survol | EXPÉRIMENTER | Risque de déclenchements involontaires ; clic et MIDI prioritaires |
+| A-13 | Affectation automatique des slices | CORRIGÉ | 48 pads visibles, 12 par groupe ; slots sonores 1–999 |
+| A-14 | Space-Saver +7 à +12 demi-tons | EXPÉRIMENTER | Comparaison audible et mesure du gain ; aucune promesse de capacité doublée |
+| A-15 | Stems WAV | REPORTÉ | Nécessite les samples et un moteur de rendu fidèle |
+
+## Séquenceur et ergonomie
+
+| ID | Idée | Statut | Décision ou condition |
+|---|---|---|---|
+| E-01 | Piano-roll multipiste à 96 PPQN | RETENU | Le modèle doit conserver les ticks, pas seulement les pas visuels |
+| E-02 | Step-sequencer 16 à 99 pas | CORRIGÉ | Grille configurable ; la machine exprime surtout 1–99 mesures, pas une limite native de 99 pas |
+| E-03 | Vélocité en histogramme | RETENU | Bande repliable sous le piano-roll |
+| E-04 | Micro-timing au tick | RETENU | Position entière 96 PPQN, pas un faux champ « micro-shift 0–95 » |
+| E-05 | Gate time par poignée | RETENU | Utile surtout en KEY/LEGATO |
+| E-06 | Ratcheting/Note Repeat | EXPÉRIMENTER | Représenter d'abord comme notes répétées ; champ natif dédié non prouvé |
+| E-07 | Clic gauche pour créer | RETENU | Seulement dans la grille active |
+| E-08 | Clic droit pour supprimer | EXPÉRIMENTER | Neutraliser le menu contextuel uniquement dans l'éditeur et fournir une alternative clavier |
+| E-09 | Double-clic créer/supprimer | ÉCARTÉ V1 | Ambigu dans l'étude et conflictuel avec le clic simple |
+| E-10 | Alt + glisser sans grille | RETENU | Déplacement et durée au tick près |
+| E-11 | Pan par clic molette | RETENU | Ajouter aussi barres de défilement et gestes trackpad |
+| E-12 | Ctrl + molette zoom horizontal | RETENU | Zoom centré sur le pointeur |
+| E-13 | Alt + molette zoom vertical | EXPÉRIMENTER | Conflit avec le réglage de vélocité sur note ; arbitrage contextuel requis |
+| E-14 | Shift + molette défilement horizontal | RETENU | Convention répandue et utile aux longues partitions |
+| E-15 | Sélection rectangulaire | RETENU | Ctrl/Cmd + glisser, avec alternative tactile future |
+| E-16 | Alt + molette vélocité | EXPÉRIMENTER | Conflit E-13 ; préférer bande de vélocité ou Shift+Alt |
+| E-17 | Dupliquer Ctrl/Cmd+D | RETENU | Duplication à la suite avec Annuler |
+| E-18 | Flèches : déplacer/transposer | RETENU | Seulement si la grille possède le focus |
+| E-19 | Shift + flèches : octave | RETENU | Pour les pistes mélodiques uniquement |
+| E-20 | Ctrl/Cmd+Q quantifier | RETENU | Opération non destructive et annulable |
+| E-21 | M ou 0 pour muter une note | EXPÉRIMENTER | État d'édition local non natif ; définir son comportement à l'export |
+| E-22 | B outil lame | REPORTÉ | Faible priorité pour des événements de notes ; la poignée de durée suffit d'abord |
+| E-23 | Ctrl+1/2 résolution de grille | RETENU | Intercepter uniquement dans l'éditeur |
+| E-24 | Espace lecture/pause | RETENU | Ne jamais faire défiler la page quand l'éditeur a le focus |
+| E-25 | Annuler/Rétablir | RETENU | Prérequis à toute édition rapide à la souris |
+| E-26 | Accessibilité clavier | RETENU | Toute action souris essentielle doit avoir un équivalent clavier |
+
+## Paramètres, scènes et contrôle live
+
+| ID | Idée | Statut | Décision ou condition |
+|---|---|---|---|
+| P-01 | Attack/Release graphique | CORRIGÉ | Plage binaire observée 0–255, pas ADSR 0–99 |
+| P-02 | Filtre LPF/HPF par pad | CORRIGÉ | Paramètres de groupe/fader ; résonance native non confirmée |
+| P-03 | Automations de fader | RETENU | Layout lu ; édition après préservation aller-retour |
+| P-04 | FX Punch-In sur la grille | REPORTÉ | Sémantique binaire incomplète |
+| P-05 | Assignation des 12 cibles fader | RETENU | Paramètres internes du groupe, à ne pas confondre avec des CC externes |
+| P-06 | Configuration libre des CC | REPORTÉ | CC réellement reçus/émis à vérifier par captures |
+| P-07 | Matrice des 99 scènes | RETENU | Références complètes et patterns existants obligatoires |
+| P-08 | Réorganisation/duplication de scènes | RETENU | Après validation de l'encodeur de scènes |
+| P-09 | Canal MIDI par pad | RETENU | Champ lu dans chaque enregistrement de pad |
+| P-10 | Routage vers Supertone | ÉCARTÉ V1 | Supertone appartient à l'EP-40, pas à l'EP-133 |
+| P-11 | Pads PC ↔ machine | RÉALISÉ | MIDI OUT du studio et MIDI IN déjà disponibles |
+| P-12 | Suivi du fader physique | EXPÉRIMENTER | Capturer les messages réels avant de concevoir l'interface |
+| P-13 | Miroir LCD complet | ÉCARTÉ V1 | État complet non exposé par un protocole vérifié |
+
+## Exports et architecture
+
+| ID | Idée | Statut | Décision ou condition |
+|---|---|---|---|
+| X-01 | Export MIDI | RÉALISÉ | Aller-retour automatisé désormais testé |
+| X-02 | Export DAWproject | REPORTÉ | Premier candidat DAW après `.ppak` stable |
+| X-03 | Export REAPER `.rpp` | REPORTÉ | Format texte accessible, après DAWproject |
+| X-04 | Export Ableton `.als` | REPORTÉ | Format propriétaire et frontière AGPL à respecter |
+| X-05 | Export natif FL Studio | ÉCARTÉ V1 | Aucun chemin fiable démontré dans l'étude |
+| X-06 | Tauri + Rust | EXPÉRIMENTER | Évaluer après mesure des limites Web/bridge Python |
+| X-07 | React/TypeScript | RÉALISÉ | Architecture actuelle conservée |
+| X-08 | Canvas/PixiJS | EXPÉRIMENTER | Canvas seulement si le DOM ne tient pas la charge mesurée |
+| X-09 | TailwindCSS | ÉCARTÉ V1 | Le thème CSS actuel est établi et maîtrisé |
+| X-10 | VST3/CLAP | ÉCARTÉ V1 | Complexité et maintenance hors périmètre |
+| X-11 | Générateur algorithmique | REPORTÉ | Après éditeur, formats et bibliothèque stables |
+| X-12 | Application hors ligne installable | RETENU | PWA d'abord ; paquet desktop seulement si nécessaire |
+
+## Règle de suivi
+
+Toute nouvelle étude ajoute ou modifie des lignes ici. Une fonctionnalité ne
+passe à **RÉALISÉ** qu'après code, test, documentation et validation. Une idée
+ne change de statut que dans un commit qui explique la décision.

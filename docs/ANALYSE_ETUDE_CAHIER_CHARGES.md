@@ -2,6 +2,10 @@
 
 Date de décision : 9 août 2026.
 
+Deuxième passe : ajout des propositions d'ergonomie DAW et des raccourcis le
+9 août 2026. Toutes les idées sont suivies individuellement dans
+[`REGISTRE_IDEES.md`](REGISTRE_IDEES.md).
+
 ## Verdict
 
 L’étude constitue une bonne **vision produit**, mais pas une spécification
@@ -129,3 +133,30 @@ archive réelle, conservation des octets inconnus, test aller-retour sans
 modification, comparaison binaire, génération sur une copie, puis essai dans
 un projet brouillon sauvegardé. Aucun gain de vitesse ou de capacité ne sera
 annoncé avant mesure.
+
+## Complément — ergonomie DAW proposée
+
+La deuxième version de l'étude améliore nettement la description de l'éditeur.
+Les gestes de base sont retenus : création au clic, suppression rapide,
+redimensionnement du gate, déplacement libre avec Alt, sélection rectangulaire,
+pan, zoom, quantification et duplication.
+
+Quelques propositions doivent néanmoins être arbitrées avant le code :
+
+- le double-clic est décrit à la fois comme création et suppression ; il est
+  donc écarté de la version 1 ;
+- Alt + molette ne peut pas commander simultanément la vélocité d'une note et
+  le zoom vertical sans règle contextuelle difficile à découvrir ;
+- les raccourcis doivent agir seulement lorsque l'éditeur possède le focus,
+  afin de ne pas casser les commandes du navigateur ;
+- le clic droit doit garder une alternative clavier et ne supprimer le menu
+  contextuel que dans la grille ;
+- un historique Annuler/Rétablir doit précéder les gestes destructifs rapides ;
+- le mute d'une note n'a pas de représentation native confirmée et doit rester
+  un état local tant que son export n'est pas défini.
+
+Corrections supplémentaires : Attack et Release utilisent une plage observée
+0–255 ; la résonance de filtre par pad n'est pas démontrée ; Note Repeat peut
+être produit comme une suite de notes mais aucun champ natif de ratchet n'est
+confirmé ; l'EP-133 gère jusqu'à 99 mesures de pattern, ce qui ne signifie pas
+une grille matériellement limitée à 99 pas.

@@ -145,6 +145,9 @@ La vision détaillée est dans `docs/ROADMAP.md`, la gestion des données dans
 `docs/GESTION_FICHIERS_ET_SONS.md` et le futur chantier dans
 `docs/VISION_OP1.md`.
 
+Toutes les propositions, y compris celles qui ne sont pas encore intégrées,
+sont conservées avec un statut et un motif dans `docs/REGISTRE_IDEES.md`.
+
 ## Règles de travail
 
 - Ne jamais présenter un mapping MIDI supposé comme confirmé.

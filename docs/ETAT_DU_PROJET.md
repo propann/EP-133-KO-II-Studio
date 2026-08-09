@@ -123,3 +123,10 @@ périmètre de la version 1.
 
 Voir [`ANALYSE_ETUDE_CAHIER_CHARGES.md`](ANALYSE_ETUDE_CAHIER_CHARGES.md) pour
 les corrections binaires, les licences et les critères de validation.
+
+La deuxième version de l'étude, enrichie des conventions de piano-roll et des
+raccourcis DAW, est également triée. Le fichier
+[`REGISTRE_IDEES.md`](REGISTRE_IDEES.md) conserve chaque proposition avec un
+identifiant, un statut et une condition. Les interactions cohérentes sont
+ajoutées à la phase d'édition avancée ; les conflits de gestes, fonctions non
+prouvées et chantiers hors version 1 restent visibles sans entrer dans le code.

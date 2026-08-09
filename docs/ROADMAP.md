@@ -22,6 +22,8 @@ pour ouvrir, écouter ou modifier un projet.
 - Une seule horloge pilote le son, le curseur, la boucle et le MIDI.
 - Les données de projet restent ouvertes et documentées en JSON.
 - Les valeurs binaires non confirmées sont préservées, jamais réinventées.
+- Toute idée, même reportée ou écartée, reste tracée dans
+  [REGISTRE_IDEES.md](REGISTRE_IDEES.md).
 - Les sons de la machine ne sont pas copiés ou redistribués sans droit explicite.
 - Le jeu et le studio restent deux outils séparés sur la page d'accueil.
 
@@ -136,6 +138,13 @@ la cible occupée n'a pas été explicitement confirmée.
 - [ ] Charger une sauvegarde existante comme base afin de préserver les champs
   inconnus et réglages non édités.
 - [ ] Gérer patterns, scènes, song mode, vélocité, durée et automation.
+- [ ] Ajouter l'historique Annuler/Rétablir avant les gestes destructifs.
+- [ ] Piano-roll : sélection multiple, déplacement, redimensionnement du gate,
+  quantification et édition de vélocité.
+- [ ] Navigation longue partition : pan molette, zoom centré et défilement
+  horizontal, avec équivalents clavier accessibles.
+- [ ] Raccourcis limités à la grille ayant le focus : lecture, duplication,
+  déplacement, transposition et résolution de grille.
 - [ ] Associer les dépendances sonores et détecter les slots absents.
 - [ ] Écrire uniquement dans un projet brouillon choisi par l'utilisateur.
 - [ ] Checkpoint avant écriture, relecture binaire et restauration possible.
