@@ -49,3 +49,20 @@ Décisions :
 - 1.3 : tests du transport et nettoyage garanti des timers MIDI/audio.
 - 1.4 : découpage des pages Accueil, Jeu, Studio et Sons.
 - 2.1 : premier menu SAVE avec Nouveau, Sauvegarder et Charger.
+
+## Décision d'architecture — étude « compagnon ultime »
+
+Statut : analysée le 9 août 2026.
+
+- [x] idées produit classées entre indispensable, majeur et expérimental ;
+- [x] structures `.pak/.ppak`, pads et événements recoupées avec les travaux
+  fondés sur des captures ;
+- [x] format audio natif corrigé à 46 875 Hz PCM 16 bits ;
+- [x] frontière de licence documentée pour les exports DAW sous AGPL-3.0 ;
+- [x] architecture React/Vite conservée jusqu'à preuve qu'un paquet desktop est
+  nécessaire ;
+- [x] feuille de route amendée sans élargir la prochaine étape.
+
+Le rapport complet est dans
+`docs/ANALYSE_ETUDE_CAHIER_CHARGES.md`. Il fait foi lorsqu'une proposition de
+l'étude contredit une structure observée ou le guide officiel.

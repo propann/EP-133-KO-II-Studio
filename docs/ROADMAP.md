@@ -21,6 +21,7 @@ pour ouvrir, écouter ou modifier un projet.
 - Ne jamais présenter un export expérimental comme garanti compatible.
 - Une seule horloge pilote le son, le curseur, la boucle et le MIDI.
 - Les données de projet restent ouvertes et documentées en JSON.
+- Les valeurs binaires non confirmées sont préservées, jamais réinventées.
 - Les sons de la machine ne sont pas copiés ou redistribués sans droit explicite.
 - Le jeu et le studio restent deux outils séparés sur la page d'accueil.
 
@@ -111,14 +112,17 @@ de fichiers audio propriétaires au dépôt.
 
 ## Phase 4 — éditeur et préparateur de sons
 
-- [ ] Import WAV/AIFF et enregistrement local.
+- [ ] Import WAV/AIFF, puis MP3/FLAC/OGG si le décodeur retenu le permet.
 - [ ] Forme d'onde, trim, normalisation, fondu et détection du silence.
 - [ ] Mono/stéréo, fréquence, hauteur racine, BPM, ONE/KEYS/LEGATO.
+- [ ] Conversion native cible PCM 16 bits à 46 875 Hz et dither TPDF lorsque
+  la réduction de profondeur le nécessite.
 - [ ] Pré-écoute avant/après conversion.
 - [ ] Conversion contrôlée vers le format accepté par l'EP-133.
 - [ ] Estimation exacte du poids et jauge de mémoire avant transfert.
 - [ ] Choix prioritaire d'un slot libre.
 - [ ] Paquet de sons préparé, manifeste et contrôles d'intégrité.
+- [ ] Analyse des doublons et sons orphelins en mode proposition uniquement.
 - [ ] Sauvegarde du slot remplacé, confirmation explicite, écriture sérialisée
   puis lecture de vérification.
 
@@ -158,3 +162,8 @@ Voir [VISION_OP1.md](VISION_OP1.md).
 Ces fonctions sont utiles, mais ne doivent pas retarder la solidité : console de
 mixage avancée, plugins, mastering, automation complexe, time-stretch avancé,
 arrangement audio multipiste et collaboration en ligne.
+
+Les exports DAWproject et REAPER seront évalués avant les formats propriétaires.
+Le projet `phones24/ep133-export-to-daw` constitue une preuve de faisabilité,
+mais sa licence AGPL-3.0 impose une frontière juridique explicite. Voir
+[ANALYSE_ETUDE_CAHIER_CHARGES.md](ANALYSE_ETUDE_CAHIER_CHARGES.md).

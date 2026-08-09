@@ -96,3 +96,19 @@ une vraie gestion Save/Load. La feuille de route détaillée se trouve dans
 - Décision prise : ne pas créer de format natif Rhythm Hero. Le menu Save/Load
   utilisera `.pak/.ppak`, MIDI et le JSON technique `ep.project.v1`.
 - Prochaine étape : charger ces formats avant de construire le menu complet.
+
+## Étude technique externe analysée
+
+Le cahier des charges « compagnon ultime » a été conservé comme source d'idées,
+mais corrigé avant intégration à la feuille de route. Les faits désormais
+retenus sont notamment : 12 pads par groupe, patterns internes à 96 PPQN,
+horloge MIDI à 24 PPQN et WAV natifs observés à 46 875 Hz en PCM 16 bits.
+
+Les fonctions sûres et proches du produit — Save/Load `.pak/.ppak`, édition des
+événements, jauge mémoire et préparation audio — restent prioritaires. Les
+exports DAW, la déduplication, le Space-Saver et une éventuelle application
+Tauri sont reportés. Les plugins VST3/CLAP et le miroir LCD complet sortent du
+périmètre de la version 1.
+
+Voir [`ANALYSE_ETUDE_CAHIER_CHARGES.md`](ANALYSE_ETUDE_CAHIER_CHARGES.md) pour
+les corrections binaires, les licences et les critères de validation.

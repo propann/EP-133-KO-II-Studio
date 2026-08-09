@@ -144,6 +144,12 @@ La vision détaillée est dans `docs/ROADMAP.md`, la gestion des données dans
 ## Règles de travail
 
 - Ne jamais présenter un mapping MIDI supposé comme confirmé.
+- Ne jamais utiliser 44,1 kHz comme format natif supposé : les WAV natifs
+  observés sont mono PCM 16 bits à 46 875 Hz.
+- L'EP-133 possède 12 pads par groupe. Les patterns internes sont à 96 PPQN,
+  tandis que l'horloge MIDI externe est à 24 PPQN.
+- Préserver les octets et champs inconnus d'une archive machine réelle ; ne pas
+  implémenter le layout d'un document secondaire sans recoupement.
 - `core/midi` capture les événements, `core/engine` calcule le jeu, `core/audio` gère le temps et le son.
 - Préserver les sources MIDI et les documents pédagogiques.
 - Avant chaque livraison : lancer le build, vérifier l'état Git et documenter les limites restantes.
@@ -154,3 +160,5 @@ La vision détaillée est dans `docs/ROADMAP.md`, la gestion des données dans
 - Ne pas créer de format de composition propriétaire Rhythm Hero. Les formats
   de référence sont `.pak/.ppak`, `.mid` et `ep.project.v1.json` comme source
   technique intermédiaire. Voir `docs/DECISION_FORMATS_PROJET.md`.
+- L'analyse critique du cahier des charges étendu et ses corrections techniques
+  sont consignées dans `docs/ANALYSE_ETUDE_CAHIER_CHARGES.md`.
