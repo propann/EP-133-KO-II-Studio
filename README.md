@@ -55,6 +55,7 @@ lecture seule tant que les protections de transfert ne sont pas finalisées.
 - [Structure du morceau et Song mode](docs/STRUCTURE_SONG_MODE.md)
 - [Chargement du projet 1 de la machine](docs/CHARGEMENT_PROJET_MACHINE.md)
 - [Architecture du miroir local de la machine](docs/ARCHITECTURE_MIROIR_MACHINE.md)
+- [Clonage complet des projets et samples](docs/CLONAGE_COMPLET_MACHINE.md)
 - [Gestion des fichiers et des sons](docs/GESTION_FICHIERS_ET_SONS.md)
 - [Décision sur les formats de projet](docs/DECISION_FORMATS_PROJET.md)
 - [Vision future OP-1](docs/VISION_OP1.md)

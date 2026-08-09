@@ -90,6 +90,9 @@
 - `FICHIER → CLONER LA MACHINE` ouvre une fenêtre de préparation et crée un
   manifeste avec un instantané initial. La future Time Machine est documentée ;
   comparaison et restauration ne sont pas encore actives.
+- Le moteur local de clone complet sait copier les neuf projets, tous les PCM,
+  leurs métadonnées et hashes dans un dossier explicite avec reprise. Son
+  lancement depuis la fenêtre web attend encore le pont local natif.
 - Export MIDI ou description `ep.project.v1` JSON.
 - Scan SysEx en lecture seule validé sur la machine : 527 sons, 56,21 Mo,
   affectations de pads, noms, modes et notes racines.

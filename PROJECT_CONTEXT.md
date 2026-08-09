@@ -174,6 +174,9 @@ Le player HTML historique reste disponible comme référence fonctionnelle penda
 - Le Studio expose `FICHIER → CLONER LA MACHINE`. Le manifeste local contient
   un premier point d'historique. La Time Machine future doit dédupliquer par
   hash et ne restaurer le matériel qu'après checkpoint, diff et confirmation.
+- `tools/clone_ep133_readonly.py` est le moteur du vrai clone complet. Il copie
+  projets, PCM et métadonnées avec hashes et reprise. L'UI ne doit pas prétendre
+  l'avoir exécuté avant le retour d'un pont local confirmé.
 
 ## Priorités
 

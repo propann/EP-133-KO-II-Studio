@@ -320,3 +320,19 @@ Statut : fondation terminée le 9 août 2026.
 - [x] premier point `INSTANTANÉ INITIAL` créé ;
 - [x] état audio explicitement marqué « pont local requis » ;
 - [x] concept Time Machine documenté sans fausse restauration active.
+
+## Étape 3.3 — moteur de clonage intégral
+
+Statut : moteur terminé, branchement UI en attente le 9 août 2026.
+
+- [x] lecture des neuf projets ;
+- [x] lecture de tous les slots sonores occupés ;
+- [x] stockage PCM et métadonnées dans le dossier cible ;
+- [x] hash SHA-256 de chaque fichier ;
+- [x] manifeste atomique et progression récupérable ;
+- [x] reprise des samples déjà copiés et de taille identique ;
+- [x] aucune commande d'écriture vers la machine ;
+- [ ] boîte de dialogue native et pont local pour lancer le moteur depuis l'UI ;
+- [ ] campagne réelle complète sur les 527 sons.
+
+Voir `docs/CLONAGE_COMPLET_MACHINE.md`.
