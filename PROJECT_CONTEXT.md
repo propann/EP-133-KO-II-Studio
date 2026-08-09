@@ -144,6 +144,9 @@ Le player HTML historique reste disponible comme référence fonctionnelle penda
   `src/core/project/model.ts`. Les cibles pédagogiques passent uniquement par
   `exerciseTargetsToNotes` et `notesToExerciseTargets`. Voir
   `docs/MODELE_DONNEES_PROJET.md`.
+- Les règles d'extension de grille vivent dans `src/core/project/editor.ts` et
+  le score dans `src/core/engine/scoring.ts`. Les deux sont contrôlés par
+  `npm run test:engine`; voir `docs/VALIDATION_SCORE_ET_EXTENSION.md`.
 
 ## Priorités
 

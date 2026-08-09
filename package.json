@@ -6,8 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "test": "npm run test:engine && npm run test:transport && npm run test:exports",
     "test:exports": "node --experimental-strip-types tools/check-project-exports.mjs",
     "test:transport": "node --experimental-strip-types tools/check-transport.mjs",
+    "test:engine": "node --experimental-strip-types tools/check-engine.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

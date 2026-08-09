@@ -60,7 +60,7 @@ pour ouvrir, écouter ou modifier un projet.
 - [x] Découper `App.tsx` en pages et composants visuels isolés.
 - [x] Définir un modèle canonique pour studio, groupes et notes, avec
   adaptateurs explicites pour les cibles de score du jeu.
-- [ ] Ajouter tests du score, des conversions MIDI et de l'extension automatique.
+- [x] Ajouter tests du score, des conversions MIDI et de l'extension automatique.
 - [x] Ajouter une gestion centralisée du transport et nettoyer tous les timers.
 - [ ] Tester manuellement Chrome/Chromium, écran large et petit écran.
 - [ ] Mettre à jour systématiquement l'état du projet après chaque livraison.

@@ -120,6 +120,11 @@ une vraie gestion Save/Load. La feuille de route détaillée se trouve dans
   artificiellement au dernier moment.
 - Les exercices existants restent compatibles grâce à un adaptateur avec
   vélocité 100 et durée d'un seizième par défaut.
+- Le score et l'extension automatique disposent maintenant d'une vérification
+  dédiée avec `npm run test:engine`.
+- Les calculs de mesure ont été sortis des clics React vers
+  `src/core/project/editor.ts`, ce qui évite les divergences entre grille pads
+  et piano-roll.
 - Le noyau sait désormais relire les MIDI formats 0/1 qu'il exporte, conserver
   tempo, position, vélocité et durée, puis les répartir sur les groupes A–D.
 - Un inspecteur ouvre les conteneurs ZIP `.pak/.ppak`, valide `meta.json` et

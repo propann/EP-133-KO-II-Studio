@@ -24,6 +24,7 @@ import {
   type ProjectPatterns,
   type SequencerNote,
 } from './core/project/model';
+import { barsAfterStepEdit, measureFromGlobalStep, usedBars } from './core/project/editor';
 import { HomePage } from './pages/HomePage';
 import { SoundsPage } from './pages/SoundsPage';
 import { ScoreView } from './components/game/ScoreView';
@@ -392,7 +393,7 @@ export default function App() {
       ? current.filter((target) => !(target.pad === pad && target.beat === beat))
       : [...current, { id: `editor-${measure}-${pad}-${step}`, group: editorGroup, beat, pad, velocity: DEFAULT_NOTE_VELOCITY, duration: DEFAULT_NOTE_DURATION }]);
     if (!exists && editorMode === 'complete') midi.sendPad(pad, EDITOR_GROUPS.indexOf(editorGroup), 110);
-    if (!exists && measure === editorBars - 1) setEditorBars((bars) => bars + 1);
+    setEditorBars((bars) => barsAfterStepEdit(bars, measure, exists));
   };
 
   const toggleKeyStep = (note: number, globalStep: number) => {
@@ -402,10 +403,10 @@ export default function App() {
       ? current.filter((target) => !(target.pad === editorSelectedPad && target.beat === beat && target.note === note))
       : [...current, { id: `key-${editorGroup}-${editorSelectedPad}-${note}-${globalStep}`, group: editorGroup, beat, pad: editorSelectedPad, note, velocity: DEFAULT_NOTE_VELOCITY, duration: DEFAULT_NOTE_DURATION }]);
     if (!exists) midi.sendNote(note, 110);
-    if (!exists && Math.floor(globalStep / 16) === editorBars - 1) setEditorBars((bars) => bars + 1);
+    setEditorBars((bars) => barsAfterStepEdit(bars, measureFromGlobalStep(globalStep), exists));
   };
 
-  const effectiveEditorBars = Math.max(1, editorTargets.length ? Math.floor(Math.max(...editorTargets.map((target) => target.beat)) / 4) + 1 : 1);
+  const effectiveEditorBars = usedBars(editorTargets);
 
   const editorExercise = (): Exercise => ({ id: 'editor-preview', title: editorName.trim() || 'MON GROOVE', description: 'Exercice utilisateur', bpm: tempo, bars: effectiveEditorBars, timeSignature: '4/4', countInBars: 0, backingTrack: null, grading: { perfectMs: 35, goodMs: 90 }, targets: notesToExerciseTargets(editorTargets) });
 
@@ -420,7 +421,7 @@ export default function App() {
     if (editorGrid.current) editorGrid.current.scrollLeft = 0;
     const patterns = { ...editorGroupTargets, [editorGroup]: editorTargets };
     const allTargets = EDITOR_GROUPS.flatMap((group) => patterns[group]);
-    const playbackBars = Math.max(1, allTargets.length ? Math.floor(Math.max(...allTargets.map((target) => target.beat)) / 4) + 1 : effectiveEditorBars);
+    const playbackBars = allTargets.length ? usedBars(allTargets) : effectiveEditorBars;
     const playbackStart = performance.now() + (editorMode === 'complete' ? 80 : 0);
     const followPlayback = () => {
       const rawBeat = Math.max(0, (performance.now() - playbackStart) / (60000 / tempo));

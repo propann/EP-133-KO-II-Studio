@@ -48,7 +48,9 @@ Décisions :
 - 1.4b : composants visuels du Jeu. **Terminée.**
 - 1.4c : isolation visuelle de l'éditeur Studio. **Terminée.**
 - 1.5 : modèle de données unique pour notes, patterns et groupes. **Terminée.**
-- 1.6 : tests du score et de l'extension automatique. **Prochaine étape.**
+- 1.6 : tests du score et de l'extension automatique. **Terminée.**
+- 1.7 : campagne manuelle Chrome/Chromium, écrans large et étroit.
+  **Prochaine étape.**
 - 2.1 : premier menu SAVE avec Nouveau, Sauvegarder et Charger.
 
 ## Décision d'architecture — étude « compagnon ultime »
@@ -193,3 +195,18 @@ Statut : terminé le 9 août 2026.
 
 Le contrat et ses frontières sont documentés dans
 `docs/MODELE_DONNEES_PROJET.md`.
+
+## Étape 1.6 — score et extension automatique
+
+Statut : terminé le 9 août 2026.
+
+- [x] seuils PERFECT/GOOD/MISS et valeurs limites testés ;
+- [x] BPM et conversion en millisecondes testés ;
+- [x] sélection et consommation d'une cible testées ;
+- [x] combo, meilleur combo et MISS testés ;
+- [x] calcul des mesures utilisées extrait de React ;
+- [x] mesure de réserve et extension automatique testées ;
+- [x] suppression sans extension testée ;
+- [x] tests transport, formats et build toujours réussis.
+
+Voir `docs/VALIDATION_SCORE_ET_EXTENSION.md`.
