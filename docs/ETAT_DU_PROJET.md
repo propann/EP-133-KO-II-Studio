@@ -93,5 +93,6 @@ une vraie gestion Save/Load. La feuille de route détaillée se trouve dans
 - Une vérification automatisée couvre l'en-tête MIDI, le mapping d'un pad, une
   hauteur KEYS, les quatre patterns et le mode de pad exporté.
 - Commande : `npm run test:exports`.
-- Prochaine étape : définir le format de sauvegarde natif Rhythm Hero avant de
-  construire le menu Save/Load.
+- Décision prise : ne pas créer de format natif Rhythm Hero. Le menu Save/Load
+  utilisera `.pak/.ppak`, MIDI et le JSON technique `ep.project.v1`.
+- Prochaine étape : charger ces formats avant de construire le menu complet.

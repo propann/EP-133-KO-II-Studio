@@ -9,14 +9,15 @@ EP-133, puis préparer un transfert matériel vérifiable.
 
 | Format | Rôle | Écriture machine |
 |---|---|---|
-| `rhythm-hero.project.json` | format de travail complet et portable | non |
 | `ep.project.v1.json` | description destinée au compilateur EP | non |
 | `.mid` | échange de notes avec un DAW | non |
 | `.ppak` | sauvegarde/projet EP compilé | import explicite |
 | paquet de sons + manifeste | audio préparé et dépendances | transfert explicite |
 
-Le format Rhythm Hero doit conserver les groupes, patterns, notes, modes de
-pad, références aux deux banques, métadonnées et version de schéma.
+Il n'y aura pas de format de composition propriétaire Rhythm Hero. Le JSON
+`ep.project.v1` sert de source lisible avant compilation, le MIDI sert à
+l'échange musical et `.pak/.ppak` reste le fichier de la machine. Voir
+[`DECISION_FORMATS_PROJET.md`](DECISION_FORMATS_PROJET.md).
 
 ## Menu SAVE
 
@@ -25,9 +26,10 @@ Le bouton `SAVE` deviendra un bouton-menu contenant :
 - Nouveau ;
 - Sauvegarder ;
 - Sauvegarder sous ;
-- Charger ;
-- Importer ;
-- Exporter ;
+- Ouvrir `.pak/.ppak` ;
+- Importer MIDI ;
+- Sauvegarder une copie `.ppak` ;
+- Exporter MIDI ou JSON technique ;
 - Dupliquer comme exercice ;
 - Historique et récupération.
 

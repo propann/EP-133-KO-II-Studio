@@ -72,14 +72,16 @@ Transformer `SAVE` en menu de fichiers :
 - [ ] Sauvegarder et Sauvegarder sous.
 - [ ] Charger un projet local.
 - [ ] Renommer, dupliquer, archiver et supprimer avec confirmation.
-- [ ] Exporter/importer un fichier Rhythm Hero JSON versionné.
+- [ ] Ouvrir et sauvegarder des projets `.pak/.ppak`.
+- [ ] Importer et exporter du MIDI standard.
+- [ ] Garder `ep.project.v1` comme représentation technique intermédiaire.
 - [ ] Lister les exercices officiels du jeu dans la même bibliothèque, en
   lecture seule, avec action « Dupliquer pour modifier ».
 - [ ] Miniatures, date de modification, BPM, longueur et groupes utilisés.
 - [ ] Autosauvegarde de secours et historique Annuler/Rétablir.
 
-**Validation :** quitter, rouvrir et retrouver une composition identique sans
-machine connectée.
+**Validation :** quitter, rouvrir une sauvegarde machine et retrouver une
+composition identique sans machine connectée ; échanger ses notes en MIDI.
 
 ## Phase 3 — deux banques de sons hors ligne
 

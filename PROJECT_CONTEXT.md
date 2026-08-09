@@ -151,3 +151,6 @@ La vision détaillée est dans `docs/ROADMAP.md`, la gestion des données dans
 - Les sérialisations MIDI et EP-133 vivent dans
   `src/core/project/exporters.ts` et sont vérifiées par
   `npm run test:exports`; ne pas les remettre dans les composants React.
+- Ne pas créer de format de composition propriétaire Rhythm Hero. Les formats
+  de référence sont `.pak/.ppak`, `.mid` et `ep.project.v1.json` comme source
+  technique intermédiaire. Voir `docs/DECISION_FORMATS_PROJET.md`.

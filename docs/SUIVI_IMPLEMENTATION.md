@@ -44,7 +44,8 @@ Décisions :
 
 ## Étapes suivantes
 
-- 1.2 : modèle de projet Rhythm Hero versionné. **Prochaine étape.**
+- 1.2 : lecture des formats machine et MIDI. **Prochaine étape.** Aucun format
+  propriétaire Rhythm Hero ne sera créé ; voir `DECISION_FORMATS_PROJET.md`.
 - 1.3 : tests du transport et nettoyage garanti des timers MIDI/audio.
 - 1.4 : découpage des pages Accueil, Jeu, Studio et Sons.
 - 2.1 : premier menu SAVE avec Nouveau, Sauvegarder et Charger.

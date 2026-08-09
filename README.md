@@ -44,6 +44,7 @@ lecture seule tant que les protections de transfert ne sont pas finalisées.
 
 - [Feuille de route](docs/ROADMAP.md)
 - [Gestion des fichiers et des sons](docs/GESTION_FICHIERS_ET_SONS.md)
+- [Décision sur les formats de projet](docs/DECISION_FORMATS_PROJET.md)
 - [Vision future OP-1](docs/VISION_OP1.md)
 - [Journal de suivi des étapes](docs/SUIVI_IMPLEMENTATION.md)
 - [Architecture cible](docs/ARCHITECTURE.md)
