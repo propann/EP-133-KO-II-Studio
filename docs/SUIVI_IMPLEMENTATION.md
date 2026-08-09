@@ -225,3 +225,13 @@ Statut : terminé le 9 août 2026.
 - [x] principes graphiques consignés sans copier les illustrations protégées.
 
 Voir `docs/BIBLIOTHEQUE_DOCUMENTAIRE.md`.
+
+## Revue des deux sections principales
+
+Statut : réalisée le 9 août 2026.
+
+Le jeu et le Studio ont été évalués séparément avant de poursuivre le design
+des partitions. Deux défauts prioritaires sont consignés : omissions non
+comptées comme MISS à la fin du jeu et SAVE complet ne conservant pas encore un
+véritable projet quatre groupes. Les concepts graphiques applicables au jeu et
+au Studio sont détaillés dans `docs/POINT_JEU_ET_STUDIO.md`.

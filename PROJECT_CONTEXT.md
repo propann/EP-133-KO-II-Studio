@@ -151,6 +151,9 @@ Le player HTML historique reste disponible comme référence fonctionnelle penda
   originale inspirée des principes généraux du manuel. Ne jamais versionner le
   PDF officiel ou ses illustrations sans licence explicite. Voir
   `docs/BIBLIOTHEQUE_DOCUMENTAIRE.md`.
+- Le dernier point d'architecture sur les deux sections principales est dans
+  `docs/POINT_JEU_ET_STUDIO.md`. Priorités : omissions du score, vrai Save/Load
+  quatre groupes, Annuler/Rétablir, puis édition visuelle vélocité/gate.
 
 ## Priorités
 
