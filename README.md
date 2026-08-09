@@ -45,6 +45,7 @@ lecture seule tant que les protections de transfert ne sont pas finalisées.
 - [Feuille de route](docs/ROADMAP.md)
 - [Analyse critique du cahier des charges étendu](docs/ANALYSE_ETUDE_CAHIER_CHARGES.md)
 - [Registre de toutes les idées et décisions](docs/REGISTRE_IDEES.md)
+- [Validation du transport audio et MIDI](docs/VALIDATION_TRANSPORT.md)
 - [Gestion des fichiers et des sons](docs/GESTION_FICHIERS_ET_SONS.md)
 - [Décision sur les formats de projet](docs/DECISION_FORMATS_PROJET.md)
 - [Vision future OP-1](docs/VISION_OP1.md)

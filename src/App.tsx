@@ -145,11 +145,14 @@ export default function App() {
   const flashTimer = useRef<number | undefined>(undefined);
   const countTimer = useRef<number | undefined>(undefined);
   const startTimer = useRef<number | undefined>(undefined);
-  const endTimer = useRef<number | undefined>(undefined);
+  const gameEndTimer = useRef<number | undefined>(undefined);
   const scoreScroll = useRef<HTMLDivElement | null>(null);
   const editorGrid = useRef<HTMLDivElement | null>(null);
   const editorPlaybackFrame = useRef<number | undefined>(undefined);
   const editorLoopTimer = useRef<number | undefined>(undefined);
+  const editorEndTimer = useRef<number | undefined>(undefined);
+  const gameRun = useRef(0);
+  const editorRun = useRef(0);
   const tempoDrag = useRef<{ y: number; tempo: number } | null>(null);
   const difficultyDrag = useRef<{ y: number; difficulty: number } | null>(null);
   const running = phase === 'playing';
@@ -193,6 +196,49 @@ export default function App() {
 
   const midi = useWebMidi(onHit, onMidiObservation);
 
+  const clearGameTimers = useCallback(() => {
+    if (frame.current !== undefined) cancelAnimationFrame(frame.current);
+    if (countTimer.current !== undefined) window.clearInterval(countTimer.current);
+    if (startTimer.current !== undefined) window.clearTimeout(startTimer.current);
+    if (gameEndTimer.current !== undefined) window.clearTimeout(gameEndTimer.current);
+    frame.current = undefined;
+    countTimer.current = undefined;
+    startTimer.current = undefined;
+    gameEndTimer.current = undefined;
+  }, []);
+
+  const clearEditorTimers = useCallback(() => {
+    if (editorPlaybackFrame.current !== undefined) cancelAnimationFrame(editorPlaybackFrame.current);
+    if (editorLoopTimer.current !== undefined) window.clearInterval(editorLoopTimer.current);
+    if (editorEndTimer.current !== undefined) window.clearTimeout(editorEndTimer.current);
+    editorPlaybackFrame.current = undefined;
+    editorLoopTimer.current = undefined;
+    editorEndTimer.current = undefined;
+  }, []);
+
+  const stopGameTransport = useCallback(() => {
+    gameRun.current += 1;
+    clearGameTimers();
+    audio.stop();
+    setPhase('idle');
+  }, [clearGameTimers]);
+
+  const stopEditorTransport = useCallback((resetPlayhead = true) => {
+    editorRun.current += 1;
+    clearEditorTimers();
+    audio.stop();
+    midi.stopOutput();
+    setEditorPlaying(false);
+    if (resetPlayhead) setEditorPlaybackBeat(0);
+  }, [clearEditorTimers, midi.stopOutput]);
+
+  const goHome = useCallback(() => {
+    stopGameTransport();
+    stopEditorTransport();
+    setEditorOpen(false);
+    setWorkspaceView('home');
+  }, [stopEditorTransport, stopGameTransport]);
+
   const connectMidi = async () => {
     await audio.unlock();
     await midi.connect();
@@ -214,16 +260,22 @@ export default function App() {
       frame.current = requestAnimationFrame(tick);
     };
     frame.current = requestAnimationFrame(tick);
-    return () => { if (frame.current !== undefined) cancelAnimationFrame(frame.current); };
+    return () => {
+      if (frame.current !== undefined) cancelAnimationFrame(frame.current);
+      frame.current = undefined;
+    };
   }, [transportActive]);
+
+  useEffect(() => () => {
+    clearGameTimers();
+    clearEditorTimers();
+    midi.stopOutput();
+    audio.dispose();
+  }, [clearEditorTimers, clearGameTimers, midi.stopOutput]);
 
   const toggle = async () => {
     if (sessionActive) {
-      audio.stop();
-      setPhase('idle');
-      if (countTimer.current !== undefined) window.clearInterval(countTimer.current);
-      if (startTimer.current !== undefined) window.clearTimeout(startTimer.current);
-      if (endTimer.current !== undefined) window.clearTimeout(endTimer.current);
+      stopGameTransport();
       return;
     }
     targets.current = activeExercise.targets.map((target, index) => ({ ...target, id: `target-${index}` }));
@@ -233,37 +285,36 @@ export default function App() {
     setSongTime(0);
     setCountdown(4);
     setPhase('countin');
+    const run = ++gameRun.current;
     await audio.start(activeExercise, 1);
+    if (run !== gameRun.current) return;
     const beatMs = 60000 / activeExercise.bpm;
     let remaining = 4;
     countTimer.current = window.setInterval(() => {
       remaining -= 1;
       setCountdown(Math.max(1, remaining));
-      if (remaining <= 1 && countTimer.current !== undefined) window.clearInterval(countTimer.current);
+      if (remaining <= 1 && countTimer.current !== undefined) {
+        window.clearInterval(countTimer.current);
+        countTimer.current = undefined;
+      }
     }, beatMs);
     startTimer.current = window.setTimeout(() => setPhase('playing'), beatMs * 4);
-    endTimer.current = window.setTimeout(() => {
-      audio.stop();
-      setPhase('idle');
-    }, beatMs * (4 + activeExercise.bars * 4));
+    gameEndTimer.current = window.setTimeout(stopGameTransport, beatMs * (4 + activeExercise.bars * 4));
   };
 
   const togglePreview = async () => {
     if (phase === 'preview') {
-      audio.stop();
-      setPhase('idle');
-      if (endTimer.current !== undefined) window.clearTimeout(endTimer.current);
+      stopGameTransport();
       return;
     }
     if (sessionActive) return;
     targets.current = activeExercise.targets.map((target, index) => ({ ...target, id: `target-${index}` }));
     setSongTime(0);
     setPhase('preview');
+    const run = ++gameRun.current;
     await audio.start(activeExercise, 0);
-    endTimer.current = window.setTimeout(() => {
-      audio.stop();
-      setPhase('idle');
-    }, 60000 / activeExercise.bpm * activeExercise.bars * 4);
+    if (run !== gameRun.current) return;
+    gameEndTimer.current = window.setTimeout(stopGameTransport, 60000 / activeExercise.bpm * activeExercise.bars * 4);
   };
 
   const updateSound = (pad: number, patch: Partial<PadSoundSettings>) => {
@@ -359,13 +410,11 @@ export default function App() {
 
   const toggleEditorPlayback = async () => {
     if (editorPlaying) {
-      audio.stop(); midi.stopOutput(); setEditorPlaying(false); setEditorPlaybackBeat(0);
-      if (editorPlaybackFrame.current !== undefined) cancelAnimationFrame(editorPlaybackFrame.current);
-      if (editorLoopTimer.current !== undefined) window.clearInterval(editorLoopTimer.current);
-      if (endTimer.current !== undefined) window.clearTimeout(endTimer.current);
+      stopEditorTransport();
       return;
     }
     setEditorPlaying(true);
+    const run = ++editorRun.current;
     setEditorPlaybackBeat(0);
     if (editorGrid.current) editorGrid.current.scrollLeft = 0;
     const patterns = { ...editorGroupTargets, [editorGroup]: editorTargets };
@@ -401,10 +450,11 @@ export default function App() {
     } else {
       // Dans l'éditeur jeu, la lecture sert à écouter le groove sans clic métronomique.
       await audio.start(editorExercise(), 0, false);
+      if (run !== editorRun.current) return;
     }
-    if (!editorLoop) endTimer.current = window.setTimeout(() => {
-      audio.stop(); midi.stopOutput(); setEditorPlaying(false); setEditorPlaybackBeat(playbackBars * 4);
-      if (editorPlaybackFrame.current !== undefined) cancelAnimationFrame(editorPlaybackFrame.current);
+    if (!editorLoop) editorEndTimer.current = window.setTimeout(() => {
+      stopEditorTransport(false);
+      setEditorPlaybackBeat(playbackBars * 4);
     }, 60000 / tempo * playbackBars * 4 + (editorMode === 'complete' ? 80 : 0));
   };
 
@@ -415,8 +465,7 @@ export default function App() {
     setUserExercises(next);
     setStyleId(`user:${saved.id}`);
     setEditorOpen(false);
-    audio.stop();
-    setEditorPlaying(false);
+    stopEditorTransport();
   };
 
   const songBeat = songTime * activeExercise.bpm / 60;
@@ -444,10 +493,6 @@ export default function App() {
     editorGrid.current.scrollLeft = editorGrid.current.scrollWidth;
   }, [editorBars, editorOpen]);
 
-  useEffect(() => () => {
-    if (editorPlaybackFrame.current !== undefined) cancelAnimationFrame(editorPlaybackFrame.current);
-  }, []);
-
   if (workspaceView === 'home') return <main className="home-screen">
     <header className="home-brand"><span>EP‑133</span><b>RHYTHM HERO</b><small>JEU · CRÉATION · MACHINE</small></header>
     <section className="home-intro"><p>Apprends le rythme, construis tes propres partitions et transforme ton EP‑133 en véritable instrument de création.</p><div className="home-machine-status"><i className={midi.connected || midi.outputConnected ? 'online' : ''} /><span>{midi.connected || midi.outputConnected ? 'EP‑133 CONNECTÉ' : 'EP‑133 PRÊT À CONNECTER'}</span>{deviceInventory && <small>PROJET {deviceInventory.project} · {Object.keys(deviceInventory.sounds).length} SONS SCANNÉS</small>}</div></section>
@@ -468,7 +513,7 @@ export default function App() {
 
   return <main className={last ? `impact impact-${last.grade.toLowerCase()}` : ''}>
     <header className="toolbar">
-      <button className="home-back compact" onClick={() => setWorkspaceView('home')}>← ACCUEIL</button>
+      <button className="home-back compact" onClick={goHome}>← ACCUEIL</button>
       <strong className="brand">EP‑133 <span>RHYTHM HERO</span></strong>
       <button className="editor-button compact" disabled={sessionActive} onClick={openEditor}>ÉDITEUR</button>
       <div className={`difficulty-control ${sessionActive ? 'locked' : ''}`} title="Maintenir et glisser verticalement" onPointerDown={(event) => { if (sessionActive) return; event.currentTarget.setPointerCapture(event.pointerId); difficultyDrag.current = { y: event.clientY, difficulty }; }} onPointerMove={(event) => { if (!difficultyDrag.current || sessionActive) return; setDifficulty(Math.max(1, Math.min(5, Math.round(difficultyDrag.current.difficulty + (difficultyDrag.current.y - event.clientY) / 24)))); }} onPointerUp={() => { difficultyDrag.current = null; }} onPointerCancel={() => { difficultyDrag.current = null; }}><small>NIVEAU ↕</small><b>{difficulty}</b></div>
@@ -480,7 +525,7 @@ export default function App() {
     </header>
     {phase === 'countin' && <div className="countdown" aria-live="assertive"><small>1 MESURE POUR SE PRÉPARER</small><b>{countdown}</b></div>}
     {editorOpen && <div className="editor-overlay"><section className="exercise-editor">
-      <header><button className="editor-home-button" onClick={() => { audio.stop(); midi.stopOutput(); setEditorPlaying(false); setEditorPlaybackBeat(0); setEditorOpen(false); setWorkspaceView('home'); }}>← ACCUEIL</button><div><small>{editorMode === 'game' ? 'ÉDITEUR JEU' : 'ÉDITEUR EP‑133 COMPLET'}</small><input value={editorName} maxLength={32} onChange={(event) => setEditorName(event.target.value.toUpperCase())} aria-label="Nom de l'exercice" /></div>{editorMode === 'complete' && <><div className="editor-groups" aria-label="Groupes EP-133">{EDITOR_GROUPS.map((group) => <button className={editorGroup === group ? 'active' : ''} onClick={() => changeEditorGroup(group)} key={group}>{group}</button>)}</div><span className={`device-scan-state ${deviceInventory ? 'active' : ''}`}>{deviceInventory ? `PROJET ${deviceInventory.project} · SCAN LECTURE SEULE` : 'AUCUN SCAN'}</span><button className={`editor-midi-out ${midi.outputConnected ? 'active' : ''}`} onClick={() => void connectMidi()}>{midi.outputConnected ? 'MIDI OUT ✓' : 'CONNECTER EP‑133'}</button></>}<div className={`editor-vu ${editorPlaying ? 'active' : ''}`}><span>-20</span><span>-6</span><span>0</span><i /><b>VU</b></div></header>
+      <header><button className="editor-home-button" onClick={goHome}>← ACCUEIL</button><div><small>{editorMode === 'game' ? 'ÉDITEUR JEU' : 'ÉDITEUR EP‑133 COMPLET'}</small><input value={editorName} maxLength={32} onChange={(event) => setEditorName(event.target.value.toUpperCase())} aria-label="Nom de l'exercice" /></div>{editorMode === 'complete' && <><div className="editor-groups" aria-label="Groupes EP-133">{EDITOR_GROUPS.map((group) => <button className={editorGroup === group ? 'active' : ''} onClick={() => changeEditorGroup(group)} key={group}>{group}</button>)}</div><span className={`device-scan-state ${deviceInventory ? 'active' : ''}`}>{deviceInventory ? `PROJET ${deviceInventory.project} · SCAN LECTURE SEULE` : 'AUCUN SCAN'}</span><button className={`editor-midi-out ${midi.outputConnected ? 'active' : ''}`} onClick={() => void connectMidi()}>{midi.outputConnected ? 'MIDI OUT ✓' : 'CONNECTER EP‑133'}</button></>}<div className={`editor-vu ${editorPlaying ? 'active' : ''}`}><span>-20</span><span>-6</span><span>0</span><i /><b>VU</b></div></header>
       <div className="editor-commandbar"><button className="save" disabled={!editorName.trim() || (!editorTargets.length && !Object.values(editorGroupTargets).some((groupTargets) => groupTargets.length))} onClick={saveEditorExercise}>● SAVE</button><button className="transport-play" disabled={editorMode === 'complete' && !midi.outputConnected} onClick={() => void toggleEditorPlayback()}>{editorPlaying ? '■ STOP' : '▶ LECTURE'}</button><button className={`loop-toggle ${editorLoop ? 'active' : ''}`} disabled={editorMode !== 'complete' || editorPlaying} onClick={() => setEditorLoop((loop) => !loop)}>↻ BOUCLE {editorLoop ? 'ON' : 'OFF'}</button><label>EXPORT <select value={editorExportFormat} onChange={(event) => setEditorExportFormat(event.target.value as 'midi' | 'json')}><option value="midi">MIDI (.mid)</option><option value="json">PROJET EP‑133 (.json)</option></select></label><button className="midi-export" onClick={exportEditor}>⇩ EXPORTER</button></div>
       {editorMode === 'complete' && <div className="editor-pad-strip"><strong>PAD {editorGroup}</strong><div className="editor-pad-buttons">{PADS.map((pad, index) => <button className={`${editorSelectedPad === index ? 'active' : ''} ${(editorPadModes[`${editorGroup}:${index}`] || 'ONE') === 'KEYS' ? 'melodic' : ''}`} title={`${devicePadName(index)} · SLOT ${devicePadInfo(index)?.slot || 'VIDE'}`} onClick={() => { setEditorSelectedPad(index); setKeyEditorOpen((editorPadModes[`${editorGroup}:${index}`] || 'ONE') === 'KEYS'); midi.sendPad(index, EDITOR_GROUPS.indexOf(editorGroup), 110); }} onAuxClick={(event) => { if (event.button !== 1) return; event.preventDefault(); setEditorSelectedPad(index); setEditorPadModes((current) => ({ ...current, [`${editorGroup}:${index}`]: 'KEYS' })); setKeyEditorOpen(true); }} key={pad.key}><b>{pad.key}</b><small>{devicePadName(index)}</small></button>)}</div><div className="editor-pad-mode"><small>MODE DU PAD {PADS[editorSelectedPad].key} · {devicePadName(editorSelectedPad)}</small>{(['ONE', 'KEYS'] as const).map((mode) => <button className={(editorPadModes[`${editorGroup}:${editorSelectedPad}`] || 'ONE') === mode ? 'active' : ''} onClick={() => { setEditorPadModes((current) => ({ ...current, [`${editorGroup}:${editorSelectedPad}`]: mode })); setKeyEditorOpen(mode === 'KEYS'); }} key={mode}>{mode}</button>)}</div></div>}
       {keyEditorOpen && editorMode === 'complete' ? <div className="key-editor"><div className="key-editor-title"><span>GROUPE {editorGroup} · PAD {PADS[editorSelectedPad].key} · {PADS[editorSelectedPad].name}</span><b>MODE KEYS · PIANO-ROLL</b><button onClick={() => setKeyEditorOpen(false)}>RETOUR AUX 12 PADS</button></div><div className="editor-grid key-grid" ref={editorGrid}><div className="key-roll" style={{ width: `${160 + editorBars * 960}px` }}>

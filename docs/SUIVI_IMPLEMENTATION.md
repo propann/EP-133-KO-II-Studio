@@ -44,9 +44,7 @@ Décisions :
 
 ## Étapes suivantes
 
-- 1.3 : tests du transport et nettoyage garanti des timers MIDI/audio.
-  **Prochaine étape.**
-- 1.4 : découpage des pages Accueil, Jeu, Studio et Sons.
+- 1.4 : découpage des pages Accueil, Jeu, Studio et Sons. **Prochaine étape.**
 - 2.1 : premier menu SAVE avec Nouveau, Sauvegarder et Charger.
 
 ## Décision d'architecture — étude « compagnon ultime »
@@ -118,5 +116,21 @@ Statut : créé le 9 août 2026 après la deuxième version de l'étude.
 - [x] les fonctions reportées, expérimentales ou écartées restent visibles dans
   `docs/REGISTRE_IDEES.md`.
 
-Cette décision documentaire ne change pas la prochaine étape technique : la
-stabilisation du transport reste prioritaire.
+À la date de cette décision documentaire, la stabilisation du transport restait
+la prochaine étape technique ; elle est clôturée ci-dessous.
+
+## Étape 1.3 — transport audio/MIDI
+
+Statut : terminé le 9 août 2026.
+
+- [x] timers de jeu et d'éditeur séparés ;
+- [x] arrêt centralisé pour le jeu et le studio ;
+- [x] compte à rebours, fin, boucle et animations annulés sur tous les chemins ;
+- [x] génération de session empêchant un démarrage asynchrone après STOP ;
+- [x] retour accueil relié à l'arrêt complet ;
+- [x] nettoyage Tone.js et MIDI au démontage ;
+- [x] MIDI STOP, All Notes Off et All Sound Off sur 16 canaux ;
+- [x] test `npm run test:transport`, tests formats et build réussis.
+
+Le détail des risques et des garanties est dans
+`docs/VALIDATION_TRANSPORT.md`.

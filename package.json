@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "test:exports": "node --experimental-strip-types tools/check-project-exports.mjs",
+    "test:transport": "node --experimental-strip-types tools/check-transport.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

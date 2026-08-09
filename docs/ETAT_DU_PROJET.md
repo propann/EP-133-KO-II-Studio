@@ -96,6 +96,11 @@ une vraie gestion Save/Load. La feuille de route détaillée se trouve dans
 - Décision prise : ne pas créer de format natif Rhythm Hero. Le menu Save/Load
   utilisera `.pak/.ppak`, MIDI et le JSON technique `ep.project.v1`.
 - Prochaine étape : charger ces formats avant de construire le menu complet.
+- Transport solidifié : timers jeu/studio séparés, STOP centralisé, anciennes
+  sessions asynchrones invalidées et nettoyage complet au retour accueil.
+- Le PANIC MIDI couvre désormais les 16 canaux avec All Notes Off et All Sound
+  Off ; une disparition du port pendant l'arrêt est tolérée.
+- Vérification dédiée : `npm run test:transport`.
 - Le noyau sait désormais relire les MIDI formats 0/1 qu'il exporte, conserver
   tempo, position, vélocité et durée, puis les répartir sur les groupes A–D.
 - Un inspecteur ouvre les conteneurs ZIP `.pak/.ppak`, valide `meta.json` et

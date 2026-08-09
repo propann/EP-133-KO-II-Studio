@@ -12,6 +12,7 @@ export class AudioEngine {
   private scheduledNotes: number[] = [];
   private metronomeBeat = 0;
   private countInSeconds = 0;
+  private startToken = 0;
   private click: Tone.Synth | null = null;
   private drumBus: Tone.Channel | null = null;
   private distortion: Tone.Distortion | null = null;
@@ -83,9 +84,11 @@ export class AudioEngine {
   }
 
   async start(exercise: Exercise, countInBars = 1, withMetronome = true) {
-    await Tone.start();
-    this.prepareInstruments();
     this.stop();
+    const token = this.startToken;
+    await Tone.start();
+    if (token !== this.startToken) return;
+    this.prepareInstruments();
     Tone.Transport.bpm.value = exercise.bpm;
     this.countInSeconds = countInBars * 4 * 60 / exercise.bpm;
     if (withMetronome) {
@@ -114,14 +117,48 @@ export class AudioEngine {
   }
 
   stop() {
+    this.startToken += 1;
     Tone.Transport.stop();
-    Tone.Transport.seconds = 0;
     if (this.metronomeId !== null) Tone.Transport.clear(this.metronomeId);
     this.scheduledNotes.forEach((id) => Tone.Transport.clear(id));
+    Tone.Transport.cancel(0);
+    Tone.Transport.seconds = 0;
     this.metronomeId = null;
     this.scheduledNotes = [];
     this.metronomeBeat = 0;
     this.countInSeconds = 0;
+  }
+
+  dispose() {
+    this.stop();
+    this.click?.dispose();
+    this.kick?.dispose();
+    this.clap?.dispose();
+    this.snare?.dispose();
+    this.openHat?.dispose();
+    this.closedHat?.dispose();
+    this.ride?.dispose();
+    this.percs.forEach((instrument) => instrument.dispose());
+    this.shaker?.dispose();
+    this.bass?.dispose();
+    this.fx?.dispose();
+    this.distortion?.dispose();
+    this.compressor?.dispose();
+    this.drumBus?.dispose();
+    this.click = null;
+    this.kick = null;
+    this.clap = null;
+    this.snare = null;
+    this.openHat = null;
+    this.closedHat = null;
+    this.ride = null;
+    this.percs = [];
+    this.shaker = null;
+    this.bass = null;
+    this.fx = null;
+    this.distortion = null;
+    this.compressor = null;
+    this.drumBus = null;
   }
 
   async loadBackingTrack(url: string) {

@@ -60,7 +60,7 @@ pour ouvrir, écouter ou modifier un projet.
 - [ ] Découper `App.tsx` en pages et composants testables.
 - [ ] Définir un modèle de données unique pour jeu, studio, groupes et notes.
 - [ ] Ajouter tests du score, des conversions MIDI et de l'extension automatique.
-- [ ] Ajouter une gestion centralisée du transport et nettoyer tous les timers.
+- [x] Ajouter une gestion centralisée du transport et nettoyer tous les timers.
 - [ ] Tester manuellement Chrome/Chromium, écran large et petit écran.
 - [ ] Mettre à jour systématiquement l'état du projet après chaque livraison.
 

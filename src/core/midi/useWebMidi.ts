@@ -18,6 +18,11 @@ export type MidiPadMap = Record<string, number>;
 
 export const midiKey = (channel: number, note: number) => `${channel}:${note}`;
 
+export const midiPanicMessages = () => [
+  [0xfc],
+  ...Array.from({ length: 16 }, (_, channel) => [[0xb0 | channel, 123, 0], [0xb0 | channel, 120, 0]]).flat(),
+];
+
 // Ordre officiel des notes dans chaque groupe : . 0 ENTER 1 2 3 4 5 6 7 8 9.
 // Ordre visuel de notre grille : 7 8 9 / 4 5 6 / 1 2 3 / . 0 ENTER.
 const NOTE_OFFSET_TO_VISUAL_PAD = [9, 10, 11, 6, 7, 8, 3, 4, 5, 0, 1, 2];
@@ -140,9 +145,12 @@ export function useWebMidi(
 
   const stopOutput = useCallback(() => {
     accessRef.current?.outputs.forEach((output) => {
-      (output as MIDIOutput & { clear: () => void }).clear();
-      output.send([0xfc]);
-      output.send([0xb0, 123, 0]);
+      try {
+        (output as MIDIOutput & { clear?: () => void }).clear?.();
+        midiPanicMessages().forEach((message) => output.send(message));
+      } catch {
+        // Un port peut disparaître entre l'état connecté et STOP.
+      }
     });
   }, []);
 
@@ -158,9 +166,10 @@ export function useWebMidi(
   }, []);
 
   useEffect(() => () => {
+    stopOutput();
     detachInputs();
     if (accessRef.current) accessRef.current.onstatechange = null;
-  }, [detachInputs]);
+  }, [detachInputs, stopOutput]);
 
   return { ...state, connect, sendPad, sendNote, stopOutput, startOutputTransport, sendClockWindow };
 }

@@ -129,6 +129,9 @@ Le player HTML historique reste disponible comme référence fonctionnelle penda
   pads, patterns, automations, scènes, song et tempo en conservant les octets
   bruts. Le projet 1 réel a été relu sans avertissement ; voir
   `docs/VALIDATION_LECTEUR_PROJET_EP133.md`.
+- Les transports jeu et studio possèdent des timers séparés et des arrêts
+  centralisés. Toute session asynchrone arrêtée est invalidée ; le PANIC MIDI
+  agit sur 16 canaux. Voir `docs/VALIDATION_TRANSPORT.md`.
 
 ## Priorités
 
