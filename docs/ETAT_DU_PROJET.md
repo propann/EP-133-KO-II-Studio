@@ -72,6 +72,10 @@
 - Éditeur du jeu et studio complet séparés, chacun revenant à l'accueil.
 - Studio sur groupes A–D avec 12 pistes, mesures horizontales extensibles,
   piano-roll KEYS, lecture, boucle, horloge et sortie MIDI vers l'EP-133.
+- Le Studio possède maintenant un vrai cycle local `NOUVEAU / SAVE / OUVRIR`
+  basé sur `ep.project.v1`. Il conserve les quatre groupes, le BPM, la hauteur,
+  la vélocité, la durée et les modes de pad sans fermer l'éditeur.
+- La sauvegarde des exercices USER reste séparée de celle des projets Studio.
 - Export MIDI ou description `ep.project.v1` JSON.
 - Scan SysEx en lecture seule validé sur la machine : 527 sons, 56,21 Mo,
   affectations de pads, noms, modes et notes racines.

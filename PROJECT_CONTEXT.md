@@ -152,8 +152,12 @@ Le player HTML historique reste disponible comme référence fonctionnelle penda
   PDF officiel ou ses illustrations sans licence explicite. Voir
   `docs/BIBLIOTHEQUE_DOCUMENTAIRE.md`.
 - Le dernier point d'architecture sur les deux sections principales est dans
-  `docs/POINT_JEU_ET_STUDIO.md`. Priorités : omissions du score, vrai Save/Load
-  quatre groupes, Annuler/Rétablir, puis édition visuelle vélocité/gate.
+  `docs/POINT_JEU_ET_STUDIO.md`.
+- Le Save/Load Studio local vit dans `src/core/project/studioLibrary.ts`. Il
+  enveloppe le document musical `ep.project.v1` sans inventer de nouveau format.
+  Voir `docs/VALIDATION_SAVE_LOAD_STUDIO.md`.
+- Priorités suivantes : `Sauvegarder sous`, import de fichier,
+  Annuler/Rétablir, puis édition visuelle vélocité/gate.
 
 ## Priorités
 

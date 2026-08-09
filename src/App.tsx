@@ -25,6 +25,7 @@ import {
   type SequencerNote,
 } from './core/project/model';
 import { barsAfterStepEdit, measureFromGlobalStep, usedBars } from './core/project/editor';
+import { loadStudioLibrary, storeStudioProject, studioStateFromDocument, type StudioProjectRecord } from './core/project/studioLibrary';
 import { HomePage } from './pages/HomePage';
 import { SoundsPage } from './pages/SoundsPage';
 import { DocumentationPage } from './pages/DocumentationPage';
@@ -144,6 +145,8 @@ export default function App() {
   const [deviceInventory, setDeviceInventory] = useState<DeviceInventory | null>(null);
   const [editorLoop, setEditorLoop] = useState(false);
   const [editorExportFormat, setEditorExportFormat] = useState<'midi' | 'json'>('midi');
+  const [studioLibrary, setStudioLibrary] = useState<StudioProjectRecord[]>(() => loadStudioLibrary(localStorage));
+  const [selectedStudioProject, setSelectedStudioProject] = useState('');
   const targets = useRef(activeExercise.targets.map((target, index) => ({ ...target, id: `target-${index}` })));
   const frame = useRef<number | undefined>(undefined);
   const flashTimer = useRef<number | undefined>(undefined);
@@ -366,8 +369,10 @@ export default function App() {
     setEditorGroup(nextGroup);
   };
 
+  const currentEditorPatterns = (): ProjectPatterns => ({ ...editorGroupTargets, [editorGroup]: editorTargets });
+
   const exportEditorMidi = () => {
-    const patterns = { ...editorGroupTargets, [editorGroup]: editorTargets };
+    const patterns = currentEditorPatterns();
     const blob = new Blob([createMidiFile(patterns, tempo)], { type: 'audio/midi' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -377,8 +382,8 @@ export default function App() {
   };
 
   const exportEditorProjectJson = () => {
-    const patterns = { ...editorGroupTargets, [editorGroup]: editorTargets };
-    const projectDocument = createEp133ProjectDocument({ title: editorName, patterns, pads: deviceInventory?.pads || [], padModes: editorPadModes });
+    const patterns = currentEditorPatterns();
+    const projectDocument = createEp133ProjectDocument({ title: editorName, bpm: tempo, patterns, pads: deviceInventory?.pads || [], padModes: editorPadModes });
     const blob = new Blob([JSON.stringify(projectDocument, null, 2)], { type: 'application/json' });
     const link = window.document.createElement('a'); link.href = URL.createObjectURL(blob);
     link.download = `${(editorName.trim() || 'ep133-project').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.ep133.json`;
@@ -420,7 +425,7 @@ export default function App() {
     const run = ++editorRun.current;
     setEditorPlaybackBeat(0);
     if (editorGrid.current) editorGrid.current.scrollLeft = 0;
-    const patterns = { ...editorGroupTargets, [editorGroup]: editorTargets };
+    const patterns = currentEditorPatterns();
     const allTargets = EDITOR_GROUPS.flatMap((group) => patterns[group]);
     const playbackBars = allTargets.length ? usedBars(allTargets) : effectiveEditorBars;
     const playbackStart = performance.now() + (editorMode === 'complete' ? 80 : 0);
@@ -471,6 +476,51 @@ export default function App() {
     stopEditorTransport();
   };
 
+  const confirmStudioReplacement = () => {
+    const containsNotes = EDITOR_GROUPS.some((group) => currentEditorPatterns()[group].length > 0);
+    return !containsNotes || window.confirm('Remplacer le projet affiché ? Enregistrez-le d’abord si vous voulez conserver ses modifications.');
+  };
+
+  const newStudioProject = () => {
+    if (!confirmStudioReplacement()) return;
+    stopEditorTransport();
+    const patterns = emptyProjectPatterns();
+    setEditorName('NOUVEAU PROJET');
+    setEditorGroup('A');
+    setEditorTargets(patterns.A);
+    setEditorGroupTargets(patterns);
+    setEditorPadModes({});
+    setEditorBars(1);
+    setKeyEditorOpen(false);
+    setSelectedStudioProject('');
+  };
+
+  const saveStudioProject = () => {
+    const patterns = currentEditorPatterns();
+    setEditorGroupTargets(patterns);
+    const document = createEp133ProjectDocument({ title: editorName, bpm: tempo, patterns, pads: deviceInventory?.pads || [], padModes: editorPadModes });
+    const stored = storeStudioProject(localStorage, studioLibrary, document, selectedStudioProject);
+    setStudioLibrary(stored.library);
+    setSelectedStudioProject(stored.id);
+  };
+
+  const loadSelectedStudioProject = () => {
+    const record = studioLibrary.find((project) => project.id === selectedStudioProject);
+    if (!record || !confirmStudioReplacement()) return;
+    stopEditorTransport();
+    const loaded = studioStateFromDocument(record.document);
+    setEditorName(loaded.title.toUpperCase());
+    setTempo(loaded.bpm);
+    setEditorGroup('A');
+    setEditorGroupTargets(loaded.patterns);
+    setEditorTargets(loaded.patterns.A);
+    setEditorPadModes(loaded.padModes);
+    setEditorBars(Math.max(1, usedBars(EDITOR_GROUPS.flatMap((group) => loaded.patterns[group])) + 1));
+    setKeyEditorOpen(false);
+  };
+
+  const saveEditor = () => editorMode === 'complete' ? saveStudioProject() : saveEditorExercise();
+
   const songBeat = songTime * activeExercise.bpm / 60;
   const totalBeats = activeExercise.bars * 4;
   const pageStart = Math.min(Math.floor(songBeat / 8) * 8, Math.max(0, totalBeats - 8));
@@ -506,7 +556,7 @@ export default function App() {
     <GameToolbar difficulty={difficulty} tempo={tempo} activeBpm={activeExercise.bpm} styleId={styleId} styles={STYLES} userExercises={userExercises} phase={phase} sessionActive={sessionActive} midiConnected={midi.connected} onDifficultyChange={setDifficulty} onTempoChange={setTempo} onStyleChange={changeStyle} onHome={goHome} onOpenEditor={openEditor} onConnectMidi={() => void connectMidi()} onPreview={() => void togglePreview()} onPlay={() => void toggle()} />
     {phase === 'countin' && <div className="countdown" aria-live="assertive"><small>1 MESURE POUR SE PRÉPARER</small><b>{countdown}</b></div>}
     {editorOpen && <div className="editor-overlay"><section className="exercise-editor">
-      <EditorToolbar mode={editorMode} name={editorName} group={editorGroup} playing={editorPlaying} loop={editorLoop} exportFormat={editorExportFormat} canSave={Boolean(editorName.trim() && (editorTargets.length || Object.values(editorGroupTargets).some((groupTargets) => groupTargets.length)))} midiConnected={midi.outputConnected} scannedProject={deviceInventory?.project} onHome={goHome} onNameChange={setEditorName} onGroupChange={changeEditorGroup} onConnectMidi={() => void connectMidi()} onSave={saveEditorExercise} onPlayback={() => void toggleEditorPlayback()} onLoopChange={setEditorLoop} onExportFormatChange={setEditorExportFormat} onExport={exportEditor} />
+      <EditorToolbar mode={editorMode} name={editorName} group={editorGroup} playing={editorPlaying} loop={editorLoop} exportFormat={editorExportFormat} canSave={Boolean(editorName.trim() && (editorMode === 'complete' || editorTargets.length || Object.values(editorGroupTargets).some((groupTargets) => groupTargets.length)))} midiConnected={midi.outputConnected} scannedProject={deviceInventory?.project} localProjects={studioLibrary.map((project) => ({ id: project.id, title: String((project.document.metadata as { title?: string } | undefined)?.title || 'PROJET SANS NOM') }))} selectedLocalProject={selectedStudioProject} onHome={goHome} onNameChange={setEditorName} onGroupChange={changeEditorGroup} onConnectMidi={() => void connectMidi()} onNew={newStudioProject} onSelectedLocalProjectChange={setSelectedStudioProject} onLoad={loadSelectedStudioProject} onSave={saveEditor} onPlayback={() => void toggleEditorPlayback()} onLoopChange={setEditorLoop} onExportFormatChange={setEditorExportFormat} onExport={exportEditor} />
       {editorMode === 'complete' && <PadStrip group={editorGroup} selectedPad={editorSelectedPad} padModes={editorPadModes} padName={devicePadName} padSlot={(pad) => devicePadInfo(pad)?.slot} onSelect={(pad) => { setEditorSelectedPad(pad); setKeyEditorOpen((editorPadModes[`${editorGroup}:${pad}`] || 'ONE') === 'KEYS'); }} onPreview={(pad) => midi.sendPad(pad, EDITOR_GROUPS.indexOf(editorGroup), 110)} onModeChange={(pad, mode) => { setEditorPadModes((current) => ({ ...current, [`${editorGroup}:${pad}`]: mode })); setKeyEditorOpen(mode === 'KEYS'); }} onOpenKeys={() => setKeyEditorOpen(true)} />}
       {keyEditorOpen && editorMode === 'complete'
         ? <PianoRoll gridRef={editorGrid} group={editorGroup} selectedPad={editorSelectedPad} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} targets={editorTargets} onClose={() => setKeyEditorOpen(false)} onPreviewNote={(note) => midi.sendNote(note, 110)} onToggleNote={toggleKeyStep} />

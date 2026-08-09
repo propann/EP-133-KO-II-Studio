@@ -39,9 +39,11 @@ export function notesToExerciseTargets(notes: SequencerNote[]): Exercise['target
 }
 
 export function normalizeSequencerNote(note: Partial<SequencerNote> & Pick<SequencerNote, 'id' | 'group' | 'beat' | 'pad'>): SequencerNote {
+  const velocity = typeof note.velocity === 'number' && Number.isFinite(note.velocity) ? note.velocity : DEFAULT_NOTE_VELOCITY;
+  const duration = typeof note.duration === 'number' && Number.isFinite(note.duration) ? note.duration : DEFAULT_NOTE_DURATION;
   return {
     ...note,
-    velocity: Math.max(1, Math.min(127, Math.round(note.velocity ?? DEFAULT_NOTE_VELOCITY))),
-    duration: Math.max(1 / 96, note.duration ?? DEFAULT_NOTE_DURATION),
+    velocity: Math.max(1, Math.min(127, Math.round(velocity))),
+    duration: Math.max(1 / 96, duration),
   };
 }

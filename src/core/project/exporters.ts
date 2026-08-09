@@ -55,17 +55,27 @@ export interface ScannedPad {
 
 interface ProjectDocumentOptions {
   title: string;
+  bpm: number;
   patterns: EditorPatterns;
   pads: ScannedPad[];
   padModes: Record<string, EditorPadMode>;
 }
 
-export function createEp133ProjectDocument({ title, patterns, pads, padModes }: ProjectDocumentOptions) {
+export function createEp133ProjectDocument({ title, bpm, patterns, pads, padModes }: ProjectDocumentOptions) {
+  const padMap = new Map(pads.map((pad) => [`${pad.group}:${pad.pad - 1}`, pad]));
+  Object.keys(padModes).forEach((key) => {
+    if (padMap.has(key)) return;
+    const [group, visualPad] = key.split(':');
+    if (EDITOR_GROUPS.includes(group as EditorGroup) && Number(visualPad) >= 0 && Number(visualPad) < 12) {
+      padMap.set(key, { group: group as EditorGroup, pad: Number(visualPad) + 1, slot: 0, playMode: 0, rootNote: 60 });
+    }
+  });
   return {
     schema: 'ep.project.v1',
     product: 'ep133',
     metadata: { title: title.trim() || 'RHYTHM HERO' },
-    pads: pads.map((pad) => ({
+    settings: { bpm: Math.max(20, Math.min(300, bpm)) },
+    pads: [...padMap.values()].map((pad) => ({
       group: pad.group,
       pad: pad.pad,
       slot: pad.slot,

@@ -57,12 +57,14 @@ de cinq niveaux. Ne pas alourdir l'écran avec des fonctions de DAW.
 
 ### Ce qui reste fragile
 
-1. **SAVE trompeur en mode complet.** La sauvegarde locale actuelle crée un
-   exercice utilisateur à partir du groupe visible. Elle ne conserve pas encore
-   proprement les quatre groupes, modes de pads, scènes et informations machine.
-   Le bouton doit devenir le menu de fichiers prévu dans la feuille de route.
+1. **SAVE trompeur en mode complet — corrigé le 9 août 2026.** La sauvegarde locale créait un
+   exercice utilisateur à partir du groupe visible. Elle conserve maintenant
+   les quatre groupes, les modes de pads et les informations machine connues
+   dans un document `ep.project.v1`. Les scènes multiples et les opérations
+   avancées du menu de fichiers restent à réaliser.
 2. **Import non branché à l'interface.** Les lecteurs MIDI et `.pak/.ppak`
-   existent et sont testés, mais aucun bouton LOAD ne remplit encore le Studio.
+   existent et sont testés. Le Studio possède désormais une bibliothèque locale
+   avec `NOUVEAU`, `SAVE` et `OUVRIR` ; l'import de fichiers reste à faire.
 3. **Vélocité et durée invisibles.** Le modèle et les exports les conservent,
    mais l'utilisateur ne peut pas encore les modifier graphiquement.
 4. **Une seule couche de patterns.** Le Studio n'affiche pas encore les pools de

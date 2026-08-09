@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { createEp133ProjectDocument, createMidiFile } from '../src/core/project/exporters.ts';
 import { decodeEp133ProjectTar, inspectEp133Archive, readEp133ProjectDocument, readMidiFile } from '../src/core/project/importers.ts';
 import { exerciseTargetsToNotes, normalizeSequencerNote, notesToExerciseTargets } from '../src/core/project/model.ts';
+import { loadStudioLibrary, storeStudioProject, studioStateFromDocument } from '../src/core/project/studioLibrary.ts';
 import { zipSync, strToU8 } from 'fflate';
 
 const patterns = {
@@ -18,15 +19,16 @@ assert.ok([...midi].includes(45), 'la note officielle du pad A-7 doit être expo
 assert.ok([...midi].includes(48), 'la hauteur du piano-roll doit être conservée');
 
 const project = createEp133ProjectDocument({
-  title: 'TEST', patterns,
+  title: 'TEST', bpm: 120, patterns,
   pads: [{ group: 'B', pad: 11, slot: 444, playMode: 0, rootNote: 26 }],
-  padModes: { 'B:10': 'KEYS' },
+  padModes: { 'A:0': 'ONE', 'B:10': 'KEYS' },
 });
 assert.equal(project.schema, 'ep.project.v1');
 assert.equal(project.patterns.length, 4);
 assert.equal(project.patterns[1].events[0].note, 48);
 assert.equal(project.patterns[0].events[0].velocity, 117);
 assert.equal(project.patterns[0].events[0].duration, 48);
+assert.equal(project.settings.bpm, 120);
 assert.equal(project.pads[0].playMode, 1);
 assert.deepEqual(project.scenes[0].groupPatterns, [1, 1, 1, 1]);
 
@@ -47,6 +49,21 @@ assert.equal(adaptedNotes[0].duration, 0.25);
 assert.deepEqual(notesToExerciseTargets(adaptedNotes), [{ id: 'jeu', beat: 2, pad: 3, note: undefined }]);
 assert.equal(normalizeSequencerNote({ id: 'fort', group: 'D', beat: 0, pad: 0, velocity: 999, duration: 0 }).velocity, 127);
 assert.equal(normalizeSequencerNote({ id: 'court', group: 'D', beat: 0, pad: 0, duration: 0 }).duration, 1 / 96);
+
+const memoryStorage = {
+  value: '',
+  getItem() { return this.value || null; },
+  setItem(_key, value) { this.value = value; },
+};
+const storedStudio = storeStudioProject(memoryStorage, [], project);
+assert.equal(loadStudioLibrary(memoryStorage).length, 1);
+const restoredStudio = studioStateFromDocument(storedStudio.library[0].document);
+assert.equal(restoredStudio.title, 'TEST');
+assert.equal(restoredStudio.bpm, 120);
+assert.equal(restoredStudio.patterns.A[0].velocity, 117);
+assert.equal(restoredStudio.patterns.A[0].duration, 0.5);
+assert.equal(restoredStudio.patterns.B[0].note, 48);
+assert.equal(restoredStudio.padModes['B:10'], 'KEYS');
 
 assert.equal(readEp133ProjectDocument(JSON.stringify(project)).schema, 'ep.project.v1');
 assert.throws(() => readEp133ProjectDocument('{"schema":"inconnu"}'), /ep\.project\.v1/);

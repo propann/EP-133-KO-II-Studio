@@ -235,3 +235,18 @@ des partitions. Deux défauts prioritaires sont consignés : omissions non
 comptées comme MISS à la fin du jeu et SAVE complet ne conservant pas encore un
 véritable projet quatre groupes. Les concepts graphiques applicables au jeu et
 au Studio sont détaillés dans `docs/POINT_JEU_ET_STUDIO.md`.
+
+## Étape 2.1 — vrai Save/Load local du Studio
+
+Statut : terminé le 9 août 2026.
+
+- [x] `NOUVEAU` remet à zéro les quatre groupes ;
+- [x] `SAVE` conserve un document complet `ep.project.v1` ;
+- [x] un projet déjà ouvert est mis à jour sans duplication ;
+- [x] la bibliothèque locale permet de sélectionner puis ouvrir un projet ;
+- [x] nom, BPM, groupes, pads, notes, vélocités, durées et modes sont restaurés ;
+- [x] confirmation avant de remplacer une composition contenant des notes ;
+- [x] sauvegarde pédagogique USER maintenue séparément ;
+- [x] aller-retour Save/Load couvert par les tests.
+
+Voir `docs/VALIDATION_SAVE_LOAD_STUDIO.md`.
