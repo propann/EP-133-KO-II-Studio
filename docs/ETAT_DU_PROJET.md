@@ -87,6 +87,9 @@
 - La page Sons & Transfert initialise maintenant un profil de machine nommé,
   son modèle mémoire 64/128 Mo, son dossier privé de samples et un miroir global
   des 527 slots occupés (56,21 Mo). Les fichiers audio ne sont pas encore copiés.
+- `FICHIER → CLONER LA MACHINE` ouvre une fenêtre de préparation et crée un
+  manifeste avec un instantané initial. La future Time Machine est documentée ;
+  comparaison et restauration ne sont pas encore actives.
 - Export MIDI ou description `ep.project.v1` JSON.
 - Scan SysEx en lecture seule validé sur la machine : 527 sons, 56,21 Mo,
   affectations de pads, noms, modes et notes racines.

@@ -308,3 +308,15 @@ Statut : première fondation terminée le 9 août 2026.
 - [ ] moteur de patch et synchronisation avec relecture.
 
 Voir `docs/ARCHITECTURE_MIROIR_MACHINE.md`.
+
+## Étape 3.2 — fenêtre Cloner la machine
+
+Statut : fondation terminée le 9 août 2026.
+
+- [x] commande ajoutée dans le menu FICHIER ;
+- [x] fenêtre dédiée avec nom, mémoire et dossier samples ;
+- [x] résumé des sons, de la mémoire et du projet scanné ;
+- [x] manifeste de clone conservé localement ;
+- [x] premier point `INSTANTANÉ INITIAL` créé ;
+- [x] état audio explicitement marqué « pont local requis » ;
+- [x] concept Time Machine documenté sans fausse restauration active.

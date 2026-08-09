@@ -110,6 +110,9 @@ composition identique sans machine connectée ; échanger ses notes en MIDI.
 - [ ] Créer l'instantané initial immuable.
 - [ ] Calculer un patch entre instantané et copie de travail.
 - [ ] Détecter les conflits avant toute synchronisation.
+- [x] Créer un manifeste local avec un premier instantané daté.
+- [ ] Time Machine : chronologie, comparaison et restauration locale.
+- [ ] Time Machine : patch de restauration matérielle avec checkpoint.
 
 ### Banque ordinateur
 

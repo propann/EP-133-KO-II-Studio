@@ -24,6 +24,9 @@ L'assistant doit suivre cet ordre :
 
 Le profil nommé, la capacité et le dossier choisi existent maintenant dans la
 page Sons & Transfert. L'inventaire global réel contient 527 sons et 56,21 Mo.
+La même préparation est accessible dans le Studio par
+`FICHIER → CLONER LA MACHINE`. Elle crée un manifeste local et son
+`INSTANTANÉ INITIAL`.
 
 ## Trois couches de données
 
@@ -67,6 +70,22 @@ sur un projet brouillon et des slots réservés.
 vélocité, groupes et transport MIDI en premier. Le fader, les touches de mode,
 les CC et les états d'écran ne seront ajoutés qu'après capture des messages
 réels. Aucun miroir LCD fictif ne sera présenté comme un état matériel fiable.
+
+## Time Machine — évolution prévue
+
+Chaque synchronisation validée pourra créer un instantané immuable contenant
+le manifeste, les projets, l'index des sons, leurs hashes et les références aux
+fichiers audio privés. La future vue Time Machine devra permettre :
+
+- une chronologie nommée et datée ;
+- la comparaison de deux états ;
+- la restauration locale d'un projet ou d'un sample isolé ;
+- la préparation d'un patch de retour vers la machine ;
+- une restauration matérielle uniquement après checkpoint et confirmation ;
+- une rétention fondée sur les hashes plutôt que sur des copies audio inutiles.
+
+Pour le moment, seul le premier point d'historique est créé. Aucun bouton de
+restauration trompeur n'est activé.
 
 ## Limite de l'application web
 

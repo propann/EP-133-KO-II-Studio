@@ -171,6 +171,9 @@ Le player HTML historique reste disponible comme référence fonctionnelle penda
   un dossier de samples et l'inventaire global réel de 527 slots occupés. La
   cible est une architecture base machine → copie hors ligne → patch vérifié.
   Voir `docs/ARCHITECTURE_MIROIR_MACHINE.md`.
+- Le Studio expose `FICHIER → CLONER LA MACHINE`. Le manifeste local contient
+  un premier point d'historique. La Time Machine future doit dédupliquer par
+  hash et ne restaurer le matériel qu'après checkpoint, diff et confirmation.
 
 ## Priorités
 

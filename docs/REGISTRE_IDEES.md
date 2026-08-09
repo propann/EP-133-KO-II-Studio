@@ -33,6 +33,7 @@ nouvelles preuves apparaissent.
 | F-13 | Synchronisation par patch | RETENU | Diff, conflits, checkpoint, confirmation et relecture obligatoires |
 | F-14 | Plusieurs machines | RETENU | Identité matérielle vérifiée avant d'appliquer le profil associé |
 | F-15 | Dossier samples dédié | RÉALISÉ | Association UI livrée ; accès persistant via pont local encore requis |
+| F-16 | Time Machine des états EP-133 | RETENU | Instantanés immuables, diff, restauration locale puis patch matériel sécurisé |
 
 ## Samples et audio
 
