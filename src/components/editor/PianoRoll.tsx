@@ -1,5 +1,5 @@
 import type { RefObject } from 'react';
-import type { Exercise } from '../../core/engine/types';
+import type { SequencerNote } from '../../core/project/model';
 import { KEY_EDITOR_NOTES, midiNoteName, type EditorGroup } from '../../core/project/exporters';
 import { EP133_PADS } from '../../core/project/pads';
 
@@ -10,7 +10,7 @@ interface PianoRollProps {
   bars: number;
   playing: boolean;
   playbackBeat: number;
-  targets: Exercise['targets'];
+  targets: SequencerNote[];
   onClose: () => void;
   onPreviewNote: (note: number) => void;
   onToggleNote: (note: number, globalStep: number) => void;

@@ -15,6 +15,15 @@ import {
   type EditorPadMode,
 } from './core/project/exporters';
 import type { DeviceInventory } from './core/project/device';
+import {
+  DEFAULT_NOTE_DURATION,
+  DEFAULT_NOTE_VELOCITY,
+  emptyProjectPatterns,
+  exerciseTargetsToNotes,
+  notesToExerciseTargets,
+  type ProjectPatterns,
+  type SequencerNote,
+} from './core/project/model';
 import { HomePage } from './pages/HomePage';
 import { SoundsPage } from './pages/SoundsPage';
 import { ScoreView } from './components/game/ScoreView';
@@ -121,11 +130,11 @@ export default function App() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorName, setEditorName] = useState('MON GROOVE');
   const [editorBars, setEditorBars] = useState(1);
-  const [editorTargets, setEditorTargets] = useState<Exercise['targets']>([]);
+  const [editorTargets, setEditorTargets] = useState<SequencerNote[]>([]);
   const [editorPlaying, setEditorPlaying] = useState(false);
   const [editorMode, setEditorMode] = useState<'game' | 'complete'>('game');
   const [editorGroup, setEditorGroup] = useState<EditorGroup>('A');
-  const [editorGroupTargets, setEditorGroupTargets] = useState<Record<EditorGroup, Exercise['targets']>>({ A: [], B: [], C: [], D: [] });
+  const [editorGroupTargets, setEditorGroupTargets] = useState<ProjectPatterns>(emptyProjectPatterns);
   const [editorPlaybackBeat, setEditorPlaybackBeat] = useState(0);
   const [editorSelectedPad, setEditorSelectedPad] = useState(0);
   const [editorPadModes, setEditorPadModes] = useState<Record<string, EditorPadMode>>({});
@@ -334,8 +343,9 @@ export default function App() {
   const openEditor = () => {
     const selected = userExercises.find((item) => `user:${item.id}` === styleId);
     setEditorName(selected?.title || 'MON GROOVE');
-    setEditorTargets(selected?.targets.map((target) => ({ ...target })) || []);
-    setEditorGroupTargets({ A: selected?.targets.map((target) => ({ ...target })) || [], B: [], C: [], D: [] });
+    const selectedNotes = selected ? exerciseTargetsToNotes(selected.targets, 'A') : [];
+    setEditorTargets(selectedNotes);
+    setEditorGroupTargets({ ...emptyProjectPatterns(), A: selectedNotes });
     setEditorGroup('A');
     setEditorMode('game');
     setEditorBars(Math.max(2, (selected?.bars || 0) + 1));
@@ -380,7 +390,7 @@ export default function App() {
     const exists = editorTargets.some((target) => target.pad === pad && target.beat === beat);
     setEditorTargets((current) => exists
       ? current.filter((target) => !(target.pad === pad && target.beat === beat))
-      : [...current, { id: `editor-${measure}-${pad}-${step}`, beat, pad }]);
+      : [...current, { id: `editor-${measure}-${pad}-${step}`, group: editorGroup, beat, pad, velocity: DEFAULT_NOTE_VELOCITY, duration: DEFAULT_NOTE_DURATION }]);
     if (!exists && editorMode === 'complete') midi.sendPad(pad, EDITOR_GROUPS.indexOf(editorGroup), 110);
     if (!exists && measure === editorBars - 1) setEditorBars((bars) => bars + 1);
   };
@@ -390,14 +400,14 @@ export default function App() {
     const exists = editorTargets.some((target) => target.pad === editorSelectedPad && target.beat === beat && target.note === note);
     setEditorTargets((current) => exists
       ? current.filter((target) => !(target.pad === editorSelectedPad && target.beat === beat && target.note === note))
-      : [...current, { id: `key-${editorGroup}-${editorSelectedPad}-${note}-${globalStep}`, beat, pad: editorSelectedPad, note }]);
+      : [...current, { id: `key-${editorGroup}-${editorSelectedPad}-${note}-${globalStep}`, group: editorGroup, beat, pad: editorSelectedPad, note, velocity: DEFAULT_NOTE_VELOCITY, duration: DEFAULT_NOTE_DURATION }]);
     if (!exists) midi.sendNote(note, 110);
     if (!exists && Math.floor(globalStep / 16) === editorBars - 1) setEditorBars((bars) => bars + 1);
   };
 
   const effectiveEditorBars = Math.max(1, editorTargets.length ? Math.floor(Math.max(...editorTargets.map((target) => target.beat)) / 4) + 1 : 1);
 
-  const editorExercise = (): Exercise => ({ id: 'editor-preview', title: editorName.trim() || 'MON GROOVE', description: 'Exercice utilisateur', bpm: tempo, bars: effectiveEditorBars, timeSignature: '4/4', countInBars: 0, backingTrack: null, grading: { perfectMs: 35, goodMs: 90 }, targets: editorTargets });
+  const editorExercise = (): Exercise => ({ id: 'editor-preview', title: editorName.trim() || 'MON GROOVE', description: 'Exercice utilisateur', bpm: tempo, bars: effectiveEditorBars, timeSignature: '4/4', countInBars: 0, backingTrack: null, grading: { perfectMs: 35, goodMs: 90 }, targets: notesToExerciseTargets(editorTargets) });
 
   const toggleEditorPlayback = async () => {
     if (editorPlaying) {
@@ -430,9 +440,9 @@ export default function App() {
         midi.sendClockWindow(tempo, cycleStart, cycleMs);
         EDITOR_GROUPS.forEach((group, groupIndex) => patterns[group].forEach((target) => {
           const at = cycleStart + target.beat * 60000 / tempo;
-          const duration = 60000 / tempo / 4 * 0.75;
-          if (target.note !== undefined) midi.sendNote(target.note, 100, at, duration);
-          else midi.sendPad(target.pad, groupIndex, 100, at, duration);
+          const duration = target.duration * 60000 / tempo;
+          if (target.note !== undefined) midi.sendNote(target.note, target.velocity, at, duration);
+          else midi.sendPad(target.pad, groupIndex, target.velocity, at, duration);
         }));
       };
       midi.startOutputTransport(startAt);

@@ -1,5 +1,5 @@
 import type { RefObject } from 'react';
-import type { Exercise } from '../../core/engine/types';
+import type { SequencerNote } from '../../core/project/model';
 import { midiNoteName, type EditorGroup, type EditorPadMode } from '../../core/project/exporters';
 import { EP133_PADS, EP133_SCORE_TRACKS } from '../../core/project/pads';
 
@@ -11,7 +11,7 @@ interface RhythmGridProps {
   mode: 'game' | 'complete';
   group: EditorGroup;
   selectedPad: number;
-  targets: Exercise['targets'];
+  targets: SequencerNote[];
   padModes: Record<string, EditorPadMode>;
   padName: (pad: number) => string;
   scannedPlayMode: (pad: number) => number | undefined;

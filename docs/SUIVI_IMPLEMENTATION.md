@@ -47,8 +47,8 @@ Décisions :
 - 1.4a : pages Accueil et Sons. **Terminée.**
 - 1.4b : composants visuels du Jeu. **Terminée.**
 - 1.4c : isolation visuelle de l'éditeur Studio. **Terminée.**
-- 1.5 : modèle de données unique pour notes, patterns et groupes.
-  **Prochaine étape.**
+- 1.5 : modèle de données unique pour notes, patterns et groupes. **Terminée.**
+- 1.6 : tests du score et de l'extension automatique. **Prochaine étape.**
 - 2.1 : premier menu SAVE avec Nouveau, Sauvegarder et Charger.
 
 ## Décision d'architecture — étude « compagnon ultime »
@@ -176,3 +176,20 @@ Statut : terminé le 9 août 2026.
 - [x] composants limités au rendu et aux callbacks ;
 - [x] état, transport et sauvegarde maintenus dans l'orchestrateur unique ;
 - [x] tests transport, formats et build réussis.
+
+## Étape 1.5 — modèle canonique du séquenceur
+
+Statut : terminé le 9 août 2026.
+
+- [x] type `SequencerNote` avec groupe, position, pad, hauteur, vélocité et
+  durée ;
+- [x] structure quatre groupes `ProjectPatterns` ;
+- [x] adaptateurs pour les exercices pédagogiques existants ;
+- [x] import MIDI raccordé au modèle ;
+- [x] export MIDI raccordé aux vélocités et durées réelles ;
+- [x] export `ep.project.v1` raccordé aux mêmes valeurs à 96 PPQN ;
+- [x] lecture studio et sortie MIDI raccordées aux mêmes durées/vélocités ;
+- [x] tests de conservation et de normalisation.
+
+Le contrat et ses frontières sont documentés dans
+`docs/MODELE_DONNEES_PROJET.md`.

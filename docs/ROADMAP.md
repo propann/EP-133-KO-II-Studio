@@ -58,7 +58,8 @@ pour ouvrir, écouter ou modifier un projet.
 ## Phase 1 — stabiliser avant d'ajouter
 
 - [x] Découper `App.tsx` en pages et composants visuels isolés.
-- [ ] Définir un modèle de données unique pour jeu, studio, groupes et notes.
+- [x] Définir un modèle canonique pour studio, groupes et notes, avec
+  adaptateurs explicites pour les cibles de score du jeu.
 - [ ] Ajouter tests du score, des conversions MIDI et de l'extension automatique.
 - [x] Ajouter une gestion centralisée du transport et nettoyer tous les timers.
 - [ ] Tester manuellement Chrome/Chromium, écran large et petit écran.

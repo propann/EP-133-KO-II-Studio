@@ -47,6 +47,7 @@ lecture seule tant que les protections de transfert ne sont pas finalisées.
 - [Registre de toutes les idées et décisions](docs/REGISTRE_IDEES.md)
 - [Validation du transport audio et MIDI](docs/VALIDATION_TRANSPORT.md)
 - [Plan de découpage de l'interface](docs/DECOUPAGE_INTERFACE.md)
+- [Modèle de données du séquenceur](docs/MODELE_DONNEES_PROJET.md)
 - [Gestion des fichiers et des sons](docs/GESTION_FICHIERS_ET_SONS.md)
 - [Décision sur les formats de projet](docs/DECISION_FORMATS_PROJET.md)
 - [Vision future OP-1](docs/VISION_OP1.md)

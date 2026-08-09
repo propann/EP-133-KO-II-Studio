@@ -140,6 +140,10 @@ Le player HTML historique reste disponible comme référence fonctionnelle penda
 - Les composants visuels du studio vivent dans `src/components/editor`.
   `App.tsx` conserve encore l'état de l'éditeur par décision explicite, jusqu'à
   l'adoption d'un modèle de projet unique.
+- Le modèle canonique du studio est `SequencerNote` dans
+  `src/core/project/model.ts`. Les cibles pédagogiques passent uniquement par
+  `exerciseTargetsToNotes` et `notesToExerciseTargets`. Voir
+  `docs/MODELE_DONNEES_PROJET.md`.
 
 ## Priorités
 

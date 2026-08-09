@@ -1,10 +1,10 @@
-import type { Exercise } from '../engine/types';
+import { PROJECT_GROUPS, type ProjectGroup, type ProjectPatterns } from './model.ts';
 
-export type EditorGroup = 'A' | 'B' | 'C' | 'D';
-export type EditorPatterns = Record<EditorGroup, Exercise['targets']>;
+export type EditorGroup = ProjectGroup;
+export type EditorPatterns = ProjectPatterns;
 export type EditorPadMode = 'ONE' | 'KEYS' | 'LEGATO';
 
-export const EDITOR_GROUPS: EditorGroup[] = ['A', 'B', 'C', 'D'];
+export const EDITOR_GROUPS: EditorGroup[] = PROJECT_GROUPS;
 export const PAD_MIDI_NOTES = [45, 46, 47, 42, 43, 44, 39, 40, 41, 36, 37, 38] as const;
 export const KEY_EDITOR_NOTES = Array.from({ length: 25 }, (_, index) => 72 - index);
 
@@ -24,8 +24,8 @@ export function createMidiFile(patterns: EditorPatterns, bpm: number) {
     const tick = Math.round(target.beat * ppqn);
     const note = target.note ?? PAD_MIDI_NOTES[target.pad] + groupIndex * 12;
     events.push(
-      { tick, data: [0x90, note, 100], order: 1 },
-      { tick: tick + 24, data: [0x80, note, 0], order: 0 },
+      { tick, data: [0x90, note, target.velocity], order: 1 },
+      { tick: tick + Math.max(1, Math.round(target.duration * ppqn)), data: [0x80, note, 0], order: 0 },
     );
   }));
   events.sort((a, b) => a.tick - b.tick || a.order - b.order);
@@ -79,8 +79,8 @@ export function createEp133ProjectDocument({ title, patterns, pads, padModes }: 
         tick: Math.round(target.beat * 96),
         pad: target.pad + 1,
         note: target.note ?? 60,
-        velocity: 100,
-        duration: 18,
+        velocity: target.velocity,
+        duration: Math.max(1, Math.round(target.duration * 96)),
       })),
     })),
     scenes: [{ groupPatterns: [1, 1, 1, 1], timeSignature: [4, 4] }],

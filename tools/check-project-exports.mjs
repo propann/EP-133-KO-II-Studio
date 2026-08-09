@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import { createEp133ProjectDocument, createMidiFile } from '../src/core/project/exporters.ts';
 import { decodeEp133ProjectTar, inspectEp133Archive, readEp133ProjectDocument, readMidiFile } from '../src/core/project/importers.ts';
+import { exerciseTargetsToNotes, normalizeSequencerNote, notesToExerciseTargets } from '../src/core/project/model.ts';
 import { zipSync, strToU8 } from 'fflate';
 
 const patterns = {
-  A: [{ id: 'kick', beat: 0, pad: 0 }],
-  B: [{ id: 'bass', beat: 1, pad: 10, note: 48 }],
+  A: [{ id: 'kick', group: 'A', beat: 0, pad: 0, velocity: 117, duration: 0.5 }],
+  B: [{ id: 'bass', group: 'B', beat: 1, pad: 10, note: 48, velocity: 83, duration: 0.25 }],
   C: [],
   D: [],
 };
@@ -24,6 +25,8 @@ const project = createEp133ProjectDocument({
 assert.equal(project.schema, 'ep.project.v1');
 assert.equal(project.patterns.length, 4);
 assert.equal(project.patterns[1].events[0].note, 48);
+assert.equal(project.patterns[0].events[0].velocity, 117);
+assert.equal(project.patterns[0].events[0].duration, 48);
 assert.equal(project.pads[0].playMode, 1);
 assert.deepEqual(project.scenes[0].groupPatterns, [1, 1, 1, 1]);
 
@@ -32,8 +35,18 @@ assert.equal(importedMidi.ppqn, 96);
 assert.equal(importedMidi.bpm, 120);
 assert.equal(importedMidi.events.length, 2);
 assert.equal(importedMidi.patterns.A[0].pad, 0);
+assert.equal(importedMidi.patterns.A[0].velocity, 117);
+assert.equal(importedMidi.patterns.A[0].duration, 0.5);
 assert.equal(importedMidi.patterns.B[0].note, 48);
-assert.equal(importedMidi.events[0].duration, 0.25);
+assert.equal(importedMidi.events[0].duration, 0.5);
+
+const adaptedNotes = exerciseTargetsToNotes([{ id: 'jeu', beat: 2, pad: 3 }], 'C');
+assert.equal(adaptedNotes[0].group, 'C');
+assert.equal(adaptedNotes[0].velocity, 100);
+assert.equal(adaptedNotes[0].duration, 0.25);
+assert.deepEqual(notesToExerciseTargets(adaptedNotes), [{ id: 'jeu', beat: 2, pad: 3, note: undefined }]);
+assert.equal(normalizeSequencerNote({ id: 'fort', group: 'D', beat: 0, pad: 0, velocity: 999, duration: 0 }).velocity, 127);
+assert.equal(normalizeSequencerNote({ id: 'court', group: 'D', beat: 0, pad: 0, duration: 0 }).duration, 1 / 96);
 
 assert.equal(readEp133ProjectDocument(JSON.stringify(project)).schema, 'ep.project.v1');
 assert.throws(() => readEp133ProjectDocument('{"schema":"inconnu"}'), /ep\.project\.v1/);

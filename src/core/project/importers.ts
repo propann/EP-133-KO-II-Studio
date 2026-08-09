@@ -1,12 +1,8 @@
 import { unzipSync } from 'fflate';
-import type { Target } from '../engine/types';
 import { EDITOR_GROUPS, PAD_MIDI_NOTES, type EditorGroup, type EditorPatterns } from './exporters.ts';
+import type { SequencerNote } from './model.ts';
 
-export interface ImportedMidiEvent extends Target {
-  group: EditorGroup;
-  velocity: number;
-  duration: number;
-}
+export interface ImportedMidiEvent extends SequencerNote {}
 
 export interface ImportedMidiProject {
   format: number;
@@ -226,7 +222,7 @@ export function readMidiFile(data: Uint8Array): ImportedMidiProject {
       duration: note.duration / division,
     });
   });
-  const patterns = Object.fromEntries(EDITOR_GROUPS.map((group) => [group, events.filter((event) => event.group === group).map(({ group: _group, velocity: _velocity, duration: _duration, ...target }) => target)])) as EditorPatterns;
+  const patterns = Object.fromEntries(EDITOR_GROUPS.map((group) => [group, events.filter((event) => event.group === group)])) as EditorPatterns;
   const initialTempo = tempos.sort((a, b) => a.tick - b.tick)[0]?.microseconds ?? 500000;
   return { format, ppqn: division, bpm: Math.round(60000000 / initialTempo), patterns, events, warnings: [...new Set(warnings)] };
 }

@@ -115,6 +115,11 @@ une vraie gestion Save/Load. La feuille de route détaillée se trouve dans
   pas dupliquer l'état.
 - Le découpage visuel prévu par l'étape 1.4 est terminé. La prochaine étape est
   l'unification du modèle de données avant l'extraction d'un hook d'éditeur.
+- Le modèle `SequencerNote` est maintenant utilisé par le studio, l'import MIDI
+  et les deux exports. Groupe, hauteur, vélocité et durée ne sont plus ajoutés
+  artificiellement au dernier moment.
+- Les exercices existants restent compatibles grâce à un adaptateur avec
+  vélocité 100 et durée d'un seizième par défaut.
 - Le noyau sait désormais relire les MIDI formats 0/1 qu'il exporte, conserver
   tempo, position, vélocité et durée, puis les répartir sur les groupes A–D.
 - Un inspecteur ouvre les conteneurs ZIP `.pak/.ppak`, valide `meta.json` et
