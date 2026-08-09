@@ -14,7 +14,7 @@ import {
   type EditorGroup,
   type EditorPadMode,
 } from './core/project/exporters';
-import type { DeviceInventory } from './core/project/device';
+import type { DeviceInventory, DeviceSoundIndex } from './core/project/device';
 import {
   DEFAULT_NOTE_DURATION,
   DEFAULT_NOTE_VELOCITY,
@@ -144,6 +144,7 @@ export default function App() {
   const [editorPadModes, setEditorPadModes] = useState<Record<string, EditorPadMode>>({});
   const [keyEditorOpen, setKeyEditorOpen] = useState(false);
   const [deviceInventory, setDeviceInventory] = useState<DeviceInventory | null>(null);
+  const [deviceSoundIndex, setDeviceSoundIndex] = useState<DeviceSoundIndex | null>(null);
   const [editorLoop, setEditorLoop] = useState(false);
   const [editorExportFormat, setEditorExportFormat] = useState<'midi' | 'json'>('midi');
   const [studioLibrary, setStudioLibrary] = useState<StudioProjectRecord[]>(() => loadStudioLibrary(localStorage));
@@ -175,6 +176,10 @@ export default function App() {
       .then((response) => response.ok ? response.json() as Promise<Record<string, unknown>> : Promise.reject())
       .then(setMachineProjectDocument)
       .catch(() => setMachineProjectDocument(null));
+    fetch('/ep133-sound-index.json', { cache: 'no-store' })
+      .then((response) => response.ok ? response.json() as Promise<DeviceSoundIndex> : Promise.reject())
+      .then(setDeviceSoundIndex)
+      .catch(() => setDeviceSoundIndex(null));
   }, []);
 
   const onHit = useCallback((hit: MidiHit) => {
@@ -609,7 +614,7 @@ export default function App() {
 
   if (workspaceView === 'home') return <HomePage connected={midi.connected || midi.outputConnected} project={deviceInventory?.project} scannedSoundCount={deviceInventory ? Object.keys(deviceInventory.sounds).length : 0} onOpenGame={() => setWorkspaceView('game')} onOpenStudio={openCompleteEditor} onOpenSounds={() => setWorkspaceView('sounds')} onOpenDocumentation={() => setWorkspaceView('docs')} />;
 
-  if (workspaceView === 'sounds') return <SoundsPage inventory={deviceInventory} midiConnected={midi.outputConnected} onBack={goHome} onConnectMidi={() => void connectMidi()} />;
+  if (workspaceView === 'sounds') return <SoundsPage inventory={deviceInventory} soundIndex={deviceSoundIndex} midiConnected={midi.outputConnected} onBack={goHome} onConnectMidi={() => void connectMidi()} />;
 
   if (workspaceView === 'docs') return <DocumentationPage onBack={goHome} />;
 

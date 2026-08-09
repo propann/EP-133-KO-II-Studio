@@ -19,3 +19,11 @@ export interface DeviceInventory {
     bpm?: number;
   }>;
 }
+
+export interface DeviceSoundIndex {
+  readOnly: boolean;
+  scannedAt: string;
+  soundCount: number;
+  usedBytes: number;
+  sounds: Array<{ slot: number; bytes: number; flags: number; fileName: string }>;
+}

@@ -99,6 +99,18 @@ composition identique sans machine connectée ; échanger ses notes en MIDI.
 
 ## Phase 3 — deux banques de sons hors ligne
 
+### Profil et miroir de machine
+
+- [x] Profil local nommé avec choix 64/128 Mo.
+- [x] Inventaire global en lecture seule des slots occupés et de leur taille.
+- [x] Association explicite d'un dossier local de samples.
+- [ ] Identifier automatiquement et durablement chaque machine.
+- [ ] Scanner les 9 projets et toutes les métadonnées sonores.
+- [ ] Copier les fichiers audio dans le dossier privé avec reprise et hash.
+- [ ] Créer l'instantané initial immuable.
+- [ ] Calculer un patch entre instantané et copie de travail.
+- [ ] Détecter les conflits avant toute synchronisation.
+
 ### Banque ordinateur
 
 - Sons libres ou créés par l'utilisateur, versionnés par identifiant et hash.

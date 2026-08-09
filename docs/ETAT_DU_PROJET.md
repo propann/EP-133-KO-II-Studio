@@ -84,6 +84,9 @@
   le plus long. Les positions et scènes multiples restent à implémenter.
 - Le projet 1 réel de la machine peut être ouvert depuis `FICHIER`. Le bouton
   charge l'instantané de `L.01/S.01` en lecture seule, sans écrire sur l'EP-133.
+- La page Sons & Transfert initialise maintenant un profil de machine nommé,
+  son modèle mémoire 64/128 Mo, son dossier privé de samples et un miroir global
+  des 527 slots occupés (56,21 Mo). Les fichiers audio ne sont pas encore copiés.
 - Export MIDI ou description `ep.project.v1` JSON.
 - Scan SysEx en lecture seule validé sur la machine : 527 sons, 56,21 Mo,
   affectations de pads, noms, modes et notes racines.

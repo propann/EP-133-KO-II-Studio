@@ -4,6 +4,7 @@ import { createEp133ProjectDocument, createMidiFile } from '../src/core/project/
 import { decodeEp133ProjectTar, inspectEp133Archive, readEp133ProjectDocument, readMidiFile } from '../src/core/project/importers.ts';
 import { exerciseTargetsToNotes, normalizeSequencerNote, notesToExerciseTargets } from '../src/core/project/model.ts';
 import { deleteStudioProject, duplicateStudioProject, loadStudioLibrary, renameStudioProject, storeStudioProject, studioStateFromDocument } from '../src/core/project/studioLibrary.ts';
+import { loadDeviceProfile, saveDeviceProfile } from '../src/core/project/deviceProfile.ts';
 import { zipSync, strToU8 } from 'fflate';
 
 const patterns = {
@@ -56,6 +57,10 @@ const memoryStorage = {
   getItem() { return this.value || null; },
   setItem(_key, value) { this.value = value; },
 };
+const savedProfile = saveDeviceProfile(memoryStorage, { name: 'STUDIO NOIR', capacityMb: 64, sampleFolderName: 'EP133 Samples', localSampleCount: 12 });
+assert.equal(savedProfile.name, 'STUDIO NOIR');
+assert.equal(loadDeviceProfile(memoryStorage).capacityMb, 64);
+memoryStorage.value = '';
 const storedStudio = storeStudioProject(memoryStorage, [], project);
 assert.equal(loadStudioLibrary(memoryStorage).length, 1);
 const restoredStudio = studioStateFromDocument(storedStudio.library[0].document);

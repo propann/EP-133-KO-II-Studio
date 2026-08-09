@@ -291,3 +291,20 @@ Statut : terminé le 9 août 2026.
 - [x] aucune écriture MIDI/SysEx envoyée à l'EP-133.
 
 Voir `docs/CHARGEMENT_PROJET_MACHINE.md`.
+
+## Étape 3.1 — fondation du miroir de machine
+
+Statut : première fondation terminée le 9 août 2026.
+
+- [x] profil de machine nommé ;
+- [x] choix explicite 64 ou 128 Mo ;
+- [x] dossier privé de samples associé ;
+- [x] scan global réel des slots en lecture seule ;
+- [x] 527 sons et 56,21 Mo affichés ;
+- [x] jauge calculée depuis la capacité déclarée ;
+- [x] pads du projet séparés de l'inventaire global ;
+- [x] modèle base machine → copie de travail → patch documenté ;
+- [ ] copie des fichiers audio et métadonnées détaillées ;
+- [ ] moteur de patch et synchronisation avec relecture.
+
+Voir `docs/ARCHITECTURE_MIROIR_MACHINE.md`.

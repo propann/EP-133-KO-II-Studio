@@ -28,6 +28,11 @@ nouvelles preuves apparaissent.
 | F-08 | Sons orphelins | RETENU | Analyse de tous les projets, proposition seulement |
 | F-09 | Déduplication SHA-256 | EXPÉRIMENTER | Hash du signal décodé ; aucune fusion automatique |
 | F-10 | Écriture directe flash | REPORTÉ | Verrouillée jusqu'aux tests aller-retour et procédure de restauration |
+| F-11 | Profil nommé par machine | RÉALISÉ | Nom local et capacité 64/128 Mo conservés dans le navigateur |
+| F-12 | Miroir initial complet | RETENU | Inventaire, projets et audio privé dans un dossier choisi |
+| F-13 | Synchronisation par patch | RETENU | Diff, conflits, checkpoint, confirmation et relecture obligatoires |
+| F-14 | Plusieurs machines | RETENU | Identité matérielle vérifiée avant d'appliquer le profil associé |
+| F-15 | Dossier samples dédié | RÉALISÉ | Association UI livrée ; accès persistant via pont local encore requis |
 
 ## Samples et audio
 

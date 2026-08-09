@@ -167,6 +167,10 @@ Le player HTML historique reste disponible comme référence fonctionnelle penda
 - `public/ep133-project-1.json` est l'instantané décodé du projet 1 réel. Le
   Studio charge la scène référencée par la première Song Position, jamais le
   dernier pattern trouvé. Voir `docs/CHARGEMENT_PROJET_MACHINE.md`.
+- Le module Sons possède un profil local nommé, une capacité déclarée 64/128 Mo,
+  un dossier de samples et l'inventaire global réel de 527 slots occupés. La
+  cible est une architecture base machine → copie hors ligne → patch vérifié.
+  Voir `docs/ARCHITECTURE_MIROIR_MACHINE.md`.
 
 ## Priorités
 
