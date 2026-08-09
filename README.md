@@ -25,6 +25,7 @@ La connexion MIDI et l’analyse de jeu sont le prochain chantier. Le mapping r�
 - [Feuille de route](docs/ROADMAP.md)
 - [Architecture cible](docs/ARCHITECTURE.md)
 - [Mise en route Windows](docs/MISE_EN_ROUTE_WINDOWS.md)
+- [Mise en route Linux — chemin principal](docs/MISE_EN_ROUTE_LINUX.md)
 - [Lancement local Windows / Raspberry Pi](docs/LANCEMENT_LOCAL.md)
 - [État du projet](docs/ETAT_DU_PROJET.md)
 - [Parcours des 39 exercices](exercises/PARCOURS_EXERCICES_V1.md)
