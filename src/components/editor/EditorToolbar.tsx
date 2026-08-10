@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react';
 import { EDITOR_GROUPS, type EditorGroup } from '../../core/project/exporters';
 import { PatternSelector } from './PatternSelector';
 
@@ -42,19 +43,26 @@ interface EditorToolbarProps {
 }
 
 export function EditorToolbar(props: EditorToolbarProps) {
+  const fileMenuRef = useRef<HTMLDetailsElement>(null);
+  const [fileMenuOpen, setFileMenuOpen] = useState(false);
+  const closeFileMenu = () => { if (fileMenuRef.current) fileMenuRef.current.open = false; };
   return <>
     <header><button className="editor-home-button" onClick={props.onHome}>← ACCUEIL</button><div><small>{props.mode === 'game' ? 'ÉDITEUR JEU' : 'ÉDITEUR EP‑133 COMPLET'}</small><input value={props.name} maxLength={32} onChange={(event) => props.onNameChange(event.target.value.toUpperCase())} aria-label="Nom de l'exercice" /></div>{props.mode === 'complete' && <><div className="editor-groups" aria-label="Groupes EP-133">{EDITOR_GROUPS.map((group) => <button className={props.group === group ? 'active' : ''} onClick={() => props.onGroupChange(group)} key={group}>{group}</button>)}</div><div className="studio-view-switch" aria-label="Vue du Studio"><button className={props.studioView === 'pattern' ? 'active' : ''} onClick={() => props.onStudioViewChange('pattern')}>EDIT PATTERN</button><button className={props.studioView === 'arrangement' ? 'active' : ''} onClick={() => props.onStudioViewChange('arrangement')}>ARRANGEMENT</button></div>{props.studioView === 'pattern' && <PatternSelector group={props.group} number={props.patternNumber} onChange={props.onPatternNumberChange} />}<span className={`device-scan-state ${props.scannedProject !== undefined ? 'active' : ''}`}>{props.scannedProject !== undefined ? `PROJET ${props.scannedProject} · SCAN LECTURE SEULE` : 'AUCUN SCAN'}</span><button className={`editor-midi-out ${props.midiConnected ? 'active' : ''}`} onClick={props.onConnectMidi}>{props.midiConnected ? 'MIDI OUT ✓' : 'CONNECTER EP‑133'}</button></>}<div className={`editor-vu ${props.playing ? 'active' : ''}`}><span>-20</span><span>-6</span><span>0</span><i /><b>VU</b></div></header>
     <div className="editor-commandbar">
       {props.mode === 'complete' ? <>
-        <details className="file-menu">
+        {fileMenuOpen && <div className="file-menu-backdrop" onClick={closeFileMenu} />}
+        <details className="file-menu" ref={fileMenuRef} onToggle={() => setFileMenuOpen(fileMenuRef.current?.open ?? false)}>
           <summary>FICHIER</summary>
           <div className="file-menu-panel">
+            <div className="file-menu-panel-head"><b>FICHIER</b><button className="file-menu-close" aria-label="Fermer le menu" onClick={closeFileMenu}>✕</button></div>
             <button className="file-new" onClick={props.onNew}>＋ NOUVEAU</button>
             <div className="file-menu-open">
               <b>OUVRIR</b>
-              {props.localProjects.length
-                ? props.localProjects.map((project) => <button key={project.id} className={project.id === props.selectedLocalProject ? 'active' : ''} onClick={() => props.onOpenProject(project.id)}>{project.title}</button>)
-                : <p>Aucun projet enregistré.</p>}
+              <div className="file-menu-open-list">
+                {props.localProjects.length
+                  ? props.localProjects.map((project) => <button key={project.id} className={project.id === props.selectedLocalProject ? 'active' : ''} onClick={() => { props.onOpenProject(project.id); closeFileMenu(); }}>{project.title}</button>)
+                  : <p>Aucun projet enregistré.</p>}
+              </div>
             </div>
             <div className="file-menu-row">
               <button className="save" disabled={!props.canSave} onClick={props.onSave}>● ENREGISTRER</button>
