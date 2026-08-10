@@ -1,1 +1,3 @@
 epsysex @ git+https://github.com/kmorrill/ep-series-sysex.git@main
+mido>=1.3,<2
+python-rtmidi>=1.5,<2

@@ -32,6 +32,13 @@ Le player HTML historique reste disponible comme référence fonctionnelle penda
 
 ## État technique au 9 août 2026
 
+Le rapport consolidé de la session du 10 août 2026 est disponible dans
+`docs/RAPPORT_SESSION_2026-08-10.md`. Point de reprise prioritaire : diagnostic
+Web MIDI navigateur dans Sons & Transfert ; le test MIDI direct vers la machine
+a réussi, mais la validation utilisateur de la communication web reste négative.
+
+- Diagnostic MIDI réel du 10 août : le navigateur ouvrait aussi `Midi Through`, ce qui pouvait annoncer une sortie connectée puis envoyer les pads au mauvais port. Entrées, sorties, notes, transport et PANIC ciblent maintenant uniquement l’EP-133. Le canal reçu de la machine est réutilisé en sortie. Les frappes de pads 36–83 pilotent A–D et le pad à l’écran. Les boutons physiques A–D seuls utilisent une notification SysEx propriétaire ; aucune écriture SysEx non documentée n’est activée.
+
 - Application moderne fusionnée dans le dépôt principal.
 - Modifications locales de `Pad-Hero` conservées, notamment les champs de précision `totalDeltaMs` et `hits` du scoring.
 - Build de production : `npm ci && npm run build`.
@@ -193,6 +200,25 @@ Le player HTML historique reste disponible comme référence fonctionnelle penda
 - `tools/local_clone_bridge.py` raccorde le bouton au cloneur sur localhost.
   Vite proxifie `/bridge`. Le dossier racine est fixé au lancement et ne peut
   pas être choisi par une requête web. Voir `docs/PONT_LOCAL_CLONAGE.md`.
+- Le cloneur prépare une synchronisation incrémentale au format manifeste v2 :
+  ancien manifeste archivé, projets comparés par hash, PCM locaux contrôlés et
+  métadonnées relues. Les écritures disque sont atomiques et aucun slot disparu
+  n'est supprimé automatiquement. Le second passage matériel depuis le bouton
+  est validé : 30,7 s, 9 projets et 527 sons inchangés, aucun téléchargement,
+  aucune erreur et 536 hashes conformes après contrôle indépendant.
+- Sons & Transfert adopte une vue machine : groupes A–D, grille physique de 12
+  pads, détail d'affectation et navigateur de banques par plages colorées. Les
+  plages confirmées viennent de la notice ; `EXTRA` reste volontairement neutre
+  pour 900–999. Voir `docs/POINT_SONS_ET_TRANSFERT.md`.
+- Dans cette vue, le mapping doit toujours passer par les helpers MIDI
+  canoniques : pad interne 1–12 vers touches visuelles
+  `7 8 9 / 4 5 6 / 1 2 3 / · 0 ENTER`. Les frappes matérielles suivent le
+  groupe et le pad à l'écran ; ONE/KEYS ne modifie que le projet local.
+- Les réaffectations son → pad sont préparées par glisser-déposer et restent
+  orange jusqu'à synchronisation. Les taux d'occupation et la mémoire théorique
+  font partie du diff. `SYNCHRONISER` ne doit écrire qu'après compilation depuis
+  une archive réelle, checkpoint, confirmation et relecture binaire ; tant que
+  ce cycle n'est pas validé, le bouton confirme seulement le plan local.
 
 ## Priorités
 
@@ -211,6 +237,10 @@ La vision détaillée est dans `docs/ROADMAP.md`, la gestion des données dans
 
 Toutes les propositions, y compris celles qui ne sont pas encore intégrées,
 sont conservées avec un statut et un motif dans `docs/REGISTRE_IDEES.md`.
+
+La présentation GitHub existe en français (`README.md`), anglais
+(`README.en.md`) et espagnol (`README.es.md`). Les trois versions doivent rester
+alignées sur l'état matériel réellement validé.
 
 ## Règles de travail
 

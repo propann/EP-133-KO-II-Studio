@@ -60,7 +60,10 @@ class CloneState:
             path = self.manifest_path() if self.machine_name else None
             if path and path.exists():
                 try:
-                    manifest = json.loads(path.read_text())
+                    full_manifest = json.loads(path.read_text())
+                    manifest = {key: full_manifest.get(key) for key in
+                                ("status", "syncMode", "createdAt", "finishedAt",
+                                 "progress", "summary", "changes")}
                 except (OSError, json.JSONDecodeError) as error:
                     self.last_error = str(error)
             return {"bridge": True, "running": running, "exitCode": exit_code,

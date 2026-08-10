@@ -1,5 +1,8 @@
 # État du projet
 
+> Rapport de clôture de la session du 10 août 2026 :
+> [RAPPORT_SESSION_2026-08-10.md](RAPPORT_SESSION_2026-08-10.md).
+
 > Mise à jour consolidée : 9 août 2026. La source principale est désormais
 > l'application React/TypeScript. Le player HTML reste une référence historique.
 
@@ -93,7 +96,7 @@
   comparaison et restauration ne sont pas encore actives.
 - Le moteur local de clone complet sait copier les neuf projets, tous les PCM,
   leurs métadonnées et hashes dans un dossier explicite avec reprise. Son
-  lancement depuis la fenêtre web attend encore le pont local natif.
+  lancement est raccordé à la fenêtre web par le pont local.
 - Le premier clone matériel complet est validé : 9 projets, 527 PCM, 527
   métadonnées, 56 214 010 octets audio et aucune erreur. Durée mesurée :
   25 min 20 s ; l'interface doit annoncer 20 à 30 minutes avant la première copie.
@@ -101,7 +104,11 @@
   527 métadonnées JSON valides. Voir `VALIDATION_CLONE_REEL.md`.
 - Le bouton du Studio est maintenant raccordé au moteur par un pont HTTP local
   sur `127.0.0.1:8765`. La progression du manifeste est affichée chaque seconde.
-  Le pont répond et attend le test de la seconde sauvegarde depuis l'interface.
+  Le second passage depuis l'interface est validé sur la machine réelle.
+- La synchronisation incrémentale archive le manifeste précédent, contrôle les
+  contenus locaux, relit les métadonnées et ne réécrit que les changements
+  détectables. Le second passage réel depuis le bouton est validé : 30,7 s,
+  9 projets et 527 sons inchangés, zéro téléchargement et zéro erreur.
 - Le menu FICHIER permet de choisir séparément la banque samples d'un clone.
   Le Studio joue alors les PCM locaux quand la machine est absente et garde le
   MIDI matériel prioritaire quand elle est connectée.

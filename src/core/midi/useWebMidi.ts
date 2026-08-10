@@ -17,6 +17,7 @@ export interface MidiObservation {
 export type MidiPadMap = Record<string, number>;
 
 export const midiKey = (channel: number, note: number) => `${channel}:${note}`;
+export const isEp133MidiPort = (name?: string | null) => /\bEP[- ]?133\b/i.test(name || '');
 
 export const midiPanicMessages = () => [
   [0xfc],
@@ -30,6 +31,15 @@ const NOTE_OFFSET_TO_VISUAL_PAD = [9, 10, 11, 6, 7, 8, 3, 4, 5, 0, 1, 2];
 export function officialPadFromNote(note: number) {
   if (note < 36 || note > 83) return undefined;
   return NOTE_OFFSET_TO_VISUAL_PAD[(note - 36) % 12];
+}
+
+export function officialGroupIndexFromNote(note: number) {
+  return note >= 36 && note <= 83 ? Math.floor((note - 36) / 12) : undefined;
+}
+
+export function officialInternalPadFromNote(note: number) {
+  const visualPad = officialPadFromNote(note);
+  return visualPad === undefined ? undefined : visualPad + 1;
 }
 
 interface WebMidiState {
@@ -52,6 +62,7 @@ export function useWebMidi(
     outputNames: [],
   });
   const accessRef = useRef<MIDIAccess | null>(null);
+  const channelRef = useRef(0);
   const hitRef = useRef(onPadHit);
   const observationRef = useRef(onObservation);
 
@@ -63,12 +74,13 @@ export function useWebMidi(
   }, []);
 
   const attachInputs = useCallback(async (access: MIDIAccess) => {
-    const inputs = [...access.inputs.values()];
+    const inputs = [...access.inputs.values()].filter((input) => isEp133MidiPort(input.name));
     const handler = (event: MIDIMessageEvent) => {
       const data = event.data;
       if (!data || (data[0] & 0xf0) !== 0x90 || data[2] === 0) return;
 
       const channel = (data[0] & 0x0f) + 1;
+      channelRef.current = channel - 1;
       const note = data[1];
       const velocity = data[2];
       const inputName = (event.target as MIDIInput | null)?.name || 'Entrée MIDI';
@@ -81,7 +93,7 @@ export function useWebMidi(
     };
 
     if (!inputs.length) {
-      setState((current) => ({ ...current, status: 'Aucune entrée MIDI détectée', connected: false, inputNames: [] }));
+      setState((current) => ({ ...current, status: 'Entrée EP-133 introuvable', connected: false, inputNames: [] }));
       return;
     }
 
@@ -99,7 +111,7 @@ export function useWebMidi(
   }, []);
 
   const attachOutputs = useCallback(async (access: MIDIAccess) => {
-    const outputs = [...access.outputs.values()];
+    const outputs = [...access.outputs.values()].filter((output) => isEp133MidiPort(output.name));
     try {
       await Promise.all(outputs.map((output) => output.connection === 'open' ? Promise.resolve(output) : output.open()));
       setState((current) => ({ ...current, outputConnected: outputs.length > 0, outputNames: outputs.map((output) => output.name || 'Sortie MIDI') }));
@@ -130,21 +142,24 @@ export function useWebMidi(
     const noteByVisualPad = [45, 46, 47, 42, 43, 44, 39, 40, 41, 36, 37, 38];
     const note = noteByVisualPad[pad] + groupIndex * 12;
     accessRef.current?.outputs.forEach((output) => {
-      output.send([0x90, note, velocity], timestamp);
-      output.send([0x80, note, 0], timestamp + durationMs);
+      if (!isEp133MidiPort(output.name)) return;
+      output.send([0x90 | channelRef.current, note, velocity], timestamp);
+      output.send([0x80 | channelRef.current, note, 0], timestamp + durationMs);
     });
   }, []);
 
   const sendNote = useCallback((note: number, velocity = 100, timestamp = performance.now(), durationMs = 120) => {
     const safeNote = Math.max(0, Math.min(127, note));
     accessRef.current?.outputs.forEach((output) => {
-      output.send([0x90, safeNote, velocity], timestamp);
-      output.send([0x80, safeNote, 0], timestamp + durationMs);
+      if (!isEp133MidiPort(output.name)) return;
+      output.send([0x90 | channelRef.current, safeNote, velocity], timestamp);
+      output.send([0x80 | channelRef.current, safeNote, 0], timestamp + durationMs);
     });
   }, []);
 
   const stopOutput = useCallback(() => {
     accessRef.current?.outputs.forEach((output) => {
+      if (!isEp133MidiPort(output.name)) return;
       try {
         (output as MIDIOutput & { clear?: () => void }).clear?.();
         midiPanicMessages().forEach((message) => output.send(message));
@@ -155,12 +170,13 @@ export function useWebMidi(
   }, []);
 
   const startOutputTransport = useCallback((timestamp = performance.now()) => {
-    accessRef.current?.outputs.forEach((output) => output.send([0xfa], timestamp));
+    accessRef.current?.outputs.forEach((output) => { if (isEp133MidiPort(output.name)) output.send([0xfa], timestamp); });
   }, []);
 
   const sendClockWindow = useCallback((bpm: number, timestamp: number, durationMs: number) => {
     const clockMs = 60000 / bpm / 24;
     accessRef.current?.outputs.forEach((output) => {
+      if (!isEp133MidiPort(output.name)) return;
       for (let offset = 0; offset < durationMs; offset += clockMs) output.send([0xf8], timestamp + offset);
     });
   }, []);

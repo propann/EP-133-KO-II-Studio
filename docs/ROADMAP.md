@@ -29,6 +29,11 @@ pour ouvrir, écouter ou modifier un projet.
 
 ## État consolidé — 9 août 2026
 
+Mise à jour du 10 août : clonage incrémental validé sur la machine et refonte
+Sons & Transfert réalisée. Le diagnostic Web MIDI de cette page reste ouvert :
+le test MIDI direct fonctionne, mais pas encore le trajet navigateur ↔ machine.
+Voir [RAPPORT_SESSION_2026-08-10.md](RAPPORT_SESSION_2026-08-10.md).
+
 ### Disponible
 
 - Accueil modulaire : Rhythm Hero, Studio EP-133, Sons & Transfert.
@@ -109,10 +114,14 @@ composition identique sans machine connectée ; échanger ses notes en MIDI.
 - [x] Copier les fichiers audio dans le dossier privé avec reprise et hash.
 - [x] Moteur local de copie des 9 projets, PCM, métadonnées et hashes.
 - [x] Relier la fenêtre web au moteur par un pont HTTP local.
+- [x] Préparer la synchronisation incrémentale et l'historique des manifestes.
+- [x] Valider un second passage incrémental depuis le bouton sur la machine.
 - [ ] Installer et démarrer automatiquement le pont comme service utilisateur.
 - [ ] Créer l'instantané initial immuable.
 - [ ] Calculer un patch entre instantané et copie de travail.
 - [ ] Détecter les conflits avant toute synchronisation.
+- [x] Préparer visuellement les réaffectations son → pad et leur diff mémoire.
+- [ ] Synchroniser les affectations après checkpoint, compilation et relecture.
 - [x] Créer un manifeste local avec un premier instantané daté.
 - [ ] Time Machine : chronologie, comparaison et restauration locale.
 - [ ] Time Machine : patch de restauration matérielle avec checkpoint.

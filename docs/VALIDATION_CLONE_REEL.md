@@ -34,9 +34,28 @@ Le manifeste et les fichiers ont été relus après la copie :
 La sauvegarde constitue donc une base locale valide pour le Studio et le futur
 système Time Machine. Elle reste privée et n'est pas versionnée dans Git.
 
-## Prochaine priorité
+## Évolution postérieure
 
-Le moteur est validé, mais son lancement a encore été effectué hors de
-l'interface. Le prochain chantier est le pont local : le bouton du Studio doit
-lancer la commande, afficher le manifeste en direct et signaler clairement la
-fin ou les erreurs.
+Le premier clone décrit ci-dessus a été lancé hors interface. Depuis le commit
+`61e9812`, le bouton du Studio est raccordé au moteur par un pont local et
+affiche le manifeste en direct. Une synchronisation incrémentale avec historique
+est en préparation le 10 août 2026.
+
+### Validation incrémentale du 10 août 2026
+
+Le second passage a été déclenché depuis le bouton du Studio avec l'EP-133
+connecté. Résultat :
+
+| Élément | Résultat |
+|---|---:|
+| Durée | 30,7 secondes |
+| Projets inchangés | 9 |
+| Sons inchangés | 527 |
+| Octets téléchargés | 0 |
+| Ajouts / modifications / suppressions | 0 |
+| Erreurs | 0 |
+
+Le manifeste final utilise le schéma `ep133.rhythm-hero.clone.v2`, le mode
+`incremental` et le statut `complete`. Un contrôle indépendant postérieur a
+recalculé les 536 hashes sans différence, confirmé l'absence de fichier
+manquant et analysé les 527 métadonnées JSON sans erreur.

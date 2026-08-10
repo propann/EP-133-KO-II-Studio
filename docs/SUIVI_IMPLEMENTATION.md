@@ -15,6 +15,21 @@ Pour chaque avancée :
 6. mettre à jour `PROJECT_CONTEXT.md`, `docs/ETAT_DU_PROJET.md` et ce journal ;
 7. créer un commit français dédié et le pousser sur la branche de travail.
 
+## Correctif MIDI EP-133 — 10 août 2026
+
+- [x] Exclure le port virtuel `Midi Through` des entrées et sorties machine.
+- [x] Envoyer pads, notes, transport et PANIC uniquement vers l’EP-133.
+- [x] Apprendre le canal MIDI depuis les messages entrants et le réutiliser en sortie.
+- [x] Conserver le retour machine → écran pour les pads des groupes A–D (notes 36–83).
+- [ ] Décoder proprement la notification SysEx propriétaire des boutons physiques A–D ; aucune écriture SysEx non documentée n’est activée.
+
+Validation de fin de session : le test direct Python, note 45 sur canal 1, fait
+sonner l’EP-133. La validation depuis la page web reste négative. Le prochain
+travail doit donc instrumenter séparément entrée, sortie, dernier message reçu
+et dernier message envoyé avant un nouveau changement de protocole.
+
+Rapport complet : `docs/RAPPORT_SESSION_2026-08-10.md`.
+
 ## Étape 1.1 — formats de projet isolés
 
 Statut : terminé le 9 août 2026.
@@ -323,7 +338,7 @@ Statut : fondation terminée le 9 août 2026.
 
 ## Étape 3.3 — moteur de clonage intégral
 
-Statut : moteur et clone réel validés, branchement UI en attente au 10 août 2026.
+Statut : moteur, clone réel et branchement UI validés au 10 août 2026.
 
 - [x] lecture des neuf projets ;
 - [x] lecture de tous les slots sonores occupés ;
@@ -335,7 +350,7 @@ Statut : moteur et clone réel validés, branchement UI en attente au 10 août 2
 - [x] arborescence canonique `clone/nom-machine/` créée automatiquement ;
 - [x] reprise des samples déjà copiés et de taille identique ;
 - [x] aucune commande d'écriture vers la machine ;
-- [ ] boîte de dialogue native et pont local pour lancer le moteur depuis l'UI ;
+- [x] boîte de dialogue et pont local pour lancer le moteur depuis l'UI ;
 - [x] campagne réelle complète sur les 527 sons, 9 projets et 0 erreur.
 
 Voir `docs/CLONAGE_COMPLET_MACHINE.md`.
@@ -343,7 +358,7 @@ Voir `docs/CLONAGE_COMPLET_MACHINE.md`.
 Contrôle indépendant des 536 hashes et 527 JSON :
 `docs/VALIDATION_CLONE_REEL.md`.
 
-## Étape 3.5 — bouton Studio raccordé au cloneur
+## Étape 3.4 — bouton Studio raccordé au cloneur
 
 Statut : raccord terminé, test par bouton à effectuer le 10 août 2026.
 
@@ -355,11 +370,11 @@ Statut : raccord terminé, test par bouton à effectuer le 10 août 2026.
 - [x] phase, compteur, pourcentage, temps et estimation dans la fenêtre ;
 - [x] journal persistant `clone.log` ;
 - [x] pont démarré et contrôle `/health` réussi ;
-- [ ] seconde sauvegarde déclenchée depuis le bouton et validée.
+- [x] seconde sauvegarde déclenchée depuis le bouton et validée.
 
 Voir `docs/PONT_LOCAL_CLONAGE.md`.
 
-## Étape 3.4 — banque machine hors ligne dans le Studio
+## Étape 3.5 — banque machine hors ligne dans le Studio
 
 Statut : première version terminée le 9 août 2026.
 
@@ -376,3 +391,79 @@ Statut : première version terminée le 9 août 2026.
 - [x] manifeste initial écrit dans `clone/nom-machine/` sur le disque ;
 
 Voir `docs/BANQUE_SAMPLES_STUDIO.md`.
+
+## Étape 3.6 — synchronisation incrémentale du miroir
+
+Statut : terminé et validé sur la machine réelle le 10 août 2026.
+
+- [x] schéma de manifeste `ep133.rhythm-hero.clone.v2` ;
+- [x] archivage atomique du manifeste précédent dans `history/` ;
+- [x] comparaison des projets par SHA-256 ;
+- [x] contrôle des PCM existants par taille, hash du manifeste et hash local ;
+- [x] relecture des métadonnées même lorsque le PCM reste local ;
+- [x] écritures atomiques des projets, PCM, métadonnées et manifestes ;
+- [x] bilan projets modifiés/inchangés et sons ajoutés/modifiés/inchangés/disparus ;
+- [x] bilan incrémental exposé par le pont et affiché dans le Studio ;
+- [x] endpoints `/health` et `/clone/status` contrôlés sur un pont temporaire ;
+- [x] tests applicatifs, build, syntaxe Python et `git diff --check` réussis ;
+- [x] premier essai UI : dépendance matérielle `mido` manquante détectée avant
+  les samples, sans modification de la machine ni des fichiers déjà clonés ;
+- [x] dépendances MIDI déclarées et reprise sur le dernier manifeste stable
+  après une exécution interrompue ou invalide ;
+- [x] échec de l'inventaire sonore converti en statut final `partial` ;
+- [x] second passage déclenché depuis le bouton avec l'EP-133 connecté ;
+- [x] durée réelle : 30,7 s ;
+- [x] 9 projets inchangés, 527 sons inchangés et 0 octet téléchargé ;
+- [x] 0 ajout, modification, suppression ou erreur ;
+- [x] contrôle indépendant après synchronisation : 536 hashes conformes,
+  aucun fichier manquant et 527 métadonnées JSON valides.
+
+Limite documentée : la machine ne fournit pas de checksum PCM distant dans sa
+liste. Un remplacement audio de même taille et de métadonnées identiques exige
+un mode de vérification complète futur pour être détecté. Aucun fichier local
+n'est supprimé automatiquement lorsqu'un slot disparaît.
+
+## Présentation GitHub trilingue
+
+Statut : terminé le 10 août 2026.
+
+- [x] page principale française restructurée comme présentation produit ;
+- [x] versions anglaise et espagnole de même portée ;
+- [x] navigation de langue en tête des trois README ;
+- [x] fonctionnalités, sécurité, validation matérielle et limites actuelles
+  présentées sans promesse d'écriture non validée ;
+- [x] installation, tests, architecture du dépôt et liens de suivi conservés.
+
+## Refonte Sons & Transfert — vue machine
+
+Statut : implémentation terminée, validation visuelle utilisateur en attente au
+10 août 2026.
+
+- [x] notice OS 2.0 relue pour les groupes, pads et plages sonores ;
+- [x] groupes A–D visibles et sélectionnables ;
+- [x] groupes A–D placés à gauche du pavé ;
+- [x] grille physique des 12 pads avec mapping interne/visuel corrigé et testé ;
+- [x] slot et nom visibles directement dans chaque pad ;
+- [x] banques Kick, Snare, Hi-hat, Perc, Bass, Melodic, FX, User 1, User 2 et Extra ;
+- [x] code couleur partagé entre pads, banques et résultats ;
+- [x] filtre de banque et recherche par slot ou nom ;
+- [x] suivi visuel des frappes MIDI avec sélection automatique du groupe/pad ;
+- [x] pads virtuels jouables via MIDI machine, PCM local ou son de secours ;
+- [x] panneau de détail sous les pads supprimé pour alléger la lecture ;
+- [x] KEYS réduit à un interrupteur orange dans l'en-tête du pavé ;
+- [x] menu déroulant remplacé par tous les dossiers visibles en boutons ;
+- [x] dossiers réorganisés verticalement pour laisser la liste lisible ;
+- [x] suppression affichée par ligne mais matériellement verrouillée avec motif ;
+- [x] glisser-déposer son → pad avec affectations locales ;
+- [x] pads et sons modifiés maintenus en orange ;
+- [x] taux d'occupation par dossier et capacité globale affichés ;
+- [x] mémoire actuelle/théorique et coût des affectations affichés ;
+- [x] bouton SYNCHRONISER et confirmation du plan local ;
+- [ ] compilation sûre du projet modifié depuis une archive machine réelle ;
+- [ ] checkpoint, écriture sur projet brouillon et relecture binaire ;
+- [x] profil, mémoire, MIDI et dossier local conservés ;
+- [x] transfert matériel maintenu désactivé ;
+- [x] tests, build et contrôle du diff réussis ;
+- [ ] contrôle visuel Chrome/Chromium sur écran large et étroit.
+
+Voir `docs/POINT_SONS_ET_TRANSFERT.md`.

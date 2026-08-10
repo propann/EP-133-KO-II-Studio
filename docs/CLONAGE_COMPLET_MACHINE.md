@@ -23,6 +23,9 @@ dossier-choisi/
 └── clone/
     └── nom-de-la-machine/
         ├── manifest.json
+        ├── clone.log
+        ├── history/
+        │   └── manifest-<date>.json
         ├── projects/
         │   ├── P01.tar
         │   └── … P09.tar
@@ -38,9 +41,23 @@ Le dossier `clone` est créé automatiquement s'il n'existe pas. S'il existe,
 il est réutilisé sans suppression. Chaque machine possède obligatoirement son
 propre sous-dossier normalisé afin d'éviter de mélanger deux appareils.
 
-Le manifeste est écrit atomiquement après chaque élément. Une reprise conserve
-un sample existant lorsque sa taille correspond, puis recalcule son hash. Les
-erreurs isolées sont consignées sans rendre les données déjà copiées inutiles.
+Le manifeste, les projets, les PCM et les métadonnées sont écrits atomiquement.
+Lorsqu'un manifeste précédent existe, il est archivé dans `history/` avant la
+synchronisation. Les erreurs isolées sont consignées sans rendre les données
+déjà copiées inutiles.
+
+À partir du schéma `ep133.rhythm-hero.clone.v2`, une synchronisation conserve
+les projets dont le hash local correspond au dernier manifeste et les PCM dont
+la taille et le hash local correspondent. Les métadonnées légères sont relues à
+chaque passage afin de détecter une modification sans télécharger à nouveau
+l'audio. Le résumé distingue les projets modifiés, les sons ajoutés ou
+modifiés, les sons inchangés et les slots disparus.
+
+Limite connue : la liste de fichiers fournie par la machine n'expose pas de
+checksum du PCM distant. Le moteur ne peut donc pas reconnaître sans
+retéléchargement un remplacement audio ayant exactement la même taille et les
+mêmes métadonnées. Les fichiers correspondant aux slots disparus sont conservés
+sur disque ; leur absence est signalée sans suppression automatique.
 
 ## Durée et progression
 
@@ -58,8 +75,8 @@ Le manifeste expose pendant l'opération :
 - les erreurs déjà rencontrées.
 
 La console affiche chaque projet et chaque slot immédiatement. Une reprise est
-normalement plus rapide, car les PCM présents et de taille identique ne sont pas
-retéléchargés.
+normalement plus rapide, car les PCM déjà validés par le manifeste et leur hash
+local ne sont pas retéléchargés.
 
 ### Validation matérielle du 9 août 2026
 
@@ -78,17 +95,18 @@ Exécution locale prévue :
   --out "/chemin/choisi" --name "MON EP-133" --capacity-mb 64
 ```
 
-## Branchement à terminer
+## Branchement au Studio
 
-La fenêtre `FICHIER → CLONER LA MACHINE` utilise une boîte de dialogue de dossier
-native sur Chrome/Chromium. Elle crée réellement
-`clone/nom-machine/manifest.json` sur le disque dur, sans upload vers le site.
-Le navigateur ne peut toutefois pas lancer le moteur Python qui dialogue avec
-le protocole fichier de la machine. Le prochain composant reste donc un pont
-local installé, limité à la commande de clonage et affichant sa progression.
+La fenêtre `FICHIER → CLONER LA MACHINE` est raccordée au moteur par le pont
+HTTP local décrit dans `PONT_LOCAL_CLONAGE.md`. Le pont fixe le dossier parent à
+son démarrage, écoute uniquement sur `127.0.0.1`, lance Python et expose la
+progression sans permettre à la page web de choisir un autre chemin.
 
-Le bouton ne devra annoncer « clone complet » qu'après contrôle des 9 projets,
-du nombre de samples, des tailles et de tous les hashes.
+Le premier clone complet est validé. La synchronisation incrémentale et son
+historique ont également été validés depuis le bouton sur la machine réelle :
+30,7 secondes pour reconnaître 9 projets et 527 sons inchangés, sans
+téléchargement ni erreur. Les 536 hashes et les 527 métadonnées ont ensuite été
+contrôlés indépendamment.
 
 ## Préparation de la Time Machine
 

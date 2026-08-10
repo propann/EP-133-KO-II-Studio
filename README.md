@@ -1,98 +1,115 @@
 # EP-133 Rhythm Hero
 
-Coach de finger-drumming interactif pour le Teenage Engineering EP-133 K.O. II.
+[Français](README.md) · [English](README.en.md) · [Español](README.es.md)
 
-L’objectif : apprendre un groove sur une mesure, le rejouer sur la vraie machine, comprendre précisément les erreurs, puis augmenter le tempo sans perdre le plaisir.
+**Apprendre, jouer, composer et sauvegarder — avec ou sans EP-133.**
 
-## Suite actuelle
+EP-133 Rhythm Hero est une suite locale et open source dédiée au Teenage
+Engineering EP-133 K.O. II. Elle réunit un coach de finger-drumming, un Studio
+sur quatre groupes, une bibliothèque sonore hors ligne et un système de clonage
+en lecture seule.
 
-- Application React / TypeScript avec moteur Web MIDI et scoring
-- Accueil modulaire : jeu, studio complet et gestion des sons
-- Player visuel inspiré du K.O. II
-- 39 rythmes progressifs, du niveau 1 au niveau 5
-- Partition sur une mesure avec le numéro du pad à jouer
-- Doigt conseillé pour chaque frappe
-- Tempo de 10 % à 150 %
-- Sons d’entraînement et VU-mètre réactif
-- Studio A–D, séquenceur extensible, piano-roll et sortie MIDI
-- Scan en lecture seule des noms, slots et modes de la machine
-- Export MIDI et JSON de projet EP-133
-- Cahier imprimable généré depuis une source versionnée
+> Projet communautaire indépendant. Aucune écriture vers la machine n'est
+> activée tant que les protections de sauvegarde, confirmation et relecture ne
+> sont pas terminées.
 
-## Démarrer l'application
+## Pourquoi ce projet ?
+
+L'objectif est de rendre l'apprentissage et la création plus visuels : choisir
+un rythme, voir les pads à frapper, jouer sur la vraie machine, mesurer son
+avance ou son retard, puis transformer ses idées en morceaux sauvegardables.
+L'application reste utilisable lorsque l'EP-133 est déconnecté.
+
+## Fonctionnalités
+
+### Rhythm Hero
+
+- 39 styles rythmiques et cinq niveaux de difficulté ;
+- partition multi-mesures avec pads et doigtés conseillés ;
+- Web MIDI, score PERFECT / GOOD / MISS, combo et précision ;
+- compte à rebours, tempo réglable et sons d'entraînement ;
+- éditeur d'exercices USER à longueur extensible.
+
+### Studio EP-133
+
+- quatre groupes A–D et 12 pads par groupe ;
+- séquenceur extensible, piano-roll KEYS, vélocité et durée ;
+- lecture locale ou sortie MIDI vers la machine ;
+- sauvegarde locale, bibliothèque de projets et export MIDI/JSON ;
+- lecture en mode Song à partir des scènes et patterns décodés.
+
+### Miroir privé de la machine
+
+- scan SysEx strictement en lecture seule ;
+- copie locale des 9 projets, PCM et métadonnées ;
+- hashes SHA-256, reprise et écritures disque atomiques ;
+- synchronisation incrémentale et historique des manifestes ;
+- lecture des samples du clone lorsque l'EP-133 est déconnecté.
+
+La validation réelle du 10 août 2026 a reconnu **9 projets et 527 sons
+inchangés en 30,7 secondes**, sans téléchargement ni erreur. Les 536 hashes ont
+été vérifiés indépendamment.
+
+## Installation rapide
+
+Prérequis : Node.js récent, npm et Chrome/Chromium pour Web MIDI.
 
 ```bash
+git clone https://github.com/propann/ep133-rhythm-hero.git
+cd ep133-rhythm-hero
 npm ci
 npm run dev
 ```
 
-Le build de production se génère avec `npm run build`. Le player autonome
-historique reste accessible dans `docs/ep133-pad-player.html` pendant la
-migration de ses 39 exercices vers l'application React.
-
-Les vérifications des formats de projet se lancent avec :
+Ouvrir ensuite l'adresse indiquée par Vite, généralement
+`http://localhost:5173/`.
 
 ```bash
-npm run test:exports
+npm test
+npm run build
 ```
 
-La connexion Web MIDI, le scoring et le mapping officiel des groupes A–D sont
-intégrés et ont été validés avec la machine. Les opérations SysEx restent en
-lecture seule tant que les protections de transfert ne sont pas finalisées.
+Pour le scan et le clonage matériel, suivre le guide
+[Pont local de clonage](docs/PONT_LOCAL_CLONAGE.md). Le player autonome
+historique reste disponible dans `docs/ep133-pad-player.html` pendant la
+migration de ses exercices.
 
-## Documentation
+## État du projet
 
+Le jeu, le Studio, le Save/Load, la lecture des archives `.pak/.ppak`, le miroir
+hors ligne et le clonage incrémental sont opérationnels. Restent notamment à
+faire : véritables scènes et Song Positions multiples, édition avancée de la
+vélocité/gate, service local automatique, préparation audio et écriture
+matérielle sécurisée.
+
+- [État détaillé](docs/ETAT_DU_PROJET.md)
 - [Feuille de route](docs/ROADMAP.md)
-- [Analyse critique du cahier des charges étendu](docs/ANALYSE_ETUDE_CAHIER_CHARGES.md)
-- [Registre de toutes les idées et décisions](docs/REGISTRE_IDEES.md)
-- [Validation du transport audio et MIDI](docs/VALIDATION_TRANSPORT.md)
-- [Plan de découpage de l'interface](docs/DECOUPAGE_INTERFACE.md)
-- [Modèle de données du séquenceur](docs/MODELE_DONNEES_PROJET.md)
-- [Validation du score et de l'extension](docs/VALIDATION_SCORE_ET_EXTENSION.md)
-- [Bibliothèque documentaire et droits](docs/BIBLIOTHEQUE_DOCUMENTAIRE.md)
-- [Point d'étape Jeu et Studio](docs/POINT_JEU_ET_STUDIO.md)
-- [Validation du Save/Load Studio](docs/VALIDATION_SAVE_LOAD_STUDIO.md)
-- [Structure du morceau et Song mode](docs/STRUCTURE_SONG_MODE.md)
-- [Chargement du projet 1 de la machine](docs/CHARGEMENT_PROJET_MACHINE.md)
-- [Architecture du miroir local de la machine](docs/ARCHITECTURE_MIROIR_MACHINE.md)
-- [Clonage complet des projets et samples](docs/CLONAGE_COMPLET_MACHINE.md)
-- [Banque de samples machine dans le Studio](docs/BANQUE_SAMPLES_STUDIO.md)
-- [Validation du premier clone matériel](docs/VALIDATION_CLONE_REEL.md)
-- [Pont local et progression du clonage](docs/PONT_LOCAL_CLONAGE.md)
-- [Gestion des fichiers et des sons](docs/GESTION_FICHIERS_ET_SONS.md)
-- [Décision sur les formats de projet](docs/DECISION_FORMATS_PROJET.md)
-- [Vision future OP-1](docs/VISION_OP1.md)
-- [Journal de suivi des étapes](docs/SUIVI_IMPLEMENTATION.md)
-- [Architecture cible](docs/ARCHITECTURE.md)
-- [Mise en route Windows](docs/MISE_EN_ROUTE_WINDOWS.md)
-- [Mise en route Linux — chemin principal](docs/MISE_EN_ROUTE_LINUX.md)
-- [Connexion et calibration MIDI du EP-133](docs/CONNEXION_ET_CALIBRATION_MIDI.md)
-- [Lancement local Windows / Raspberry Pi](docs/LANCEMENT_LOCAL.md)
-- [État du projet](docs/ETAT_DU_PROJET.md)
-- [Parcours des 39 exercices](exercises/PARCOURS_EXERCICES_V1.md)
-- [Catalogue machine des exercices](exercises/catalogue-exercices-v1.json)
-- [Atlas de finger-drumming](handbook/EP133_ATLAS_FINGER_DRUMMING.md)
+- [Journal d'implémentation](docs/SUIVI_IMPLEMENTATION.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Validation du clone réel](docs/VALIDATION_CLONE_REEL.md)
+- [Point d'étape Sons & Transfert](docs/POINT_SONS_ET_TRANSFERT.md)
+- [Contexte et décisions](PROJECT_CONTEXT.md)
 
 ## Organisation
 
-- `src/` : application React et moteurs audio, MIDI et scoring
-- `public/` : exercices de l'application et sources MIDI
-- `docs/` : documentation et player autonome historique
-- `exercises/` : exercices en JSON
-- `handbook/` : partitions et cahier
-- `tools/` : générateurs et vérifications
+- `src/` — application React, audio, MIDI, scoring et projets ;
+- `public/` — exercices, données publiques et sources MIDI ;
+- `docs/` — architecture, validations et guides ;
+- `exercises/` — parcours pédagogique et catalogue ;
+- `handbook/` — atlas de finger-drumming ;
+- `tools/` — scanners, cloneur, pont local et vérifications.
 
-Le contexte de fusion et les prochaines priorités sont consignés dans
-[`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md).
+## Sécurité et données
 
-## Déploiement
-
-Chaque push sur `main` déclenche le workflow GitHub Pages. Dans les réglages du
-dépôt, choisir **Settings → Pages → Source: GitHub Actions** lors de la première
-mise en service.
+- lecture seule par défaut lors des échanges SysEx ;
+- aucun sample propriétaire n'est versionné dans Git ;
+- les clones restent dans un dossier privé choisi par l'utilisateur ;
+- aucune suppression ou restauration matérielle automatique ;
+- les formats inconnus sont préservés, jamais inventés.
 
 ## Licence
 
-Code du projet : MIT, sauf dépendance future précisant autre chose.
+Code du projet sous licence MIT, sauf mention contraire pour une dépendance.
 
-Teenage Engineering, EP-133 et K.O. II sont des marques de leurs propriétaires. Projet communautaire indépendant.
+Teenage Engineering, EP-133 et K.O. II sont des marques de leurs propriétaires.
+Ce projet n'est ni affilié ni approuvé par Teenage Engineering.

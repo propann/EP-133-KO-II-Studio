@@ -632,6 +632,20 @@ export default function App() {
     const info = devicePadInfo(pad);
     return info ? deviceInventory?.sounds[String(info.slot)]?.name || `SON ${info.slot}` : 'VIDE';
   };
+  const previewSoundPagePad = async (group: EditorGroup, pad: number, stagedSlot?: number) => {
+    const info = deviceInventory?.pads.find((candidate) => candidate.group === group && candidate.pad === pad + 1);
+    if (stagedSlot !== undefined) {
+      if (await machineSampleBank.play(stagedSlot, 110, performance.now(), undefined, deviceInventory?.sounds[String(stagedSlot)]?.rootNote || 60)) return;
+      await audio.previewPad(pad);
+      return;
+    }
+    if (midi.outputConnected) {
+      midi.sendPad(pad, EDITOR_GROUPS.indexOf(group), 110);
+      return;
+    }
+    if (info?.slot && await machineSampleBank.play(info.slot, 110, performance.now(), undefined, info.rootNote)) return;
+    await audio.previewPad(pad);
+  };
 
   useEffect(() => {
     if (!transportActive || !scoreScroll.current) return;
@@ -647,7 +661,7 @@ export default function App() {
 
   if (workspaceView === 'home') return <HomePage connected={midi.connected || midi.outputConnected} project={deviceInventory?.project} scannedSoundCount={deviceInventory ? Object.keys(deviceInventory.sounds).length : 0} onOpenGame={() => setWorkspaceView('game')} onOpenStudio={openCompleteEditor} onOpenSounds={() => setWorkspaceView('sounds')} onOpenDocumentation={() => setWorkspaceView('docs')} />;
 
-  if (workspaceView === 'sounds') return <SoundsPage inventory={deviceInventory} soundIndex={deviceSoundIndex} midiConnected={midi.outputConnected} onBack={goHome} onConnectMidi={() => void connectMidi()} />;
+  if (workspaceView === 'sounds') return <SoundsPage inventory={deviceInventory} soundIndex={deviceSoundIndex} midiConnected={midi.outputConnected} liveMidi={lastMidi} padModes={editorPadModes} onBack={goHome} onConnectMidi={() => void connectMidi()} onPadModeChange={(group, pad, mode) => setEditorPadModes((current) => ({ ...current, [`${group}:${pad}`]: mode }))} onPadPreview={(group, pad, stagedSlot) => void previewSoundPagePad(group, pad, stagedSlot)} />;
 
   if (workspaceView === 'docs') return <DocumentationPage onBack={goHome} />;
 
