@@ -40,6 +40,8 @@ interface EditorToolbarProps {
   onLoopChange: (loop: boolean) => void;
   onExportFormatChange: (format: 'midi' | 'json') => void;
   onExport: () => void;
+  onExportMidi: () => void;
+  onExportJson: () => void;
 }
 
 export function EditorToolbar(props: EditorToolbarProps) {
@@ -55,25 +57,23 @@ export function EditorToolbar(props: EditorToolbarProps) {
           <summary>FICHIER</summary>
           <div className="file-menu-panel">
             <div className="file-menu-panel-head"><b>FICHIER</b><button className="file-menu-close" aria-label="Fermer le menu" onClick={closeFileMenu}>✕</button></div>
-            <button className="file-new" onClick={props.onNew}>＋ NOUVEAU</button>
-            <div className="file-menu-open">
-              <b>OUVRIR</b>
-              <div className="file-menu-open-list">
-                {props.localProjects.length
-                  ? props.localProjects.map((project) => <button key={project.id} className={project.id === props.selectedLocalProject ? 'active' : ''} onClick={() => { props.onOpenProject(project.id); closeFileMenu(); }}>{project.title}</button>)
-                  : <p>Aucun projet enregistré.</p>}
-              </div>
+            <button className="file-row" onClick={() => { props.onNew(); closeFileMenu(); }}>Nouveau</button>
+            <div className="file-row file-row-label">Ouvrir</div>
+            <div className="file-menu-open-list">
+              {props.localProjects.length
+                ? props.localProjects.map((project) => <button key={project.id} className={`file-row nested ${project.id === props.selectedLocalProject ? 'active' : ''}`} onClick={() => { props.onOpenProject(project.id); closeFileMenu(); }}>{project.title}</button>)
+                : <p className="file-row nested muted">Aucun projet enregistré.</p>}
             </div>
-            <div className="file-menu-row">
-              <button className="save" disabled={!props.canSave} onClick={props.onSave}>● ENREGISTRER</button>
-              <button disabled={!props.canSave} onClick={props.onSaveAs}>ENREGISTRER SOUS</button>
-            </div>
-            <div className="file-menu-row">
-              <button disabled={!props.selectedLocalProject} onClick={props.onRename}>RENOMMER</button>
-              <button disabled={!props.selectedLocalProject} onClick={props.onDuplicate}>DUPLIQUER</button>
-              <button className="file-delete" disabled={!props.selectedLocalProject} onClick={props.onDelete}>SUPPRIMER</button>
-            </div>
-            <div className="file-export"><label>FORMAT<select value={props.exportFormat} onChange={(event) => props.onExportFormatChange(event.target.value as 'midi' | 'json')}><option value="midi">MIDI (.mid)</option><option value="json">PROJET EP‑133 (.json)</option></select></label><button className="midi-export" onClick={props.onExport}>⇩ EXPORTER</button></div>
+            <hr className="file-menu-divider" />
+            <button className="file-row" disabled={!props.canSave} onClick={props.onSave}>Enregistrer</button>
+            <button className="file-row" disabled={!props.canSave} onClick={props.onSaveAs}>Enregistrer sous…</button>
+            <hr className="file-menu-divider" />
+            <button className="file-row" disabled={!props.selectedLocalProject} onClick={props.onRename}>Renommer</button>
+            <button className="file-row" disabled={!props.selectedLocalProject} onClick={props.onDuplicate}>Dupliquer</button>
+            <button className="file-row danger" disabled={!props.selectedLocalProject} onClick={props.onDelete}>Supprimer</button>
+            <hr className="file-menu-divider" />
+            <button className="file-row" onClick={() => { props.onExportMidi(); closeFileMenu(); }}>Exporter en MIDI (.mid)</button>
+            <button className="file-row" onClick={() => { props.onExportJson(); closeFileMenu(); }}>Exporter en projet EP‑133 (.json)</button>
           </div>
         </details>
         <button className="machine-project-load" disabled={!props.machineProjectAvailable} onClick={props.onLoadMachineProject} title={props.machineProjectAvailable ? 'Charger le projet scanné sur la machine' : 'Aucun projet scanné'}>↓ PROJET MACHINE</button>
