@@ -16,6 +16,7 @@
      cartes), pour rester cohérent avec les cartes du Song Arranger. */
   --radius: 10px;
   --radius-sm: 5px;
+  --radius-xs: 3px;
   /* Convention visuelle de la vue Song Arranger uniquement — choix de design
      du Studio, PAS une couleur confirmée sur la machine EP-133 réelle. */
   --group-a: var(--ko-orange);
@@ -352,11 +353,11 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
    empaquetées à coins arrondis reliées par des flèches (maquette de référence). */
 .song-arranger { flex:1 1 auto; display:flex; flex-direction:column; overflow:hidden; background:#e9e7e1; }
 .song-arranger-track { flex:1 1 auto; display:flex; align-items:flex-start; gap:0; padding:14px 10px; overflow:auto; }
-.song-position-card { flex:0 0 220px; display:flex; flex-direction:column; border:2px solid var(--ko-black); border-radius:10px; overflow:hidden; background:#fbfaf7; box-shadow:2px 2px 0 #c8c4bb; cursor:grab; }
+.song-position-card { flex:0 0 220px; display:flex; flex-direction:column; border:2px solid var(--ko-black); border-radius:var(--radius); overflow:hidden; background:#fbfaf7; box-shadow:2px 2px 0 #c8c4bb; cursor:grab; }
 .song-position-arrow { align-self:center; flex:0 0 auto; padding:0 6px; font-size:20px; font-weight:900; color:var(--ko-orange); }
 .song-position-head { display:flex; align-items:center; justify-content:space-between; gap:6px; padding:6px 10px; background:var(--group-a); font-size:9px; font-weight:900; }
 .song-position-head small { display:block; font-size:7px; font-weight:normal; }
-.song-position-audition { width:20px; height:20px; padding:0; border:1px solid var(--ko-black); border-radius:5px; background:var(--ko-beige); font-size:8px; }
+.song-position-audition { width:20px; height:20px; padding:0; border:1px solid var(--ko-black); border-radius:var(--radius-sm); background:var(--ko-beige); font-size:8px; }
 .song-position-scene { display:flex; align-items:center; justify-content:space-between; gap:6px; padding:5px 10px; border-bottom:1px solid #d8d5cf; font-size:8px; font-weight:bold; }
 .song-position-scene small { margin-left:4px; font-weight:normal; }
 .song-position-shared { margin:0; padding:3px 10px; border-bottom:1px solid #d8d5cf; font-size:6.5px; font-style:normal; color:#8a8579; }
@@ -366,27 +367,28 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .pattern-block.muted { opacity:.55; }
 .pattern-block-head { display:flex; align-items:center; gap:5px; font-size:8px; font-weight:bold; }
 .pattern-block-head span { flex:1; }
-.pattern-block-mute { width:15px; height:15px; padding:0; border:1px solid var(--ko-black); border-radius:4px; background:var(--ko-beige); font-size:8px; line-height:1; }
-.pattern-badge { display:grid; place-items:center; width:16px; height:16px; border:1px solid var(--ko-black); border-radius:4px; font-size:8px; font-weight:900; }
+.pattern-block-mute { width:17px; height:17px; padding:0; border:1px solid var(--ko-black); border-radius:var(--radius-sm); background:var(--ko-beige); font-size:8px; line-height:1; }
+.pattern-badge { display:grid; place-items:center; width:20px; height:20px; border:1px solid var(--ko-black); border-radius:var(--radius-sm); font-size:9px; font-weight:900; }
 .pattern-badge.group-a { background:var(--group-a); }
 .pattern-badge.group-b { background:var(--group-b); }
 .pattern-badge.group-c { background:var(--group-c); color:var(--ko-beige); }
 .pattern-badge.group-d { background:var(--group-d); }
-.pattern-preview { position:relative; height:16px; margin-top:3px; }
-.pattern-preview.empty { display:flex; align-items:center; height:12px; margin-top:3px; font-size:6px; font-weight:bold; color:#948f87; }
-.pattern-preview.trigger { display:grid; grid-auto-flow:column; gap:1px; background:#e5e2db; border-radius:3px; overflow:hidden; }
+/* Aperçu son agrandi — mini-grille en damier (déclencheurs) ou barres (mélodique), toujours dérivé des frappes existantes, jamais de l'audio réel. */
+.pattern-preview { position:relative; height:30px; margin-top:5px; }
+.pattern-preview.empty { display:flex; align-items:center; height:20px; margin-top:5px; font-size:7px; font-weight:bold; color:#948f87; }
+.pattern-preview.trigger { display:grid; grid-auto-flow:column; gap:1.5px; background:#e5e2db; border-radius:var(--radius-xs); overflow:hidden; }
 .pattern-preview.trigger i { background:transparent; font-style:normal; }
 .pattern-preview.trigger i.on { background:var(--ko-orange); }
-.pattern-preview.melodic span { position:absolute; bottom:0; width:3px; background:#5a5650; border-radius:1px; }
+.pattern-preview.melodic span { position:absolute; bottom:0; width:4px; background:#5a5650; border-radius:var(--radius-xs); }
 .song-position-actions { display:grid; grid-template-columns:1fr 1fr; gap:1px; border-top:1px solid var(--ko-black); background:#e5e2db; }
 .song-position-actions button { padding:6px 0; border:0; background:#f3f1ec; font-size:8px; font-weight:bold; }
 .song-position-actions .song-position-delete { background:#f0cfc3; }
-.song-position-add { flex:0 0 130px; align-self:stretch; margin-left:8px; border:2px dashed #a19c92; border-radius:10px; background:transparent; color:#625f5a; font-size:9px; font-weight:bold; }
+.song-position-add { flex:0 0 130px; align-self:stretch; margin-left:8px; border:2px dashed #a19c92; border-radius:var(--radius); background:transparent; color:#625f5a; font-size:9px; font-weight:bold; }
 .pattern-pool { flex:0 0 auto; display:flex; flex-direction:column; gap:5px; padding:8px 10px; border-top:2px solid var(--ko-black); background:var(--ko-panel); overflow-x:auto; }
 .pattern-pool > b { font-size:8px; }
 .pattern-pool-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
 .pattern-pool-row > b { width:20px; font-size:9px; }
-.pattern-pool-card { padding:4px 7px; border:1px solid var(--ko-black); border-radius:5px; font-size:8px; font-weight:bold; cursor:grab; }
+.pattern-pool-card { padding:4px 7px; border:1px solid var(--ko-black); border-radius:var(--radius-sm); font-size:8px; font-weight:bold; cursor:grab; }
 .pattern-pool-card.group-a { background:var(--group-a); }
 .pattern-pool-card.group-b { background:var(--group-b); }
 .pattern-pool-card.group-c { background:var(--group-c); color:var(--ko-beige); }
