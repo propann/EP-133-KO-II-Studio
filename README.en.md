@@ -73,10 +73,12 @@ migrated.
 
 ## Project status
 
-The game, Studio, Save/Load workflow, `.pak/.ppak` reading, offline mirror, and
-incremental cloning are operational. Remaining work includes true multiple
-scenes and Song Positions, advanced velocity/gate editing, automatic local
-service startup, audio preparation, and safeguarded device writing.
+The game, Studio, Save/Load workflow, `.pak/.ppak` reading, offline mirror,
+incremental cloning, and the full Pattern/Scene/Song hierarchy (Pattern Editor
+and Song Arranger views) are operational. Remaining work includes automatic
+playback advance from one Song Position to the next, advanced velocity/gate
+editing, automatic local service startup, audio preparation, and safeguarded
+device writing.
 
 - [Detailed status — French](docs/ETAT_DU_PROJET.md)
 - [Roadmap — French](docs/ROADMAP.md)

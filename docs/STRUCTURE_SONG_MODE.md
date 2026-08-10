@@ -13,27 +13,46 @@ Une Song Position dure autant que le pattern le plus long de sa scène. Une
 liste peut contenir jusqu'à 99 positions. Cette règle, et non la reproduction
 de l'illustration du manuel, guide notre interface.
 
-## Première intégration dans le Studio
+## Modèle réel dans le Studio
 
-Le bandeau Song mode affiche maintenant les repères utilisés par la machine :
+Le Studio stocke désormais toute la hiérarchie, pas une seule scène figée :
 
-- `SONG POS 01` et `[L.01]` pour la position dans la liste ;
-- `SCENE 01` et `[S.01]` pour la scène assignée ;
-- `PATTERN A01`, `B01`, `C01`, `D01` pour les quatre groupes ;
-- la longueur de chaque pattern et celle de la Song Position ;
-- le groupe actuellement édité en ambre.
+- `PatternBank` (`src/core/project/song.ts`) garde tous les patterns 01–99 de
+  tous les groupes ; un trou (ex. pas de B01) est légal et préservé, jamais
+  comblé — conforme aux scans réels de la machine.
+- `SceneDefinition[]` garde toutes les scènes S.01–S.99, chacune choisissant un
+  pattern par groupe ou `null` (MUTE, `0` côté machine).
+- `song: number[]` garde la liste complète L.01–L.99, l'ordre chronologique du
+  morceau. Une scène est une ressource partagée : deux Song Positions peuvent
+  référencer la même scène, et la modifier depuis l'une change l'autre —
+  fidèle au fonctionnement réel de la machine.
 
-Cliquer un pattern A01–D01 sélectionne le groupe correspondant dans la grille.
-La longueur de la scène est calculée à partir du groupe qui contient le plus de
-mesures, conformément au fonctionnement décrit dans le manuel.
+Deux vues exploitent ce modèle, basculables via `[ EDIT PATTERN ] / [ ARRANGEMENT ]` dans la barre du Studio :
 
-## Étape suivante
+- **Pattern Editor** : la grille existante, plus un sélecteur `PATTERN: [ A01 ▲▼ ]`
+  pour choisir quel numéro de pattern du groupe actif est édité.
+- **Song Arranger** (`SongArranger.tsx`) : un storyboard horizontal, une carte
+  par Song Position, montrant les 4 blocs de groupe de sa scène avec un
+  aperçu schématique (dérivé des frappes, pas de l'audio). `[DUP]` crée une
+  scène indépendante pour varier sans affecter les positions qui partagent la
+  scène source ; `[DELETE]` retire la position sans supprimer la scène si
+  elle reste utilisée ailleurs. Le glisser-déposer réordonne les positions et
+  affecte un pattern du pool à un bloc de groupe.
 
-Le modèle actuel conserve une scène et une position. La prochaine évolution ne
-doit pas seulement dessiner des cartes supplémentaires : elle doit stocker de
-vrais patterns A01–D99, des scènes S.01–S.99 et une liste L.01–L.99, puis faire
-suivre le transport et les exports. La zone « prochaine Song Position » est
-donc volontairement informative et non cliquable pour le moment.
+Convention visuelle propre au Studio (pas un fait matériel confirmé) : dans
+l'Arrangeur seulement, les groupes A/B/C/D sont respectivement orange, jaune,
+anthracite et gris (`--group-a/b/c/d` dans `style.css`). Ailleurs dans
+l'interface (onglets de groupe, PadStrip), la couleur reste uniquement liée à
+la sélection, comme avant.
+
+## Limite assumée
+
+La lecture reste bornée à une scène à la fois — auditionner une Song Position
+depuis l'Arrangeur (`▶`) joue sa scène en boucle simple. L'avancée automatique
+d'une Song Position à la suivante pendant la lecture du morceau complet **n'est
+pas implémentée** : ce serait un remaniement du transport plus large que ce
+chantier. Le modèle de données (patterns/scènes/song) est en revanche complet
+et s'exporte/s'importe fidèlement.
 
 Le PDF officiel et ses illustrations ne sont pas redistribués dans le dépôt.
 Seuls les concepts fonctionnels et les repères de la machine sont repris.

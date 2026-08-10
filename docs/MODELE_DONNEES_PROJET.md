@@ -35,6 +35,31 @@ vides. `emptyProjectPatterns()` est la seule fabrique de cette structure.
   car son moteur de score possède des états HIT/MISS qui ne doivent pas
   contaminer un projet musical.
 
+## Au-dessus de la note : PatternBank, Scène, Song
+
+`SequencerNote`/`ProjectPatterns` restent la seule représentation d'une
+frappe. `src/core/project/song.ts` ajoute la couche de composition
+au-dessus, sans y toucher :
+
+| Type | Rôle |
+|---|---|
+| `PatternBank` | `SequencerNote[]` de tous les patterns 01–99, pour tous les groupes ; la présence d'une clé signale un pattern créé, même vide |
+| `SceneDefinition` | un pattern par groupe (ou `null` = MUTE) + signature rythmique, pour une scène 1–99 |
+| `song: number[]` | la liste ordonnée des Song Positions, chaque entrée étant un numéro de scène |
+
+`patternsForScene(bank, scenes, sceneNumber)` est la seule fonction-pont vers
+`ProjectPatterns` — RhythmGrid, PianoRoll, PadStrip et `createMidiFile` ne
+savent toujours travailler qu'avec une scène à la fois, à plat, sans connaître
+la banque complète. `sceneIsUsed` réplique exactement la règle du décodeur réel
+(`importers.ts`) : une scène est exportée dès qu'au moins un groupe n'est pas
+MUTE, jamais si tous le sont.
+
+`createEp133ProjectDocument` (exporters.ts) écrit désormais toute la banque et
+toutes les scènes utilisées ; `studioStateFromDocument` (studioLibrary.ts) les
+relit intégralement au lieu de ne garder que la première Song Position. Voir
+`docs/STRUCTURE_SONG_MODE.md` pour la vue d'ensemble et les deux vues Studio
+qui exploitent ce modèle.
+
 ## Compatibilité
 
 Les anciens exercices sont convertis avec une vélocité de 100 et une durée de

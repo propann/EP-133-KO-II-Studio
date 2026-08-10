@@ -5,7 +5,8 @@
  * `docs/DECISION_FORMATS_PROJET.md`. Les lecteurs/inspecteurs symétriques
  * vivent dans `importers.ts`. Contrôlé par `npm run test:exports`.
  */
-import { PROJECT_GROUPS, type ProjectGroup, type ProjectPatterns } from './model.ts';
+import { PROJECT_GROUPS, type ProjectGroup, type ProjectPatterns, type SequencerNote } from './model.ts';
+import { sceneIsUsed, type PatternBank, type SceneDefinition } from './song.ts';
 
 export type EditorGroup = ProjectGroup;
 export type EditorPatterns = ProjectPatterns;
@@ -71,18 +72,41 @@ export interface ScannedPad {
 interface ProjectDocumentOptions {
   title: string;
   bpm: number;
-  patterns: EditorPatterns;
+  /** Tous les patterns de tous les groupes, pas seulement ceux en cours d'édition — voir `core/project/song.ts`. */
+  patternBank: PatternBank;
+  scenes: SceneDefinition[];
+  song: number[];
+  currentScene: number | null;
   pads: ScannedPad[];
   padModes: Record<string, EditorPadMode>;
 }
 
+/** Sérialise un pattern (frappes d'un seul groupe/numéro) vers le format `ep.project.v1`, en dérivant sa longueur en mesures. */
+function serializePattern(id: string, notes: SequencerNote[]) {
+  return {
+    id,
+    bars: Math.max(1, notes.length ? Math.floor(Math.max(...notes.map((target) => target.beat)) / 4) + 1 : 1),
+    events: notes.map((target) => ({
+      tick: Math.round(target.beat * 96),
+      pad: target.pad + 1,
+      note: target.note ?? 60,
+      velocity: target.velocity,
+      duration: Math.max(1, Math.round(target.duration * 96)),
+    })),
+  };
+}
+
 /**
  * Construit un document `ep.project.v1` à partir de l'état du Studio — la
- * source technique intermédiaire avant compilation `.ppak`. Fusionne les pads
- * scannés sur la machine (`pads`) avec les changements de mode ONE/KEYS/LEGATO
- * faits localement (`padModes`), sans perdre les pads non touchés.
+ * source technique intermédiaire avant compilation `.ppak`. Écrit TOUS les
+ * patterns de la banque (pas un seul par groupe), toutes les scènes
+ * réellement utilisées (`sceneIsUsed`, une scène entièrement MUTE n'est
+ * jamais émise, comme sur la machine réelle) et la liste Song complète.
+ * Fusionne les pads scannés sur la machine (`pads`) avec les changements de
+ * mode ONE/KEYS/LEGATO faits localement (`padModes`), sans perdre les pads
+ * non touchés.
  */
-export function createEp133ProjectDocument({ title, bpm, patterns, pads, padModes }: ProjectDocumentOptions) {
+export function createEp133ProjectDocument({ title, bpm, patternBank, scenes, song, currentScene, pads, padModes }: ProjectDocumentOptions) {
   const padMap = new Map(pads.map((pad) => [`${pad.group}:${pad.pad - 1}`, pad]));
   Object.keys(padModes).forEach((key) => {
     if (padMap.has(key)) return;
@@ -103,18 +127,14 @@ export function createEp133ProjectDocument({ title, bpm, patterns, pads, padMode
       playMode: padModes[`${pad.group}:${pad.pad - 1}`] === 'KEYS' ? 1 : padModes[`${pad.group}:${pad.pad - 1}`] === 'LEGATO' ? 2 : pad.playMode,
       rootNote: pad.rootNote,
     })),
-    patterns: EDITOR_GROUPS.map((group) => ({
-      id: `${group}01`,
-      bars: Math.max(1, patterns[group].length ? Math.floor(Math.max(...patterns[group].map((target) => target.beat)) / 4) + 1 : 1),
-      events: patterns[group].map((target) => ({
-        tick: Math.round(target.beat * 96),
-        pad: target.pad + 1,
-        note: target.note ?? 60,
-        velocity: target.velocity,
-        duration: Math.max(1, Math.round(target.duration * 96)),
-      })),
+    patterns: EDITOR_GROUPS.flatMap((group) => Object.entries(patternBank[group])
+      .map(([number, notes]) => serializePattern(`${group}${String(number).padStart(2, '0')}`, notes))),
+    scenes: scenes.filter(sceneIsUsed).map((scene) => ({
+      scene: scene.scene,
+      groupPatterns: EDITOR_GROUPS.map((group) => scene.groupPatterns[group] ?? 0),
+      timeSignature: scene.timeSignature,
     })),
-    scenes: [{ groupPatterns: [1, 1, 1, 1], timeSignature: [4, 4] }],
-    song: [1],
+    song,
+    currentScene,
   };
 }

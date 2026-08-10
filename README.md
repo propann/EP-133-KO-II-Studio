@@ -83,9 +83,10 @@ migration de ses exercices.
 ## État du projet
 
 Le jeu, le Studio, le Save/Load, la lecture des archives `.pak/.ppak`, le miroir
-hors ligne et le clonage incrémental sont opérationnels. Restent notamment à
-faire : véritables scènes et Song Positions multiples, édition avancée de la
-vélocité/gate, service local automatique, préparation audio et écriture
+hors ligne, le clonage incrémental et la hiérarchie complète Patterns/Scènes/Song
+(vues Pattern Editor et Song Arranger) sont opérationnels. Restent notamment à
+faire : lecture automatique d'une Song Position à la suivante, édition avancée de
+la vélocité/gate, service local automatique, préparation audio et écriture
 matérielle sécurisée.
 
 - [État détaillé](docs/ETAT_DU_PROJET.md)

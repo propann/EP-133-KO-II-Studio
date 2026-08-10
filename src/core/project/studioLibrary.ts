@@ -6,7 +6,8 @@
  * / `importers.ts`. Voir `docs/VALIDATION_SAVE_LOAD_STUDIO.md`.
  */
 import { EDITOR_GROUPS, type EditorPadMode } from './exporters.ts';
-import { emptyProjectPatterns, normalizeSequencerNote, type ProjectPatterns } from './model.ts';
+import { normalizeSequencerNote, type ProjectGroup, type ProjectPatterns } from './model.ts';
+import { emptyPatternBank, patternsForScene, type PatternBank, type SceneDefinition } from './song.ts';
 
 export const STUDIO_LIBRARY_KEY = 'ep133-rhythm-hero:studio-projects:v1';
 
@@ -20,6 +21,12 @@ export interface StudioProjectRecord {
 export interface StudioProjectState {
   title: string;
   bpm: number;
+  /** Tous les patterns de tous les groupes — voir `core/project/song.ts`. */
+  patternBank: PatternBank;
+  scenes: SceneDefinition[];
+  song: number[];
+  currentScene: number | null;
+  /** Vue de confort : les 4 patterns de la scène de départ (première Song Position, sinon `currentScene`, sinon 1) — pour les appelants qui n'ont pas encore besoin de la banque complète. */
   patterns: ProjectPatterns;
   padModes: Record<string, EditorPadMode>;
 }
@@ -89,22 +96,18 @@ export function deleteStudioProject(storage: Pick<Storage, 'setItem'>, library: 
  */
 export function studioStateFromDocument(document: Record<string, unknown>): StudioProjectState {
   if (document.schema !== 'ep.project.v1' || document.product !== 'ep133') throw new Error('Projet EP-133 incompatible.');
-  const patterns = emptyProjectPatterns();
   if (!Array.isArray(document.patterns)) throw new Error('Patterns absents du projet.');
-  const scenes = Array.isArray(document.scenes) ? document.scenes : [];
-  const song = Array.isArray(document.song) ? document.song : [];
-  const firstSceneNumber = Number(song[0]) || Number(document.currentScene) || 1;
-  const firstScene = scenes.find((candidate) => candidate && typeof candidate === 'object' && Number((candidate as Record<string, unknown>).scene || scenes.indexOf(candidate) + 1) === firstSceneNumber) as Record<string, unknown> | undefined;
-  const selectedPatterns = Array.isArray(firstScene?.groupPatterns) ? firstScene.groupPatterns.map(Number) : [1, 1, 1, 1];
+
+  // Tous les patterns de tous les groupes — plus de filtre sur « le seul pattern sélectionné ».
+  const patternBank = emptyPatternBank();
   document.patterns.forEach((candidate) => {
     if (!candidate || typeof candidate !== 'object') return;
     const pattern = candidate as Record<string, unknown>;
-    const match = /^([A-D])\d{2}$/.exec(String(pattern.id || ''));
+    const match = /^([A-D])(\d{2})$/.exec(String(pattern.id || ''));
     if (!match || !Array.isArray(pattern.events)) return;
-    const group = match[1] as keyof ProjectPatterns;
-    const groupIndex = EDITOR_GROUPS.indexOf(group);
-    if (Number(String(pattern.id).slice(1)) !== (selectedPatterns[groupIndex] || 1)) return;
-    patterns[group] = pattern.events.flatMap((candidateEvent, index) => {
+    const group = match[1] as ProjectGroup;
+    const number = Number(match[2]);
+    patternBank[group][number] = pattern.events.flatMap((candidateEvent, index) => {
       if (!candidateEvent || typeof candidateEvent !== 'object') return [];
       const event = candidateEvent as Record<string, unknown>;
       const tick = Number(event.tick); const pad = Number(event.pad) - 1;
@@ -120,6 +123,24 @@ export function studioStateFromDocument(document: Record<string, unknown>): Stud
       })];
     });
   });
+
+  // Toutes les scènes — le fallback « scene: index+1 » couvre nativement les anciens documents où le champ `scene` est absent.
+  const rawScenes = Array.isArray(document.scenes) ? document.scenes : [];
+  const scenes: SceneDefinition[] = rawScenes.map((candidate, index) => {
+    const record = (candidate && typeof candidate === 'object' ? candidate : {}) as Record<string, unknown>;
+    const sceneNumber = Number(record.scene) || index + 1;
+    const rawGroupPatterns = Array.isArray(record.groupPatterns) ? record.groupPatterns.map(Number) : [0, 0, 0, 0];
+    const groupPatterns = Object.fromEntries(
+      EDITOR_GROUPS.map((group, groupIndex) => [group, rawGroupPatterns[groupIndex] > 0 ? rawGroupPatterns[groupIndex] : null]),
+    ) as Record<ProjectGroup, number | null>;
+    const rawTimeSignature = Array.isArray(record.timeSignature) ? record.timeSignature.map(Number) : [];
+    const timeSignature: [number, number] = [rawTimeSignature[0] || 4, rawTimeSignature[1] || 4];
+    return { scene: sceneNumber, groupPatterns, timeSignature };
+  });
+
+  const song = Array.isArray(document.song) ? document.song.map(Number).filter(Number.isFinite) : [];
+  const currentScene = Number.isFinite(Number(document.currentScene)) ? Number(document.currentScene) : null;
+
   const padModes: Record<string, EditorPadMode> = {};
   if (Array.isArray(document.pads)) document.pads.forEach((candidate) => {
     if (!candidate || typeof candidate !== 'object') return;
@@ -130,5 +151,15 @@ export function studioStateFromDocument(document: Record<string, unknown>): Stud
   });
   const metadata = document.metadata && typeof document.metadata === 'object' ? document.metadata as Record<string, unknown> : {};
   const settings = document.settings && typeof document.settings === 'object' ? document.settings as Record<string, unknown> : {};
-  return { title: String(metadata.title || 'PROJET EP-133'), bpm: Math.max(20, Math.min(300, Number(settings.bpm) || 120)), patterns, padModes };
+  const startingScene = song[0] ?? currentScene ?? 1;
+  return {
+    title: String(metadata.title || 'PROJET EP-133'),
+    bpm: Math.max(20, Math.min(300, Number(settings.bpm) || 120)),
+    patternBank,
+    scenes,
+    song,
+    currentScene,
+    patterns: patternsForScene(patternBank, scenes, startingScene),
+    padModes,
+  };
 }

@@ -20,19 +20,78 @@ assert.equal(new TextDecoder().decode(midi.slice(14, 18)), 'MTrk');
 assert.ok([...midi].includes(45), 'la note officielle du pad A-7 doit être exportée');
 assert.ok([...midi].includes(48), 'la hauteur du piano-roll doit être conservée');
 
+// Banque multi-pattern/groupe avec trou volontaire (pas de B01), miroir de ep133-project-1.json.
+const patternBank = {
+  A: { 1: patterns.A, 2: [{ id: 'kick2', group: 'A', beat: 4, pad: 0, velocity: 90, duration: 0.5 }] },
+  B: { 2: patterns.B },
+  C: {},
+  D: {},
+};
+const scenes = [
+  { scene: 1, groupPatterns: { A: 1, B: null, C: null, D: null }, timeSignature: [4, 4] },
+  { scene: 2, groupPatterns: { A: 2, B: 2, C: null, D: null }, timeSignature: [4, 4] },
+];
+const song = [1, 2];
+const currentScene = 2;
+
 const project = createEp133ProjectDocument({
-  title: 'TEST', bpm: 120, patterns,
+  title: 'TEST', bpm: 120, patternBank, scenes, song, currentScene,
   pads: [{ group: 'B', pad: 11, slot: 444, playMode: 0, rootNote: 26 }],
   padModes: { 'A:0': 'ONE', 'B:10': 'KEYS' },
 });
 assert.equal(project.schema, 'ep.project.v1');
-assert.equal(project.patterns.length, 4);
-assert.equal(project.patterns[1].events[0].note, 48);
-assert.equal(project.patterns[0].events[0].velocity, 117);
-assert.equal(project.patterns[0].events[0].duration, 48);
+assert.equal(project.patterns.length, 3, 'A01, A02, B02 — pas de B01');
+assert.ok(!project.patterns.some((pattern) => pattern.id === 'B01'), 'le trou B01 doit être préservé, jamais comblé');
+const a01 = project.patterns.find((pattern) => pattern.id === 'A01');
+const a02 = project.patterns.find((pattern) => pattern.id === 'A02');
+const b02 = project.patterns.find((pattern) => pattern.id === 'B02');
+assert.equal(a01.events[0].velocity, 117);
+assert.equal(a01.events[0].duration, 48);
+assert.equal(a02.events[0].velocity, 90);
+assert.equal(b02.events[0].note, 48);
 assert.equal(project.settings.bpm, 120);
 assert.equal(project.pads[0].playMode, 1);
-assert.deepEqual(project.scenes[0].groupPatterns, [1, 1, 1, 1]);
+assert.equal(project.scenes.length, 2);
+assert.deepEqual(project.scenes[0].groupPatterns, [1, 0, 0, 0], 'scène 1 : B/C/D MUTE (0)');
+assert.deepEqual(project.scenes[1].groupPatterns, [2, 2, 0, 0]);
+assert.deepEqual(project.song, [1, 2]);
+assert.equal(project.currentScene, 2);
+
+const withMutedScene = createEp133ProjectDocument({
+  title: 'TEST', bpm: 120, patternBank,
+  scenes: [...scenes, { scene: 3, groupPatterns: { A: null, B: null, C: null, D: null }, timeSignature: [4, 4] }],
+  song, currentScene, pads: [], padModes: {},
+});
+assert.equal(withMutedScene.scenes.length, 2, 'une scène entièrement MUTE ne doit jamais être exportée, comme sur la machine réelle');
+
+const roundTripped = studioStateFromDocument(project);
+assert.deepEqual(Object.keys(roundTripped.patternBank.A).map(Number).sort((x, y) => x - y), [1, 2]);
+assert.deepEqual(Object.keys(roundTripped.patternBank.B).map(Number).sort((x, y) => x - y), [2]);
+assert.equal(roundTripped.patternBank.A[1][0].velocity, 117);
+assert.equal(roundTripped.patternBank.A[2][0].velocity, 90);
+assert.equal(roundTripped.patternBank.B[2][0].note, 48);
+assert.equal(roundTripped.scenes.length, 2);
+assert.deepEqual(roundTripped.scenes[0].groupPatterns, { A: 1, B: null, C: null, D: null });
+assert.deepEqual(roundTripped.scenes[1].groupPatterns, { A: 2, B: 2, C: null, D: null });
+assert.deepEqual(roundTripped.song, [1, 2]);
+assert.equal(roundTripped.currentScene, 2);
+
+const oldShapeDocument = {
+  schema: 'ep.project.v1', product: 'ep133',
+  metadata: { title: 'ANCIEN' }, settings: { bpm: 100 }, pads: [],
+  patterns: [
+    { id: 'A01', bars: 1, events: [{ tick: 0, pad: 1, note: 60, velocity: 100, duration: 48 }] },
+    { id: 'B01', bars: 1, events: [] },
+    { id: 'C01', bars: 1, events: [] },
+    { id: 'D01', bars: 1, events: [] },
+  ],
+  scenes: [{ groupPatterns: [1, 1, 1, 1], timeSignature: [4, 4] }],
+  song: [1],
+};
+const oldShapeState = studioStateFromDocument(oldShapeDocument);
+assert.equal(oldShapeState.scenes[0].scene, 1, 'scène sans champ `scene` explicite retombe sur index+1');
+assert.equal(oldShapeState.patterns.A[0].pad, 0);
+assert.equal(oldShapeState.currentScene, null, '`currentScene` absent doit rester null, pas 0 ni NaN');
 
 const importedMidi = readMidiFile(midi);
 assert.equal(importedMidi.ppqn, 96);
@@ -69,9 +128,9 @@ assert.equal(loadStudioLibrary(memoryStorage).length, 1);
 const restoredStudio = studioStateFromDocument(storedStudio.library[0].document);
 assert.equal(restoredStudio.title, 'TEST');
 assert.equal(restoredStudio.bpm, 120);
-assert.equal(restoredStudio.patterns.A[0].velocity, 117);
-assert.equal(restoredStudio.patterns.A[0].duration, 0.5);
-assert.equal(restoredStudio.patterns.B[0].note, 48);
+assert.equal(restoredStudio.patternBank.A[1][0].velocity, 117);
+assert.equal(restoredStudio.patternBank.A[1][0].duration, 0.5);
+assert.equal(restoredStudio.patternBank.B[2][0].note, 48);
 assert.equal(restoredStudio.padModes['B:10'], 'KEYS');
 const renamedLibrary = renameStudioProject(memoryStorage, storedStudio.library, storedStudio.id, 'TEST RENOMMÉ');
 assert.equal(renamedLibrary[0].document.metadata.title, 'TEST RENOMMÉ');
@@ -85,6 +144,15 @@ assert.equal(loadStudioLibrary(memoryStorage)[0].document.metadata.title, 'TEST 
 const machineProject = JSON.parse(fs.readFileSync('public/ep133-project-1.json', 'utf8'));
 const loadedMachineProject = studioStateFromDocument(machineProject);
 assert.equal(loadedMachineProject.bpm, 120);
+const sortedKeys = (bank, group) => Object.keys(bank[group]).map(Number).sort((x, y) => x - y);
+assert.deepEqual(sortedKeys(loadedMachineProject.patternBank, 'A'), [1, 2, 3]);
+assert.deepEqual(sortedKeys(loadedMachineProject.patternBank, 'B'), [2, 3], 'pas de B01 dans le scan réel — le trou doit être préservé');
+assert.deepEqual(sortedKeys(loadedMachineProject.patternBank, 'C'), [1, 2, 3]);
+assert.deepEqual(sortedKeys(loadedMachineProject.patternBank, 'D'), [1, 2, 3]);
+assert.equal(loadedMachineProject.scenes.length, 3);
+assert.deepEqual(loadedMachineProject.song, [1]);
+assert.equal(loadedMachineProject.currentScene, 3, 'currentScene (3) diffère de song[0] (1) dans ce scan réel');
+// Vue de confort : toujours la première Song Position (scène 1), jamais currentScene.
 assert.equal(loadedMachineProject.patterns.A.length, 25, 'L.01/S.01 doit charger A01');
 assert.equal(loadedMachineProject.patterns.B.length, 0, 'un pattern B01 absent doit rester vide');
 assert.equal(loadedMachineProject.patterns.C.length, 0, 'L.01/S.01 doit charger C01 et non C03');
@@ -120,6 +188,7 @@ const scenesRecord = new Uint8Array(712);
 scenesRecord.set([0, 0, 0, 0, 0, 4, 4]);
 for (let index = 0; index < 99; index += 1) scenesRecord.set([0, 0, 0, 0, 4, 4], 7 + index * 6);
 scenesRecord.set([1, 1, 1, 1, 4, 4], 7);
+scenesRecord.set([1, 0, 1, 1, 4, 4], 13); // scène 2 : groupe B à 0 (MUTE), doit quand même compter comme utilisée
 const sceneTrailer = 7 + 99 * 6;
 scenesRecord[sceneTrailer + 3] = 1;
 scenesRecord[sceneTrailer + 11] = 1;
@@ -144,6 +213,9 @@ assert.equal(decodedTar.patterns[0].notes[0].pad, 7);
 assert.equal(decodedTar.patterns[0].notes[0].velocity, 110);
 assert.equal(decodedTar.patterns[0].automation[0].value, 32767);
 assert.deepEqual(decodedTar.scenes[0].groupPatterns, [1, 1, 1, 1]);
+const mutedGroupScene = decodedTar.scenes.find((scene) => scene.scene === 2);
+assert.ok(mutedGroupScene, 'une scène avec un groupe à 0 doit rester considérée comme utilisée dès qu\'un autre groupe est actif');
+assert.deepEqual(mutedGroupScene.groupPatterns, [1, 0, 1, 1]);
 assert.deepEqual(decodedTar.song, [1]);
 assert.equal(decodedTar.bpm, 123.5);
 assert.equal(decodedTar.warnings.length, 0);

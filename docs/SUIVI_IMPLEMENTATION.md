@@ -505,3 +505,36 @@ documenté et validé sur la machine réelle le 10 août (voir plus haut,
 
 Nettoyage opérationnel associé : sept process `vite` orphelins (aucune
 session interactive attachée) ont été arrêtés, il n'en reste qu'un.
+
+## Étape 4.1 — Hiérarchie réelle Groupes → Patterns → Scènes → Song
+
+Statut : modèle de données et deux vues Studio livrés le 10 août 2026,
+`npm run build`/`npm test` au vert.
+
+Le Studio ne connaissait qu'un pattern par groupe, une scène et une Song
+Position implicites — `createEp133ProjectDocument` l'écrivait en dur et
+`studioStateFromDocument` jetait le reste au chargement, alors que le format
+machine réel (`.pak`/`.ppak`) supporte déjà nativement jusqu'à 99 patterns par
+groupe, 99 scènes et 99 Song Positions (confirmé sur `public/ep133-project-1.json` :
+groupe A a les patterns 01/02/03, groupe B seulement 02/03, 3 scènes).
+
+- [x] `src/core/project/song.ts` : `PatternBank`, `SceneDefinition`,
+  `sceneIsUsed` (réplique exactement la règle du décodeur réel), `patternsForScene` ;
+- [x] `exporters.ts`/`studioLibrary.ts` : écriture et lecture de toute la
+  banque/scènes/song, plus `currentScene`, au lieu de collapser à un pattern ;
+  round-trip et rétrocompatibilité ancien format vérifiés dans
+  `tools/check-project-exports.mjs` ;
+- [x] sélecteur `PATTERN: [ A01 ▲▼ ]` dans la barre du Studio pour choisir le
+  pattern édité au sein du groupe actif ;
+- [x] switch `[ EDIT PATTERN ] / [ ARRANGEMENT ]` ;
+- [x] `SongArranger.tsx` : storyboard horizontal des Song Positions, blocs de
+  groupe colorés (convention Studio, pas un fait matériel confirmé),
+  aperçu schématique dérivé des frappes (pas d'audio réel), `[DUP]`/`[DELETE]`,
+  glisser-déposer pour réordonner les positions et affecter un pattern depuis
+  le pool ; `SongModeBar.tsx` (figé à Song Position 1 / Scène 1) est retiré,
+  entièrement absorbé ;
+- [ ] avancée automatique d'une Song Position à la suivante pendant la
+  lecture du morceau complet — hors scope, transport trop large pour ce
+  chantier ; seule l'audition d'une scène à la fois est possible.
+
+Voir `docs/STRUCTURE_SONG_MODE.md` et `docs/MODELE_DONNEES_PROJET.md`.

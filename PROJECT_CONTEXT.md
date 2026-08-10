@@ -239,6 +239,16 @@ a réussi, mais la validation utilisateur de la communication web reste négativ
   écriture `localStorage`. `crypto.randomUUID()` a un repli hors contexte
   sécurisé. Le glisser-déposer d'un son sans charge utile valide ne peut plus
   effacer un pad par erreur. Voir `docs/SUIVI_IMPLEMENTATION.md`.
+- Le Studio stocke désormais la vraie hiérarchie du manuel : patterns 01–99
+  par groupe (trous légaux préservés), scènes S.01–S.99, liste Song L.01–L.99
+  (`src/core/project/song.ts`). Deux vues : Pattern Editor (sélecteur
+  `PATTERN: [ A01 ▲▼ ]`) et Song Arranger (storyboard horizontal des Song
+  Positions, `SongArranger.tsx`, remplace `SongModeBar`). Une scène est une
+  ressource partagée entre Song Positions, fidèle au fonctionnement réel de
+  la machine ; `[DUP]` en sort pour créer une variante indépendante. Limite
+  assumée : la lecture reste bornée à une scène auditionnée à la fois, pas
+  d'avancée automatique entre Song Positions. Voir
+  `docs/STRUCTURE_SONG_MODE.md` et `docs/MODELE_DONNEES_PROJET.md`.
 
 ## Priorités
 

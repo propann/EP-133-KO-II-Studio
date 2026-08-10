@@ -19,13 +19,22 @@ import type { DeviceInventory, DeviceSoundIndex } from './core/project/device';
 import {
   DEFAULT_NOTE_DURATION,
   DEFAULT_NOTE_VELOCITY,
-  emptyProjectPatterns,
   exerciseTargetsToNotes,
   notesToExerciseTargets,
   type ProjectPatterns,
   type SequencerNote,
 } from './core/project/model';
 import { barsAfterStepEdit, measureFromGlobalStep, usedBars } from './core/project/editor';
+import {
+  emptyPatternBank,
+  emptyScene,
+  nextFreeSceneNumber,
+  patternNumbersForGroup,
+  patternsForScene,
+  MAX_PATTERN_NUMBER,
+  type PatternBank,
+  type SceneDefinition,
+} from './core/project/song';
 import { deleteStudioProject, duplicateStudioProject, loadStudioLibrary, renameStudioProject, storeStudioProject, studioStateFromDocument, type StudioProjectRecord, type StudioProjectState } from './core/project/studioLibrary';
 import { HomePage } from './pages/HomePage';
 import { SoundsPage } from './pages/SoundsPage';
@@ -38,7 +47,7 @@ import { PianoRoll } from './components/editor/PianoRoll';
 import { RhythmGrid } from './components/editor/RhythmGrid';
 import { PadStrip } from './components/editor/PadStrip';
 import { EditorToolbar } from './components/editor/EditorToolbar';
-import { SongModeBar } from './components/editor/SongModeBar';
+import { SongArranger } from './components/editor/SongArranger';
 import { MachineCloneDialog } from './components/editor/MachineCloneDialog';
 import { chooseLocalDirectory, collectLocalFiles } from './core/storage/localFolders';
 import './style.css';
@@ -142,7 +151,12 @@ export default function App() {
   const [editorPlaying, setEditorPlaying] = useState(false);
   const [editorMode, setEditorMode] = useState<'game' | 'complete'>('game');
   const [editorGroup, setEditorGroup] = useState<EditorGroup>('A');
-  const [editorGroupTargets, setEditorGroupTargets] = useState<ProjectPatterns>(emptyProjectPatterns);
+  const [editorPatternBank, setEditorPatternBank] = useState<PatternBank>(emptyPatternBank);
+  const [editorPatternNumbers, setEditorPatternNumbers] = useState<Record<EditorGroup, number>>({ A: 1, B: 1, C: 1, D: 1 });
+  const [editorScenes, setEditorScenes] = useState<SceneDefinition[]>([]);
+  const [editorSong, setEditorSong] = useState<number[]>([]);
+  const [editorActiveScene, setEditorActiveScene] = useState(1);
+  const [studioView, setStudioView] = useState<'pattern' | 'arrangement'>('pattern');
   const [editorPlaybackBeat, setEditorPlaybackBeat] = useState(0);
   const [editorSelectedPad, setEditorSelectedPad] = useState(0);
   const [editorPadModes, setEditorPadModes] = useState<Record<string, EditorPadMode>>({});
@@ -377,11 +391,18 @@ export default function App() {
     setEditorName(selected?.title || 'MON GROOVE');
     const selectedNotes = selected ? exerciseTargetsToNotes(selected.targets, 'A') : [];
     setEditorTargets(selectedNotes);
-    setEditorGroupTargets({ ...emptyProjectPatterns(), A: selectedNotes });
+    const bank = emptyPatternBank();
+    bank.A[1] = selectedNotes;
+    setEditorPatternBank(bank);
+    setEditorPatternNumbers({ A: 1, B: 1, C: 1, D: 1 });
+    setEditorScenes([{ scene: 1, groupPatterns: { A: 1, B: null, C: null, D: null }, timeSignature: [4, 4] }]);
+    setEditorSong([1]);
+    setEditorActiveScene(1);
     setEditorGroup('A');
     setEditorMode('game');
     setEditorBars(Math.max(2, (selected?.bars || 0) + 1));
     setEditorOpen(true);
+    setStudioView('pattern');
   };
 
   const openCompleteEditor = () => {
@@ -390,16 +411,34 @@ export default function App() {
     setEditorMode('complete');
   };
 
+  /** Flush les frappes en cours vers la banque, en repartant du groupe/numéro de pattern actifs — pas seulement du groupe comme avant l'introduction des patterns multiples. */
+  const currentPatternBank = (): PatternBank => ({
+    ...editorPatternBank,
+    [editorGroup]: { ...editorPatternBank[editorGroup], [editorPatternNumbers[editorGroup]]: editorTargets },
+  });
+
+  const patternsForActiveScene = (): ProjectPatterns => patternsForScene(currentPatternBank(), editorScenes, editorActiveScene);
+
   const changeEditorGroup = (nextGroup: EditorGroup) => {
-    setEditorGroupTargets((current) => ({ ...current, [editorGroup]: editorTargets }));
-    setEditorTargets(editorGroupTargets[nextGroup]);
+    setEditorPatternBank((current) => ({ ...current, [editorGroup]: { ...current[editorGroup], [editorPatternNumbers[editorGroup]]: editorTargets } }));
+    const nextNotes = editorPatternBank[nextGroup][editorPatternNumbers[nextGroup]] || [];
+    setEditorTargets(nextNotes);
     setEditorGroup(nextGroup);
+    setEditorBars(Math.max(1, usedBars(nextNotes) + 1));
   };
 
-  const currentEditorPatterns = (): ProjectPatterns => ({ ...editorGroupTargets, [editorGroup]: editorTargets });
+  /** Bascule vers un autre numéro de pattern (01–99) du groupe actif ; le crée vide s'il n'existe pas encore — choix d'UX du Studio, pas un fait matériel confirmé. */
+  const changeEditorPattern = (nextNumber: number) => {
+    const clamped = Math.max(1, Math.min(MAX_PATTERN_NUMBER, nextNumber));
+    setEditorPatternBank((current) => ({ ...current, [editorGroup]: { ...current[editorGroup], [editorPatternNumbers[editorGroup]]: editorTargets } }));
+    const nextNotes = editorPatternBank[editorGroup][clamped] || [];
+    setEditorTargets(nextNotes);
+    setEditorPatternNumbers((current) => ({ ...current, [editorGroup]: clamped }));
+    setEditorBars(Math.max(1, usedBars(nextNotes) + 1));
+  };
 
   const exportEditorMidi = () => {
-    const patterns = currentEditorPatterns();
+    const patterns = patternsForActiveScene();
     const blob = new Blob([createMidiFile(patterns, tempo)], { type: 'audio/midi' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -409,8 +448,8 @@ export default function App() {
   };
 
   const exportEditorProjectJson = () => {
-    const patterns = currentEditorPatterns();
-    const projectDocument = createEp133ProjectDocument({ title: editorName, bpm: tempo, patterns, pads: deviceInventory?.pads || [], padModes: editorPadModes });
+    const patternBank = currentPatternBank();
+    const projectDocument = createEp133ProjectDocument({ title: editorName, bpm: tempo, patternBank, scenes: editorScenes, song: editorSong, currentScene: editorActiveScene, pads: deviceInventory?.pads || [], padModes: editorPadModes });
     const blob = new Blob([JSON.stringify(projectDocument, null, 2)], { type: 'application/json' });
     const link = window.document.createElement('a'); link.href = URL.createObjectURL(blob);
     link.download = `${(editorName.trim() || 'ep133-project').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.ep133.json`;
@@ -455,16 +494,19 @@ export default function App() {
 
   const editorExercise = (): Exercise => ({ id: 'editor-preview', title: editorName.trim() || 'MON GROOVE', description: 'Exercice utilisateur', bpm: tempo, bars: effectiveEditorBars, timeSignature: '4/4', countInBars: 0, backingTrack: null, grading: { perfectMs: 35, goodMs: 90 }, targets: notesToExerciseTargets(editorTargets) });
 
-  const toggleEditorPlayback = async () => {
+  /** `sceneOverride` audite une scène précise (depuis l'Arrangeur) sans attendre le prochain rendu de `editorActiveScene`. */
+  const toggleEditorPlayback = async (sceneOverride?: number) => {
     if (editorPlaying) {
       stopEditorTransport();
       return;
     }
+    const activeScene = sceneOverride ?? editorActiveScene;
+    if (sceneOverride !== undefined) setEditorActiveScene(sceneOverride);
     setEditorPlaying(true);
     const run = ++editorRun.current;
     setEditorPlaybackBeat(0);
     if (editorGrid.current) editorGrid.current.scrollLeft = 0;
-    const patterns = currentEditorPatterns();
+    const patterns = patternsForScene(currentPatternBank(), editorScenes, activeScene);
     const allTargets = EDITOR_GROUPS.flatMap((group) => patterns[group]);
     const playbackBars = allTargets.length ? usedBars(allTargets) : effectiveEditorBars;
     const playbackStart = performance.now() + (editorMode === 'complete' ? 80 : 0);
@@ -521,28 +563,33 @@ export default function App() {
   };
 
   const confirmStudioReplacement = () => {
-    const containsNotes = EDITOR_GROUPS.some((group) => currentEditorPatterns()[group].length > 0);
+    const bank = currentPatternBank();
+    const containsNotes = EDITOR_GROUPS.some((group) => Object.values(bank[group]).some((notes) => notes.length > 0));
     return !containsNotes || window.confirm('Remplacer le projet affiché ? Enregistrez-le d’abord si vous voulez conserver ses modifications.');
   };
 
   const newStudioProject = () => {
     if (!confirmStudioReplacement()) return;
     stopEditorTransport();
-    const patterns = emptyProjectPatterns();
     setEditorName('NOUVEAU PROJET');
     setEditorGroup('A');
-    setEditorTargets(patterns.A);
-    setEditorGroupTargets(patterns);
+    setEditorTargets([]);
+    setEditorPatternBank(emptyPatternBank());
+    setEditorPatternNumbers({ A: 1, B: 1, C: 1, D: 1 });
+    setEditorScenes([]);
+    setEditorSong([]);
+    setEditorActiveScene(1);
     setEditorPadModes({});
     setEditorBars(1);
     setKeyEditorOpen(false);
+    setStudioView('pattern');
     setSelectedStudioProject('');
   };
 
   const saveStudioProject = () => {
-    const patterns = currentEditorPatterns();
-    setEditorGroupTargets(patterns);
-    const document = createEp133ProjectDocument({ title: editorName, bpm: tempo, patterns, pads: deviceInventory?.pads || [], padModes: editorPadModes });
+    const patternBank = currentPatternBank();
+    setEditorPatternBank(patternBank);
+    const document = createEp133ProjectDocument({ title: editorName, bpm: tempo, patternBank, scenes: editorScenes, song: editorSong, currentScene: editorActiveScene, pads: deviceInventory?.pads || [], padModes: editorPadModes });
     const stored = storeStudioProject(localStorage, studioLibrary, document, selectedStudioProject);
     setStudioLibrary(stored.library);
     setSelectedStudioProject(stored.id);
@@ -551,11 +598,11 @@ export default function App() {
   const saveStudioProjectAs = () => {
     const title = window.prompt('Nom de la nouvelle copie :', editorName);
     if (!title?.trim()) return;
-    const patterns = currentEditorPatterns();
-    const document = createEp133ProjectDocument({ title, bpm: tempo, patterns, pads: deviceInventory?.pads || [], padModes: editorPadModes });
+    const patternBank = currentPatternBank();
+    const document = createEp133ProjectDocument({ title, bpm: tempo, patternBank, scenes: editorScenes, song: editorSong, currentScene: editorActiveScene, pads: deviceInventory?.pads || [], padModes: editorPadModes });
     const stored = storeStudioProject(localStorage, studioLibrary, document);
     setEditorName(title.trim().toUpperCase());
-    setEditorGroupTargets(patterns);
+    setEditorPatternBank(patternBank);
     setStudioLibrary(stored.library);
     setSelectedStudioProject(stored.id);
   };
@@ -588,6 +635,28 @@ export default function App() {
     setSelectedStudioProject('');
   };
 
+  /** Commun à un chargement local et machine : repart sur le premier pattern réellement écrit par groupe (pas forcément 01, un trou est légal) pour ne pas ouvrir une grille vide. */
+  const applyLoadedStudioProject = (loaded: StudioProjectState) => {
+    stopEditorTransport();
+    setEditorName(loaded.title.toUpperCase());
+    setTempo(loaded.bpm);
+    setEditorGroup('A');
+    setEditorPatternBank(loaded.patternBank);
+    const startingNumbers = Object.fromEntries(
+      EDITOR_GROUPS.map((group) => [group, patternNumbersForGroup(loaded.patternBank, group)[0] ?? 1]),
+    ) as Record<EditorGroup, number>;
+    setEditorPatternNumbers(startingNumbers);
+    setEditorScenes(loaded.scenes);
+    setEditorSong(loaded.song);
+    setEditorActiveScene(loaded.song[0] ?? loaded.currentScene ?? 1);
+    const startingNotes = loaded.patternBank.A[startingNumbers.A] || [];
+    setEditorTargets(startingNotes);
+    setEditorPadModes(loaded.padModes);
+    setEditorBars(Math.max(1, usedBars(startingNotes) + 1));
+    setStudioView('pattern');
+    setKeyEditorOpen(false);
+  };
+
   const loadSelectedStudioProject = () => {
     const record = studioLibrary.find((project) => project.id === selectedStudioProject);
     if (!record || !confirmStudioReplacement()) return;
@@ -598,15 +667,7 @@ export default function App() {
       window.alert(error instanceof Error ? error.message : 'Ce projet local est illisible.');
       return;
     }
-    stopEditorTransport();
-    setEditorName(loaded.title.toUpperCase());
-    setTempo(loaded.bpm);
-    setEditorGroup('A');
-    setEditorGroupTargets(loaded.patterns);
-    setEditorTargets(loaded.patterns.A);
-    setEditorPadModes(loaded.padModes);
-    setEditorBars(Math.max(1, usedBars(EDITOR_GROUPS.flatMap((group) => loaded.patterns[group])) + 1));
-    setKeyEditorOpen(false);
+    applyLoadedStudioProject(loaded);
   };
 
   const loadMachineProject = () => {
@@ -618,16 +679,8 @@ export default function App() {
       window.alert(error instanceof Error ? error.message : 'Le projet scanné sur la machine est illisible.');
       return;
     }
-    stopEditorTransport();
-    setEditorName(loaded.title.toUpperCase());
-    setTempo(loaded.bpm);
-    setEditorGroup('A');
-    setEditorGroupTargets(loaded.patterns);
-    setEditorTargets(loaded.patterns.A);
-    setEditorPadModes(loaded.padModes);
-    setEditorBars(Math.max(1, usedBars(EDITOR_GROUPS.flatMap((group) => loaded.patterns[group])) + 1));
+    applyLoadedStudioProject(loaded);
     setSelectedStudioProject('');
-    setKeyEditorOpen(false);
   };
 
   const saveEditor = () => editorMode === 'complete' ? saveStudioProject() : saveEditorExercise();
@@ -659,6 +712,55 @@ export default function App() {
     await audio.previewPad(pad);
   };
 
+  // Vue Song Arranger — la Scène reste une ressource partagée (comme sur la machine réelle) :
+  // modifier un bloc dans une Song Position modifie toutes celles qui pointent vers la même scène.
+  const assignSceneGroupPattern = (sceneNumber: number, group: EditorGroup, patternNumber: number | null) => {
+    setEditorScenes((current) => current.map((scene) => scene.scene === sceneNumber
+      ? { ...scene, groupPatterns: { ...scene.groupPatterns, [group]: patternNumber } }
+      : scene));
+  };
+
+  const reorderEditorSong = (fromIndex: number, toIndex: number) => {
+    setEditorSong((current) => {
+      if (fromIndex < 0 || fromIndex >= current.length || toIndex < 0 || toIndex >= current.length || fromIndex === toIndex) return current;
+      const next = [...current];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return next;
+    });
+  };
+
+  /** Crée une scène indépendante (copie de la source) pour sortir d'un partage — c'est le mécanisme prévu pour varier une Song Position sans affecter les autres. */
+  const duplicateSongPosition = (index: number) => {
+    const sourceSceneNumber = editorSong[index];
+    if (sourceSceneNumber === undefined) return;
+    const source = editorScenes.find((scene) => scene.scene === sourceSceneNumber);
+    const newSceneNumber = nextFreeSceneNumber(editorScenes);
+    const newScene: SceneDefinition = source ? { ...source, scene: newSceneNumber, groupPatterns: { ...source.groupPatterns } } : emptyScene(newSceneNumber);
+    setEditorScenes((current) => [...current, newScene]);
+    setEditorSong((current) => { const next = [...current]; next.splice(index + 1, 0, newSceneNumber); return next; });
+  };
+
+  const deleteSongPosition = (index: number) => {
+    if (!window.confirm('Retirer cette Song Position de la structure du morceau ?')) return;
+    setEditorSong((current) => current.filter((_, position) => position !== index));
+  };
+
+  const addSongPosition = () => {
+    const lastSceneNumber = editorSong[editorSong.length - 1];
+    const source = editorScenes.find((scene) => scene.scene === lastSceneNumber);
+    const newSceneNumber = nextFreeSceneNumber(editorScenes);
+    const newScene: SceneDefinition = source ? { ...source, scene: newSceneNumber, groupPatterns: { ...source.groupPatterns } } : emptyScene(newSceneNumber);
+    setEditorScenes((current) => [...current, newScene]);
+    setEditorSong((current) => [...current, newSceneNumber]);
+  };
+
+  const auditionSongPosition = (index: number) => {
+    const sceneNumber = editorSong[index];
+    if (sceneNumber === undefined) return;
+    void toggleEditorPlayback(sceneNumber);
+  };
+
   useEffect(() => {
     if (!transportActive || !scoreScroll.current) return;
     const viewport = scoreScroll.current;
@@ -681,13 +783,15 @@ export default function App() {
     <GameToolbar difficulty={difficulty} tempo={tempo} activeBpm={activeExercise.bpm} styleId={styleId} styles={STYLES} userExercises={userExercises} phase={phase} sessionActive={sessionActive} midiConnected={midi.connected} onDifficultyChange={setDifficulty} onTempoChange={setTempo} onStyleChange={changeStyle} onHome={goHome} onOpenEditor={openEditor} onConnectMidi={() => void connectMidi()} onPreview={() => void togglePreview()} onPlay={() => void toggle()} />
     {phase === 'countin' && <div className="countdown" aria-live="assertive"><small>1 MESURE POUR SE PRÉPARER</small><b>{countdown}</b></div>}
     {editorOpen && <div className="editor-overlay"><section className="exercise-editor">
-      <EditorToolbar mode={editorMode} name={editorName} group={editorGroup} playing={editorPlaying} loop={editorLoop} exportFormat={editorExportFormat} canSave={Boolean(editorName.trim() && (editorMode === 'complete' || editorTargets.length || Object.values(editorGroupTargets).some((groupTargets) => groupTargets.length)))} midiConnected={midi.outputConnected} scannedProject={deviceInventory?.project} machineProjectAvailable={Boolean(machineProjectDocument)} machineSampleCount={machineSampleCount} localProjects={studioLibrary.map((project) => ({ id: project.id, title: String((project.document.metadata as { title?: string } | undefined)?.title || 'PROJET SANS NOM') }))} selectedLocalProject={selectedStudioProject} onHome={goHome} onNameChange={setEditorName} onGroupChange={changeEditorGroup} onConnectMidi={() => void connectMidi()} onNew={newStudioProject} onSelectedLocalProjectChange={setSelectedStudioProject} onLoad={loadSelectedStudioProject} onLoadMachineProject={loadMachineProject} onCloneMachine={() => setMachineCloneOpen(true)} onOpenSampleFolder={() => void openStudioSampleFolder()} onSave={saveEditor} onSaveAs={saveStudioProjectAs} onRename={renameSelectedStudioProject} onDuplicate={duplicateSelectedStudioProject} onDelete={deleteSelectedStudioProject} onPlayback={() => void toggleEditorPlayback()} onLoopChange={setEditorLoop} onExportFormatChange={setEditorExportFormat} onExport={exportEditor} />
-      {editorMode === 'complete' && <SongModeBar activeGroup={editorGroup} patterns={currentEditorPatterns()} onGroupChange={changeEditorGroup} />}
-      {editorMode === 'complete' && <PadStrip group={editorGroup} selectedPad={editorSelectedPad} padModes={editorPadModes} padName={devicePadName} padSlot={(pad) => devicePadInfo(pad)?.slot} onSelect={(pad) => { setEditorSelectedPad(pad); setKeyEditorOpen((editorPadModes[`${editorGroup}:${pad}`] || 'ONE') === 'KEYS'); }} onPreview={(pad) => { const info = devicePadInfo(pad); if (midi.outputConnected) midi.sendPad(pad, EDITOR_GROUPS.indexOf(editorGroup), 110); else if (info?.slot) void machineSampleBank.play(info.slot, 110, performance.now(), undefined, info.rootNote); }} onModeChange={(pad, mode) => { setEditorPadModes((current) => ({ ...current, [`${editorGroup}:${pad}`]: mode })); setKeyEditorOpen(mode === 'KEYS'); }} onOpenKeys={() => setKeyEditorOpen(true)} />}
-      {keyEditorOpen && editorMode === 'complete'
-        ? <PianoRoll gridRef={editorGrid} group={editorGroup} selectedPad={editorSelectedPad} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} targets={editorTargets} onClose={() => setKeyEditorOpen(false)} onPreviewNote={(note) => { const info = devicePadInfo(editorSelectedPad); if (midi.outputConnected) midi.sendNote(note, 110); else if (info?.slot) void machineSampleBank.play(info.slot, 110, performance.now(), note, info.rootNote); }} onToggleNote={toggleKeyStep} />
-        : <RhythmGrid gridRef={editorGrid} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} mode={editorMode} group={editorGroup} selectedPad={editorSelectedPad} targets={editorTargets} padModes={editorPadModes} padName={devicePadName} scannedPlayMode={(pad) => devicePadInfo(pad)?.playMode} onSelectPad={setEditorSelectedPad} onOpenKeys={() => setKeyEditorOpen(true)} onToggleStep={toggleEditorStep} />}
-      <footer><span>{editorMode === 'complete' ? `${midi.outputConnected ? `SON EP‑133 · ${midi.outputNames.join(' + ')}` : 'EP‑133 NON CONNECTÉ'} · ` : ''}GROUPE {editorGroup} · {editorTargets.length} FRAPPE(S) · {effectiveEditorBars} MESURE(S) · {tempo} BPM · AJOUT AUTOMATIQUE ACTIF</span></footer>
+      <EditorToolbar mode={editorMode} name={editorName} group={editorGroup} playing={editorPlaying} loop={editorLoop} exportFormat={editorExportFormat} canSave={Boolean(editorName.trim() && (editorMode === 'complete' || editorTargets.length || EDITOR_GROUPS.some((group) => Object.values(editorPatternBank[group]).some((notes) => notes.length))))} midiConnected={midi.outputConnected} scannedProject={deviceInventory?.project} machineProjectAvailable={Boolean(machineProjectDocument)} machineSampleCount={machineSampleCount} localProjects={studioLibrary.map((project) => ({ id: project.id, title: String((project.document.metadata as { title?: string } | undefined)?.title || 'PROJET SANS NOM') }))} selectedLocalProject={selectedStudioProject} studioView={studioView} patternNumber={editorPatternNumbers[editorGroup]} onHome={goHome} onNameChange={setEditorName} onGroupChange={changeEditorGroup} onStudioViewChange={setStudioView} onPatternNumberChange={changeEditorPattern} onConnectMidi={() => void connectMidi()} onNew={newStudioProject} onSelectedLocalProjectChange={setSelectedStudioProject} onLoad={loadSelectedStudioProject} onLoadMachineProject={loadMachineProject} onCloneMachine={() => setMachineCloneOpen(true)} onOpenSampleFolder={() => void openStudioSampleFolder()} onSave={saveEditor} onSaveAs={saveStudioProjectAs} onRename={renameSelectedStudioProject} onDuplicate={duplicateSelectedStudioProject} onDelete={deleteSelectedStudioProject} onPlayback={() => void toggleEditorPlayback()} onLoopChange={setEditorLoop} onExportFormatChange={setEditorExportFormat} onExport={exportEditor} />
+      {editorMode === 'complete' && studioView === 'arrangement' && <SongArranger scenes={editorScenes} song={editorSong} patternBank={currentPatternBank()} onAssignCell={assignSceneGroupPattern} onReorderSong={reorderEditorSong} onDuplicateSongPosition={duplicateSongPosition} onDeleteSongPosition={deleteSongPosition} onAddSongPosition={addSongPosition} onAuditionSongPosition={auditionSongPosition} />}
+      {(editorMode !== 'complete' || studioView === 'pattern') && <>
+        {editorMode === 'complete' && <PadStrip group={editorGroup} selectedPad={editorSelectedPad} padModes={editorPadModes} padName={devicePadName} padSlot={(pad) => devicePadInfo(pad)?.slot} onSelect={(pad) => { setEditorSelectedPad(pad); setKeyEditorOpen((editorPadModes[`${editorGroup}:${pad}`] || 'ONE') === 'KEYS'); }} onPreview={(pad) => { const info = devicePadInfo(pad); if (midi.outputConnected) midi.sendPad(pad, EDITOR_GROUPS.indexOf(editorGroup), 110); else if (info?.slot) void machineSampleBank.play(info.slot, 110, performance.now(), undefined, info.rootNote); }} onModeChange={(pad, mode) => { setEditorPadModes((current) => ({ ...current, [`${editorGroup}:${pad}`]: mode })); setKeyEditorOpen(mode === 'KEYS'); }} onOpenKeys={() => setKeyEditorOpen(true)} />}
+        {keyEditorOpen && editorMode === 'complete'
+          ? <PianoRoll gridRef={editorGrid} group={editorGroup} selectedPad={editorSelectedPad} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} targets={editorTargets} onClose={() => setKeyEditorOpen(false)} onPreviewNote={(note) => { const info = devicePadInfo(editorSelectedPad); if (midi.outputConnected) midi.sendNote(note, 110); else if (info?.slot) void machineSampleBank.play(info.slot, 110, performance.now(), note, info.rootNote); }} onToggleNote={toggleKeyStep} />
+          : <RhythmGrid gridRef={editorGrid} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} mode={editorMode} group={editorGroup} selectedPad={editorSelectedPad} targets={editorTargets} padModes={editorPadModes} padName={devicePadName} scannedPlayMode={(pad) => devicePadInfo(pad)?.playMode} onSelectPad={setEditorSelectedPad} onOpenKeys={() => setKeyEditorOpen(true)} onToggleStep={toggleEditorStep} />}
+      </>}
+      <footer><span>{editorMode === 'complete' ? `${midi.outputConnected ? `SON EP‑133 · ${midi.outputNames.join(' + ')}` : 'EP‑133 NON CONNECTÉ'} · PATTERN ${editorGroup}${String(editorPatternNumbers[editorGroup]).padStart(2, '0')} · ` : ''}GROUPE {editorGroup} · {editorTargets.length} FRAPPE(S) · {effectiveEditorBars} MESURE(S) · {tempo} BPM · AJOUT AUTOMATIQUE ACTIF</span></footer>
       {machineCloneOpen && <MachineCloneDialog inventory={deviceInventory} soundIndex={deviceSoundIndex} onClose={() => setMachineCloneOpen(false)} />}
     </section></div>}
 

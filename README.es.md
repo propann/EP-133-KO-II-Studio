@@ -76,10 +76,11 @@ sus ejercicios.
 ## Estado del proyecto
 
 El juego, el Studio, Save/Load, la lectura de `.pak/.ppak`, el espejo sin
-conexión y el clonado incremental están operativos. Quedan pendientes las
-escenas y Song Positions múltiples, la edición avanzada de velocidad/gate, el
-inicio automático del servicio local, la preparación de audio y la escritura
-segura en el dispositivo.
+conexión, el clonado incremental y la jerarquía completa Patrones/Escenas/Song
+(vistas Pattern Editor y Song Arranger) están operativos. Quedan pendientes el
+avance automático de una Song Position a la siguiente durante la reproducción,
+la edición avanzada de velocidad/gate, el inicio automático del servicio
+local, la preparación de audio y la escritura segura en el dispositivo.
 
 - [Estado detallado — francés](docs/ETAT_DU_PROJET.md)
 - [Hoja de ruta — francés](docs/ROADMAP.md)

@@ -12,6 +12,12 @@
   --ko-black: #1A1A1A;
   --ko-amber: #FFB000;
   --ko-muted: #8E8D88;
+  /* Convention visuelle de la vue Song Arranger uniquement — choix de design
+     du Studio, PAS une couleur confirmée sur la machine EP-133 réelle. */
+  --group-a: var(--ko-orange);
+  --group-b: #FFD400;
+  --group-c: #2A2724;
+  --group-d: #9A9890;
 }
 
 * { box-sizing: border-box; }
@@ -285,24 +291,59 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .studio-sample-folder input { position:absolute; width:1px; height:1px; opacity:0; }
 .file-export { display:grid; grid-template-columns:1fr auto; align-items:end; gap:8px; margin-top:10px; padding-top:10px; border-top:1px solid var(--ko-black); }
 .file-export label { display:grid; gap:5px; }
-.song-mode-bar { flex:0 0 auto; display:flex; align-items:stretch; gap:8px; min-height:96px; padding:7px 9px; border-bottom:2px solid var(--ko-black); background:#d5d3ce; overflow-x:auto; }
-.song-mode-title { flex:0 0 92px; display:flex; flex-direction:column; justify-content:space-between; padding:7px; border:1px solid var(--ko-black); background:#ece9e3; }
-.song-mode-title b { font-size:13px; }
-.song-mode-title span { font-size:7px; line-height:1.35; }
-.song-position-card { flex:0 0 410px; border:1px solid var(--ko-black); background:#ece9e3; box-shadow:3px 3px 0 #99958e; }
-.song-position-card > header { display:flex; gap:8px; padding:4px 7px; background:var(--ko-orange); border-bottom:1px solid var(--ko-black); font-size:9px; }
-.song-position-card > header span { margin-left:auto; }
-.song-scene-head { display:flex; align-items:center; gap:6px; padding:4px 7px; font-size:8px; }
-.song-scene-head em { margin-left:auto; font-style:normal; font-weight:bold; }
-.song-patterns { display:grid; grid-template-columns:repeat(4, 1fr); gap:4px; padding:0 6px 6px; }
-.song-patterns button { min-height:38px; display:grid; grid-template-columns:22px 1fr; align-items:center; gap:2px; padding:3px; border:1px solid var(--ko-black); background:#d8d6d1; box-shadow:none; text-align:left; }
-.song-patterns button.active { background:var(--ko-amber); box-shadow:inset 0 -3px 0 var(--ko-orange); }
-.song-patterns button b { grid-row:1 / 3; display:grid; place-items:center; height:27px; background:#999da0; color:#fff; font-size:14px; }
-.song-patterns button span { font-size:7px; font-weight:bold; white-space:nowrap; }
-.song-patterns button small { font-size:7px; }
-.song-position-next { flex:0 0 105px; display:flex; align-items:center; justify-content:center; gap:7px; border:1px dashed #77736d; background:#e3e0da; color:#625f5a; }
-.song-position-next b { font-size:20px; color:var(--ko-orange); }
-.song-position-next span { font-size:7px; font-weight:bold; line-height:1.35; }
+/* Switch de vue Studio [ EDIT PATTERN ] / [ ARRANGEMENT ] — même traitement que .editor-groups. */
+.studio-view-switch { display:flex!important; gap:5px!important; }
+.studio-view-switch button { height:43px; padding:0 10px; border:2px solid var(--ko-black); background:#d9d7d1; font-weight:900; font-size:9px; box-shadow:2px 2px 0 var(--ko-black); }
+.studio-view-switch button.active { background:var(--ko-orange); transform:translate(2px,2px); box-shadow:none; }
+
+/* Sélecteur PATTERN: [ A01 ▲▼ ] */
+.pattern-selector { display:flex; align-items:center; gap:6px; padding:4px 8px; border:2px solid var(--ko-black); background:#d9d7d1; }
+.pattern-selector b { font-size:7px; }
+.pattern-selector > span { font-size:14px; font-weight:900; min-width:34px; text-align:center; }
+.pattern-selector-buttons { display:flex; flex-direction:column; gap:1px; }
+.pattern-selector-buttons button { width:18px; height:18px; padding:0; border:1px solid var(--ko-black); background:var(--ko-amber); font-size:8px; line-height:1; }
+.pattern-selector-buttons button:disabled { opacity:.35; }
+
+/* Vue Song Arranger — storyboard horizontal des Song Positions. */
+.song-arranger { flex:1 1 auto; display:flex; flex-direction:column; overflow:hidden; background:#e9e7e1; }
+.song-arranger-track { flex:1 1 auto; display:flex; align-items:flex-start; gap:10px; padding:10px; overflow:auto; }
+.song-position-card { flex:0 0 230px; display:flex; flex-direction:column; border:2px solid var(--ko-black); background:#ece9e3; box-shadow:3px 3px 0 #99958e; cursor:grab; }
+.song-position-head { display:flex; align-items:center; justify-content:space-between; gap:6px; padding:6px 8px; background:var(--group-a); border-bottom:1px solid var(--ko-black); font-size:9px; font-weight:900; }
+.song-position-head small { display:block; font-size:7px; font-weight:normal; }
+.song-position-audition { width:22px; height:22px; padding:0; border:1px solid var(--ko-black); background:var(--ko-beige); font-size:9px; }
+.song-position-scene { display:flex; flex-direction:column; gap:2px; padding:5px 8px; border-bottom:1px solid var(--ko-black); background:#ddd9d1; font-size:8px; }
+.song-position-scene b { font-size:9px; }
+.song-position-scene small { margin-left:4px; font-weight:normal; }
+.song-position-scene em { font-style:normal; font-size:7px; color:#7a756c; }
+.song-position-groups { display:flex; flex-direction:column; gap:5px; padding:6px; }
+.pattern-block { border:1px solid var(--ko-black); background:#f3f1ec; min-height:44px; }
+.pattern-block.muted { background:#e3e0da; opacity:.6; }
+.pattern-block-head { display:flex; align-items:center; gap:4px; padding:3px 5px; font-size:8px; font-weight:bold; }
+.pattern-block-head span { flex:1; }
+.pattern-block-mute { width:16px; height:16px; padding:0; border:1px solid var(--ko-black); background:var(--ko-beige); font-size:8px; line-height:1; }
+.pattern-block.group-a .pattern-block-head { background:var(--group-a); }
+.pattern-block.group-b .pattern-block-head { background:var(--group-b); }
+.pattern-block.group-c .pattern-block-head { background:var(--group-c); color:var(--ko-beige); }
+.pattern-block.group-d .pattern-block-head { background:var(--group-d); }
+.pattern-preview { position:relative; height:22px; margin:0 5px 5px; background:#dedbd4; border:1px solid #b6b2aa; }
+.pattern-preview.empty { display:grid; place-items:center; height:16px; margin:0 5px 5px; font-size:6px; font-weight:bold; color:#948f87; }
+.pattern-preview span { position:absolute; bottom:0; width:3px; background:var(--ko-black); }
+.pattern-preview.trigger span { width:2px; border-radius:2px; background:var(--ko-orange); }
+.pattern-preview.melodic span { background:#5a5650; }
+.song-position-actions { display:grid; grid-template-columns:1fr 1fr; gap:1px; border-top:1px solid var(--ko-black); }
+.song-position-actions button { padding:6px 0; border:0; background:#d9d7d1; font-size:8px; font-weight:bold; }
+.song-position-actions .song-position-delete { background:#e2b8ac; }
+.song-position-add { flex:0 0 130px; align-self:stretch; border:2px dashed #77736d; background:transparent; color:#625f5a; font-size:9px; font-weight:bold; }
+.pattern-pool { flex:0 0 auto; display:flex; flex-direction:column; gap:5px; padding:8px 10px; border-top:2px solid var(--ko-black); background:var(--ko-panel); overflow-x:auto; }
+.pattern-pool > b { font-size:8px; }
+.pattern-pool-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.pattern-pool-row > b { width:20px; font-size:9px; }
+.pattern-pool-card { padding:4px 7px; border:1px solid var(--ko-black); font-size:8px; font-weight:bold; cursor:grab; }
+.pattern-pool-card.group-a { background:var(--group-a); }
+.pattern-pool-card.group-b { background:var(--group-b); }
+.pattern-pool-card.group-c { background:var(--group-c); color:var(--ko-beige); }
+.pattern-pool-card.group-d { background:var(--group-d); }
+.pattern-pool p { margin:0; font-size:8px; color:#7a756c; }
 .machine-clone-overlay { position:fixed; z-index:80; inset:0; display:grid; place-items:center; padding:20px; background:rgba(24,23,21,.72); }
 .machine-clone-dialog { width:min(760px, 96vw); max-height:92vh; overflow:auto; border:3px solid var(--ko-black); background:var(--ko-panel); box-shadow:8px 8px 0 rgba(0,0,0,.45); }
 .machine-clone-dialog > header { display:flex; align-items:center; justify-content:space-between; min-height:68px; padding:10px 14px; border-bottom:2px solid var(--ko-black); background:#d4d2cd; }
