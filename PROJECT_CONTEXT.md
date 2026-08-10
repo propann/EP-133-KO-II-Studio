@@ -231,6 +231,14 @@ a réussi, mais la validation utilisateur de la communication web reste négativ
   font partie du diff. `SYNCHRONISER` ne doit écrire qu'après compilation depuis
   une archive réelle, checkpoint, confirmation et relecture binaire ; tant que
   ce cycle n'est pas validé, le bouton confirme seulement le plan local.
+- Revue de code indépendante du 10 août : le chargement d'un projet Studio
+  (local ou scanné sur la machine) est protégé par `try/catch` — un document
+  incompatible affiche un message au lieu de bloquer l'éditeur en silence.
+  Le clonage complet dans `MachineCloneDialog` est lui aussi protégé de bout en
+  bout, et son garde-fou « aucun dossier/pont choisi » revient avant toute
+  écriture `localStorage`. `crypto.randomUUID()` a un repli hors contexte
+  sécurisé. Le glisser-déposer d'un son sans charge utile valide ne peut plus
+  effacer un pad par erreur. Voir `docs/SUIVI_IMPLEMENTATION.md`.
 
 ## Priorités
 

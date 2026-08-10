@@ -26,17 +26,21 @@ export function loadStudioLibrary(storage: Pick<Storage, 'getItem'>): StudioProj
   }
 }
 
-export function storeStudioProject(storage: Pick<Storage, 'setItem'>, library: StudioProjectRecord[], document: Record<string, unknown>, existingId?: string | null) {
-  const id = existingId || `studio-${Date.now()}-${globalThis.crypto.randomUUID()}`;
-  const record = { id, updatedAt: new Date().toISOString(), document };
-  const next = [...library.filter((item) => item.id !== id), record].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-  storage.setItem(STUDIO_LIBRARY_KEY, JSON.stringify(next));
-  return { id, library: next };
+function randomProjectId() {
+  const uuid = globalThis.crypto?.randomUUID?.() || `${Math.random().toString(16).slice(2)}-${Math.random().toString(16).slice(2)}`;
+  return `studio-${Date.now()}-${uuid}`;
 }
 
 function writeStudioLibrary(storage: Pick<Storage, 'setItem'>, library: StudioProjectRecord[]) {
   storage.setItem(STUDIO_LIBRARY_KEY, JSON.stringify(library));
   return library;
+}
+
+export function storeStudioProject(storage: Pick<Storage, 'setItem'>, library: StudioProjectRecord[], document: Record<string, unknown>, existingId?: string | null) {
+  const id = existingId || randomProjectId();
+  const record = { id, updatedAt: new Date().toISOString(), document };
+  const next = [...library.filter((item) => item.id !== id), record].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  return { id, library: writeStudioLibrary(storage, next) };
 }
 
 export function renameStudioProject(storage: Pick<Storage, 'setItem'>, library: StudioProjectRecord[], id: string, title: string) {

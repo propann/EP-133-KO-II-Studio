@@ -26,7 +26,7 @@ import {
   type SequencerNote,
 } from './core/project/model';
 import { barsAfterStepEdit, measureFromGlobalStep, usedBars } from './core/project/editor';
-import { deleteStudioProject, duplicateStudioProject, loadStudioLibrary, renameStudioProject, storeStudioProject, studioStateFromDocument, type StudioProjectRecord } from './core/project/studioLibrary';
+import { deleteStudioProject, duplicateStudioProject, loadStudioLibrary, renameStudioProject, storeStudioProject, studioStateFromDocument, type StudioProjectRecord, type StudioProjectState } from './core/project/studioLibrary';
 import { HomePage } from './pages/HomePage';
 import { SoundsPage } from './pages/SoundsPage';
 import { DocumentationPage } from './pages/DocumentationPage';
@@ -591,8 +591,14 @@ export default function App() {
   const loadSelectedStudioProject = () => {
     const record = studioLibrary.find((project) => project.id === selectedStudioProject);
     if (!record || !confirmStudioReplacement()) return;
+    let loaded: StudioProjectState;
+    try {
+      loaded = studioStateFromDocument(record.document);
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : 'Ce projet local est illisible.');
+      return;
+    }
     stopEditorTransport();
-    const loaded = studioStateFromDocument(record.document);
     setEditorName(loaded.title.toUpperCase());
     setTempo(loaded.bpm);
     setEditorGroup('A');
@@ -605,8 +611,14 @@ export default function App() {
 
   const loadMachineProject = () => {
     if (!machineProjectDocument || !confirmStudioReplacement()) return;
+    let loaded: StudioProjectState;
+    try {
+      loaded = studioStateFromDocument(machineProjectDocument);
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : 'Le projet scanné sur la machine est illisible.');
+      return;
+    }
     stopEditorTransport();
-    const loaded = studioStateFromDocument(machineProjectDocument);
     setEditorName(loaded.title.toUpperCase());
     setTempo(loaded.bpm);
     setEditorGroup('A');

@@ -372,7 +372,7 @@ export function decodeEp133ProjectTar(data: Uint8Array, path = 'projects/P01.tar
         } else if ((chunk[4] !== 4 || chunk[5] !== 4) && chunk.some((value) => value !== 0)) warnings.push(`Scène inutilisée ${index + 1} avec signature inattendue.`);
       }
       const trailer = 7 + 99 * 6;
-      currentScene = sceneRaw.length > trailer + 3 ? sceneRaw[trailer + 3] || null : null;
+      currentScene = sceneRaw.length > trailer + 3 ? sceneRaw[trailer + 3] : null;
       const songLength = sceneRaw.length > trailer + 11 ? sceneRaw[trailer + 11] : 0;
       song = [...sceneRaw.subarray(trailer + 12, Math.min(sceneRaw.length, trailer + 12 + songLength))];
       if (song.length !== songLength) warnings.push('Liste song tronquée dans le membre scenes.');

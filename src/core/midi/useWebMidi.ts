@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { PAD_MIDI_NOTES } from '../project/exporters.ts';
 
 export interface MidiHit {
   pad: number;
@@ -139,8 +140,7 @@ export function useWebMidi(
   }, [attachInputs, attachOutputs, detachInputs]);
 
   const sendPad = useCallback((pad: number, groupIndex: number, velocity = 100, timestamp = performance.now(), durationMs = 90) => {
-    const noteByVisualPad = [45, 46, 47, 42, 43, 44, 39, 40, 41, 36, 37, 38];
-    const note = noteByVisualPad[pad] + groupIndex * 12;
+    const note = PAD_MIDI_NOTES[pad] + groupIndex * 12;
     accessRef.current?.outputs.forEach((output) => {
       if (!isEp133MidiPort(output.name)) return;
       output.send([0x90 | channelRef.current, note, velocity], timestamp);

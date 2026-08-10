@@ -467,3 +467,41 @@ Statut : implémentation terminée, validation visuelle utilisateur en attente a
 - [ ] contrôle visuel Chrome/Chromium sur écran large et étroit.
 
 Voir `docs/POINT_SONS_ET_TRANSFERT.md`.
+
+## Étape 3.7 — revue de code indépendante : Studio et clonage
+
+Statut : correctifs appliqués et validés le 10 août 2026 (`npm test`,
+`npm run build`).
+
+Une revue de code automatisée à effort « high » sur `src/` (4 lecteurs
+indépendants, vérification adversariale par des agents séparés) a fait
+remonter 10 constats retenus. 9 ont été corrigés :
+
+- [x] chargement d'un projet Studio local malformé (`App.tsx`,
+  `loadSelectedStudioProject`) : protégé par `try/catch`, message affiché au
+  lieu de bloquer silencieusement l'éditeur ;
+- [x] chargement du projet scanné sur la machine (`App.tsx`,
+  `loadMachineProject`) : même protection ;
+- [x] `MachineCloneDialog.createClone` : le clonage complet (requête au pont
+  local, écriture du manifeste) est désormais protégé de bout en bout, et le
+  garde-fou « aucun dossier ni pont choisi » revient avant toute écriture
+  `localStorage` au lieu d'après ;
+- [x] `storeStudioProject` (`studioLibrary.ts`) : repli sur un identifiant
+  aléatoire manuel si `crypto.randomUUID()` est indisponible (contexte non
+  sécurisé) ; l'écriture passe désormais par le même helper que
+  rename/delete au lieu d'un `localStorage.setItem` dupliqué ;
+- [x] `decodeEp133ProjectTar` (`importers.ts`) : un octet de scène active
+  valant `0` est préservé au lieu d'être converti en `null` ;
+- [x] glisser-déposer d'un son dans Sons & Transfert (`SoundsPage.tsx`) : une
+  charge utile absente ne peut plus être coercée en slot `0` et effacer un
+  pad par erreur ;
+- [x] `useWebMidi.sendPad` : la table pad → note MIDI dupliquée est remplacée
+  par l'import partagé `PAD_MIDI_NOTES` de `exporters.ts`.
+
+Un constat a été laissé volontairement inchangé : le canal MIDI de sortie
+réutilise le dernier canal reçu en entrée (`useWebMidi.ts`). C'est un choix
+documenté et validé sur la machine réelle le 10 août (voir plus haut,
+« diagnostic MIDI réel »), pas une régression à annuler à l'aveugle.
+
+Nettoyage opérationnel associé : sept process `vite` orphelins (aucune
+session interactive attachée) ont été arrêtés, il n'en reste qu'un.

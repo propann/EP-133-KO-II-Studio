@@ -75,6 +75,25 @@ Autre limite confirmée : les frappes des pads produisent des notes MIDI standar
 - `git diff --check` : réussi ;
 - seul avertissement connu : bundle JavaScript principal légèrement supérieur à 500 kB.
 
+## Revue de code indépendante — Studio et clonage
+
+Une revue automatisée à effort « high » sur `src/` (4 lecteurs indépendants,
+vérification adversariale) a fait remonter 10 constats retenus, dont 5 bugs
+confirmés touchant le Studio et le clonage/sauvegarde :
+
+- chargement d’un projet Studio (local ou machine) qui plantait en silence sur
+  un document incompatible, éditeur laissé bloqué sans message ;
+- clonage complet (`MachineCloneDialog`) sans filet en cas d’erreur réseau ou
+  d’écriture disque, et garde-fou déplacé après les écritures locales ;
+- glisser-déposer d’un son sur un pad coercé en slot `0` par une charge utile
+  absente, effaçant le pad sans intention explicite.
+
+9 des 10 constats ont été corrigés le jour même ; le dixième (partage du canal
+MIDI reçu/émis) a été laissé tel quel car documenté comme un choix délibéré
+validé sur la machine réelle, pas une régression. `npm test` et
+`npm run build` restent au vert après correctifs. Détail complet dans
+`docs/SUIVI_IMPLEMENTATION.md`.
+
 ## État Git
 
 Les changements ont été publiés sur `agent/consolidation-suite-ep133` dans le

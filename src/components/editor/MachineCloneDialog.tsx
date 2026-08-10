@@ -38,17 +38,27 @@ export function MachineCloneDialog({ inventory, soundIndex, onClose }: MachineCl
     }
   };
   const createClone = async () => {
-    const profile = saveDeviceProfile(localStorage, { name, capacityMb, sampleFolderName: folderName, localSampleCount });
-    const manifest = createDeviceClone(localStorage, profile, soundIndex?.soundCount || 0, soundIndex?.usedBytes || 0, inventory?.project || null);
-    if (bridgeRoot) {
-      setCloneError('');
-      const response = await fetch('/bridge/clone/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, capacityMb }) });
-      if (!response.ok) { const value = await response.json(); setCloneError(value.reason || value.error || 'Impossible de lancer le clone.'); return; }
-      setCloneStatus({ running: true, manifest: { progress: { phase: 'starting', current: 0, total: 9 } } });
-      setCreated(true); return;
+    if (!bridgeRoot && !directory) return;
+    setCloneError('');
+    try {
+      const profile = saveDeviceProfile(localStorage, { name, capacityMb, sampleFolderName: folderName, localSampleCount });
+      const manifest = createDeviceClone(localStorage, profile, soundIndex?.soundCount || 0, soundIndex?.usedBytes || 0, inventory?.project || null);
+      if (bridgeRoot) {
+        const response = await fetch('/bridge/clone/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, capacityMb }) });
+        if (!response.ok) {
+          const value = await response.json().catch(() => ({}) as { reason?: string; error?: string });
+          setCloneError(value.reason || value.error || 'Impossible de lancer le clone.');
+          return;
+        }
+        setCloneStatus({ running: true, manifest: { progress: { phase: 'starting', current: 0, total: 9 } } });
+        setCreated(true);
+        return;
+      }
+      setWrittenPath(await writeCloneManifest(directory as LocalDirectoryHandle, name, manifest));
+      setCreated(true);
+    } catch (error) {
+      setCloneError(error instanceof Error ? error.message : 'Le clonage a échoué de façon inattendue.');
     }
-    if (!directory) return;
-    setWrittenPath(await writeCloneManifest(directory, name, manifest)); setCreated(true);
   };
   const statusManifest = cloneStatus?.manifest as { status?: string; progress?: { phase?: string; current?: number; total?: number; elapsedSeconds?: number; estimatedRemainingSeconds?: number }; summary?: { errorCount?: number; projectsUpdated?: number; soundsAdded?: number; soundsUpdated?: number; soundsUnchanged?: number; soundsDeleted?: number } } | undefined;
   const progress = statusManifest?.progress;
