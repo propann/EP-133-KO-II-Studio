@@ -13,6 +13,12 @@ en lecture seule.
 > activée tant que les protections de sauvegarde, confirmation et relecture ne
 > sont pas terminées.
 
+## Reprise par une autre IA
+
+Plusieurs agents travaillent sur ce dépôt. Lire d'abord [la passation
+complète](docs/AI_HANDOFF.md) : état réel, contraintes, matériel et prochaine
+mission, avant toute modification.
+
 ## Pourquoi ce projet ?
 
 L'objectif est de rendre l'apprentissage et la création plus visuels : choisir
