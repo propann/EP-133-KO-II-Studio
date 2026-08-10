@@ -26,8 +26,8 @@ interface EditorToolbarProps {
   onConnectMidi: () => void;
   onSave: () => void;
   onNew: () => void;
-  onSelectedLocalProjectChange: (id: string) => void;
-  onLoad: () => void;
+  /** Ouvre directement le projet cliqué — pas de sélection préalable dans un menu déroulant séparé. */
+  onOpenProject: (id: string) => void;
   onSaveAs: () => void;
   onRename: () => void;
   onDuplicate: () => void;
@@ -45,22 +45,33 @@ export function EditorToolbar(props: EditorToolbarProps) {
   return <>
     <header><button className="editor-home-button" onClick={props.onHome}>← ACCUEIL</button><div><small>{props.mode === 'game' ? 'ÉDITEUR JEU' : 'ÉDITEUR EP‑133 COMPLET'}</small><input value={props.name} maxLength={32} onChange={(event) => props.onNameChange(event.target.value.toUpperCase())} aria-label="Nom de l'exercice" /></div>{props.mode === 'complete' && <><div className="editor-groups" aria-label="Groupes EP-133">{EDITOR_GROUPS.map((group) => <button className={props.group === group ? 'active' : ''} onClick={() => props.onGroupChange(group)} key={group}>{group}</button>)}</div><div className="studio-view-switch" aria-label="Vue du Studio"><button className={props.studioView === 'pattern' ? 'active' : ''} onClick={() => props.onStudioViewChange('pattern')}>EDIT PATTERN</button><button className={props.studioView === 'arrangement' ? 'active' : ''} onClick={() => props.onStudioViewChange('arrangement')}>ARRANGEMENT</button></div>{props.studioView === 'pattern' && <PatternSelector group={props.group} number={props.patternNumber} onChange={props.onPatternNumberChange} />}<span className={`device-scan-state ${props.scannedProject !== undefined ? 'active' : ''}`}>{props.scannedProject !== undefined ? `PROJET ${props.scannedProject} · SCAN LECTURE SEULE` : 'AUCUN SCAN'}</span><button className={`editor-midi-out ${props.midiConnected ? 'active' : ''}`} onClick={props.onConnectMidi}>{props.midiConnected ? 'MIDI OUT ✓' : 'CONNECTER EP‑133'}</button></>}<div className={`editor-vu ${props.playing ? 'active' : ''}`}><span>-20</span><span>-6</span><span>0</span><i /><b>VU</b></div></header>
     <div className="editor-commandbar">
-      {props.mode === 'complete' ? <details className="file-menu">
-        <summary>FICHIER</summary>
-        <div className="file-menu-panel">
-          <label>PROJET LOCAL<select value={props.selectedLocalProject} onChange={(event) => props.onSelectedLocalProjectChange(event.target.value)}><option value="">— CHOISIR —</option>{props.localProjects.map((project) => <option value={project.id} key={project.id}>{project.title}</option>)}</select></label>
-          <div className="file-menu-grid">
-            <button onClick={props.onNew}>＋ NOUVEAU</button><button disabled={!props.selectedLocalProject} onClick={props.onLoad}>OUVRIR</button>
-            <button className="machine-project-load" disabled={!props.machineProjectAvailable} onClick={props.onLoadMachineProject}>↓ PROJET 1 MACHINE</button><span className="machine-project-state">{props.machineProjectAvailable ? 'SCAN LECTURE SEULE PRÊT' : 'AUCUN PROJET SCANNÉ'}</span>
-            <button className="clone-machine" onClick={props.onCloneMachine}>▣ CLONER LA MACHINE</button><span className="machine-project-state">MIROIR + FUTURE TIME MACHINE</span>
-            <button className="studio-sample-folder" onClick={props.onOpenSampleFolder}>▤ OUVRIR BANQUE LOCALE</button><span className={`machine-project-state ${props.machineSampleCount ? 'ready' : ''}`}>{props.machineSampleCount ? `${props.machineSampleCount} SAMPLES HDD · AUCUN UPLOAD` : 'AUCUN DOSSIER LOCAL OUVERT'}</span>
-            <button className="save" disabled={!props.canSave} onClick={props.onSave}>● ENREGISTRER</button><button disabled={!props.canSave} onClick={props.onSaveAs}>ENREGISTRER SOUS</button>
-            <button disabled={!props.selectedLocalProject} onClick={props.onRename}>RENOMMER</button><button disabled={!props.selectedLocalProject} onClick={props.onDuplicate}>DUPLIQUER</button>
-            <button className="file-delete" disabled={!props.selectedLocalProject} onClick={props.onDelete}>SUPPRIMER</button>
+      {props.mode === 'complete' ? <>
+        <details className="file-menu">
+          <summary>FICHIER</summary>
+          <div className="file-menu-panel">
+            <button className="file-new" onClick={props.onNew}>＋ NOUVEAU</button>
+            <div className="file-menu-open">
+              <b>OUVRIR</b>
+              {props.localProjects.length
+                ? props.localProjects.map((project) => <button key={project.id} className={project.id === props.selectedLocalProject ? 'active' : ''} onClick={() => props.onOpenProject(project.id)}>{project.title}</button>)
+                : <p>Aucun projet enregistré.</p>}
+            </div>
+            <div className="file-menu-row">
+              <button className="save" disabled={!props.canSave} onClick={props.onSave}>● ENREGISTRER</button>
+              <button disabled={!props.canSave} onClick={props.onSaveAs}>ENREGISTRER SOUS</button>
+            </div>
+            <div className="file-menu-row">
+              <button disabled={!props.selectedLocalProject} onClick={props.onRename}>RENOMMER</button>
+              <button disabled={!props.selectedLocalProject} onClick={props.onDuplicate}>DUPLIQUER</button>
+              <button className="file-delete" disabled={!props.selectedLocalProject} onClick={props.onDelete}>SUPPRIMER</button>
+            </div>
+            <div className="file-export"><label>FORMAT<select value={props.exportFormat} onChange={(event) => props.onExportFormatChange(event.target.value as 'midi' | 'json')}><option value="midi">MIDI (.mid)</option><option value="json">PROJET EP‑133 (.json)</option></select></label><button className="midi-export" onClick={props.onExport}>⇩ EXPORTER</button></div>
           </div>
-          <div className="file-export"><label>FORMAT<select value={props.exportFormat} onChange={(event) => props.onExportFormatChange(event.target.value as 'midi' | 'json')}><option value="midi">MIDI (.mid)</option><option value="json">PROJET EP‑133 (.json)</option></select></label><button className="midi-export" onClick={props.onExport}>⇩ EXPORTER</button></div>
-        </div>
-      </details> : <><button className="save" disabled={!props.canSave} onClick={props.onSave}>● SAVE</button><label className="export-select">EXPORT <select value={props.exportFormat} onChange={(event) => props.onExportFormatChange(event.target.value as 'midi' | 'json')}><option value="midi">MIDI (.mid)</option><option value="json">PROJET EP‑133 (.json)</option></select></label><button className="midi-export" onClick={props.onExport}>⇩ EXPORTER</button></>}
+        </details>
+        <button className="machine-project-load" disabled={!props.machineProjectAvailable} onClick={props.onLoadMachineProject} title={props.machineProjectAvailable ? 'Charger le projet scanné sur la machine' : 'Aucun projet scanné'}>↓ PROJET MACHINE</button>
+        <button className="clone-machine" onClick={props.onCloneMachine} title="Cloner la machine (miroir hors ligne)">▣ CLONER</button>
+        <button className="studio-sample-folder" onClick={props.onOpenSampleFolder} title="Ouvrir la banque de samples locale">▤ SAMPLES{props.machineSampleCount ? ` · ${props.machineSampleCount}` : ''}</button>
+      </> : <><button className="save" disabled={!props.canSave} onClick={props.onSave}>● SAVE</button><label className="export-select">EXPORT <select value={props.exportFormat} onChange={(event) => props.onExportFormatChange(event.target.value as 'midi' | 'json')}><option value="midi">MIDI (.mid)</option><option value="json">PROJET EP‑133 (.json)</option></select></label><button className="midi-export" onClick={props.onExport}>⇩ EXPORTER</button></>}
       <button className="transport-play" disabled={props.mode === 'complete' && !props.midiConnected && !props.machineSampleCount} onClick={props.onPlayback}>{props.playing ? '■ STOP' : '▶ LECTURE'}</button><button className={`loop-toggle ${props.loop ? 'active' : ''}`} disabled={props.mode !== 'complete' || props.playing} onClick={() => props.onLoopChange(!props.loop)}>↻ BOUCLE {props.loop ? 'ON' : 'OFF'}</button>
     </div>
   </>;

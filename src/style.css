@@ -273,24 +273,28 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .editor-commandbar .local-project-select select { min-width:150px; max-width:230px; }
 .editor-commandbar select { height:34px; padding:5px 8px; border:1px solid var(--ko-black); background:#f3f1ec; font:inherit; }
 .editor-commandbar .midi-export { background:var(--ko-amber); }
+/* Menu FICHIER classique : Nouveau / Ouvrir (liste cliquable) / Enregistrer / Renommer-Dupliquer-Supprimer / Exporter.
+   Les actions machine (charger le scan, cloner, banque locale) vivent dans la barre de commandes, pas ici. */
 .file-menu { position:relative; flex:0 0 auto; }
 .file-menu > summary { min-height:34px; display:flex; align-items:center; padding:6px 18px 6px 12px; border:1px solid var(--ko-black); background:var(--ko-orange); box-shadow:2px 2px 0 var(--ko-black); font-size:10px; font-weight:bold; cursor:pointer; list-style:none; }
 .file-menu > summary::after { content:'▾'; margin-left:10px; }
 .file-menu[open] > summary::after { content:'▴'; }
-.file-menu-panel { position:fixed; z-index:30; top:112px; left:14px; width:min(430px, calc(100vw - 28px)); padding:12px; border:2px solid var(--ko-black); background:var(--ko-panel); box-shadow:5px 5px 0 rgba(30,29,27,.55); }
-.file-menu-panel > label { display:grid; gap:5px; }
-.file-menu-panel select { width:100%; }
-.file-menu-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:9px; }
-.file-menu-grid button { width:100%; }
-.file-menu-grid .file-delete { background:#d8d2c8; }
-.file-menu-grid .machine-project-load { background:var(--ko-amber); }
-.file-menu-grid .clone-machine { background:var(--ko-orange); }
-.machine-project-state { display:flex; align-items:center; padding:0 6px; border:1px solid #8d8982; background:#dedbd5; font-size:7px; font-weight:bold; }
-.machine-project-state.ready { background:var(--ko-amber); }
-.studio-sample-folder { position:relative; display:flex !important; justify-content:center; min-height:34px; padding:6px 10px; border:1px solid var(--ko-black); background:#d8d5cf; box-shadow:2px 2px 0 var(--ko-black); cursor:pointer; }
-.studio-sample-folder input { position:absolute; width:1px; height:1px; opacity:0; }
-.file-export { display:grid; grid-template-columns:1fr auto; align-items:end; gap:8px; margin-top:10px; padding-top:10px; border-top:1px solid var(--ko-black); }
+.file-menu-panel { position:fixed; z-index:30; top:112px; left:14px; width:min(340px, calc(100vw - 28px)); padding:12px; border:2px solid var(--ko-black); background:var(--ko-panel); box-shadow:5px 5px 0 rgba(30,29,27,.55); display:flex; flex-direction:column; gap:9px; }
+.file-new { width:100%; background:#d9d7d1; }
+.file-menu-open { display:flex; flex-direction:column; gap:4px; padding:8px; border:1px solid var(--ko-black); background:#f3f1ec; }
+.file-menu-open b { font-size:8px; }
+.file-menu-open p { margin:0; font-size:8px; color:#7a756c; }
+.file-menu-open button { width:100%; padding:6px 8px; border:1px solid var(--ko-black); background:#e5e2db; text-align:left; box-shadow:none; }
+.file-menu-open button.active { background:var(--ko-amber); font-weight:bold; }
+.file-menu-row { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+.file-menu-row:has(.file-delete) { grid-template-columns:1fr 1fr 1fr; }
+.file-menu-row button { width:100%; }
+.file-menu-row .file-delete { background:#d8d2c8; }
+.file-export { display:grid; grid-template-columns:1fr auto; align-items:end; gap:8px; padding-top:9px; border-top:1px solid var(--ko-black); }
 .file-export label { display:grid; gap:5px; }
+.editor-commandbar .machine-project-load { background:var(--ko-amber); }
+.editor-commandbar .clone-machine { background:#d9d7d1; }
+.editor-commandbar .studio-sample-folder { background:#d9d7d1; }
 /* Switch de vue Studio [ EDIT PATTERN ] / [ ARRANGEMENT ] — même traitement que .editor-groups. */
 .studio-view-switch { display:flex!important; gap:5px!important; }
 .studio-view-switch button { height:43px; padding:0 10px; border:2px solid var(--ko-black); background:#d9d7d1; font-weight:900; font-size:9px; box-shadow:2px 2px 0 var(--ko-black); }
