@@ -12,6 +12,10 @@
   --ko-black: #1A1A1A;
   --ko-amber: #FFB000;
   --ko-muted: #8E8D88;
+  /* Rayon de cadre commun à tout l'affichage du Studio (panneaux, boutons,
+     cartes), pour rester cohérent avec les cartes du Song Arranger. */
+  --radius: 10px;
+  --radius-sm: 5px;
   /* Convention visuelle de la vue Song Arranger uniquement — choix de design
      du Studio, PAS une couleur confirmée sur la machine EP-133 réelle. */
   --group-a: var(--ko-orange);
@@ -252,6 +256,35 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .exercise-editor > header small { font-size:9px; }
 .exercise-editor > header input { width:min(420px,65vw); padding:8px; border:2px solid var(--ko-black); background:#f3f1ec; font:700 16px inherit; }
 .exercise-editor button { border:1px solid var(--ko-black); background:#dedcd6; color:var(--ko-black); font:inherit; cursor:pointer; }
+/* Cadres arrondis pour tout l'affichage du Studio — boutons, panneaux, pastilles —
+   cohérents avec les cartes du Song Arranger. La grille du séquenceur (mesures, pas)
+   reste anguleuse : c'est une matrice, pas des cartes, et ses en-têtes collants ne se
+   prêtent pas au rognage visuel d'un cadre arrondi. */
+.editor-home-button,
+.editor-midi-out,
+.device-scan-state,
+.editor-commandbar button,
+.editor-commandbar select,
+.file-menu > summary,
+.file-menu-panel,
+.file-menu-close,
+.pattern-selector,
+.pattern-selector-buttons button,
+.editor-pad-strip > strong,
+.editor-pad-buttons button,
+.editor-pad-mode button,
+.machine-clone-dialog > header button,
+.clone-form input,
+.clone-form select,
+.clone-folder span,
+.clone-folder button,
+.machine-clone-dialog > footer button {
+  border-radius: var(--radius-sm);
+}
+.editor-groups button,
+.studio-view-switch button {
+  border-radius: var(--radius);
+}
 .exercise-editor > header button,.exercise-editor > footer button { padding:9px 12px; }
 .editor-home-button { min-width:100px; align-self:stretch; border:2px solid var(--ko-black)!important; background:var(--ko-black)!important; color:var(--ko-beige)!important; font-size:9px!important; font-weight:bold!important; box-shadow:3px 3px 0 var(--ko-orange); transition:transform .12s,box-shadow .12s; }
 .editor-home-button:hover,.editor-home-button:focus-visible { background:var(--ko-orange)!important; color:var(--ko-black)!important; }
