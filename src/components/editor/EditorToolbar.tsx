@@ -48,6 +48,7 @@ interface EditorToolbarProps {
 
 export function EditorToolbar(props: EditorToolbarProps) {
   const fileMenuRef = useRef<HTMLDetailsElement>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
   const [fileMenuOpen, setFileMenuOpen] = useState(false);
   const closeFileMenu = () => { if (fileMenuRef.current) fileMenuRef.current.open = false; };
   return <>
@@ -66,9 +67,8 @@ export function EditorToolbar(props: EditorToolbarProps) {
                 ? props.localProjects.map((project) => <button key={project.id} className={`file-row nested ${project.id === props.selectedLocalProject ? 'active' : ''}`} onClick={() => { props.onOpenProject(project.id); closeFileMenu(); }}>{project.title}</button>)
                 : <p className="file-row nested muted">Aucun projet enregistré.</p>}
             </div>
-            <label className="file-row file-import">Importer un fichier…
-              <input type="file" accept=".json" multiple hidden onChange={(event) => { if (event.target.files?.length) props.onImportFiles(event.target.files); event.target.value = ''; closeFileMenu(); }} />
-            </label>
+            <button className="file-row" onClick={() => importInputRef.current?.click()}>Importer un fichier…</button>
+            <input ref={importInputRef} type="file" accept=".json" multiple hidden onChange={(event) => { if (event.target.files?.length) props.onImportFiles(event.target.files); event.target.value = ''; closeFileMenu(); }} />
             <hr className="file-menu-divider" />
             <button className="file-row" disabled={!props.canSave} onClick={props.onSave}>Enregistrer</button>
             <button className="file-row" disabled={!props.canSave} onClick={props.onSaveAs}>Enregistrer sous…</button>
