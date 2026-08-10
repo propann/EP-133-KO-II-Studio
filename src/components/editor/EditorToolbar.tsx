@@ -29,6 +29,8 @@ interface EditorToolbarProps {
   onNew: () => void;
   /** Ouvre directement le projet cliqué — pas de sélection préalable dans un menu déroulant séparé. */
   onOpenProject: (id: string) => void;
+  /** Importe un ou plusieurs fichiers .json (format « Exporter en projet EP-133 ») dans la bibliothèque locale, sans console. */
+  onImportFiles: (files: FileList) => void;
   onSaveAs: () => void;
   onRename: () => void;
   onDuplicate: () => void;
@@ -64,6 +66,9 @@ export function EditorToolbar(props: EditorToolbarProps) {
                 ? props.localProjects.map((project) => <button key={project.id} className={`file-row nested ${project.id === props.selectedLocalProject ? 'active' : ''}`} onClick={() => { props.onOpenProject(project.id); closeFileMenu(); }}>{project.title}</button>)
                 : <p className="file-row nested muted">Aucun projet enregistré.</p>}
             </div>
+            <label className="file-row file-import">Importer un fichier…
+              <input type="file" accept=".json" multiple hidden onChange={(event) => { if (event.target.files?.length) props.onImportFiles(event.target.files); event.target.value = ''; closeFileMenu(); }} />
+            </label>
             <hr className="file-menu-divider" />
             <button className="file-row" disabled={!props.canSave} onClick={props.onSave}>Enregistrer</button>
             <button className="file-row" disabled={!props.canSave} onClick={props.onSaveAs}>Enregistrer sous…</button>
