@@ -77,7 +77,10 @@ Autre limite confirmée : les frappes des pads produisent des notes MIDI standar
 
 ## État Git
 
-Les changements sont locaux et non publiés. Le push GitHub a été reporté ; l’authentification `gh` devra être rétablie avant publication. Aucun commit de clôture n’est créé dans ce rapport afin de conserver la décision de publication à l’utilisateur.
+Les changements ont été publiés sur `agent/consolidation-suite-ep133` dans le
+commit `7cea244`. La PR brouillon #1 a été mise à jour :
+<https://github.com/propann/ep133-rhythm-hero/pull/1>. L’authentification GitHub
+du compte `propann` a été rétablie et GitGuardian réussit.
 
 ## Priorités à la reprise
 

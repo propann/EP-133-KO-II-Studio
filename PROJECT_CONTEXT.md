@@ -37,6 +37,18 @@ Le rapport consolidé de la session du 10 août 2026 est disponible dans
 Web MIDI navigateur dans Sons & Transfert ; le test MIDI direct vers la machine
 a réussi, mais la validation utilisateur de la communication web reste négative.
 
+### Point de reprise sauvegardé — 10 août 2026
+
+- Branche active : `agent/consolidation-suite-ep133`.
+- Dernier commit publié : `7cea244` — « Consolider le clone et la gestion des sons EP-133 ».
+- PR brouillon : <https://github.com/propann/ep133-rhythm-hero/pull/1>.
+- `npm test`, `npm run build`, `git diff --check` et GitGuardian réussissent.
+- Le clone incrémental réel est validé ; ne pas recommencer ce chantier.
+- La priorité est d’instrumenter Web MIDI dans Sons & Transfert : noms exacts des entrées/sorties, dernier message reçu, dernier message envoyé, canal et note.
+- Le test Python direct note 45/canal 1 fait sonner l’EP-133 : câble, port, canal et réception machine sont validés.
+- Les boutons physiques A–D seuls remontent du SysEx propriétaire ; ne pas envoyer de SysEx non documenté.
+- Les réaffectations son → pad, suppressions et synchronisations restent locales/verrouillées jusqu’au checkpoint et à la relecture binaire.
+
 - Diagnostic MIDI réel du 10 août : le navigateur ouvrait aussi `Midi Through`, ce qui pouvait annoncer une sortie connectée puis envoyer les pads au mauvais port. Entrées, sorties, notes, transport et PANIC ciblent maintenant uniquement l’EP-133. Le canal reçu de la machine est réutilisé en sortie. Les frappes de pads 36–83 pilotent A–D et le pad à l’écran. Les boutons physiques A–D seuls utilisent une notification SysEx propriétaire ; aucune écriture SysEx non documentée n’est activée.
 
 - Application moderne fusionnée dans le dépôt principal.
