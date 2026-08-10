@@ -795,9 +795,17 @@ export default function App() {
     viewport.scrollLeft = Math.max(0, (viewport.scrollWidth - viewport.clientWidth) * progress);
   }, [pageStart, songBeat, transportActive]);
 
+  const previousEditorBars = useRef(editorBars);
   useEffect(() => {
     if (!editorOpen || !editorGrid.current) return;
-    editorGrid.current.scrollLeft = editorGrid.current.scrollWidth;
+    // N'aller au bout de la grille (mesure de réserve) que si on vient d'écrire une note
+    // qui a fait grandir le pattern d'une seule mesure. Tout autre changement (chargement
+    // d'un projet, changement de groupe ou de pattern, nouveau projet) doit ramener au
+    // début — sinon le pattern chargé semble vide, on regarde une mesure de réserve loin
+    // devant les vraies frappes.
+    const grewByOneFromEditing = editorBars === previousEditorBars.current + 1;
+    editorGrid.current.scrollLeft = grewByOneFromEditing ? editorGrid.current.scrollWidth : 0;
+    previousEditorBars.current = editorBars;
   }, [editorBars, editorOpen]);
 
   if (workspaceView === 'home') return <HomePage connected={midi.connected || midi.outputConnected} project={deviceInventory?.project} scannedSoundCount={deviceInventory ? Object.keys(deviceInventory.sounds).length : 0} onOpenGame={() => setWorkspaceView('game')} onOpenStudio={openCompleteEditor} onOpenSounds={() => setWorkspaceView('sounds')} onOpenDocumentation={() => setWorkspaceView('docs')} />;
