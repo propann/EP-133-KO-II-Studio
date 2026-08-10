@@ -1,6 +1,14 @@
+/**
+ * Profil local de la machine et manifeste du premier instantané de clone,
+ * persistés dans `localStorage` (pas dans le clone disque lui-même — voir
+ * `src/core/storage/localFolders.ts` pour ça). Sert d'identité stable pour
+ * nommer le dossier `clone/<nom-machine>/` et pour préparer la future Time
+ * Machine incrémentale.
+ */
 export const DEVICE_PROFILE_KEY = 'ep133-rhythm-hero:device-profile:v1';
 export const DEVICE_CLONE_KEY = 'ep133-rhythm-hero:device-clone:v1';
 
+/** Identité déclarée de la machine par l'utilisateur (nom, capacité mémoire), pas lue depuis le matériel. */
 export interface DeviceProfile {
   name: string;
   capacityMb: 64 | 128;
@@ -9,6 +17,7 @@ export interface DeviceProfile {
   updatedAt: string;
 }
 
+/** Relit le profil sauvegardé ; renvoie `null` si absent ou corrompu (jamais d'exception). */
 export function loadDeviceProfile(storage: Pick<Storage, 'getItem'>): DeviceProfile | null {
   try {
     const profile = JSON.parse(storage.getItem(DEVICE_PROFILE_KEY) || 'null') as Partial<DeviceProfile> | null;
@@ -23,6 +32,13 @@ export function saveDeviceProfile(storage: Pick<Storage, 'setItem'>, profile: Om
   return saved;
 }
 
+/**
+ * Instantané local minimal du clone : ce que l'app sait AVANT que le pont
+ * local (`tools/local_clone_bridge.py` + `tools/clone_ep133_readonly.py`)
+ * n'ait réellement copié les PCM sur le disque. `audioStatus` reste
+ * `'local-bridge-required'` tant que ce clone complet n'a pas tourné — l'UI
+ * ne doit jamais prétendre l'avoir fait avant ce retour confirmé.
+ */
 export interface DeviceCloneManifest {
   createdAt: string;
   profile: DeviceProfile;
@@ -33,6 +49,7 @@ export interface DeviceCloneManifest {
   history: Array<{ createdAt: string; label: string }>;
 }
 
+/** Écrit le manifeste initial du clone en localStorage (pas encore l'audio, voir `DeviceCloneManifest`). */
 export function createDeviceClone(storage: Pick<Storage, 'setItem'>, profile: DeviceProfile, soundCount: number, usedBytes: number, scannedProject: number | null): DeviceCloneManifest {
   const createdAt = new Date().toISOString();
   const clone = { createdAt, profile, soundCount, usedBytes, scannedProject, audioStatus: 'local-bridge-required' as const, history: [{ createdAt, label: 'INSTANTANÉ INITIAL' }] };

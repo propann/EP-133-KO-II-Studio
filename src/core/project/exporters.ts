@@ -1,3 +1,10 @@
+/**
+ * Sérialisation du Studio vers les formats de référence : `.mid` standard et
+ * `ep.project.v1.json` (source technique intermédiaire vers `.pak/.ppak`).
+ * Aucun format de composition propriétaire Rhythm Hero — voir
+ * `docs/DECISION_FORMATS_PROJET.md`. Les lecteurs/inspecteurs symétriques
+ * vivent dans `importers.ts`. Contrôlé par `npm run test:exports`.
+ */
 import { PROJECT_GROUPS, type ProjectGroup, type ProjectPatterns } from './model.ts';
 
 export type EditorGroup = ProjectGroup;
@@ -5,6 +12,13 @@ export type EditorPatterns = ProjectPatterns;
 export type EditorPadMode = 'ONE' | 'KEYS' | 'LEGATO';
 
 export const EDITOR_GROUPS: EditorGroup[] = PROJECT_GROUPS;
+/**
+ * Note MIDI de base par pad interne (index 0–11, ordre visuel
+ * `7 8 9 / 4 5 6 / 1 2 3 / · 0 ENTER`) pour le groupe A ; ajouter
+ * `groupIndex * 12` pour B/C/D. Mapping validé sur la machine réelle — voir
+ * `docs/CONNEXION_ET_CALIBRATION_MIDI.md`. Seule source de vérité : ne pas
+ * en recopier une seconde version ailleurs (import ce tableau).
+ */
 export const PAD_MIDI_NOTES = [45, 46, 47, 42, 43, 44, 39, 40, 41, 36, 37, 38] as const;
 export const KEY_EDITOR_NOTES = Array.from({ length: 25 }, (_, index) => 72 - index);
 
@@ -17,6 +31,7 @@ const variableLength = (value: number) => {
   return bytes;
 };
 
+/** Encode les 4 patterns du Studio en un fichier Standard MIDI Format 0, résolution 96 PPQN (celle des patterns internes de l'EP-133). */
 export function createMidiFile(patterns: EditorPatterns, bpm: number) {
   const ppqn = 96;
   const events: { tick: number; data: number[]; order: number }[] = [];
@@ -61,6 +76,12 @@ interface ProjectDocumentOptions {
   padModes: Record<string, EditorPadMode>;
 }
 
+/**
+ * Construit un document `ep.project.v1` à partir de l'état du Studio — la
+ * source technique intermédiaire avant compilation `.ppak`. Fusionne les pads
+ * scannés sur la machine (`pads`) avec les changements de mode ONE/KEYS/LEGATO
+ * faits localement (`padModes`), sans perdre les pads non touchés.
+ */
 export function createEp133ProjectDocument({ title, bpm, patterns, pads, padModes }: ProjectDocumentOptions) {
   const padMap = new Map(pads.map((pad) => [`${pad.group}:${pad.pad - 1}`, pad]));
   Object.keys(padModes).forEach((key) => {

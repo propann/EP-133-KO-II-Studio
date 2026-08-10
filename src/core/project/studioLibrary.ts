@@ -1,8 +1,16 @@
+/**
+ * Save/Load local du Studio : une bibliothèque de projets `ep.project.v1`
+ * dans `localStorage`, plus la conversion vers/depuis l'état interne du
+ * Studio (`StudioProjectState`). N'invente aucun format propre à Rhythm
+ * Hero — enveloppe seulement le document musical partagé avec `exporters.ts`
+ * / `importers.ts`. Voir `docs/VALIDATION_SAVE_LOAD_STUDIO.md`.
+ */
 import { EDITOR_GROUPS, type EditorPadMode } from './exporters.ts';
 import { emptyProjectPatterns, normalizeSequencerNote, type ProjectPatterns } from './model.ts';
 
 export const STUDIO_LIBRARY_KEY = 'ep133-rhythm-hero:studio-projects:v1';
 
+/** Une entrée de la bibliothèque locale : un projet `ep.project.v1` horodaté et identifié. */
 export interface StudioProjectRecord {
   id: string;
   updatedAt: string;
@@ -16,6 +24,7 @@ export interface StudioProjectState {
   padModes: Record<string, EditorPadMode>;
 }
 
+/** Relit la bibliothèque locale ; filtre silencieusement toute entrée corrompue plutôt que d'échouer entièrement. */
 export function loadStudioLibrary(storage: Pick<Storage, 'getItem'>): StudioProjectRecord[] {
   try {
     const value: unknown = JSON.parse(storage.getItem(STUDIO_LIBRARY_KEY) || '[]');
@@ -26,16 +35,19 @@ export function loadStudioLibrary(storage: Pick<Storage, 'getItem'>): StudioProj
   }
 }
 
+/** Identifiant de projet ; `crypto.randomUUID()` a un repli si indisponible (contexte non sécurisé, ex. HTTP simple sur réseau local). */
 function randomProjectId() {
   const uuid = globalThis.crypto?.randomUUID?.() || `${Math.random().toString(16).slice(2)}-${Math.random().toString(16).slice(2)}`;
   return `studio-${Date.now()}-${uuid}`;
 }
 
+/** Seul point d'écriture de la bibliothèque — tous les autres exports passent par ici, jamais un `setItem` direct. */
 function writeStudioLibrary(storage: Pick<Storage, 'setItem'>, library: StudioProjectRecord[]) {
   storage.setItem(STUDIO_LIBRARY_KEY, JSON.stringify(library));
   return library;
 }
 
+/** Crée ou met à jour une entrée (nouveau projet si `existingId` absent), et remonte la liste triée par date de modification. */
 export function storeStudioProject(storage: Pick<Storage, 'setItem'>, library: StudioProjectRecord[], document: Record<string, unknown>, existingId?: string | null) {
   const id = existingId || randomProjectId();
   const record = { id, updatedAt: new Date().toISOString(), document };
@@ -43,6 +55,7 @@ export function storeStudioProject(storage: Pick<Storage, 'setItem'>, library: S
   return { id, library: writeStudioLibrary(storage, next) };
 }
 
+/** Renomme sans toucher au contenu musical ; ignore une saisie vide plutôt que d'effacer le titre. */
 export function renameStudioProject(storage: Pick<Storage, 'setItem'>, library: StudioProjectRecord[], id: string, title: string) {
   const cleanTitle = title.trim();
   if (!cleanTitle) return library;
@@ -54,6 +67,7 @@ export function renameStudioProject(storage: Pick<Storage, 'setItem'>, library: 
   return writeStudioLibrary(storage, next);
 }
 
+/** Copie profonde du document source sous un nouvel identifiant ; renvoie `null` si la source n'existe plus. */
 export function duplicateStudioProject(storage: Pick<Storage, 'setItem'>, library: StudioProjectRecord[], id: string, title: string) {
   const source = library.find((record) => record.id === id);
   if (!source) return null;
@@ -66,6 +80,13 @@ export function deleteStudioProject(storage: Pick<Storage, 'setItem'>, library: 
   return writeStudioLibrary(storage, library.filter((record) => record.id !== id));
 }
 
+/**
+ * Convertit un document `ep.project.v1` (local ou scanné sur la machine) vers
+ * l'état interne du Studio. **Peut lever une exception** si le document est
+ * incompatible ou incomplet (schéma, patterns absents) — tout appelant doit
+ * l'entourer d'un `try/catch` et afficher un message plutôt que de laisser
+ * l'éditeur bloqué en silence après un `stopEditorTransport()` déjà exécuté.
+ */
 export function studioStateFromDocument(document: Record<string, unknown>): StudioProjectState {
   if (document.schema !== 'ep.project.v1' || document.product !== 'ep133') throw new Error('Projet EP-133 incompatible.');
   const patterns = emptyProjectPatterns();

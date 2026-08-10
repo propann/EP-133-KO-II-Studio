@@ -1,3 +1,12 @@
+/**
+ * Lecture audio des samples clonés depuis un dossier local (`clone/<nom-machine>/`),
+ * pour que le Studio et Sons & Transfert restent jouables sans EP-133 connecté.
+ * Priorité audio dans l'app : sortie MIDI machine si branchée, sinon ce
+ * lecteur PCM local. Voir `docs/BANQUE_SAMPLES_STUDIO.md`.
+ *
+ * Format natif observé sur la machine : PCM mono 16 bits, 46 875 Hz — ne
+ * jamais supposer 44,1 kHz par défaut (règle de travail du projet).
+ */
 interface SampleMetadata {
   channels?: number;
   samplerate?: number;
@@ -11,8 +20,14 @@ export class MachineSampleBank {
   private buffers = new Map<number, AudioBuffer>();
   private sources = new Set<AudioBufferSourceNode>();
 
+  /** Nombre de slots PCM indexés (pas forcément tous décodés — voir `bufferFor`, décodage à la demande). */
   get size() { return this.pcmFiles.size; }
 
+  /**
+   * Indexe un dossier de clone déjà aplati par `collectLocalFiles` : reconnaît
+   * `samples/NNN.pcm` et `metadata/NNN.json` par numéro de slot. Ne décode
+   * aucun audio ici — juste l'inventaire, décodage réel différé à `play()`.
+   */
   async load(files: FileList | File[]) {
     this.stopAll();
     this.pcmFiles.clear(); this.metadata.clear(); this.buffers.clear();
@@ -31,6 +46,7 @@ export class MachineSampleBank {
     return this.size;
   }
 
+  /** Décode un PCM brut (Int16 little-endian, mono ou stéréo) en `AudioBuffer`, mis en cache par slot. */
   private async bufferFor(slot: number) {
     const cached = this.buffers.get(slot); if (cached) return cached;
     const file = this.pcmFiles.get(slot); if (!file) return null;
@@ -49,6 +65,11 @@ export class MachineSampleBank {
     return buffer;
   }
 
+  /**
+   * Joue un slot au temps `atPerformanceMs` (horloge `performance.now()`,
+   * pour rester synchronisé avec le transport Studio/jeu). `note`/`rootNote`
+   * pilotent le pitch quand le mode KEYS transpose le sample.
+   */
   async play(slot: number, velocity = 110, atPerformanceMs = performance.now(), note?: number, rootNote = 60) {
     const buffer = await this.bufferFor(slot); if (!buffer || !this.context) return false;
     const source = this.context.createBufferSource();
