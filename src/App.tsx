@@ -54,7 +54,8 @@ import { PadStrip } from './components/editor/PadStrip';
 import { EditorToolbar } from './components/editor/EditorToolbar';
 import { SongArranger } from './components/editor/SongArranger';
 import { MachineCloneDialog } from './components/editor/MachineCloneDialog';
-import { chooseLocalDirectory, collectLocalFiles } from './core/storage/localFolders';
+import { chooseLocalDirectory, collectLocalFiles, type LocalDirectoryHandle } from './core/storage/localFolders';
+import { SAMPLE_FOLDER_KEY, hasStoredPermission, loadDirectoryHandle, requestStoredPermission, saveDirectoryHandle } from './core/storage/directoryHandleStore';
 import './style.css';
 import { APP_LANGUAGE_KEY, loadAppLanguage, type AppLanguage } from './core/i18n';
 
@@ -138,6 +139,9 @@ export default function App() {
   const [machineProjectDocument, setMachineProjectDocument] = useState<Record<string, unknown> | null>(null);
   const [machineCloneOpen, setMachineCloneOpen] = useState(false);
   const [machineSampleCount, setMachineSampleCount] = useState(0);
+  const [sampleFolderName, setSampleFolderName] = useState('');
+  const [sampleFolderNeedsReconnect, setSampleFolderNeedsReconnect] = useState(false);
+  const sampleDirectoryHandleRef = useRef<LocalDirectoryHandle | null>(null);
   const targets = useRef(activeExercise.targets.map((target, index) => ({ ...target, id: `target-${index}` })));
   const frame = useRef<number | undefined>(undefined);
   const flashTimer = useRef<number | undefined>(undefined);
@@ -170,6 +174,22 @@ export default function App() {
       .then((response) => response.ok ? response.json() as Promise<DeviceSoundIndex> : Promise.reject())
       .then(setDeviceSoundIndex)
       .catch(() => setDeviceSoundIndex(null));
+  }, []);
+
+  /** Restauration silencieuse du dossier de travail mémorisé — queryPermission seul (jamais requestPermission ici : il faut un vrai clic, voir reconnectSampleFolder). */
+  useEffect(() => {
+    void (async () => {
+      const handle = await loadDirectoryHandle(SAMPLE_FOLDER_KEY);
+      if (!handle) return;
+      sampleDirectoryHandleRef.current = handle;
+      setSampleFolderName(handle.name);
+      if (await hasStoredPermission(handle, 'read')) {
+        try { setMachineSampleCount(await machineSampleBank.load(await collectLocalFiles(handle))); }
+        catch { setSampleFolderNeedsReconnect(true); }
+      } else {
+        setSampleFolderNeedsReconnect(true);
+      }
+    })();
   }, []);
 
   const onHit = useCallback((hit: MidiHit) => {
@@ -267,12 +287,31 @@ export default function App() {
     await midi.connect();
   };
 
+  /** Choix explicite : le handle est sauvegardé dans IndexedDB (voir directoryHandleStore.ts) pour ne plus jamais rouvrir ce sélecteur tant que la permission tient. */
   const openStudioSampleFolder = async () => {
     try {
       const directory = await chooseLocalDirectory();
+      sampleDirectoryHandleRef.current = directory;
+      setSampleFolderName(directory.name);
+      setSampleFolderNeedsReconnect(false);
       setMachineSampleCount(await machineSampleBank.load(await collectLocalFiles(directory)));
+      await saveDirectoryHandle(SAMPLE_FOLDER_KEY, directory);
     } catch (error) {
       if ((error as { name?: string }).name !== 'AbortError') window.alert(error instanceof Error ? error.message : 'Impossible d’ouvrir le dossier local.');
+    }
+  };
+
+  /** Redemande la permission sur le dossier déjà mémorisé — geste utilisateur requis, le navigateur ne la garde jamais indéfiniment tout seul. */
+  const reconnectSampleFolder = async () => {
+    const handle = sampleDirectoryHandleRef.current;
+    if (!handle) return;
+    const granted = await requestStoredPermission(handle, 'read');
+    if (!granted) { window.alert('Autorisation refusée pour ce dossier. Choisis-le à nouveau si besoin.'); return; }
+    try {
+      setMachineSampleCount(await machineSampleBank.load(await collectLocalFiles(handle)));
+      setSampleFolderNeedsReconnect(false);
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : 'Impossible de relire ce dossier.');
     }
   };
 
@@ -1011,7 +1050,10 @@ export default function App() {
         onConnectMidi={() => void connectMidi()}
         onCloneMachine={() => setMachineCloneOpen(true)}
         onViewScanReport={() => setWorkspaceView('sounds')}
+        sampleFolderName={sampleFolderName}
+        sampleFolderNeedsReconnect={sampleFolderNeedsReconnect}
         onOpenSampleFolder={() => void openStudioSampleFolder()}
+        onReconnectSampleFolder={() => void reconnectSampleFolder()}
         onResetStats={() => updateProfile((profile) => ({ ...profile, stats: emptyPlayerStats() }))}
       />
       {machineCloneOpen && <MachineCloneDialog inventory={deviceInventory} soundIndex={deviceSoundIndex} onClose={() => setMachineCloneOpen(false)} />}

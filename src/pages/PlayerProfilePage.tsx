@@ -16,7 +16,10 @@ interface PlayerProfilePageProps {
   onConnectMidi: () => void;
   onCloneMachine: () => void;
   onViewScanReport: () => void;
+  sampleFolderName: string;
+  sampleFolderNeedsReconnect: boolean;
   onOpenSampleFolder: () => void;
+  onReconnectSampleFolder: () => void;
   onResetStats: () => void;
 }
 
@@ -38,7 +41,7 @@ const activeSpec = (avatarId: string) => AVATAR_PRESETS.find((spec) => spec.id =
  *   réellement projets/PCM/métadonnées ; « CLONER » ouvre `MachineCloneDialog`,
  *   déjà entièrement fonctionnel.
  */
-export function PlayerProfilePage({ profile, machineConnected, machineSampleCount, deviceInventory, deviceSoundIndex, onBack, onChange, onChangeMachine, onAddMachine, onRemoveMachine, onConnectMidi, onCloneMachine, onViewScanReport, onOpenSampleFolder, onResetStats }: PlayerProfilePageProps) {
+export function PlayerProfilePage({ profile, machineConnected, machineSampleCount, deviceInventory, deviceSoundIndex, onBack, onChange, onChangeMachine, onAddMachine, onRemoveMachine, onConnectMidi, onCloneMachine, onViewScanReport, sampleFolderName, sampleFolderNeedsReconnect, onOpenSampleFolder, onReconnectSampleFolder, onResetStats }: PlayerProfilePageProps) {
   const { stats } = profile;
   const totalHits = stats.perfect + stats.good + stats.miss;
   const accuracy = totalHits > 0 ? Math.round(((stats.perfect + stats.good) / totalHits) * 100) : null;
@@ -71,17 +74,23 @@ export function PlayerProfilePage({ profile, machineConnected, machineSampleCoun
             <span>{deviceSoundIndex?.soundCount ?? '—'} SONS</span>
             <span>{deviceSoundIndex ? `${(deviceSoundIndex.usedBytes / 1e6).toFixed(1)} MO` : '— MO'}</span>
           </div>}
+          {sampleFolderName && <div className="profile-machine-scan-summary">
+            <span>DOSSIER MÉMORISÉ · {sampleFolderName}</span>
+            {sampleFolderNeedsReconnect && <span className="profile-folder-warning">AUTORISATION À RENOUVELER</span>}
+          </div>}
           <div className="profile-machine-actions">
             {!machineConnected && <button className="profile-connect" onClick={onConnectMidi}>CONNECTER</button>}
             <button onClick={onViewScanReport}>SCANNER · RAPPORT</button>
             <button className="profile-scan" onClick={onCloneMachine}>CLONER</button>
-            <button onClick={onOpenSampleFolder}>DOSSIER DE TRAVAIL</button>
+            {sampleFolderNeedsReconnect
+              ? <button className="profile-connect" onClick={onReconnectSampleFolder}>RECONNECTER LE DOSSIER</button>
+              : <button onClick={onOpenSampleFolder}>{sampleFolderName ? 'CHANGER DE DOSSIER' : 'DOSSIER DE TRAVAIL'}</button>}
             {profile.machines.length > 1 && <button className="profile-machine-remove" onClick={() => { if (window.confirm(`Retirer « ${machine.name} » de la fiche ?`)) onRemoveMachine(machine.id); }}>RETIRER</button>}
           </div>
         </article>)}
       </div>
       <button className="profile-add-machine" onClick={onAddMachine}>+ DÉCLARER UNE AUTRE MACHINE</button>
-      <p className="profile-gear-note">Le dossier de travail reste en local sur cet ordinateur pour l’instant ; un support de type drive/cloud est envisagé plus tard.</p>
+      <p className="profile-gear-note">Le dossier de travail est mémorisé sur cet ordinateur (IndexedDB) — plus besoin de le rechoisir à chaque visite, seulement de reconfirmer l’autorisation si le navigateur la redemande. Un support de type drive/cloud est envisagé plus tard.</p>
     </section>
 
     <section className="profile-stats">
