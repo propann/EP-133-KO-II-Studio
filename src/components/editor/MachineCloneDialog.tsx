@@ -31,7 +31,8 @@ export function MachineCloneDialog({ inventory, soundIndex, onClose }: MachineCl
   }, [cloneStatus]);
   const chooseFolder = async () => {
     try {
-      const selected = await chooseLocalDirectory();
+      // readwrite explicite : c'est ici, et seulement ici, que le manifeste est écrit.
+      const selected = await chooseLocalDirectory('readwrite');
       setDirectory(selected); setFolderName(selected.name); setLocalSampleCount(0);
     } catch (error) {
       if ((error as { name?: string }).name !== 'AbortError') window.alert(error instanceof Error ? error.message : 'Impossible d’ouvrir le dossier local.');

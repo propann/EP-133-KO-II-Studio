@@ -21,11 +21,19 @@ interface LocalFileHandle {
 
 const isDirectory = (handle: LocalDirectoryHandle | LocalFileHandle): handle is LocalDirectoryHandle => 'values' in handle;
 
-/** Ouvre le sélecteur de dossier natif. Rejette avec `AbortError` si l'utilisateur annule — à filtrer par l'appelant. */
-export async function chooseLocalDirectory() {
+/**
+ * Ouvre le sélecteur de dossier natif. Rejette avec `AbortError` si
+ * l'utilisateur annule — à filtrer par l'appelant.
+ *
+ * `mode` par défaut : `'read'`. Ne demander `'readwrite'` que là où on
+ * écrit vraiment (le clone, via `writeCloneManifest`) — une simple lecture
+ * (dossier de travail, banque de samples) n'a aucune raison de réclamer un
+ * accès en écriture au disque de l'utilisateur.
+ */
+export async function chooseLocalDirectory(mode: 'read' | 'readwrite' = 'read') {
   const picker = (window as Window & { showDirectoryPicker?: (options?: { mode?: 'read' | 'readwrite' }) => Promise<LocalDirectoryHandle> }).showDirectoryPicker;
   if (!picker) throw new Error('Ce navigateur ne permet pas l’accès direct aux dossiers. Utilisez Chrome ou Chromium en local.');
-  return picker({ mode: 'readwrite' });
+  return picker({ mode });
 }
 
 /**
