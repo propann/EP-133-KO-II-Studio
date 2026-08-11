@@ -990,6 +990,18 @@ export default function App() {
     await audio.previewPad(pad);
   };
 
+  /**
+   * Écoute directe d'un slot de la banque machine (numéro arbitraire 001-999, pas
+   * forcément assigné à un pad) — contrairement à `previewSoundPagePad`, aucun
+   * repli synthétisé n'a de sens ici (pas de catégorie de pad à retomber dessus) :
+   * renvoie honnêtement si ça a vraiment joué, pour que la page affiche un message
+   * plutôt qu'un clic silencieux quand le dossier de travail n'est pas chargé.
+   */
+  const previewBankSound = async (slot: number) => {
+    await audio.unlock();
+    return machineSampleBank.play(slot, 110, performance.now(), undefined, deviceInventory?.sounds[String(slot)]?.rootNote || 60);
+  };
+
   // Vue Song Arranger — la Scène reste une ressource partagée (comme sur la machine réelle) :
   // modifier un bloc dans une Song Position modifie toutes celles qui pointent vers la même scène.
   const assignSceneGroupPattern = (sceneNumber: number, group: EditorGroup, patternNumber: number | null) => {
@@ -1113,7 +1125,7 @@ export default function App() {
 
   if (workspaceView === 'machine-test') return <MachineTestPage connected={midi.connected} inputNames={midi.inputNames} observations={midiObservations} onBack={goHome} onConnect={() => void midi.connectMonitor()} onSendLearned={midi.sendLearnedMessage} onSelectMachineGroup={midi.selectMachineGroup} />;
 
-  if (workspaceView === 'sounds') return <SoundsPage inventory={deviceInventory} soundIndex={deviceSoundIndex} midiConnected={midi.outputConnected} liveMidi={lastMidi?.note !== undefined && lastMidi.velocity !== undefined ? { note: lastMidi.note, velocity: lastMidi.velocity, timestamp: lastMidi.timestamp } : null} padModes={editorPadModes} onBack={goHome} onConnectMidi={() => void connectMidi()} onPadModeChange={(group, pad, mode) => setEditorPadModes((current) => ({ ...current, [`${group}:${pad}`]: mode }))} onPadPreview={(group, pad, stagedSlot) => void previewSoundPagePad(group, pad, stagedSlot)} localLibraryHandle={localLibraryHandle} localLibraryFolderName={localLibraryFolderName} localLibraryNeedsReconnect={localLibraryNeedsReconnect} onReconnectLocalLibrary={() => void reconnectLocalLibraryFolder()} />;
+  if (workspaceView === 'sounds') return <SoundsPage inventory={deviceInventory} soundIndex={deviceSoundIndex} midiConnected={midi.outputConnected} liveMidi={lastMidi?.note !== undefined && lastMidi.velocity !== undefined ? { note: lastMidi.note, velocity: lastMidi.velocity, timestamp: lastMidi.timestamp } : null} padModes={editorPadModes} onBack={goHome} onConnectMidi={() => void connectMidi()} onPadModeChange={(group, pad, mode) => setEditorPadModes((current) => ({ ...current, [`${group}:${pad}`]: mode }))} onPadPreview={(group, pad, stagedSlot) => void previewSoundPagePad(group, pad, stagedSlot)} onPreviewSound={(slot) => previewBankSound(slot)} localLibraryHandle={localLibraryHandle} localLibraryFolderName={localLibraryFolderName} localLibraryNeedsReconnect={localLibraryNeedsReconnect} onReconnectLocalLibrary={() => void reconnectLocalLibraryFolder()} />;
 
   if (workspaceView === 'docs') return <DocumentationPage language={language} onBack={goHome} />;
 

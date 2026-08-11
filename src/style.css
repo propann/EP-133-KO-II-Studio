@@ -894,6 +894,9 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .sound-bank-results input { min-width:0; height:31px; padding:5px 8px; border:2px solid var(--ko-black); border-radius:7px; background:#f5f2e9; font:inherit; }
 .sound-bank-results > div { max-height:495px; overflow:auto; }
 .sound-bank-results article { position:relative; display:grid; grid-template-columns:48px 1fr auto; align-items:center; gap:10px; min-height:48px; padding:6px 8px 6px 14px; border-bottom:1px solid #aaa69f; }
+/* Banque machine seulement : bouton d'écoute en plus du numéro de slot (la
+   bibliothèque perso, elle, n'a que 3 colonnes — pas de numéro de slot). */
+.sound-bank-results article.with-preview { grid-template-columns:30px 44px 1fr auto; }
 .sound-bank-results article > b { font-size:16px; }
 .sound-bank-results article > div { display:grid; min-width:0; }
 .sound-bank-results article strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:9px; }

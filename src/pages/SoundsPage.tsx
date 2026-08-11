@@ -23,6 +23,8 @@ interface SoundsPageProps {
   onConnectMidi: () => void;
   onPadModeChange: (group: EditorGroup, pad: number, mode: EditorPadMode) => void;
   onPadPreview: (group: EditorGroup, pad: number, stagedSlot?: number) => void;
+  /** Écoute d'un slot de la banque machine ; renvoie si ça a vraiment joué (pas de repli possible ici). */
+  onPreviewSound: (slot: number) => Promise<boolean>;
   /** Bibliothèque perso (dossier réglé depuis la Fiche personnage — cette page ne fait que la lire). */
   localLibraryHandle: LocalDirectoryHandle | null;
   localLibraryFolderName: string;
@@ -62,7 +64,7 @@ async function readLocalEntries(dir: LocalDirectoryHandle): Promise<LocalEntry[]
 const bankForSlot = (slot: number) => SOUND_BANKS.slice(1).find((bank) => slot >= bank.from && slot <= bank.to) || SOUND_BANKS[10];
 const playModeName = (mode?: number) => mode === 1 ? 'KEYS' : mode === 2 ? 'LEGATO' : 'ONE';
 
-export function SoundsPage({ inventory, soundIndex, midiConnected, liveMidi, padModes, onBack, onConnectMidi, onPadModeChange, onPadPreview, localLibraryHandle, localLibraryFolderName, localLibraryNeedsReconnect, onReconnectLocalLibrary }: SoundsPageProps) {
+export function SoundsPage({ inventory, soundIndex, midiConnected, liveMidi, padModes, onBack, onConnectMidi, onPadModeChange, onPadPreview, onPreviewSound, localLibraryHandle, localLibraryFolderName, localLibraryNeedsReconnect, onReconnectLocalLibrary }: SoundsPageProps) {
   // Nom/mémoire/statut affichés en tête de page — réglés depuis la Fiche personnage
   // (plus de formulaire « PROFIL DE LA MACHINE » ici, retiré pour épurer la page).
   const existingProfile = loadDeviceProfile(localStorage);
@@ -73,6 +75,7 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, liveMidi, pad
   const [selectedPad, setSelectedPad] = useState(1);
   const [activeBank, setActiveBank] = useState<(typeof SOUND_BANKS)[number]['id']>('all');
   const [query, setQuery] = useState('');
+  const [previewMissSlot, setPreviewMissSlot] = useState<number | null>(null);
   const [livePad, setLivePad] = useState<number | null>(null);
   const [stagedAssignments, setStagedAssignments] = useState<Record<string, number>>({});
   // Affectations venues de la bibliothèque perso plutôt que de la banque machine — pad ou slot visé.
@@ -162,6 +165,14 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, liveMidi, pad
 
   const requestDelete = (slot: number) => {
     window.alert(`SUPPRESSION DU SLOT ${String(slot).padStart(3, '0')} VERROUILLÉE\n\nLa sauvegarde du son, le checkpoint et la relecture de contrôle doivent être disponibles avant toute suppression sur l’EP-133.`);
+  };
+  /** Pas de repli synthétisé possible pour un slot arbitraire (contrairement à un pad) — si rien
+   * n'a vraiment joué (dossier de travail non chargé), le dire plutôt qu'un clic silencieux. */
+  const previewBankSlot = async (slot: number) => {
+    const played = await onPreviewSound(slot);
+    if (played) { setPreviewMissSlot(null); return; }
+    setPreviewMissSlot(slot);
+    window.setTimeout(() => setPreviewMissSlot((current) => current === slot ? null : current), 2600);
   };
   const stageSound = (group: EditorGroup, internalPad: number, slot: number) => {
     const original = inventory?.pads.find((pad) => pad.group === group && pad.pad === internalPad)?.slot;
@@ -260,9 +271,10 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, liveMidi, pad
               onDragStart={(event) => { event.dataTransfer.effectAllowed = 'copy'; event.dataTransfer.setData('application/x-ep133-slot', String(sound.slot)); event.dataTransfer.setData('text/plain', String(sound.slot)); }}
               onDragOver={(event) => { if (draggingLocalRef.current) { event.preventDefault(); event.dataTransfer.dropEffect = 'copy'; } }}
               onDrop={(event) => { const draggedLocal = draggingLocalRef.current; if (!draggedLocal) return; event.preventDefault(); setStagedImports((current) => ({ ...current, [sound.slot]: draggedLocal })); }}
-              className={`bank-${bank.id} ${changed || proposedImport ? 'changed' : ''}`}>
+              className={`with-preview bank-${bank.id} ${changed || proposedImport ? 'changed' : ''}`}>
+              <button className="local-preview-btn" onClick={(event) => { event.stopPropagation(); void previewBankSlot(sound.slot); }} aria-label="Écouter">▶</button>
               <b>{String(sound.slot).padStart(3, '0')}</b>
-              <div><strong>{namesBySlot.get(sound.slot) || sound.fileName.replace(/\.pcm$/i, '')}</strong><small>{proposedImport ? `SON PERSO PROPOSÉ · ${proposedImport.fileName}` : `${bank.label} · ${(sound.bytes / 1000).toFixed(1)} KO · GLISSER SUR UN PAD OU ICI`}</small></div>
+              <div><strong>{namesBySlot.get(sound.slot) || sound.fileName.replace(/\.pcm$/i, '')}</strong><small>{previewMissSlot === sound.slot ? 'AUCUN AUDIO LOCAL — charge le dossier de travail depuis la FICHE PERSONNAGE' : proposedImport ? `SON PERSO PROPOSÉ · ${proposedImport.fileName}` : `${bank.label} · ${(sound.bytes / 1000).toFixed(1)} KO · GLISSER SUR UN PAD OU ICI`}</small></div>
               <button className="sound-delete" onClick={() => requestDelete(sound.slot)}>SUPPRIMER</button>
             </article>; })}{!filteredSounds.length && <p>Aucun son dans cette banque.</p>}</div></div>
           </div>
