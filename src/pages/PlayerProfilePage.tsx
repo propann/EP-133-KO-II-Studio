@@ -5,6 +5,9 @@ import type { PlayerMachine, PlayerProfile } from '../core/project/playerProfile
 interface PlayerProfilePageProps {
   profile: PlayerProfile;
   machineConnected: boolean;
+  midiStatus: string;
+  midiInputNames: string[];
+  midiOutputNames: string[];
   machineSampleCount: number;
   deviceInventory: DeviceInventory | null;
   deviceSoundIndex: DeviceSoundIndex | null;
@@ -46,7 +49,7 @@ const activeSpec = (avatarId: string) => AVATAR_PRESETS.find((spec) => spec.id =
  *   (`saveDeviceProfile` + `createDeviceClone` + `writeCloneManifest`),
  *   juste déclenché d'un clic ici plutôt que de rouvrir la fenêtre de clone.
  */
-export function PlayerProfilePage({ profile, machineConnected, machineSampleCount, deviceInventory, deviceSoundIndex, onBack, onChange, onChangeMachine, onAddMachine, onRemoveMachine, onConnectMidi, onCloneMachine, onScanMachine, onViewScanReport, lastScanSave, scanSaveError, scanSaveMachineId, sampleFolderName, sampleFolderNeedsReconnect, onOpenSampleFolder, onReconnectSampleFolder, onResetStats }: PlayerProfilePageProps) {
+export function PlayerProfilePage({ profile, machineConnected, midiStatus, midiInputNames, midiOutputNames, machineSampleCount, deviceInventory, deviceSoundIndex, onBack, onChange, onChangeMachine, onAddMachine, onRemoveMachine, onConnectMidi, onCloneMachine, onScanMachine, onViewScanReport, lastScanSave, scanSaveError, scanSaveMachineId, sampleFolderName, sampleFolderNeedsReconnect, onOpenSampleFolder, onReconnectSampleFolder, onResetStats }: PlayerProfilePageProps) {
   const { stats } = profile;
   const totalHits = stats.perfect + stats.good + stats.miss;
   const accuracy = totalHits > 0 ? Math.round(((stats.perfect + stats.good) / totalHits) * 100) : null;
@@ -75,6 +78,12 @@ export function PlayerProfilePage({ profile, machineConnected, machineSampleCoun
           </div>
           <div className="profile-machine-status">
             <span className={machineConnected ? 'online' : ''}><i />{machineConnected ? 'EP‑133 CONNECTÉ' : 'NON CONNECTÉ'}</span>
+            {/* Diagnostic réel du hook MIDI (useWebMidi.status) — jusqu'ici calculé
+                mais affiché nulle part, y compris sur le banc de test. Dit
+                précisément pourquoi ça échoue plutôt qu'un simple binaire. */}
+            <small className="profile-midi-status">{midiStatus}</small>
+            {midiInputNames.length > 0 && <small>ENTRÉE · {midiInputNames.join(' + ')}</small>}
+            {midiOutputNames.length > 0 && <small>SORTIE · {midiOutputNames.join(' + ')}</small>}
             {machineSampleCount > 0 && <small>{machineSampleCount} ÉCHANTILLONS CHARGÉS</small>}
             {/* Retour d'info du dernier SCAN, juste à côté du statut de connexion — toujours quelque chose de visible, jamais un clic silencieux. */}
             {scanSaveMachineId === machine.id && <small className="profile-scan-pending">⋯ SAUVEGARDE EN COURS</small>}

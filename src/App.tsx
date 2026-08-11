@@ -1086,6 +1086,9 @@ export default function App() {
       <PlayerProfilePage
         profile={playerProfile}
         machineConnected={midi.connected || midi.outputConnected}
+        midiStatus={midi.status}
+        midiInputNames={midi.inputNames}
+        midiOutputNames={midi.outputNames}
         machineSampleCount={machineSampleCount}
         deviceInventory={deviceInventory}
         deviceSoundIndex={deviceSoundIndex}
