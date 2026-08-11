@@ -54,8 +54,9 @@ import { PadStrip } from './components/editor/PadStrip';
 import { EditorToolbar } from './components/editor/EditorToolbar';
 import { SongArranger } from './components/editor/SongArranger';
 import { MachineCloneDialog } from './components/editor/MachineCloneDialog';
-import { chooseLocalDirectory, collectLocalFiles, type LocalDirectoryHandle } from './core/storage/localFolders';
+import { chooseLocalDirectory, collectLocalFiles, writeCloneManifest, type LocalDirectoryHandle } from './core/storage/localFolders';
 import { SAMPLE_FOLDER_KEY, hasStoredPermission, loadDirectoryHandle, requestStoredPermission, saveDirectoryHandle } from './core/storage/directoryHandleStore';
+import { createDeviceClone, saveDeviceProfile } from './core/project/deviceProfile';
 import './style.css';
 import { APP_LANGUAGE_KEY, loadAppLanguage, type AppLanguage } from './core/i18n';
 
@@ -142,6 +143,8 @@ export default function App() {
   const [sampleFolderName, setSampleFolderName] = useState('');
   const [sampleFolderNeedsReconnect, setSampleFolderNeedsReconnect] = useState(false);
   const sampleDirectoryHandleRef = useRef<LocalDirectoryHandle | null>(null);
+  const [lastScanSave, setLastScanSave] = useState<{ machineId: string; path: string; at: string } | null>(null);
+  const [scanSaveError, setScanSaveError] = useState('');
   const targets = useRef(activeExercise.targets.map((target, index) => ({ ...target, id: `target-${index}` })));
   const frame = useRef<number | undefined>(undefined);
   const flashTimer = useRef<number | undefined>(undefined);
@@ -312,6 +315,40 @@ export default function App() {
       setSampleFolderNeedsReconnect(false);
     } catch (error) {
       window.alert(error instanceof Error ? error.message : 'Impossible de relire ce dossier.');
+    }
+  };
+
+  /**
+   * SCAN = état des lieux rapide (nombre de projets/sons, mémoire, chemin)
+   * écrit sur le disque — jamais les PCM eux-mêmes, ça reste le travail du
+   * CLONE (pont local, 20-30 min). Réutilise exactement les fonctions déjà
+   * écrites pour `MachineCloneDialog` (`saveDeviceProfile`,
+   * `createDeviceClone`, `writeCloneManifest`) au lieu d'en refaire une :
+   * c'est la même écriture de manifeste que le clone fait déjà en secours
+   * quand le pont local n'est pas lancé, juste déclenchée d'un clic depuis
+   * la fiche personnage. Écrit dans le dossier de travail déjà mémorisé —
+   * lisible par n'importe quel autre outil, ce n'est jamais un stockage
+   * propriétaire du navigateur.
+   */
+  const scanAndSaveMachine = async (machine: PlayerMachine) => {
+    setScanSaveError('');
+    try {
+      let directory = sampleDirectoryHandleRef.current;
+      if (directory) {
+        if (!(await requestStoredPermission(directory, 'readwrite'))) { setScanSaveError('Autorisation d’écriture refusée pour le dossier de travail.'); return; }
+      } else {
+        directory = await chooseLocalDirectory('readwrite');
+        sampleDirectoryHandleRef.current = directory;
+        setSampleFolderName(directory.name);
+        setSampleFolderNeedsReconnect(false);
+        await saveDirectoryHandle(SAMPLE_FOLDER_KEY, directory);
+      }
+      const deviceProfile = saveDeviceProfile(localStorage, { name: machine.name, capacityMb: machine.memory === '128' ? 128 : 64, sampleFolderName: directory.name, localSampleCount: machineSampleCount });
+      const manifest = createDeviceClone(localStorage, deviceProfile, deviceSoundIndex?.soundCount || 0, deviceSoundIndex?.usedBytes || 0, deviceInventory?.project || null);
+      const path = await writeCloneManifest(directory, machine.name, manifest);
+      setLastScanSave({ machineId: machine.id, path, at: new Date().toISOString() });
+    } catch (error) {
+      if ((error as { name?: string }).name !== 'AbortError') setScanSaveError(error instanceof Error ? error.message : 'La sauvegarde de l’état des lieux a échoué.');
     }
   };
 
@@ -1049,7 +1086,10 @@ export default function App() {
         onRemoveMachine={(id) => updateProfile((profile) => ({ ...profile, machines: profile.machines.filter((machine) => machine.id !== id) }))}
         onConnectMidi={() => void connectMidi()}
         onCloneMachine={() => setMachineCloneOpen(true)}
+        onScanMachine={(id) => { const machine = playerProfile.machines.find((candidate) => candidate.id === id); if (machine) void scanAndSaveMachine(machine); }}
         onViewScanReport={() => setWorkspaceView('sounds')}
+        lastScanSave={lastScanSave}
+        scanSaveError={scanSaveError}
         sampleFolderName={sampleFolderName}
         sampleFolderNeedsReconnect={sampleFolderNeedsReconnect}
         onOpenSampleFolder={() => void openStudioSampleFolder()}

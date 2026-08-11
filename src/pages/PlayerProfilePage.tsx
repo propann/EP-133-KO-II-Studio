@@ -15,7 +15,10 @@ interface PlayerProfilePageProps {
   onRemoveMachine: (id: string) => void;
   onConnectMidi: () => void;
   onCloneMachine: () => void;
+  onScanMachine: (id: string) => void;
   onViewScanReport: () => void;
+  lastScanSave: { machineId: string; path: string; at: string } | null;
+  scanSaveError: string;
   sampleFolderName: string;
   sampleFolderNeedsReconnect: boolean;
   onOpenSampleFolder: () => void;
@@ -26,22 +29,23 @@ interface PlayerProfilePageProps {
 const activeSpec = (avatarId: string) => AVATAR_PRESETS.find((spec) => spec.id === avatarId) || AVATAR_PRESETS[0];
 
 /**
- * Fiche personnage — identité du joueur, machines EP-133 déclarées (le clone
- * et le dossier de travail se lancent d'ici) et bilan cumulé sur toutes les
- * sessions. Module de l'écosystème Studio (accessible depuis l'accueil),
- * pas seulement du jeu.
+ * Fiche personnage — identité du joueur, machines EP-133 déclarées (le scan,
+ * le clone et le dossier de travail se lancent d'ici) et bilan cumulé sur
+ * toutes les sessions. Module de l'écosystème Studio (accessible depuis
+ * l'accueil), pas seulement du jeu.
  *
- * SCAN et CLONE sont deux outils distincts, déjà construits ailleurs dans
- * le projet — pas de doublon ici :
- * - le scan (`tools/scan_ep133_readonly.py` côté machine) alimente
- *   `deviceInventory`/`deviceSoundIndex`, déjà chargés par App.tsx et déjà
- *   détaillés dans Sons & Transfert. « SCANNER » affiche juste le résumé et
- *   renvoie vers ce rapport complet, sans le reconstruire.
- * - le clone (`tools/clone_ep133_readonly.py` + pont local) copie
- *   réellement projets/PCM/métadonnées ; « CLONER » ouvre `MachineCloneDialog`,
- *   déjà entièrement fonctionnel.
+ * SCAN et CLONE sont deux outils distincts, déjà construits ailleurs dans le
+ * projet — pas de doublon ici :
+ * - CLONE copie réellement projets + PCM (pont local, 20-30 min la première
+ *   fois) : « CLONER » ouvre `MachineCloneDialog`, déjà entièrement
+ *   fonctionnel.
+ * - SCAN est l'état des lieux rapide (nombre de projets/sons, mémoire) écrit
+ *   sur le disque, sans les PCM — exactement ce que `MachineCloneDialog`
+ *   écrit déjà en secours quand le pont n'est pas lancé
+ *   (`saveDeviceProfile` + `createDeviceClone` + `writeCloneManifest`),
+ *   juste déclenché d'un clic ici plutôt que de rouvrir la fenêtre de clone.
  */
-export function PlayerProfilePage({ profile, machineConnected, machineSampleCount, deviceInventory, deviceSoundIndex, onBack, onChange, onChangeMachine, onAddMachine, onRemoveMachine, onConnectMidi, onCloneMachine, onViewScanReport, sampleFolderName, sampleFolderNeedsReconnect, onOpenSampleFolder, onReconnectSampleFolder, onResetStats }: PlayerProfilePageProps) {
+export function PlayerProfilePage({ profile, machineConnected, machineSampleCount, deviceInventory, deviceSoundIndex, onBack, onChange, onChangeMachine, onAddMachine, onRemoveMachine, onConnectMidi, onCloneMachine, onScanMachine, onViewScanReport, lastScanSave, scanSaveError, sampleFolderName, sampleFolderNeedsReconnect, onOpenSampleFolder, onReconnectSampleFolder, onResetStats }: PlayerProfilePageProps) {
   const { stats } = profile;
   const totalHits = stats.perfect + stats.good + stats.miss;
   const accuracy = totalHits > 0 ? Math.round(((stats.perfect + stats.good) / totalHits) * 100) : null;
@@ -68,7 +72,13 @@ export function PlayerProfilePage({ profile, machineConnected, machineSampleCoun
               <option value="128">128 MO</option>
             </select></label>
           </div>
-          <div className="profile-machine-status"><span className={machineConnected ? 'online' : ''}><i />{machineConnected ? 'EP‑133 CONNECTÉ' : 'NON CONNECTÉ'}</span>{machineSampleCount > 0 && <small>{machineSampleCount} ÉCHANTILLONS CHARGÉS</small>}</div>
+          <div className="profile-machine-status">
+            <span className={machineConnected ? 'online' : ''}><i />{machineConnected ? 'EP‑133 CONNECTÉ' : 'NON CONNECTÉ'}</span>
+            {machineSampleCount > 0 && <small>{machineSampleCount} ÉCHANTILLONS CHARGÉS</small>}
+            {/* Retour d'info du dernier SCAN, juste à côté du statut de connexion. */}
+            {lastScanSave?.machineId === machine.id && <small className="profile-scan-feedback">✓ SAUVEGARDÉ {new Date(lastScanSave.at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} · {lastScanSave.path}</small>}
+            {scanSaveError && <small className="profile-folder-warning">{scanSaveError}</small>}
+          </div>
           {(deviceInventory || deviceSoundIndex) && <div className="profile-machine-scan-summary">
             <span>{deviceInventory ? `PROJET P${String(deviceInventory.project).padStart(2, '0')}` : 'PROJET —'}</span>
             <span>{deviceSoundIndex?.soundCount ?? '—'} SONS</span>
@@ -80,7 +90,8 @@ export function PlayerProfilePage({ profile, machineConnected, machineSampleCoun
           </div>}
           <div className="profile-machine-actions">
             {!machineConnected && <button className="profile-connect" onClick={onConnectMidi}>CONNECTER</button>}
-            <button onClick={onViewScanReport}>SCANNER · RAPPORT</button>
+            <button className="profile-connect" onClick={() => onScanMachine(machine.id)}>SCANNER · SAUVEGARDER</button>
+            <button onClick={onViewScanReport}>RAPPORT DÉTAILLÉ</button>
             <button className="profile-scan" onClick={onCloneMachine}>CLONER</button>
             {sampleFolderNeedsReconnect
               ? <button className="profile-connect" onClick={onReconnectSampleFolder}>RECONNECTER LE DOSSIER</button>
