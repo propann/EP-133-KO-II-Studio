@@ -866,9 +866,11 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .sound-memory > small { grid-column:1/-1; }
 .sound-memory i { height:10px; border:2px solid var(--ko-black); background:#85827c; }
 .sound-memory i span { display:block; height:100%; background:var(--ko-orange); }
-.sound-machine-workspace { display:grid; grid-template-columns:minmax(390px,.8fr) minmax(480px,1.35fr); min-height:610px; }
+.sound-machine-workspace { display:grid; grid-template-columns:1fr 1fr; min-height:610px; }
 .sound-pad-panel,.sound-bank-panel { min-width:0; padding:15px; }
-.sound-pad-panel { border-right:3px solid var(--ko-black); background:#bcb9b2; }
+.sound-pad-panel { grid-column:1/-1; border-right:0; border-bottom:3px solid var(--ko-black); background:#bcb9b2; }
+.sound-pad-panel .sound-pad-machine { max-width:700px; margin:0 auto; }
+.local-library-panel { border-left:3px solid var(--ko-black); }
 .sound-bank-panel { background:#cfccc5; }
 .sound-pad-panel > header,.sound-bank-panel > header { display:flex; align-items:end; justify-content:space-between; gap:12px; margin-bottom:11px; }
 .sound-pad-panel h2,.sound-bank-panel h2 { margin:2px 0 0; font-size:18px; letter-spacing:-.04em; }
@@ -922,7 +924,7 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .bank-user2::before,.bank-user2.sound-slot-badge { background:#af8350!important; }
 .bank-extra::before,.bank-extra.sound-slot-badge { background:#777!important; }
 .bank-all::before { background:linear-gradient(#e65c32,#f0a12e,#6f9b8b,#8b68a4)!important; }
-@media(max-width:1050px) { .sound-machine-workspace { grid-template-columns:1fr; } .sound-pad-panel { border-right:0; border-bottom:3px solid var(--ko-black); } .sound-pad-grid { max-width:620px; } }
+@media(max-width:1050px) { .sound-machine-workspace { grid-template-columns:1fr; } .sound-pad-grid { max-width:620px; } .local-library-panel { border-left:0; border-top:3px solid var(--ko-black); } }
 @media(max-width:720px) { .sound-machine-console { box-shadow:4px 4px 0 #242321; } .sound-machine-topline { grid-template-columns:1fr; } .sound-machine-workspace { min-height:0; } .sound-pad-panel,.sound-bank-panel { padding:10px; } .sound-pad-grid { gap:7px; padding:9px; } .sound-pad-grid button { min-height:72px; } .sound-bank-browser { grid-template-columns:1fr; } .sound-bank-browser > nav { display:grid; grid-template-columns:repeat(2,1fr); border-right:0; border-bottom:2px solid var(--ko-black); } .sound-bank-results > div { max-height:430px; } .sound-profile-compact { grid-template-columns:1fr; } }
 
 /* Disposition matérielle : groupes à gauche, pavé 3 × 4 à droite. */
@@ -977,34 +979,18 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
    code visuel que la banque de sons machine (barre d'accent à gauche, lignes
    en grille, mêmes teintes) plutôt qu'un style à part — juste un peu plus
    arrondi que ses angles vifs. */
-.local-library-panel { grid-column:1/-1; border-left:0; border-top:3px solid var(--ko-black); background:#c9d6cf; }
-.local-library-hint { max-width:520px; padding:8px 0; font-size:10px; font-weight:600; line-height:1.5; }
+.local-library-hint { max-width:420px; padding:8px 0; font-size:10px; font-weight:600; line-height:1.5; }
 .local-empty { display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; gap:14px; padding:14px 18px; border:3px solid var(--ko-black); border-radius:var(--radius); background:var(--ko-panel); box-shadow:6px 6px 0 var(--ko-black); }
 .local-empty p { max-width:420px; font-size:10px; font-weight:600; line-height:1.5; }
-.local-browser { display:flex; flex-direction:column; gap:10px; min-height:0; }
-.local-browser-controls { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; }
-.local-breadcrumb { display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:0; }
-.local-breadcrumb button { position:relative; padding:6px 12px 6px 16px; overflow:hidden; border:2px solid var(--ko-black); border-radius:8px; background:#d5d2cb; font-size:8px; font-weight:900; cursor:pointer; }
-.local-breadcrumb button::before { content:""; position:absolute; inset:0 auto 0 0; width:6px; background:#777; }
-.local-breadcrumb button:last-child { color:#fff; background:var(--ko-orange); box-shadow:3px 3px 0 var(--ko-black); }
-.local-breadcrumb button:last-child::before { background:rgba(255,255,255,.35); }
 .local-send-feedback { margin:0; padding:8px 14px; border-radius:8px; font-size:8px; font-weight:900; }
 .local-send-feedback.done { color:#0a4a1f; background:#bfe6c9; }
 .local-send-feedback.error { color:#5c1912; background:#f2c6bd; }
-.local-search { display:grid; grid-template-columns:auto 1fr; align-items:center; gap:10px; padding:8px 9px; border:2px solid var(--ko-black); border-radius:8px; background:#d6d3cc; font-size:7px; font-weight:bold; width:min(320px,100%); }
-.local-search input { min-width:0; height:28px; padding:5px 8px; border:2px solid var(--ko-black); border-radius:6px; background:#f5f2e9; font:inherit; }
 .local-loading { padding:16px; font-size:9px; font-weight:700; }
-.local-entries { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:8px; max-height:280px; overflow:auto; padding:2px; }
-.local-entry { position:relative; display:grid; grid-template-columns:34px 1fr auto; align-items:center; gap:6px; min-height:40px; padding:5px 6px 5px 14px; overflow:hidden; border:2px solid var(--ko-black); border-radius:8px; background:#f2efe7; text-align:left; }
-.local-entry::before { content:""; position:absolute; inset:0 auto 0 0; width:6px; background:#777; }
-.local-entry.local-folder { grid-template-columns:1fr auto; cursor:pointer; font-size:9px; font-weight:900; background:#e2dfd6; }
-.local-entry.local-folder::before { background:var(--ko-orange); }
-.local-entry.local-folder:hover { background:var(--ko-amber); }
-.local-entry.local-file[draggable="true"] { cursor:grab; }
-.local-entry.local-file[draggable="true"]:active { cursor:grabbing; }
-.local-entry span { overflow:hidden; flex:1; min-width:0; text-overflow:ellipsis; white-space:nowrap; font-size:8px; font-weight:700; }
-.local-preview-btn { position:relative; z-index:1; flex:0 0 auto; width:26px; height:26px; border:2px solid var(--ko-black); border-radius:8px; background:var(--ko-orange); color:#fff; font-size:10px; cursor:pointer; }
-.local-assign-btn { position:relative; z-index:1; flex:0 0 auto; padding:5px 8px; border:1px solid var(--ko-black); border-radius:6px; background:#d8d4cc; font-size:6px; font-weight:900; cursor:pointer; white-space:nowrap; }
+.local-no-subfolders { padding:9px 15px; font-size:8px; font-weight:700; color:#57544e; }
+/* Boutons de la bibliothèque perso : même gabarit que .sound-delete de la banque
+   machine (juste à côté), pour rester dans le même code visuel. */
+.local-preview-btn,.local-assign-btn { padding:6px 8px; border:1px solid var(--ko-black); background:#d8d4cc; font-size:6px; font-weight:900; cursor:pointer; }
+.local-preview-btn { border-radius:50%; width:26px; height:26px; padding:0; background:var(--ko-orange); color:#fff; font-size:10px; }
 .local-assign-btn:hover { color:#fff; background:var(--ko-orange); }
 @media(max-width:720px) { .local-entries { grid-template-columns:1fr; } .local-browser-controls { flex-direction:column; align-items:stretch; } .local-search { width:100%; } }
 

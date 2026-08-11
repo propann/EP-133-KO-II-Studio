@@ -109,7 +109,8 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, liveMidi, pad
     || playModeName(currentPad?.playMode) as EditorPadMode;
   const changedSlots = useMemo(() => new Set(Object.values(stagedAssignments)), [stagedAssignments]);
   const changeCount = Object.keys(stagedAssignments).length + Object.keys(stagedLocalPads).length + Object.keys(stagedImports).length;
-  const filteredPersoEntries = useMemo(() => persoEntries.filter((entry) => entry.name.toLowerCase().includes(persoQuery.trim().toLowerCase())), [persoEntries, persoQuery]);
+  const persoFolders = useMemo(() => persoEntries.filter((entry): entry is LocalEntry & { kind: 'directory' } => entry.kind === 'directory'), [persoEntries]);
+  const filteredPersoFiles = useMemo(() => persoEntries.filter((entry): entry is LocalEntry & { kind: 'file' } => entry.kind === 'file' && entry.name.toLowerCase().includes(persoQuery.trim().toLowerCase())), [persoEntries, persoQuery]);
 
   useEffect(() => {
     if (!liveMidi || performance.now() - liveMidi.timestamp > 1000 || liveMidi.note < 36 || liveMidi.note > 83) return;
@@ -279,30 +280,32 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, liveMidi, pad
         </section>
 
         <section className="sound-bank-panel local-library-panel">
-          <header><div><small>ORDI</small><h2>BIBLIOTHÈQUE PERSO</h2></div><span>{filteredPersoEntries.length} ÉLÉMENT(S)</span></header>
+          <header><div><small>{localLibraryHandle ? `${localLibraryFolderName}${persoStack.map((item) => ` / ${item.name}`).join('')}` : 'ORDI'}</small><h2>BIBLIOTHÈQUE PERSO</h2></div><span>{filteredPersoFiles.length} AFFICHÉS</span></header>
           {!localLibraryHandle && <p className="local-library-hint">Connecte ta bibliothèque personnelle depuis la <b>FICHE PERSONNAGE</b> pour la parcourir ici.</p>}
           {localLibraryHandle && localLibraryNeedsReconnect && <div className="local-empty"><p>Autorisation à renouveler pour « {localLibraryFolderName} ».</p><button className="profile-connect" onClick={onReconnectLocalLibrary}>RECONNECTER</button></div>}
-          {localLibraryHandle && !localLibraryNeedsReconnect && <div className="local-browser">
-            <div className="local-browser-controls">
-              <nav className="local-breadcrumb" aria-label="Chemin bibliothèque perso">
-                <button onClick={() => gotoPerso(-1)}>{localLibraryFolderName}</button>
-                {persoStack.map((item, index) => <button key={item.name + index} onClick={() => gotoPerso(index)}>{item.name}</button>)}
-              </nav>
-              <label className="local-search">RECHERCHER<input value={persoQuery} onChange={(event) => setPersoQuery(event.target.value)} placeholder="NOM" /></label>
+          {/* Même concept d'affichage que la banque de sons machine juste à côté : dossiers à
+              gauche (ici les sous-dossiers du niveau courant, pas des banques fixes), fichiers
+              filtrables à droite — mêmes classes .sound-bank-folders / .sound-bank-results. */}
+          {localLibraryHandle && !localLibraryNeedsReconnect && <div className="sound-bank-browser">
+            <div className="sound-bank-folders">
+              {persoStack.length > 0 && <button onClick={() => gotoPerso(persoStack.length - 2)}><b>⬅</b><span>REMONTER</span></button>}
+              {persoFolders.map((entry) => <button key={entry.name} onClick={() => enterPerso(entry)}><b>📁</b><span>{entry.name}</span></button>)}
+              {!persoFolders.length && !persoLoading && <p className="local-no-subfolders">Aucun sous-dossier ici.</p>}
             </div>
-            {persoLoading && <p className="local-loading">Lecture…</p>}
-            {!persoLoading && <div className="local-entries">
-              {filteredPersoEntries.map((entry) => entry.kind === 'directory'
-                ? <button key={entry.name} className="local-entry local-folder" onClick={() => enterPerso(entry)}><b>📁</b><span>{entry.name}</span></button>
-                : <div key={entry.name} className="local-entry local-file" draggable
+            <div className="sound-bank-results">
+              <label>RECHERCHER<input value={persoQuery} onChange={(event) => setPersoQuery(event.target.value)} placeholder="NOM DE FICHIER" /></label>
+              {persoLoading && <p className="local-loading">Lecture…</p>}
+              {!persoLoading && <div>
+                {filteredPersoFiles.map((entry) => <article key={entry.name} draggable
                     onDragStart={(event) => { draggingLocalRef.current = { fileName: entry.name, handle: entry.handle }; event.dataTransfer.effectAllowed = 'copy'; event.dataTransfer.setData('text/plain', entry.name); }}
                     onDragEnd={() => { draggingLocalRef.current = null; }}>
-                    <button className="local-preview-btn" onClick={() => void previewPerso(entry)} aria-label={playingName === entry.name ? 'Pause' : 'Écouter'}>{playingName === entry.name ? '⏸' : '▶'}</button>
-                    <span title={entry.name}>{entry.name}</span>
-                    <button className="local-assign-btn" onClick={() => stageLocalOnPad(activeGroup, selectedPad, { fileName: entry.name, handle: entry.handle })}>→ {activeGroup}{selectedPad}</button>
-                  </div>)}
-              {!filteredPersoEntries.length && <p>Aucun son ici.</p>}
-            </div>}
+                  <button className="local-preview-btn" onClick={() => void previewPerso(entry)} aria-label={playingName === entry.name ? 'Pause' : 'Écouter'}>{playingName === entry.name ? '⏸' : '▶'}</button>
+                  <div><strong>{entry.name}</strong><small>GLISSER SUR UN PAD OU UN SLOT MACHINE</small></div>
+                  <button className="local-assign-btn" onClick={() => stageLocalOnPad(activeGroup, selectedPad, { fileName: entry.name, handle: entry.handle })}>→ {activeGroup}{selectedPad}</button>
+                </article>)}
+                {!filteredPersoFiles.length && <p>Aucun son ici.</p>}
+              </div>}
+            </div>
           </div>}
           <audio ref={audioRef} onEnded={() => setPlayingName(null)} hidden />
         </section>
