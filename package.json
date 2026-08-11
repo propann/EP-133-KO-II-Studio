@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "typecheck": "tsc -b",
     "build": "tsc -b && vite build",
     "test": "npm run test:engine && npm run test:transport && npm run test:exports",
     "test:exports": "node --experimental-strip-types tools/check-project-exports.mjs",
@@ -13,17 +14,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "latest",
+    "@vitejs/plugin-react": "^6.0.5",
     "fflate": "^0.8.3",
-    "react": "latest",
-    "react-dom": "latest",
-    "tone": "latest",
-    "vite": "latest"
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tone": "^15.1.22",
+    "vite": "^8.2.0"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "typescript": "latest"
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "typescript": "^7.0.2"
   }
 }

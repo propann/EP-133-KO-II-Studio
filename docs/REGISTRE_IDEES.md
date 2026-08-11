@@ -134,8 +134,8 @@ ce classement plutôt qu'un simple avis isolé.
 
 | ID | Idée | Statut | Décision ou condition |
 |---|---|---|---|
-| Q-01 | Pinner les dépendances (retirer tous les `latest`) | RETENU | `package-lock.json` déjà committé, protège `npm ci` aujourd'hui ; les versions déclarées restent flottantes, risque de dérive à la prochaine régénération du lockfile |
-| Q-02 | CI qualité (typecheck + tests + build sur chaque PR) | RETENU | Seul `deploy-pages.yml` existe aujourd'hui (déploiement) ; aucune vérification automatisée avant fusion |
+| Q-01 | Pinner les dépendances (retirer tous les `latest`) | RÉALISÉ | 11 août — versions en `^` figées sur ce qui était installé, lockfile regénéré, `npm ci` revérifié à froid |
+| Q-02 | CI qualité (typecheck + tests + build sur chaque PR) | RÉALISÉ | 11 août — `.github/workflows/ci.yml`, distinct de `deploy-pages.yml` (déploiement) |
 | Q-03 | Pyramide de tests (unitaire/intégration/E2E) | RETENU | Suite actuelle limitée à 3 scripts ciblés (moteur, transport, exports) ; Playwright déjà utilisé en pratique pour vérifier visuellement chaque changement, mais hors suite committée — à formaliser |
 | Q-04 | Adaptateur versionné autour d'`ep-series-sysex` (MIT) | EXPÉRIMENTER | Éviter de réimplémenter seul le protocole d'écriture SysEx ; dépendance stratégique externe à évaluer avant la Phase 5 |
 | Q-05 | Positionnement « Learning & Project OS » (Coach / Composer / Time Machine / Open Interop / Local First) | RETENU | Cadre de différenciation face à EP-PatchStudio (menace critique identifiée) ; à formaliser dans la doc produit et la page d'accueil, pas de changement de code requis |

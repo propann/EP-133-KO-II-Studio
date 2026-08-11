@@ -82,12 +82,13 @@ autorisation MIDI du navigateur.
 - Seul le niveau 1 des cinq styles (Boom-Bap, House, Rock, Reggae, Minimal)
   est écrit à la main ; les niveaux 2 à 5 et les 34 autres styles utilisent
   encore des partitions générées provisoires.
-- Les tests automatisés sont insuffisants : 3 scripts ciblés (moteur,
-  transport, exports), aucun test d'intégration ni E2E committé, aucune CI
-  de qualité (seul un workflow de déploiement existe).
+- Les tests automatisés restent limités à 3 scripts ciblés (moteur,
+  transport, exports) — toujours aucun test d'intégration ni E2E committé,
+  mais une CI qualité (typecheck + tests + build) tourne désormais sur
+  chaque push/PR (11 août, `.github/workflows/ci.yml`).
 - Les dépendances (`react`, `vite`, `tone`, `@vitejs/plugin-react`) sont
-  encore déclarées en `latest` ; un lockfile est committé mais les versions
-  ne sont pas figées à la source.
+  pinnées en `^` depuis le 11 août (plus de `latest`), lockfile regénéré et
+  revérifié avec `npm ci`.
 - Annuler/Rétablir (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z) existe désormais pour
   l'édition d'un pattern (11 août) — pas encore pour les scènes/Song ni de
   vraie autosauvegarde de secours.
@@ -104,10 +105,12 @@ autorisation MIDI du navigateur.
 - [x] Ajouter une gestion centralisée du transport et nettoyer tous les timers.
 - [ ] Tester manuellement Chrome/Chromium, écran large et petit écran.
 - [ ] Mettre à jour systématiquement l'état du projet après chaque livraison.
-- [ ] Pinner les dépendances (`react`, `vite`, `tone`, `@vitejs/plugin-react` —
-  retirer `latest`), garder le lockfile committé (voir REGISTRE_IDEES.md Q-01).
-- [ ] CI qualité minimale sur chaque pull request : typecheck, `npm test`,
-  build (voir REGISTRE_IDEES.md Q-02).
+- [x] Pinner les dépendances (`react`, `vite`, `tone`, `@vitejs/plugin-react` —
+  plus de `latest`, versions en `^` figées sur ce qui était réellement
+  installé), lockfile regénéré et vérifié avec `npm ci` (voir
+  REGISTRE_IDEES.md Q-01).
+- [x] CI qualité sur chaque push/pull request : typecheck, `npm test`,
+  build (`.github/workflows/ci.yml`, voir REGISTRE_IDEES.md Q-02).
 
 **Validation :** build reproductible, aucune note bloquée, navigation et boucle
 stables, restauration correcte d'une session locale.
