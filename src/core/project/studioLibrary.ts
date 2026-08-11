@@ -29,6 +29,7 @@ export interface StudioProjectState {
   /** Vue de confort : les 4 patterns de la scène de départ (première Song Position, sinon `currentScene`, sinon 1) — pour les appelants qui n'ont pas encore besoin de la banque complète. */
   patterns: ProjectPatterns;
   padModes: Record<string, EditorPadMode>;
+  patternLengths: Record<string, number>;
 }
 
 /** Relit la bibliothèque locale ; filtre silencieusement toute entrée corrompue plutôt que d'échouer entièrement. */
@@ -100,6 +101,7 @@ export function studioStateFromDocument(document: Record<string, unknown>): Stud
 
   // Tous les patterns de tous les groupes — plus de filtre sur « le seul pattern sélectionné ».
   const patternBank = emptyPatternBank();
+  const patternLengths: Record<string, number> = {};
   document.patterns.forEach((candidate) => {
     if (!candidate || typeof candidate !== 'object') return;
     const pattern = candidate as Record<string, unknown>;
@@ -107,6 +109,7 @@ export function studioStateFromDocument(document: Record<string, unknown>): Stud
     if (!match || !Array.isArray(pattern.events)) return;
     const group = match[1] as ProjectGroup;
     const number = Number(match[2]);
+    patternLengths[`${group}:${number}`] = Math.max(1, Math.min(99, Number(pattern.bars) || 1));
     patternBank[group][number] = pattern.events.flatMap((candidateEvent, index) => {
       if (!candidateEvent || typeof candidateEvent !== 'object') return [];
       const event = candidateEvent as Record<string, unknown>;
@@ -161,5 +164,6 @@ export function studioStateFromDocument(document: Record<string, unknown>): Stud
     currentScene,
     patterns: patternsForScene(patternBank, scenes, startingScene),
     padModes,
+    patternLengths,
   };
 }

@@ -38,6 +38,7 @@ const project = createEp133ProjectDocument({
   title: 'TEST', bpm: 120, patternBank, scenes, song, currentScene,
   pads: [{ group: 'B', pad: 11, slot: 444, playMode: 0, rootNote: 26 }],
   padModes: { 'A:0': 'ONE', 'B:10': 'KEYS' },
+  patternLengths: { 'A:1': 4, 'A:2': 2, 'B:2': 3 },
 });
 assert.equal(project.schema, 'ep.project.v1');
 assert.equal(project.patterns.length, 3, 'A01, A02, B02 — pas de B01');
@@ -49,6 +50,8 @@ assert.equal(a01.events[0].velocity, 117);
 assert.equal(a01.events[0].duration, 48);
 assert.equal(a02.events[0].velocity, 90);
 assert.equal(b02.events[0].note, 48);
+assert.equal(a01.bars, 4, 'LN.4 doit rester distinct de la dernière note du pattern');
+assert.equal(b02.bars, 3, 'la longueur native est propre à chaque groupe/pattern');
 assert.equal(project.settings.bpm, 120);
 assert.equal(project.pads[0].playMode, 1);
 assert.equal(project.scenes.length, 2);
@@ -70,6 +73,8 @@ assert.deepEqual(Object.keys(roundTripped.patternBank.B).map(Number).sort((x, y)
 assert.equal(roundTripped.patternBank.A[1][0].velocity, 117);
 assert.equal(roundTripped.patternBank.A[2][0].velocity, 90);
 assert.equal(roundTripped.patternBank.B[2][0].note, 48);
+assert.equal(roundTripped.patternLengths['A:1'], 4);
+assert.equal(roundTripped.patternLengths['B:2'], 3);
 assert.equal(roundTripped.scenes.length, 2);
 assert.deepEqual(roundTripped.scenes[0].groupPatterns, { A: 1, B: null, C: null, D: null });
 assert.deepEqual(roundTripped.scenes[1].groupPatterns, { A: 2, B: 2, C: null, D: null });

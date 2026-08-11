@@ -349,6 +349,9 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .editor-commandbar .clone-machine { background:#d9d7d1; }
 .editor-commandbar .studio-sample-folder { background:#d9d7d1; }
 .studio-pattern-context { flex:0 0 auto; padding:7px 10px; border:1px solid var(--ko-black); border-radius:var(--radius-sm); background:#e5e2db; font-size:8px; font-weight:bold; white-space:nowrap; }
+.pattern-length-control { display:flex; align-items:stretch; height:43px; border:2px solid var(--ko-black); background:#252523; color:#f2efe7; box-shadow:2px 2px 0 var(--ko-orange); }
+.pattern-length-control button { width:32px; border:0!important; border-radius:0!important; background:#d9d7d1!important; font-size:16px!important; font-weight:900!important; }
+.pattern-length-control b { display:grid; place-items:center; min-width:58px; padding:0 8px; color:var(--ko-orange); font:900 14px monospace; }
 .editor-commandbar .studio-commit-scene { background:var(--ko-orange); border-color:var(--ko-black); font-weight:900; }
 /* Fenêtre de sélection ouverte depuis FICHIER → Ouvrir. La bibliothèque ne
    déborde plus dans le petit menu d'actions et tous ses contrôles conservent

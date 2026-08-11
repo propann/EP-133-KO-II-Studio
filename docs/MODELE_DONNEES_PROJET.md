@@ -1,5 +1,13 @@
 # Modèle de données du séquenceur
 
+## Longueur native des patterns
+
+La notice EP-133 OS 2.0 confirme que `LN.1` désigne un pattern d'une mesure et
+que chaque groupe accepte une longueur jusqu'à `LN.99`. Dans `ep.project.v1`,
+la propriété `bars` de chaque pattern conserve cette valeur explicitement :
+elle ne doit pas être recalculée uniquement depuis la dernière note, car un
+pattern vide ou volontairement plus long possède malgré tout une longueur.
+
 ## Pourquoi ce modèle existe
 
 Le jeu pédagogique et le studio utilisaient auparavant la même forme minimale

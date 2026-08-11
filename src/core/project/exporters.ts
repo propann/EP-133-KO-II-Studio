@@ -79,13 +79,15 @@ interface ProjectDocumentOptions {
   currentScene: number | null;
   pads: ScannedPad[];
   padModes: Record<string, EditorPadMode>;
+  /** Longueur native LN.1–LN.99 de chaque pattern, indexée par `A:1`, `B:42`, etc. */
+  patternLengths?: Record<string, number>;
 }
 
 /** Sérialise un pattern (frappes d'un seul groupe/numéro) vers le format `ep.project.v1`, en dérivant sa longueur en mesures. */
-function serializePattern(id: string, notes: SequencerNote[]) {
+function serializePattern(id: string, notes: SequencerNote[], explicitBars?: number) {
   return {
     id,
-    bars: Math.max(1, notes.length ? Math.floor(Math.max(...notes.map((target) => target.beat)) / 4) + 1 : 1),
+    bars: Math.max(1, Math.min(99, explicitBars ?? (notes.length ? Math.floor(Math.max(...notes.map((target) => target.beat)) / 4) + 1 : 1))),
     events: notes.map((target) => ({
       tick: Math.round(target.beat * 96),
       pad: target.pad + 1,
@@ -106,7 +108,7 @@ function serializePattern(id: string, notes: SequencerNote[]) {
  * mode ONE/KEYS/LEGATO faits localement (`padModes`), sans perdre les pads
  * non touchés.
  */
-export function createEp133ProjectDocument({ title, bpm, patternBank, scenes, song, currentScene, pads, padModes }: ProjectDocumentOptions) {
+export function createEp133ProjectDocument({ title, bpm, patternBank, scenes, song, currentScene, pads, padModes, patternLengths = {} }: ProjectDocumentOptions) {
   const padMap = new Map(pads.map((pad) => [`${pad.group}:${pad.pad - 1}`, pad]));
   Object.keys(padModes).forEach((key) => {
     if (padMap.has(key)) return;
@@ -128,7 +130,7 @@ export function createEp133ProjectDocument({ title, bpm, patternBank, scenes, so
       rootNote: pad.rootNote,
     })),
     patterns: EDITOR_GROUPS.flatMap((group) => Object.entries(patternBank[group])
-      .map(([number, notes]) => serializePattern(`${group}${String(number).padStart(2, '0')}`, notes))),
+      .map(([number, notes]) => serializePattern(`${group}${String(number).padStart(2, '0')}`, notes, patternLengths[`${group}:${number}`]))),
     scenes: scenes.filter(sceneIsUsed).map((scene) => ({
       scene: scene.scene,
       groupPatterns: EDITOR_GROUPS.map((group) => scene.groupPatterns[group] ?? 0),

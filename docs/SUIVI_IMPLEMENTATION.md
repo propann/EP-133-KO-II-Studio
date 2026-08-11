@@ -558,3 +558,18 @@ Statut : première tranche livrée le 11 août 2026, tests et build réussis.
 
 Le fond quadrillé de la présentation est désormais la toile de fond commune
 de l'application, y compris pour l'éditeur plein écran et le banc de test.
+
+## Étape 4.3 — longueur native des patterns `LN.n`
+
+Statut : contrôle Studio livré le 11 août 2026, validation matérielle de
+l'écriture encore verrouillée.
+
+- [x] notice OS 2.0 vérifiée : `LN.1` = une mesure et longueur maximale 99 ;
+- [x] contrôle `−  LN.n  ＋` ajouté à côté du pattern actif ;
+- [x] suppression de la mesure de réserve automatique dans le Studio complet ;
+- [x] grille principale libellée avec la longueur native plutôt que « MESURE » ;
+- [x] diminution protégée par confirmation si des notes seraient tronquées ;
+- [x] valeur `bars` importée des projets réels et conservée à l'export JSON ;
+- [x] longueur propre à chaque couple groupe/pattern ;
+- [ ] compilation `.ppak`, écriture sur projet brouillon et relecture sur un
+  vrai EP-133 avant de déclarer la synchronisation matérielle compatible.
