@@ -16,7 +16,8 @@
   /* Repères de catégorie de pad pour Rhythm Hero — mêmes teintes que les
      pastilles .bank-* de Sons & Transfert, pour que jeu et banque de sons
      parlent le même langage visuel. */
-  --cat-kick:#e65c32; --cat-snare:#f0a12e; --cat-hat:#e9cf4c; --cat-perc:#bc6f97; --cat-bass:#586a9b; --cat-fx:#8b68a4;
+  --cat-kick:#ff6a3d; --cat-clap:#f0a83a; --cat-snare:#d6c93e; --cat-open-hat:#9ecb4c; --cat-closed-hat:#4fcb7e; --cat-ride:#3fcbb0;
+  --cat-perc-1:#3fadd6; --cat-perc-2:#4c7fe0; --cat-perc-3:#7a5fe0; --cat-shaker:#b24fd6; --cat-bass:#e04fb0; --cat-fx:#f0507a;
   /* Rayon de cadre commun à tout l'affichage du Studio (panneaux, boutons,
      cartes), pour rester cohérent avec les cartes du Song Arranger. */
   --radius: 10px;
@@ -67,30 +68,59 @@ header { display:flex; justify-content:space-between; gap:30px; align-items:star
    défile horizontalement pendant la lecture — plus un `position: sticky`
    partagé avec la grille, un vrai second panneau toujours visible. */
 .score-body { display:flex; align-items:flex-start; }
-.track-labels { flex:0 0 132px; display:flex; flex-direction:column; background:#dedcd6; border-right:2px solid var(--ko-black); }
-.track-labels-spacer { height:22px; border-bottom:1px solid #a9a69f; }
-.track-labels strong { position:relative; display:flex; align-items:center; height:31px; padding:0 7px 0 12px; border-top:1px solid #a9a69f; font-size:10px; }
-.track-labels strong::before { content:''; position:absolute; inset:0 auto 0 0; width:5px; background:#999; }
+.track-labels { flex:0 0 148px; display:flex; flex-direction:column; background:#e9e7e1; border-right:2px solid var(--ko-black); }
+/* Pastilles arrondies, une par piste — hauteur + marge choisies pour que
+   chacune reste alignée pile sur sa bande de partition (23px + 2×4px de
+   marge = les 31px d'une ligne .sequence-step). */
+.track-labels strong {
+  display:flex; align-items:center; gap:6px;
+  height:23px; margin:4px 8px; padding:0 10px;
+  border:1px solid var(--ko-black); border-radius:999px;
+  background:#fff; box-shadow:1px 1px 0 var(--ko-black);
+  font-size:8.5px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.track-labels strong::before { content:''; flex:0 0 auto; width:7px; height:7px; border-radius:50%; background:#999; }
 .track-labels strong.cat-kick::before { background:var(--cat-kick); }
+.track-labels strong.cat-clap::before { background:var(--cat-clap); }
 .track-labels strong.cat-snare::before { background:var(--cat-snare); }
-.track-labels strong.cat-hat::before { background:var(--cat-hat); }
-.track-labels strong.cat-perc::before { background:var(--cat-perc); }
+.track-labels strong.cat-open-hat::before { background:var(--cat-open-hat); }
+.track-labels strong.cat-closed-hat::before { background:var(--cat-closed-hat); }
+.track-labels strong.cat-ride::before { background:var(--cat-ride); }
+.track-labels strong.cat-perc-1::before { background:var(--cat-perc-1); }
+.track-labels strong.cat-perc-2::before { background:var(--cat-perc-2); }
+.track-labels strong.cat-perc-3::before { background:var(--cat-perc-3); }
+.track-labels strong.cat-shaker::before { background:var(--cat-shaker); }
 .track-labels strong.cat-bass::before { background:var(--cat-bass); }
 .track-labels strong.cat-fx::before { background:var(--cat-fx); }
-.sequencer-scroll { flex:1 1 auto; min-width:0; overflow-x:auto; padding:10px; scroll-behavior:auto; scrollbar-color:var(--ko-orange) #b8b5ae; }
+.sequencer-scroll { flex:1 1 auto; min-width:0; overflow-x:auto; padding:10px; scroll-behavior:auto; scrollbar-color:var(--ko-orange) #b8b5ae; cursor:grab; touch-action:pan-y; }
+.sequencer-scroll:active { cursor:grabbing; }
 /* Cartes de mesure : la coupure entre mesures se voit à la carte (cadre +
    coin arrondi + espace), plus besoin d'un bandeau « MESURE 1/2 » à lire. */
 .measure-cards { position:relative; display:flex; gap:14px; min-width:1420px; }
 .measure-card { flex:1 1 0; border:2px solid var(--ko-black); border-radius:var(--radius-sm); background:#f8f7f3; overflow:hidden; }
-.step-numbers { display:grid; grid-template-columns:repeat(16, minmax(22px,1fr)); height:22px; border-bottom:1px solid #a9a69f; background:#e9e7e1; }
-.step-numbers i { display:grid; place-items:center; font-size:9px; font-style:normal; color:#77736c; }
 .measure-card-row { display:grid; grid-template-columns:repeat(16, minmax(22px,1fr)); }
 .sequence-step {
   display:grid; place-items:center; height:31px; border-left:1px solid #b8b5ae; border-top:1px solid #b8b5ae;
   background:#f4f2ed; color:var(--ko-black); font-size:10px; font-style:normal; font-weight:bold;
 }
-.measure-card-row .sequence-step:first-child,.step-numbers i:first-child { border-left:0; }
+.measure-card-row .sequence-step:first-child { border-left:0; }
+/* Un pas attendu prend la couleur de la famille de sa piste (même code que
+   les pastilles à gauche) — plus tout en orange quel que soit le son. */
 .sequence-step.filled { background:var(--ko-orange); }
+.measure-card-row.cat-kick .sequence-step.filled { background:var(--cat-kick); }
+.measure-card-row.cat-clap .sequence-step.filled { background:var(--cat-clap); }
+.measure-card-row.cat-snare .sequence-step.filled { background:var(--cat-snare); }
+.measure-card-row.cat-open-hat .sequence-step.filled { background:var(--cat-open-hat); }
+.measure-card-row.cat-closed-hat .sequence-step.filled { background:var(--cat-closed-hat); }
+.measure-card-row.cat-ride .sequence-step.filled { background:var(--cat-ride); }
+.measure-card-row.cat-perc-1 .sequence-step.filled { background:var(--cat-perc-1); }
+.measure-card-row.cat-perc-2 .sequence-step.filled { background:var(--cat-perc-2); }
+.measure-card-row.cat-perc-3 .sequence-step.filled { background:var(--cat-perc-3); }
+.measure-card-row.cat-shaker .sequence-step.filled { background:var(--cat-shaker); }
+.measure-card-row.cat-bass .sequence-step.filled { background:var(--cat-bass); color:#fff; }
+.measure-card-row.cat-fx .sequence-step.filled { background:var(--cat-fx); color:#fff; }
+/* La frappe réelle (juste/à côté/ratée) reste prioritaire sur la couleur
+   de famille : c'est le retour le plus important à cet endroit précis. */
 .sequence-step.filled.perfect { background:var(--ko-amber); color:var(--ko-black); }
 .sequence-step.filled.good { background:var(--ko-amber); color:var(--ko-black); }
 .sequence-step.filled.miss { background:#c62818; color:#fff; }
@@ -100,59 +130,69 @@ header { display:flex; justify-content:space-between; gap:30px; align-items:star
 .sequence-step.played.good .player-mark { background:var(--ko-amber); }
 .sequence-step.played.miss .player-mark { background:#c62818; }
 .sequence-step.played:not(.filled) { background:#dedcd6; }
-.sequence-cursor { position:absolute; top:22px; bottom:0; width:2px; background:var(--ko-orange); box-shadow:0 0 8px var(--ko-orange); z-index:3; pointer-events:none; }
-/* Bac de pads recessé dans la façade, comme le vrai pavé 3×4 de l'EP-133
-   (voir .ep133-face sur le banc de test) : cadre sombre, puits en creux,
-   au lieu d'une simple grille de rectangles posée sur le fond du panneau.
-   Références : capture façade K.O.II fournie le 11/08 — touches très
-   arrondies façon keycap, légende sous la touche (pas dedans), petit point
-   repère à gauche de la légende. */
+.sequence-cursor { position:absolute; top:0; bottom:0; width:2px; background:var(--ko-orange); box-shadow:0 0 8px var(--ko-orange); z-index:3; pointer-events:none; }
+/* Plus de fond sombre derrière les pads (11/08) — le bac reste une simple
+   grille posée sur le panneau, sans puits recessé. */
 .pads {
   display:grid;
   grid-template-columns:repeat(3, minmax(0, 1fr));
   gap:8px 10px;
   flex:0 0 auto;
   width:100%; max-width:420px;
-  padding:12px 12px 9px;
-  border:3px solid var(--ko-black);
-  border-radius:var(--radius);
-  background:linear-gradient(165deg,#2c2a26,#171615);
-  box-shadow:inset 0 0 26px rgba(0,0,0,.6), inset 0 3px 0 rgba(0,0,0,.4);
 }
 .pad-cell { display:flex; flex-direction:column; gap:4px; }
 .pads button {
   position:relative; overflow:hidden;
-  height:52px; background:linear-gradient(165deg,#333230,#121211); color:#fff; border:1px solid #000;
+  height:52px; background:#dedcd6; color:var(--ko-black); border:1px solid var(--ko-black);
   border-radius:12px;
-  text-align:left; padding:7px 9px; cursor:pointer;
-  box-shadow:0 4px 6px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.12);
+  text-align:left; padding:7px 9px; cursor:pointer; font-size:12px;
+  box-shadow:0 4px 6px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.4);
   transition:transform .1s ease,box-shadow .1s ease,background .1s ease;
 }
-.pads button:hover { background:linear-gradient(165deg,var(--ko-orange),#c93700); color:#fff; transform:translateY(-2px); box-shadow:0 6px 8px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.2); }
-.pads button:active { transform:translateY(1px); box-shadow:0 1px 1px rgba(0,0,0,.6), inset 0 2px 4px rgba(0,0,0,.5); }
+/* Chaque touche prend la couleur de sa famille de son — même palette que
+   la partition et les pastilles de piste. */
+.pad-cell.cat-kick button { background:var(--cat-kick); }
+.pad-cell.cat-clap button { background:var(--cat-clap); }
+.pad-cell.cat-snare button { background:var(--cat-snare); }
+.pad-cell.cat-open-hat button { background:var(--cat-open-hat); }
+.pad-cell.cat-closed-hat button { background:var(--cat-closed-hat); }
+.pad-cell.cat-ride button { background:var(--cat-ride); }
+.pad-cell.cat-perc-1 button { background:var(--cat-perc-1); color:#fff; }
+.pad-cell.cat-perc-2 button { background:var(--cat-perc-2); color:#fff; }
+.pad-cell.cat-perc-3 button { background:var(--cat-perc-3); color:#fff; }
+.pad-cell.cat-shaker button { background:var(--cat-shaker); color:#fff; }
+.pad-cell.cat-bass button { background:var(--cat-bass); color:#fff; }
+.pad-cell.cat-fx button { background:var(--cat-fx); color:#fff; }
+.pads button:hover { background:linear-gradient(165deg,var(--ko-orange),#c93700); color:#fff; transform:translateY(-2px); box-shadow:0 6px 8px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.2); }
+.pads button:active { transform:translateY(1px); box-shadow:0 1px 1px rgba(0,0,0,.4), inset 0 2px 4px rgba(0,0,0,.25); }
 .pads button.expected-pad {
   background:var(--ko-amber); color:var(--ko-black);
   box-shadow:0 0 0 4px var(--ko-orange), 0 0 24px var(--ko-amber);
 }
-.pads button.played-pad { transform:translateY(1px); box-shadow:0 1px 1px rgba(0,0,0,.6), inset 0 2px 4px rgba(0,0,0,.5); }
+.pads button.played-pad { transform:translateY(1px); box-shadow:0 1px 1px rgba(0,0,0,.4), inset 0 2px 4px rgba(0,0,0,.25); }
 .pads button.played-pad.perfect { background:var(--ko-amber); color:var(--ko-black); box-shadow:0 0 22px var(--ko-amber); }
 .pads button.played-pad.good { background:var(--ko-amber); color:var(--ko-black); box-shadow:0 0 22px var(--ko-amber); }
-.pads button.played-pad.miss { background:#c62818; box-shadow:0 0 22px #c62818; }
+.pads button.played-pad.miss { background:#c62818; color:#fff; box-shadow:0 0 22px #c62818; }
 .pads button.calibrating {
   background:var(--ko-amber); color:var(--ko-black);
   box-shadow:0 0 0 3px var(--ko-orange), 5px 5px 0 var(--ko-black);
 }
-.pads button { font-size:12px; }
-.pads b { display:block; color:var(--ko-amber); font-size:13px; letter-spacing:.01em; }
+.pads b { display:block; font-size:13px; letter-spacing:.01em; }
 /* Légende hors de la touche, comme les repères LPF/ATK/VEL imprimés sous
    les touches réelles — famille de son signalée par la couleur du point,
    pas par un bandeau plaqué sur la touche elle-même. */
 .pad-caption { display:flex; align-items:center; justify-content:center; gap:5px; padding:0 2px; color:#7a756c; font-style:normal; font-size:7.5px; letter-spacing:.05em; text-align:center; }
 .pad-dot { flex:0 0 auto; width:6px; height:6px; border-radius:50%; background:#6b6862; }
 .cat-kick .pad-dot { background:var(--cat-kick); }
+.cat-clap .pad-dot { background:var(--cat-clap); }
 .cat-snare .pad-dot { background:var(--cat-snare); }
-.cat-hat .pad-dot { background:var(--cat-hat); }
-.cat-perc .pad-dot { background:var(--cat-perc); }
+.cat-open-hat .pad-dot { background:var(--cat-open-hat); }
+.cat-closed-hat .pad-dot { background:var(--cat-closed-hat); }
+.cat-ride .pad-dot { background:var(--cat-ride); }
+.cat-perc-1 .pad-dot { background:var(--cat-perc-1); }
+.cat-perc-2 .pad-dot { background:var(--cat-perc-2); }
+.cat-perc-3 .pad-dot { background:var(--cat-perc-3); }
+.cat-shaker .pad-dot { background:var(--cat-shaker); }
 .cat-bass .pad-dot { background:var(--cat-bass); }
 .cat-fx .pad-dot { background:var(--cat-fx); }
 /* Pads décalés à gauche, cadre de retour de performance à droite (11/08) —

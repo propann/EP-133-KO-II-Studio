@@ -1,4 +1,4 @@
-import type { RefObject } from 'react';
+import { useRef, type PointerEvent, type RefObject, type WheelEvent } from 'react';
 import type { Exercise, Grade } from '../../core/engine/types';
 import { EP133_PADS, EP133_SCORE_TRACKS } from '../../core/project/pads';
 
@@ -27,6 +27,27 @@ interface ScoreViewProps {
  * lecture. Demandé le 11/08.
  */
 export function ScoreView({ viewportRef, pageStart, songBeat, transportActive, playheadProgress, expectedTargets, playedNotes }: ScoreViewProps) {
+  /** Glisser-déposer à la souris pour naviguer dans la partition — en plus
+   * du défilement automatique pendant la lecture, qui reprend la main dès
+   * la frappe suivante. */
+  const drag = useRef<{ pointerId: number; startX: number; startScrollLeft: number } | null>(null);
+  const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
+    drag.current = { pointerId: event.pointerId, startX: event.clientX, startScrollLeft: event.currentTarget.scrollLeft };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (!drag.current || drag.current.pointerId !== event.pointerId) return;
+    event.currentTarget.scrollLeft = drag.current.startScrollLeft - (event.clientX - drag.current.startX);
+  };
+  const endDrag = () => { drag.current = null; };
+  const onWheel = (event: WheelEvent<HTMLDivElement>) => {
+    const viewport = event.currentTarget;
+    if (viewport.scrollWidth <= viewport.clientWidth) return;
+    event.preventDefault();
+    viewport.scrollLeft += event.deltaY || event.deltaX;
+  };
+
   const renderRow = (track: (typeof EP133_SCORE_TRACKS)[number], half: number) => Array.from({ length: 16 }, (_, localStep) => {
     const step = half * 16 + localStep;
     const expected = expectedTargets.find((target) => target.pad === track.pad && Math.round((target.beat - pageStart) * 4) === step);
@@ -39,14 +60,12 @@ export function ScoreView({ viewportRef, pageStart, songBeat, transportActive, p
   return <section className="score-view" aria-label="Partition sur deux mesures">
     <div className="score-body">
       <div className="track-labels">
-        <span className="track-labels-spacer" />
         {EP133_SCORE_TRACKS.map((track) => <strong className={`cat-${track.category}`} key={track.pad}>{track.label}</strong>)}
       </div>
-      <div className="sequencer-scroll" ref={viewportRef}>
+      <div className="sequencer-scroll" ref={viewportRef} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerCancel={endDrag} onWheel={onWheel}>
         <div className="measure-cards">
           {[0, 1].map((half) => <section className="measure-card" key={half}>
-            <div className="step-numbers">{Array.from({ length: 16 }, (_, step) => <i key={step}>{step + 1}</i>)}</div>
-            {EP133_SCORE_TRACKS.map((track) => <div className="measure-card-row" key={track.pad}>{renderRow(track, half)}</div>)}
+            {EP133_SCORE_TRACKS.map((track) => <div className={`measure-card-row cat-${track.category}`} key={track.pad}>{renderRow(track, half)}</div>)}
           </section>)}
           {transportActive && <div className="sequence-cursor" style={{ left: `calc(100% * ${playheadProgress})` }} />}
         </div>
