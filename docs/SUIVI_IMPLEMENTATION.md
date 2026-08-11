@@ -575,6 +575,9 @@ l'écriture encore verrouillée.
   au moins une note ;
 - [x] toile d'édition blanche étendue à toute la largeur et toute la hauteur
   disponibles, même pour `LN.1`, sans créer de faux pas hors longueur.
+- [x] une zone contenant des notes verrouille la borne minimale de `LN` : le
+  bouton moins ne peut plus tronquer une partie déjà écrite ; son bandeau
+  orange arrondi matérialise cette zone figée.
 - [x] suppression de la mesure de réserve automatique dans le Studio complet ;
 - [x] grille principale libellée avec la longueur native plutôt que « MESURE » ;
 - [x] diminution protégée par confirmation si des notes seraient tronquées ;

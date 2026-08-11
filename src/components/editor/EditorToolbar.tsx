@@ -20,6 +20,7 @@ interface EditorToolbarProps {
   studioView: 'pattern' | 'arrangement';
   patternNumber: number;
   patternLength: number;
+  minimumPatternLength: number;
   activeSongPosition: number;
   activeScene: number;
   onHome: () => void;
@@ -91,7 +92,7 @@ export function EditorToolbar(props: EditorToolbarProps) {
         <button className="studio-sample-folder" onClick={props.onOpenSampleFolder} title="Ouvrir la banque de samples locale">▤ SAMPLES{props.machineSampleCount ? ` · ${props.machineSampleCount}` : ''}</button>
         {props.studioView === 'pattern' && <><button className="studio-commit-scene" onClick={props.onCommitScene}>COMMIT · CRÉER SCÈNE</button><span className="studio-pattern-context">SONG POSITION L.{String(props.activeSongPosition).padStart(2, '0')} · SCÈNE S.{String(props.activeScene).padStart(2, '0')} · PATTERN {props.group}{String(props.patternNumber).padStart(2, '0')}</span></>}
       </> : <><button className="save" disabled={!props.canSave} onClick={props.onSave}>● SAVE</button><label className="export-select">EXPORT <select value={props.exportFormat} onChange={(event) => props.onExportFormatChange(event.target.value as 'midi' | 'json')}><option value="midi">MIDI (.mid)</option><option value="json">PROJET EP‑133 (.json)</option></select></label><button className="midi-export" onClick={props.onExport}>⇩ EXPORTER</button></>}
-      <button className="transport-play" onClick={props.onPlayback}>{props.playing ? '■ STOP' : '▶ LECTURE'}</button><button className={`loop-toggle ${props.loop ? 'active' : ''}`} disabled={props.mode !== 'complete' || props.playing} onClick={() => props.onLoopChange(!props.loop)}>↻ BOUCLE {props.loop ? 'ON' : 'OFF'}</button>{props.mode === 'complete' && props.studioView === 'pattern' && <div className="pattern-length-control" aria-label="Longueur du pattern"><button disabled={props.patternLength <= 1} onClick={() => props.onPatternLengthChange(props.patternLength - 1)}>−</button><b>LN.{props.patternLength}</b><button disabled={props.patternLength >= 99} onClick={() => props.onPatternLengthChange(props.patternLength + 1)}>＋</button></div>}
+      <button className="transport-play" onClick={props.onPlayback}>{props.playing ? '■ STOP' : '▶ LECTURE'}</button><button className={`loop-toggle ${props.loop ? 'active' : ''}`} disabled={props.mode !== 'complete' || props.playing} onClick={() => props.onLoopChange(!props.loop)}>↻ BOUCLE {props.loop ? 'ON' : 'OFF'}</button>{props.mode === 'complete' && props.studioView === 'pattern' && <div className="pattern-length-control" aria-label="Longueur du pattern"><button disabled={props.patternLength <= props.minimumPatternLength} title={props.patternLength <= props.minimumPatternLength ? 'Les blocs contenant des notes sont verrouillés' : 'Raccourcir le pattern'} onClick={() => props.onPatternLengthChange(props.patternLength - 1)}>−</button><b>LN.{props.patternLength}</b><button disabled={props.patternLength >= 99} onClick={() => props.onPatternLengthChange(props.patternLength + 1)}>＋</button></div>}
     </div>
     {openProjectWindow && <div className="project-open-overlay" role="dialog" aria-modal="true" aria-labelledby="project-open-title" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpenProjectWindow(false); }}>
       <section className="project-open-dialog">
