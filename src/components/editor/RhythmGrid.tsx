@@ -35,7 +35,7 @@ export function RhythmGrid(props: RhythmGridProps) {
     }
     return null;
   };
-  return <div className="editor-grid" ref={props.gridRef} onWheel={horizontalWheelScroll}><div className="editor-horizontal" style={{ width: `${160 + totalBars * 960}px` }}>
+  return <div className="editor-grid" ref={props.gridRef} onWheel={horizontalWheelScroll}><div className="editor-horizontal" style={{ width: `max(100%, ${160 + totalBars * 960}px)` }}>
     {props.playing && <i className="editor-playhead" style={{ left: `${160 + props.playbackBeat / 4 * 960}px` }} />}
     <div className="editor-measure-line"><span className="editor-corner">PISTES</span><div className="editor-measure-heads" style={{ gridTemplateColumns: `repeat(${totalBars}, 1fr)` }}>{Array.from({ length: totalBars }, (_, measure) => {
       const committed = sectionAtMeasure(measure);

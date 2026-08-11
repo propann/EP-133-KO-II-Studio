@@ -573,6 +573,8 @@ l'écriture encore verrouillée.
 - [x] afficheur `LN.n` compact déplacé à côté de `BOUCLE ON/OFF`, sans libellé
   secondaire ; en-têtes de grille gris à vide et orange dès qu'ils contiennent
   au moins une note ;
+- [x] toile d'édition blanche étendue à toute la largeur et toute la hauteur
+  disponibles, même pour `LN.1`, sans créer de faux pas hors longueur.
 - [x] suppression de la mesure de réserve automatique dans le Studio complet ;
 - [x] grille principale libellée avec la longueur native plutôt que « MESURE » ;
 - [x] diminution protégée par confirmation si des notes seraient tronquées ;
