@@ -63,43 +63,44 @@ header { display:flex; justify-content:space-between; gap:30px; align-items:star
   border:1px solid var(--ko-black); border-radius:var(--radius); background:#f3f1ec;
   box-shadow:4px 4px 0 var(--ko-black); overflow:hidden;
 }
-.sequencer-scroll { overflow-x:auto; padding:10px; scroll-behavior:auto; scrollbar-color:var(--ko-orange) #b8b5ae; }
-.sequencer { min-width:1500px; display:grid; gap:10px; }
-.sequence-block { position:relative; border:1px solid #8e8d88; background:#e9e7e1; overflow:hidden; }
-.sequence-block h2 { margin:0; padding:5px 8px; font-size:13px; border-bottom:1px solid #8e8d88; }
-.measure-titles,.step-numbers,.sequence-track { display:grid; grid-template-columns:132px repeat(32,minmax(22px,1fr)); }
-.measure-titles span,.step-numbers span { grid-column:1; }
-.measure-titles b { padding:4px; text-align:center; font-size:10px; }
-.measure-titles b:first-of-type { grid-column:2 / span 16; }
-.measure-titles b:last-of-type { grid-column:18 / span 16; border-left:2px solid var(--ko-black); }
-.step-numbers i { padding:3px 0; text-align:center; font-size:9px; font-style:normal; }
-.step-numbers i:nth-child(18) { border-left:2px solid var(--ko-black); }
-.sequence-track strong { position:sticky; left:0; z-index:5; display:flex; align-items:center; padding:0 7px 0 12px; border-top:1px solid #a9a69f; border-right:2px solid var(--ko-black); background:#dedcd6; font-size:10px; }
-.sequence-track strong::before { content:''; position:absolute; inset:0 auto 0 0; width:5px; background:#999; }
-.sequence-track strong.cat-kick::before { background:var(--cat-kick); }
-.sequence-track strong.cat-snare::before { background:var(--cat-snare); }
-.sequence-track strong.cat-hat::before { background:var(--cat-hat); }
-.sequence-track strong.cat-perc::before { background:var(--cat-perc); }
-.sequence-track strong.cat-bass::before { background:var(--cat-bass); }
-.sequence-track strong.cat-fx::before { background:var(--cat-fx); }
+/* Colonne des noms de piste : bloc indépendant, HORS du conteneur qui
+   défile horizontalement pendant la lecture — plus un `position: sticky`
+   partagé avec la grille, un vrai second panneau toujours visible. */
+.score-body { display:flex; align-items:flex-start; }
+.track-labels { flex:0 0 132px; display:flex; flex-direction:column; background:#dedcd6; border-right:2px solid var(--ko-black); }
+.track-labels-spacer { height:22px; border-bottom:1px solid #a9a69f; }
+.track-labels strong { position:relative; display:flex; align-items:center; height:31px; padding:0 7px 0 12px; border-top:1px solid #a9a69f; font-size:10px; }
+.track-labels strong::before { content:''; position:absolute; inset:0 auto 0 0; width:5px; background:#999; }
+.track-labels strong.cat-kick::before { background:var(--cat-kick); }
+.track-labels strong.cat-snare::before { background:var(--cat-snare); }
+.track-labels strong.cat-hat::before { background:var(--cat-hat); }
+.track-labels strong.cat-perc::before { background:var(--cat-perc); }
+.track-labels strong.cat-bass::before { background:var(--cat-bass); }
+.track-labels strong.cat-fx::before { background:var(--cat-fx); }
+.sequencer-scroll { flex:1 1 auto; min-width:0; overflow-x:auto; padding:10px; scroll-behavior:auto; scrollbar-color:var(--ko-orange) #b8b5ae; }
+/* Cartes de mesure : la coupure entre mesures se voit à la carte (cadre +
+   coin arrondi + espace), plus besoin d'un bandeau « MESURE 1/2 » à lire. */
+.measure-cards { position:relative; display:flex; gap:14px; min-width:1420px; }
+.measure-card { flex:1 1 0; border:2px solid var(--ko-black); border-radius:var(--radius-sm); background:#f8f7f3; overflow:hidden; }
+.step-numbers { display:grid; grid-template-columns:repeat(16, minmax(22px,1fr)); height:22px; border-bottom:1px solid #a9a69f; background:#e9e7e1; }
+.step-numbers i { display:grid; place-items:center; font-size:9px; font-style:normal; color:#77736c; }
+.measure-card-row { display:grid; grid-template-columns:repeat(16, minmax(22px,1fr)); }
 .sequence-step {
   display:grid; place-items:center; height:31px; border-left:1px solid #b8b5ae; border-top:1px solid #b8b5ae;
   background:#f4f2ed; color:var(--ko-black); font-size:10px; font-style:normal; font-weight:bold;
 }
-.sequence-step:nth-of-type(17) { border-left:2px solid var(--ko-black); }
-.sequence-block.model .sequence-step.filled { background:var(--ko-orange); }
-.sequence-block.player .sequence-step.filled { background:var(--ko-amber); }
-.sequence-block.combined .sequence-step.filled { background:var(--ko-orange); }
-.sequence-block.player .sequence-step.filled.perfect { background:var(--ko-amber); color:var(--ko-black); }
-.sequence-block.player .sequence-step.filled.good { background:var(--ko-amber); }
-.sequence-block.player .sequence-step.filled.miss { background:#c62818; color:#fff; }
+.measure-card-row .sequence-step:first-child,.step-numbers i:first-child { border-left:0; }
+.sequence-step.filled { background:var(--ko-orange); }
+.sequence-step.filled.perfect { background:var(--ko-amber); color:var(--ko-black); }
+.sequence-step.filled.good { background:var(--ko-amber); color:var(--ko-black); }
+.sequence-step.filled.miss { background:#c62818; color:#fff; }
 .sequence-step.current { outline:2px solid var(--ko-orange); outline-offset:-2px; z-index:2; }
 .player-mark { width:13px; height:13px; border-radius:50%; background:#fff; border:2px solid var(--ko-black); box-shadow:0 0 0 2px #fff; }
 .sequence-step.played.perfect .player-mark { background:var(--ko-amber); }
 .sequence-step.played.good .player-mark { background:var(--ko-amber); }
 .sequence-step.played.miss .player-mark { background:#c62818; }
 .sequence-step.played:not(.filled) { background:#dedcd6; }
-.sequence-cursor { position:absolute; top:21px; bottom:0; width:2px; background:var(--ko-orange); box-shadow:0 0 8px var(--ko-orange); z-index:3; pointer-events:none; }
+.sequence-cursor { position:absolute; top:22px; bottom:0; width:2px; background:var(--ko-orange); box-shadow:0 0 8px var(--ko-orange); z-index:3; pointer-events:none; }
 /* Bac de pads recessé dans la façade, comme le vrai pavé 3×4 de l'EP-133
    (voir .ep133-face sur le banc de test) : cadre sombre, puits en creux,
    au lieu d'une simple grille de rectangles posée sur le fond du panneau.
@@ -109,21 +110,21 @@ header { display:flex; justify-content:space-between; gap:30px; align-items:star
 .pads {
   display:grid;
   grid-template-columns:repeat(3, minmax(0, 1fr));
-  gap:10px 12px;
-  width:100%; max-width:640px;
-  margin:0 auto;
-  padding:16px 16px 12px;
+  gap:8px 10px;
+  flex:0 0 auto;
+  width:100%; max-width:420px;
+  padding:12px 12px 9px;
   border:3px solid var(--ko-black);
   border-radius:var(--radius);
   background:linear-gradient(165deg,#2c2a26,#171615);
   box-shadow:inset 0 0 26px rgba(0,0,0,.6), inset 0 3px 0 rgba(0,0,0,.4);
 }
-.pad-cell { display:flex; flex-direction:column; gap:5px; }
+.pad-cell { display:flex; flex-direction:column; gap:4px; }
 .pads button {
   position:relative; overflow:hidden;
-  height:68px; background:linear-gradient(165deg,#333230,#121211); color:#fff; border:1px solid #000;
-  border-radius:14px;
-  text-align:left; padding:9px 11px; cursor:pointer;
+  height:52px; background:linear-gradient(165deg,#333230,#121211); color:#fff; border:1px solid #000;
+  border-radius:12px;
+  text-align:left; padding:7px 9px; cursor:pointer;
   box-shadow:0 4px 6px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.12);
   transition:transform .1s ease,box-shadow .1s ease,background .1s ease;
 }
@@ -141,7 +142,8 @@ header { display:flex; justify-content:space-between; gap:30px; align-items:star
   background:var(--ko-amber); color:var(--ko-black);
   box-shadow:0 0 0 3px var(--ko-orange), 5px 5px 0 var(--ko-black);
 }
-.pads b { display:block; color:var(--ko-amber); font-size:15px; letter-spacing:.01em; }
+.pads button { font-size:12px; }
+.pads b { display:block; color:var(--ko-amber); font-size:13px; letter-spacing:.01em; }
 /* Légende hors de la touche, comme les repères LPF/ATK/VEL imprimés sous
    les touches réelles — famille de son signalée par la couleur du point,
    pas par un bandeau plaqué sur la touche elle-même. */
@@ -153,18 +155,27 @@ header { display:flex; justify-content:space-between; gap:30px; align-items:star
 .cat-perc .pad-dot { background:var(--cat-perc); }
 .cat-bass .pad-dot { background:var(--cat-bass); }
 .cat-fx .pad-dot { background:var(--cat-fx); }
-/* VU-mètres retirés le 11/08 (trop d'info à côté des pads) : le panneau ne
-   porte plus que le bac de pads, centré, avec juste le combo en repère. */
+/* Pads décalés à gauche, cadre de retour de performance à droite (11/08) —
+   plus de VU-mètres décoratifs ni de badge combo isolé : l'analyse de la
+   session vit dans un seul bloc lisible, à côté du bac de pads. */
 .performance-panel {
-  position:relative; display:flex; justify-content:center;
+  display:flex; align-items:stretch; gap:16px;
   margin-top:14px; padding:14px; border:1px solid #77746e; border-radius:var(--radius);
   background:linear-gradient(145deg,#dedcd6,#c7c4bd); box-shadow:4px 4px 0 var(--ko-black);
 }
-.combo-badge {
-  position:absolute; top:10px; right:14px;
-  padding:4px 9px; border:1px solid var(--ko-black); border-radius:var(--radius-sm);
-  background:var(--ko-amber); color:var(--ko-black); font-size:10px; font-weight:900; letter-spacing:.04em;
+.performance-results {
+  flex:1 1 auto; min-width:190px; display:flex; flex-direction:column; gap:6px;
+  padding:12px 14px; border:1px solid var(--ko-black); border-radius:var(--radius-sm);
+  background:#f3f1ec; box-shadow:3px 3px 0 var(--ko-black);
 }
+.performance-results > b { font-size:10px; letter-spacing:.1em; color:#65625d; margin-bottom:2px; }
+.performance-stat { display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding-top:6px; border-top:1px solid #d8d5cf; }
+.performance-stat:first-of-type { padding-top:0; border-top:0; }
+.performance-stat span { font-size:9px; font-weight:bold; letter-spacing:.04em; color:#65625d; }
+.performance-stat b { font-variant-numeric:tabular-nums; font-size:16px; }
+.performance-stat.perfect b { color:var(--ko-orange); }
+.performance-stat.good b { color:#9a6500; }
+.performance-stat.miss b { color:#c62818; }
 .sound-editor {
   display:grid; grid-template-columns:1.1fr repeat(3,1.4fr) auto auto; gap:14px; align-items:center;
   margin-top:12px; padding:12px; border:2px solid var(--ko-black); border-radius:var(--radius); background:var(--ko-panel);
@@ -552,7 +563,8 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
   main { padding:24px 16px; }
   header { display:block; }
   .connect { margin-top:20px; width:100%; }
-  .pads { grid-template-columns:repeat(3, minmax(0, 1fr)); gap:7px; }
+  .performance-panel { flex-direction:column; }
+  .pads { grid-template-columns:repeat(3, minmax(0, 1fr)); gap:7px; max-width:none; }
   .pads button { min-width:0; height:92px; padding:9px; font-size:11px; }
   .pad-caption { font-size:7px; overflow-wrap:anywhere; }
   .sound-editor { grid-template-columns:1fr; }

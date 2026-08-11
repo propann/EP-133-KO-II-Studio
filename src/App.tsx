@@ -998,7 +998,7 @@ export default function App() {
 
     <ScoreView viewportRef={scoreScroll} pageStart={pageStart} songBeat={songBeat} transportActive={transportActive} playheadProgress={playheadProgress} expectedTargets={visibleTargets} playedNotes={visiblePlayerNotes} />
 
-    <PerformancePanel transportActive={transportActive} expectedPad={expectedPad} flashedPad={flashedPad} combo={score.combo} onPlayPad={clickPad} onEditPad={editPad} />
+    <PerformancePanel transportActive={transportActive} expectedPad={expectedPad} flashedPad={flashedPad} score={score} onPlayPad={clickPad} onEditPad={editPad} />
 
     {soundPad !== null && <PadSoundEditor pad={soundPad} settings={soundSettings[soundPad]} onChange={(patch) => updateSound(soundPad, patch)} onPreview={() => void audio.previewPad(soundPad)} onClose={() => setSoundPad(null)} />}
   </main>;
