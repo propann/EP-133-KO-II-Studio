@@ -1,9 +1,12 @@
 import type { KeyboardEvent } from 'react';
+import type { AppLanguage } from '../core/i18n';
 
 interface HomePageProps {
   connected: boolean;
   project?: number;
   scannedSoundCount: number;
+  language: AppLanguage;
+  onLanguageChange: (language: AppLanguage) => void;
   onOpenGame: () => void;
   onOpenStudio: () => void;
   onOpenSounds: () => void;
@@ -11,23 +14,35 @@ interface HomePageProps {
   onOpenMachineTest: () => void;
 }
 
+const copy = {
+  fr: {
+    tagline: 'CRÉER · CLONER · TRANSFÉRER', intro: 'Extrais les morceaux de ta machine, transforme patterns, scènes, Songs et sons, puis prépare leur retour vers l’EP‑133.', connected: 'EP‑133 CONNECTÉ', ready: 'EP‑133 PRÊT À CONNECTER', project: 'PROJET', sounds: 'SONS SCANNÉS',
+    cards: [['CRÉER','PATTERN & SONG STUDIO','Ouvre des morceaux de la machine et travaille groupes, patterns, scènes et positions Song dans un véritable éditeur.'],['CLONER · GÉRER','SONS & TRANSFERT','Clone projets et samples, inspecte la bibliothèque réelle et prépare précisément les emplacements de la machine.'],['CONNECTER','TEST MACHINE','Inspecte MIDI et SysEx, associe les contrôles physiques et vérifie la communication dans les deux sens.'],['MODULE INCLUS','RHYTHM HERO','Retrouve les exercices progressifs, partitions animées et entraînements avec les pads de l’EP‑133.'],['COMPRENDRE','DOCUMENTATION','Guides du Studio et de la machine, connexion MIDI, formats et procédures vérifiées.']], official: 'GUIDE OFFICIEL EP‑133 ↗', local: 'OPEN SOURCE · LOCAL · SANS COMPTE', language: 'Langue',
+  },
+  en: {
+    tagline: 'CREATE · CLONE · TRANSFER', intro: 'Extract music from your device, reshape patterns, scenes, Songs and sounds, then prepare their return to the EP‑133.', connected: 'EP‑133 CONNECTED', ready: 'EP‑133 READY TO CONNECT', project: 'PROJECT', sounds: 'SCANNED SOUNDS',
+    cards: [['CREATE','PATTERN & SONG STUDIO','Open music from the device and edit groups, patterns, scenes and Song positions in a true editor.'],['CLONE · MANAGE','SOUNDS & TRANSFER','Clone projects and samples, inspect the real library and prepare device slots precisely.'],['CONNECT','MACHINE TEST','Inspect MIDI and SysEx, map physical controls and verify two-way communication.'],['INCLUDED MODULE','RHYTHM HERO','Practice with progressive exercises, animated notation and the real EP‑133 pads.'],['LEARN','DOCUMENTATION','Studio and device guides, MIDI connection, formats and verified procedures.']], official: 'OFFICIAL EP‑133 GUIDE ↗', local: 'OPEN SOURCE · LOCAL · NO ACCOUNT', language: 'Language',
+  },
+  es: {
+    tagline: 'CREAR · CLONAR · TRANSFERIR', intro: 'Extrae la música de tu máquina, transforma patterns, escenas, Songs y sonidos, y prepara su regreso al EP‑133.', connected: 'EP‑133 CONECTADO', ready: 'EP‑133 LISTO PARA CONECTAR', project: 'PROYECTO', sounds: 'SONIDOS ESCANEADOS',
+    cards: [['CREAR','PATTERN & SONG STUDIO','Abre música de la máquina y edita grupos, patterns, escenas y posiciones Song.'],['CLONAR · GESTIONAR','SONIDOS Y TRANSFERENCIA','Clona proyectos y samples, inspecciona la biblioteca real y prepara los slots de la máquina.'],['CONECTAR','PRUEBA DE MÁQUINA','Inspecciona MIDI y SysEx, asigna controles físicos y verifica la comunicación bidireccional.'],['MÓDULO INCLUIDO','RHYTHM HERO','Practica con ejercicios progresivos, partitura animada y los pads reales del EP‑133.'],['COMPRENDER','DOCUMENTACIÓN','Guías del Studio y de la máquina, conexión MIDI, formatos y procedimientos verificados.']], official: 'GUÍA OFICIAL EP‑133 ↗', local: 'CÓDIGO ABIERTO · LOCAL · SIN CUENTA', language: 'Idioma',
+  },
+} as const;
+
 function activateWithKeyboard(event: KeyboardEvent<HTMLElement>, action: () => void) {
   if (event.key !== 'Enter' && event.key !== ' ') return;
   event.preventDefault();
   action();
 }
 
-export function HomePage({ connected, project, scannedSoundCount, onOpenGame, onOpenStudio, onOpenSounds, onOpenDocumentation, onOpenMachineTest }: HomePageProps) {
+export function HomePage({ connected, project, scannedSoundCount, language, onLanguageChange, onOpenGame, onOpenStudio, onOpenSounds, onOpenDocumentation, onOpenMachineTest }: HomePageProps) {
+  const t = copy[language];
+  const actions = [onOpenStudio, onOpenSounds, onOpenMachineTest, onOpenGame, onOpenDocumentation];
+  const classes = ['studio-card', 'sounds-card', 'machine-test-card', 'game-card', 'docs-card'];
   return <main className="home-screen">
-    <header className="home-brand"><span>EP‑133</span><b>KO II STUDIO</b><small>CRÉER · CLONER · TRANSFÉRER</small></header>
-    <section className="home-intro"><p>Extrais les morceaux de ta machine, transforme patterns, scènes, Songs et sons, puis prépare leur retour vers l’EP‑133.</p><div className="home-machine-status"><i className={connected ? 'online' : ''} /><span>{connected ? 'EP‑133 CONNECTÉ' : 'EP‑133 PRÊT À CONNECTER'}</span>{project !== undefined && <small>PROJET {project} · {scannedSoundCount} SONS SCANNÉS</small>}</div></section>
-    <section className="home-tools">
-      <article className="home-card studio-card" role="button" tabIndex={0} onClick={onOpenStudio} onKeyDown={(event) => activateWithKeyboard(event, onOpenStudio)}><span className="home-number">01</span><small>CRÉER</small><h2>PATTERN & SONG STUDIO</h2><p>Ouvre des morceaux de la machine et travaille groupes, patterns, scènes et positions Song dans un véritable éditeur.</p></article>
-      <article className="home-card sounds-card" role="button" tabIndex={0} onClick={onOpenSounds} onKeyDown={(event) => activateWithKeyboard(event, onOpenSounds)}><span className="home-number">02</span><small>CLONER · GÉRER</small><h2>SONS & TRANSFERT</h2><p>Clone projets et samples, inspecte la bibliothèque réelle et prépare précisément les emplacements de la machine.</p></article>
-      <article className="home-card machine-test-card" role="button" tabIndex={0} onClick={onOpenMachineTest} onKeyDown={(event) => activateWithKeyboard(event, onOpenMachineTest)}><span className="home-number">03</span><small>CONNECTER</small><h2>TEST MACHINE</h2><p>Inspecte MIDI et SysEx, associe les contrôles physiques et vérifie la communication dans les deux sens.</p></article>
-      <article className="home-card game-card" role="button" tabIndex={0} onClick={onOpenGame} onKeyDown={(event) => activateWithKeyboard(event, onOpenGame)}><span className="home-number">04</span><small>MODULE INCLUS</small><h2>RHYTHM HERO</h2><p>Retrouve les exercices progressifs, partitions animées et entraînements avec les pads de l’EP‑133.</p></article>
-      <article className="home-card docs-card" role="button" tabIndex={0} onClick={onOpenDocumentation} onKeyDown={(event) => activateWithKeyboard(event, onOpenDocumentation)}><span className="home-number">05</span><small>COMPRENDRE</small><h2>DOCUMENTATION</h2><p>Guide français, repères visuels, connexion MIDI, formats et sécurité de la machine.</p></article>
-    </section>
-    <footer className="home-footer"><span>EP‑133 KO II STUDIO</span><a href="https://teenage.engineering/guides/ep-133" target="_blank" rel="noreferrer">GUIDE OFFICIEL EP‑133 ↗</a><span>OPEN SOURCE · LOCAL · SANS COMPTE</span></footer>
+    <header className="home-brand"><span>EP‑133</span><b>KO II STUDIO</b><div className="language-switch" aria-label={t.language}>{(['fr','en','es'] as AppLanguage[]).map((item) => <button className={language === item ? 'active' : ''} onClick={() => onLanguageChange(item)} aria-pressed={language === item} key={item}>{item.toUpperCase()}</button>)}</div><small>{t.tagline}</small></header>
+    <section className="home-intro"><p>{t.intro}</p><div className="home-machine-status"><i className={connected ? 'online' : ''} /><span>{connected ? t.connected : t.ready}</span>{project !== undefined && <small>{t.project} {project} · {scannedSoundCount} {t.sounds}</small>}</div></section>
+    <section className="home-tools">{t.cards.map(([eyebrow, title, description], index) => <article className={`home-card ${classes[index]}`} role="button" tabIndex={0} onClick={actions[index]} onKeyDown={(event) => activateWithKeyboard(event, actions[index])} key={title}><span className="home-number">{String(index + 1).padStart(2, '0')}</span><small>{eyebrow}</small><h2>{title}</h2><p>{description}</p></article>)}</section>
+    <footer className="home-footer"><span>EP‑133 KO II STUDIO</span><a href="https://teenage.engineering/guides/ep-133" target="_blank" rel="noreferrer">{t.official}</a><span>{t.local}</span></footer>
   </main>;
 }

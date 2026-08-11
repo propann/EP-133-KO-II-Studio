@@ -58,6 +58,12 @@ La page forme désormais un centre documentaire en trois parties :
 Chaque fiche indique clairement quand une procédure est limitée à la lecture
 seule ou exige une validation sur le matériel réel.
 
+Depuis le 11 août 2026, l'accueil et le centre documentaire disposent d'un
+sélecteur **FR / EN / ES**. Le choix est mémorisé localement et traduit la
+navigation, les présentations et les fiches documentaires. Les fichiers
+techniques complets restent pour l'instant rédigés en français sur GitHub ; la
+traduction de leur contenu sera versionnée progressivement.
+
 ## Ressources communautaires à indexer plus tard
 
 Les projets étudiés (`ep-series-sysex`, `EP133-skill`, export DAW et autres)

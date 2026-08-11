@@ -54,6 +54,7 @@ import { MachineCloneDialog } from './components/editor/MachineCloneDialog';
 import { chooseLocalDirectory, collectLocalFiles } from './core/storage/localFolders';
 import './style.css';
 import catalogue from '../exercises/catalogue-exercices-v1.json';
+import { APP_LANGUAGE_KEY, loadAppLanguage, type AppLanguage } from './core/i18n';
 
 const styleLabel = (key: string) => key.replace(/([a-z])([A-Z])/g, '$1 $2').replaceAll('_', ' ').toUpperCase();
 const STYLES = catalogue.exercises.map((item) => ({ id: item.key, label: `${String(item.id).padStart(2, '0')} · ${styleLabel(item.key)}`, bpm: item.bpm }));
@@ -134,6 +135,7 @@ function loadUserExercises(): Exercise[] {
 }
 
 export default function App() {
+  const [language, setLanguage] = useState<AppLanguage>(loadAppLanguage);
   const [workspaceView, setWorkspaceView] = useState<'home' | 'game' | 'sounds' | 'docs' | 'machine-test'>('home');
   const [styleId, setStyleId] = useState('boom');
   const [difficulty, setDifficulty] = useState(1);
@@ -1003,13 +1005,15 @@ export default function App() {
     editorScrollToEnd.current = false;
   }, [editorBars, editorGroup, editorOpen, editorPatternNumbers, studioView]);
 
-  if (workspaceView === 'home') return <HomePage connected={midi.connected || midi.outputConnected} project={deviceInventory?.project} scannedSoundCount={deviceInventory ? Object.keys(deviceInventory.sounds).length : 0} onOpenGame={() => setWorkspaceView('game')} onOpenStudio={openCompleteEditor} onOpenSounds={() => setWorkspaceView('sounds')} onOpenDocumentation={() => setWorkspaceView('docs')} onOpenMachineTest={() => setWorkspaceView('machine-test')} />;
+  const changeLanguage = (nextLanguage: AppLanguage) => { setLanguage(nextLanguage); localStorage.setItem(APP_LANGUAGE_KEY, nextLanguage); document.documentElement.lang = nextLanguage; };
+
+  if (workspaceView === 'home') return <HomePage connected={midi.connected || midi.outputConnected} project={deviceInventory?.project} scannedSoundCount={deviceInventory ? Object.keys(deviceInventory.sounds).length : 0} language={language} onLanguageChange={changeLanguage} onOpenGame={() => setWorkspaceView('game')} onOpenStudio={openCompleteEditor} onOpenSounds={() => setWorkspaceView('sounds')} onOpenDocumentation={() => setWorkspaceView('docs')} onOpenMachineTest={() => setWorkspaceView('machine-test')} />;
 
   if (workspaceView === 'machine-test') return <MachineTestPage connected={midi.connected} inputNames={midi.inputNames} observations={midiObservations} onBack={goHome} onConnect={() => void midi.connectMonitor()} onSendLearned={midi.sendLearnedMessage} onSelectMachineGroup={midi.selectMachineGroup} />;
 
   if (workspaceView === 'sounds') return <SoundsPage inventory={deviceInventory} soundIndex={deviceSoundIndex} midiConnected={midi.outputConnected} liveMidi={lastMidi?.note !== undefined && lastMidi.velocity !== undefined ? { note: lastMidi.note, velocity: lastMidi.velocity, timestamp: lastMidi.timestamp } : null} padModes={editorPadModes} onBack={goHome} onConnectMidi={() => void connectMidi()} onPadModeChange={(group, pad, mode) => setEditorPadModes((current) => ({ ...current, [`${group}:${pad}`]: mode }))} onPadPreview={(group, pad, stagedSlot) => void previewSoundPagePad(group, pad, stagedSlot)} />;
 
-  if (workspaceView === 'docs') return <DocumentationPage onBack={goHome} />;
+  if (workspaceView === 'docs') return <DocumentationPage language={language} onBack={goHome} />;
 
   return <main className={last ? `impact impact-${last.grade.toLowerCase()}` : ''}>
     <GameToolbar difficulty={difficulty} tempo={tempo} activeBpm={activeExercise.bpm} styleId={styleId} styles={STYLES} userExercises={userExercises} phase={phase} sessionActive={sessionActive} midiConnected={midi.connected} onDifficultyChange={setDifficulty} onTempoChange={setTempo} onStyleChange={changeStyle} onHome={goHome} onOpenEditor={openEditor} onConnectMidi={() => void connectMidi()} onPreview={() => void togglePreview()} onPlay={() => void toggle()} />

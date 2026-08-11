@@ -1,3 +1,5 @@
+import type { AppLanguage } from '../core/i18n';
+
 const REPO_DOCS = 'https://github.com/propann/EP-133-KO-II-Studio/blob/main/docs';
 
 type DocLink = {
@@ -27,30 +29,53 @@ const machineGuides: DocLink[] = [
   { title: 'MODÈLE DE DONNÉES', file: 'MODELE_DONNEES_PROJET.md', description: 'Groupes, pads, notes, vélocités, durées et champs préservés.' },
 ];
 
-function DocumentationLibrary({ eyebrow, title, description, links, start }: { eyebrow: string; title: string; description: string; links: DocLink[]; start: number }) {
+const guideTranslations: Record<'en' | 'es', Record<string, [string, string, string?]>> = {
+  en: {
+    'LANCEMENT_LOCAL.md':['START THE STUDIO','Install the app, run it locally and open each tool.'], 'STRUCTURE_SONG_MODE.md':['PATTERN & SONG STUDIO','Understand patterns, scenes, Song Positions and the arranger.'], 'VALIDATION_SAVE_LOAD_STUDIO.md':['SAVE / LOAD','Create, save, reopen and protect Studio projects.'], 'POINT_SONS_ET_TRANSFERT.md':['SOUNDS & TRANSFER','Groups, pads, slots, sound banks and synchronization preparation.'], 'CLONAGE_COMPLET_MACHINE.md':['CLONE THE DEVICE','Copy projects, metadata and samples to a private local mirror.','READ ONLY'], 'PONT_LOCAL_CLONAGE.md':['LOCAL BRIDGE','Connect the browser to the local cloning engine.'], 'CONNEXION_ET_CALIBRATION_MIDI.md':['MACHINE TEST & MIDI','Read MIDI/SysEx logs, map controls and test both directions.','HARDWARE'], 'POINT_JEU_ET_STUDIO.md':['RHYTHM HERO','Use the training module, exercises, scoring and pads.'],
+    'MISE_EN_ROUTE_LINUX.md':['LINUX SETUP','USB, permissions, compatible browser and MIDI checks on Linux.'], 'MISE_EN_ROUTE_WINDOWS.md':['WINDOWS SETUP','Prepare Windows, connect the EP‑133 and start the app.'], 'CHARGEMENT_PROJET_MACHINE.md':['LOAD A DEVICE PROJECT','Read a real project without changing EP‑133 data.','READ ONLY'], 'BANQUE_SAMPLES_STUDIO.md':['SAMPLE LIBRARY','Understand sounds, slots and their use in the Studio.'], 'DECISION_FORMATS_PROJET.md':['EP‑133 FORMATS','.pak/.ppak archives, MIDI, JSON and known compatibility limits.'], 'MODELE_DONNEES_PROJET.md':['DATA MODEL','Groups, pads, notes, velocities, durations and preserved fields.'],
+  },
+  es: {
+    'LANCEMENT_LOCAL.md':['INICIAR EL STUDIO','Instala la aplicación, ejecútala localmente y abre sus herramientas.'], 'STRUCTURE_SONG_MODE.md':['PATTERN & SONG STUDIO','Comprende patterns, escenas, Song Positions y el arreglador.'], 'VALIDATION_SAVE_LOAD_STUDIO.md':['SAVE / LOAD','Crea, guarda, vuelve a abrir y protege proyectos del Studio.'], 'POINT_SONS_ET_TRANSFERT.md':['SONIDOS Y TRANSFERENCIA','Grupos, pads, slots, bancos de sonidos y preparación de sincronización.'], 'CLONAGE_COMPLET_MACHINE.md':['CLONAR LA MÁQUINA','Copia proyectos, metadatos y samples a un espejo local privado.','SOLO LECTURA'], 'PONT_LOCAL_CLONAGE.md':['PUENTE LOCAL','Conecta el navegador con el motor local de clonación.'], 'CONNEXION_ET_CALIBRATION_MIDI.md':['PRUEBA DE MÁQUINA Y MIDI','Lee el registro MIDI/SysEx, asigna controles y prueba ambos sentidos.','HARDWARE'], 'POINT_JEU_ET_STUDIO.md':['RHYTHM HERO','Usa el módulo de entrenamiento, sus ejercicios, puntuación y pads.'],
+    'MISE_EN_ROUTE_LINUX.md':['CONFIGURACIÓN LINUX','USB, permisos, navegador compatible y verificación MIDI en Linux.'], 'MISE_EN_ROUTE_WINDOWS.md':['CONFIGURACIÓN WINDOWS','Prepara Windows, conecta el EP‑133 e inicia la aplicación.'], 'CHARGEMENT_PROJET_MACHINE.md':['CARGAR UN PROYECTO','Lee un proyecto real sin modificar los datos del EP‑133.','SOLO LECTURA'], 'BANQUE_SAMPLES_STUDIO.md':['BANCO DE SAMPLES','Comprende sonidos, slots y su uso en el Studio.'], 'DECISION_FORMATS_PROJET.md':['FORMATOS EP‑133','Archivos .pak/.ppak, MIDI, JSON y límites conocidos.'], 'MODELE_DONNEES_PROJET.md':['MODELO DE DATOS','Grupos, pads, notas, velocidades, duraciones y campos preservados.'],
+  },
+};
+
+function localizedGuides(guides: DocLink[], language: AppLanguage): DocLink[] {
+  if (language === 'fr') return guides;
+  return guides.map((guide) => { const translated = guideTranslations[language][guide.file]; return translated ? { ...guide, title:translated[0], description:translated[1], status:translated[2] } : guide; });
+}
+
+const ui = {
+  fr: { back:'← ACCUEIL', center:'CENTRE DE DOCUMENTATION', badge:'OUTILS · MACHINE · FR', hero:'MAÎTRISER LE STUDIO.', hero2:'COMPRENDRE LA MACHINE.', lead:'Tous les guides de nos outils sont réunis ici, avec les procédures de connexion et les références de l’EP‑133.', tools:'NOS OUTILS', toolsSub:'Studio, clone, sons, MIDI et entraînement', machine:'LA MACHINE', machineSub:'Connexion, formats, projets et samples', official:'GUIDE OFFICIEL', officialSub:'Référence constructeur Teenage Engineering', software:'DOCUMENTATION DU LOGICIEL', softwareText:'Les procédures pratiques pour utiliser chaque module d’EP‑133 KO II Studio.', hardware:'DOCUMENTATION MATÉRIELLE', hardwareText:'Nos notes techniques et procédures vérifiées pour travailler avec la vraie machine.', guides:'GUIDES', open:'OUVRIR ↗', source:'SOURCE CONSTRUCTEUR', officialTitle:'GUIDE OFFICIEL EP‑133', sourceText:'La référence pour toutes les commandes et fonctions de la machine. Le manuel reste la propriété de Teenage Engineering et n’est pas redistribué par ce projet.', online:'GUIDE EN LIGNE ↗', downloads:'TÉLÉCHARGEMENTS ↗' },
+  en: { back:'← HOME', center:'DOCUMENTATION CENTER', badge:'TOOLS · DEVICE · EN', hero:'MASTER THE STUDIO.', hero2:'UNDERSTAND THE DEVICE.', lead:'All guides for our tools are gathered here, together with connection procedures and EP‑133 references.', tools:'OUR TOOLS', toolsSub:'Studio, clone, sounds, MIDI and training', machine:'THE DEVICE', machineSub:'Connection, formats, projects and samples', official:'OFFICIAL GUIDE', officialSub:'Teenage Engineering manufacturer reference', software:'SOFTWARE DOCUMENTATION', softwareText:'Practical procedures for every EP‑133 KO II Studio module.', hardware:'DEVICE DOCUMENTATION', hardwareText:'Our technical notes and verified procedures for working with the real device.', guides:'GUIDES', open:'OPEN ↗', source:'MANUFACTURER SOURCE', officialTitle:'OFFICIAL EP‑133 GUIDE', sourceText:'The reference for all device controls and functions. The manual remains the property of Teenage Engineering and is not redistributed by this project.', online:'ONLINE GUIDE ↗', downloads:'DOWNLOADS ↗' },
+  es: { back:'← INICIO', center:'CENTRO DE DOCUMENTACIÓN', badge:'HERRAMIENTAS · MÁQUINA · ES', hero:'DOMINAR EL STUDIO.', hero2:'COMPRENDER LA MÁQUINA.', lead:'Todas las guías de nuestras herramientas están reunidas aquí, junto con los procedimientos de conexión y las referencias del EP‑133.', tools:'NUESTRAS HERRAMIENTAS', toolsSub:'Studio, clon, sonidos, MIDI y entrenamiento', machine:'LA MÁQUINA', machineSub:'Conexión, formatos, proyectos y samples', official:'GUÍA OFICIAL', officialSub:'Referencia del fabricante Teenage Engineering', software:'DOCUMENTACIÓN DEL SOFTWARE', softwareText:'Procedimientos prácticos para cada módulo de EP‑133 KO II Studio.', hardware:'DOCUMENTACIÓN DE LA MÁQUINA', hardwareText:'Notas técnicas y procedimientos verificados para trabajar con la máquina real.', guides:'GUÍAS', open:'ABRIR ↗', source:'FUENTE DEL FABRICANTE', officialTitle:'GUÍA OFICIAL EP‑133', sourceText:'La referencia para todos los controles y funciones de la máquina. El manual pertenece a Teenage Engineering y este proyecto no lo redistribuye.', online:'GUÍA EN LÍNEA ↗', downloads:'DESCARGAS ↗' },
+} as const;
+
+function DocumentationLibrary({ eyebrow, title, description, links, start, guidesLabel, openLabel }: { eyebrow: string; title: string; description: string; links: DocLink[]; start: number; guidesLabel: string; openLabel: string }) {
   return <section className="docs-library">
-    <header><div><small>{eyebrow}</small><h2>{title}</h2><p>{description}</p></div><span>{links.length} GUIDES</span></header>
+    <header><div><small>{eyebrow}</small><h2>{title}</h2><p>{description}</p></div><span>{links.length} {guidesLabel}</span></header>
     <div>{links.map((guide, index) => <a href={`${REPO_DOCS}/${guide.file}`} target="_blank" rel="noreferrer" key={guide.file}>
       <b>{String(start + index).padStart(2, '0')}</b>
       <div><strong>{guide.title}</strong><p>{guide.description}</p>{guide.status && <em>{guide.status}</em>}</div>
-      <span>OUVRIR ↗</span>
+      <span>{openLabel}</span>
     </a>)}</div>
   </section>;
 }
 
-interface DocumentationPageProps { onBack: () => void; }
+interface DocumentationPageProps { language: AppLanguage; onBack: () => void; }
 
-export function DocumentationPage({ onBack }: DocumentationPageProps) {
+export function DocumentationPage({ language, onBack }: DocumentationPageProps) {
+  const t = ui[language];
   return <main className="documentation-page">
-    <header className="module-header docs-header"><button onClick={onBack}>← ACCUEIL</button><div><small>MODULE 05</small><h1>CENTRE DE DOCUMENTATION</h1></div><span className="ready">OUTILS · MACHINE · FR</span></header>
+    <header className="module-header docs-header"><button onClick={onBack}>{t.back}</button><div><small>MODULE 05</small><h1>{t.center}</h1></div><span className="ready">{t.badge}</span></header>
 
-    <section className="docs-hero"><div><small>EP‑133 KO II STUDIO</small><h2>MAÎTRISER LE STUDIO.<br />COMPRENDRE LA MACHINE.</h2><p>Tous les guides de nos outils sont réunis ici, avec les procédures de connexion et les références de l’EP‑133.</p></div><div className="docs-device-diagram" aria-label="Schéma original des quatre groupes et douze pads"><div className="docs-screen"><i /><i /><i /><i /><i /><i /><i /><i /></div><div className="docs-groups"><b>A</b><b>B</b><b>C</b><b>D</b></div><div className="docs-pad-mini">{['7','8','9','4','5','6','1','2','3','·','0','↵'].map((key) => <i key={key}>{key}</i>)}</div></div></section>
+    <section className="docs-hero"><div><small>EP‑133 KO II STUDIO</small><h2>{t.hero}<br />{t.hero2}</h2><p>{t.lead}</p></div><div className="docs-device-diagram" aria-label="EP-133 diagram"><div className="docs-screen"><i /><i /><i /><i /><i /><i /><i /><i /></div><div className="docs-groups"><b>A</b><b>B</b><b>C</b><b>D</b></div><div className="docs-pad-mini">{['7','8','9','4','5','6','1','2','3','·','0','↵'].map((key) => <i key={key}>{key}</i>)}</div></div></section>
 
-    <nav className="docs-index" aria-label="Sommaire de la documentation"><a href="#outils"><b>01</b><span>NOS OUTILS<small>Studio, clone, sons, MIDI et entraînement</small></span></a><a href="#machine"><b>02</b><span>LA MACHINE<small>Connexion, formats, projets et samples</small></span></a><a href="#officiel"><b>03</b><span>GUIDE OFFICIEL<small>Référence constructeur Teenage Engineering</small></span></a></nav>
+    <nav className="docs-index" aria-label="Documentation index"><a href="#outils"><b>01</b><span>{t.tools}<small>{t.toolsSub}</small></span></a><a href="#machine"><b>02</b><span>{t.machine}<small>{t.machineSub}</small></span></a><a href="#officiel"><b>03</b><span>{t.official}<small>{t.officialSub}</small></span></a></nav>
 
-    <div id="outils"><DocumentationLibrary eyebrow="DOCUMENTATION DU LOGICIEL" title="NOS OUTILS" description="Les procédures pratiques pour utiliser chaque module d’EP‑133 KO II Studio." links={toolGuides} start={1} /></div>
-    <div id="machine"><DocumentationLibrary eyebrow="DOCUMENTATION MATÉRIELLE" title="EP‑133 K.O. II" description="Nos notes techniques et procédures vérifiées pour travailler avec la vraie machine." links={machineGuides} start={toolGuides.length + 1} /></div>
+    <div id="outils"><DocumentationLibrary eyebrow={t.software} title={t.tools} description={t.softwareText} links={localizedGuides(toolGuides, language)} start={1} guidesLabel={t.guides} openLabel={t.open} /></div>
+    <div id="machine"><DocumentationLibrary eyebrow={t.hardware} title="EP‑133 K.O. II" description={t.hardwareText} links={localizedGuides(machineGuides, language)} start={toolGuides.length + 1} guidesLabel={t.guides} openLabel={t.open} /></div>
 
-    <section className="docs-sources" id="officiel"><div><small>SOURCE CONSTRUCTEUR</small><h2>GUIDE OFFICIEL EP‑133</h2><p>La référence pour toutes les commandes et fonctions de la machine. Les illustrations et le manuel restent la propriété de Teenage Engineering et ne sont pas redistribués par ce projet.</p></div><div className="docs-source-actions"><a href="https://teenage.engineering/guides/ep-133" target="_blank" rel="noreferrer">GUIDE EN LIGNE ↗</a><a className="secondary" href="https://teenage.engineering/downloads/ep-133" target="_blank" rel="noreferrer">TÉLÉCHARGEMENTS ↗</a></div></section>
+    <section className="docs-sources" id="officiel"><div><small>{t.source}</small><h2>{t.officialTitle}</h2><p>{t.sourceText}</p></div><div className="docs-source-actions"><a href="https://teenage.engineering/guides/ep-133" target="_blank" rel="noreferrer">{t.online}</a><a className="secondary" href="https://teenage.engineering/downloads/ep-133" target="_blank" rel="noreferrer">{t.downloads}</a></div></section>
   </main>;
 }

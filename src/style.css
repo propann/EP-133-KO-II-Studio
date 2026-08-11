@@ -12,6 +12,7 @@
   --ko-black: #1A1A1A;
   --ko-amber: #FFB000;
   --ko-muted: #8E8D88;
+  --ko-grid:linear-gradient(rgba(26,26,26,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(26,26,26,.045) 1px,transparent 1px),var(--ko-beige);
   /* Rayon de cadre commun à tout l'affichage du Studio (panneaux, boutons,
      cartes), pour rester cohérent avec les cartes du Song Arranger. */
   --radius: 10px;
@@ -29,11 +30,9 @@
 body {
   margin: 0;
   min-width: 320px;
-  background:
-    linear-gradient(rgba(26,26,26,.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(26,26,26,.045) 1px, transparent 1px),
-    var(--ko-beige);
+  background:var(--ko-grid);
   background-size: 24px 24px;
+  background-attachment:fixed;
 }
 button { font: inherit; }
 main { max-width: 1280px; margin: auto; padding: 14px 24px 28px; display:flex; flex-direction:column; }
@@ -250,8 +249,8 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .start:disabled { opacity:.45; cursor:not-allowed; }
 .editor-button { background:#d9d7d1; border:1px solid var(--ko-black); cursor:pointer; }
 .editor-button:disabled { opacity:.45; cursor:not-allowed; }
-.editor-overlay { position:fixed; inset:0; z-index:60; display:block; padding:0; background:var(--ko-beige); }
-.exercise-editor { width:100vw; height:100vh; max-height:none; overflow:hidden; padding:14px 18px; border:0; background:var(--ko-beige); box-shadow:none; display:flex; flex-direction:column; }
+.editor-overlay { position:fixed; inset:0; z-index:60; display:block; padding:0; background:var(--ko-grid); background-size:24px 24px; }
+.exercise-editor { width:100vw; height:100vh; max-height:none; overflow:hidden; padding:14px 18px; border:0; background:transparent; box-shadow:none; display:flex; flex-direction:column; }
 .exercise-editor > header { display:flex; align-items:center; justify-content:space-between; gap:14px; border-bottom:1px solid var(--ko-black); padding-bottom:10px; }
 .exercise-editor > header div { display:grid; gap:5px; }
 .exercise-editor > header small { font-size:9px; }
@@ -618,6 +617,9 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .home-brand { align-items:flex-end; padding-bottom:15px; border-bottom:4px solid var(--ko-black); }
 .home-brand span { padding:7px 11px; background:var(--ko-orange); color:var(--ko-black); font-size:20px; font-weight:900; }
 .home-brand b { margin-right:auto; font-size:clamp(22px,4vw,50px); line-height:.9; letter-spacing:-3px; }
+.language-switch { display:flex; gap:4px; margin-left:auto; }
+.language-switch button { min-width:38px; padding:6px 7px; border:2px solid var(--ko-black); background:var(--ko-panel); font-size:8px; font-weight:900; cursor:pointer; }
+.language-switch button.active { background:var(--ko-orange); color:#fff; box-shadow:2px 2px 0 var(--ko-black); }
 .home-brand small { font-size:9px; font-weight:bold; }
 .home-intro { display:flex; align-items:center; justify-content:space-between; gap:25px; padding:25px 0; }
 .home-intro p { margin:0; max-width:720px; color:var(--ko-black); font-size:clamp(14px,1.7vw,22px); font-weight:bold; line-height:1.35; }
@@ -646,7 +648,7 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .home-footer a:hover,.home-footer a:focus-visible { color:var(--ko-orange); }
 
 /* Banc de test MIDI : façade interactive et journal brut en lecture seule. */
-.machine-test-page { min-height:100vh; padding:22px clamp(18px,3vw,48px); background:#d5d2ca; color:var(--ko-black); }
+.machine-test-page { min-height:100vh; padding:22px clamp(18px,3vw,48px); color:var(--ko-black); }
 .machine-test-header { display:flex; align-items:center; gap:18px; padding-bottom:14px; border-bottom:4px solid var(--ko-black); }
 .machine-test-header > div { margin-right:auto; }
 .machine-test-header small { font-size:8px; font-weight:900; letter-spacing:1.5px; }
