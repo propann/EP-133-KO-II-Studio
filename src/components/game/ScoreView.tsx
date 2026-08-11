@@ -29,7 +29,7 @@ export function ScoreView({ viewportRef, pageStart, songBeat, transportActive, p
           <div className="measure-titles"><span /><b>MESURE {Math.floor(pageStart / 4) + 1}</b><b>MESURE {Math.floor(pageStart / 4) + 2}</b></div>
           <div className="step-numbers"><span />{Array.from({ length: 32 }, (_, step) => <i key={step}>{step % 16 + 1}</i>)}</div>
           {EP133_SCORE_TRACKS.map((track) => <div className="sequence-track" key={track.pad}>
-            <strong>{track.label}</strong>
+            <strong className={`cat-${track.category}`}>{track.label}</strong>
             {Array.from({ length: 32 }, (_, step) => {
               const expected = expectedTargets.find((target) => target.pad === track.pad && Math.round((target.beat - pageStart) * 4) === step);
               const played = playedNotes.filter((note) => note.pad === track.pad && Math.max(0, Math.min(31, Math.floor((note.beat - pageStart) * 4))) === step);

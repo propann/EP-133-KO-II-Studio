@@ -13,6 +13,10 @@
   --ko-amber: #FFB000;
   --ko-muted: #8E8D88;
   --ko-grid:linear-gradient(rgba(26,26,26,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(26,26,26,.045) 1px,transparent 1px),var(--ko-beige);
+  /* Repères de catégorie de pad pour Rhythm Hero — mêmes teintes que les
+     pastilles .bank-* de Sons & Transfert, pour que jeu et banque de sons
+     parlent le même langage visuel. */
+  --cat-kick:#e65c32; --cat-snare:#f0a12e; --cat-hat:#e9cf4c; --cat-perc:#bc6f97; --cat-bass:#586a9b; --cat-fx:#8b68a4;
   /* Rayon de cadre commun à tout l'affichage du Studio (panneaux, boutons,
      cartes), pour rester cohérent avec les cartes du Song Arranger. */
   --radius: 10px;
@@ -86,7 +90,14 @@ header { display:flex; justify-content:space-between; gap:30px; align-items:star
 .measure-titles b:last-of-type { grid-column:18 / span 16; border-left:2px solid var(--ko-black); }
 .step-numbers i { padding:3px 0; text-align:center; font-size:9px; font-style:normal; }
 .step-numbers i:nth-child(18) { border-left:2px solid var(--ko-black); }
-.sequence-track strong { position:sticky; left:0; z-index:5; display:flex; align-items:center; padding:0 7px; border-top:1px solid #a9a69f; border-right:2px solid var(--ko-black); background:#dedcd6; font-size:10px; }
+.sequence-track strong { position:sticky; left:0; z-index:5; display:flex; align-items:center; padding:0 7px 0 12px; border-top:1px solid #a9a69f; border-right:2px solid var(--ko-black); background:#dedcd6; font-size:10px; }
+.sequence-track strong::before { content:''; position:absolute; inset:0 auto 0 0; width:5px; background:#999; }
+.sequence-track strong.cat-kick::before { background:var(--cat-kick); }
+.sequence-track strong.cat-snare::before { background:var(--cat-snare); }
+.sequence-track strong.cat-hat::before { background:var(--cat-hat); }
+.sequence-track strong.cat-perc::before { background:var(--cat-perc); }
+.sequence-track strong.cat-bass::before { background:var(--cat-bass); }
+.sequence-track strong.cat-fx::before { background:var(--cat-fx); }
 .sequence-step {
   display:grid; place-items:center; height:25px; border-left:1px solid #b8b5ae; border-top:1px solid #b8b5ae;
   background:#f4f2ed; color:var(--ko-black); font-size:9px; font-style:normal; font-weight:bold;
@@ -113,12 +124,23 @@ header { display:flex; justify-content:space-between; gap:30px; align-items:star
   margin:0 auto;
 }
 .pads button {
+  position:relative; overflow:hidden;
   height:76px; background:linear-gradient(145deg,#262626,#111); color:#fff; border:1px solid var(--ko-black);
   border-radius:var(--radius-sm);
   text-align:left; padding:12px; cursor:pointer;
   box-shadow:3px 3px 0 var(--ko-black);
   transition:transform .1s ease,box-shadow .1s ease,background .1s ease;
 }
+/* Rail de couleur par famille de son — même code que les pastilles .bank-*
+   de Sons & Transfert, pour apprendre à repérer un rôle de pad d'un coup
+   d'œil plutôt que par la seule lecture du nom. */
+.pads button::before { content:''; position:absolute; inset:0 auto 0 0; width:5px; background:#555; }
+.pads button.cat-kick::before { background:var(--cat-kick); }
+.pads button.cat-snare::before { background:var(--cat-snare); }
+.pads button.cat-hat::before { background:var(--cat-hat); }
+.pads button.cat-perc::before { background:var(--cat-perc); }
+.pads button.cat-bass::before { background:var(--cat-bass); }
+.pads button.cat-fx::before { background:var(--cat-fx); }
 .pads button:hover { background:var(--ko-orange); color:#fff; transform:translateY(-2px); box-shadow:3px 5px 0 var(--ko-black); }
 .pads button:active { transform:translate(2px,2px); box-shadow:none; }
 .pads button.expected-pad {

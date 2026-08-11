@@ -17,7 +17,7 @@ export function PerformancePanel({ transportActive, expectedPad, flashedPad, mid
     <section className="pads">{EP133_PADS.map((pad, index) => {
       const expected = transportActive && expectedPad === index;
       const played = flashedPad?.pad === index;
-      return <button key={pad.key} onClick={(event) => { if (event.detail === 1) onPlayPad(index); }} onDoubleClick={() => onEditPad(index)} className={`${expected ? 'expected-pad ' : ''}${played && flashedPad ? `played-pad ${flashedPad.grade.toLowerCase()}` : ''}`}>
+      return <button key={pad.key} onClick={(event) => { if (event.detail === 1) onPlayPad(index); }} onDoubleClick={() => onEditPad(index)} className={`cat-${pad.category} ${expected ? 'expected-pad ' : ''}${played && flashedPad ? `played-pad ${flashedPad.grade.toLowerCase()}` : ''}`}>
         <b>{pad.key}</b>{pad.name}
         <em>MAPPING MIDI AUTOMATIQUE</em>
       </button>;
