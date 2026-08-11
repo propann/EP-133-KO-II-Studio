@@ -8,6 +8,18 @@ la propriété `bars` de chaque pattern conserve cette valeur explicitement :
 elle ne doit pas être recalculée uniquement depuis la dernière note, car un
 pattern vide ou volontairement plus long possède malgré tout une longueur.
 
+La valeur est indépendante pour chaque couple groupe/pattern. Le projet réel
+de validation le démontre notamment avec `A01 = LN.2`, `C01 = LN.1` et
+`C02 = LN.4`. La durée d'une scène suit ensuite le groupe le plus long ; elle
+ne doit jamais recopier arbitrairement la même longueur sur A, B, C et D.
+
+Dans l'éditeur, une mesure conserve une largeur fixe de 16 pas × 60 px. Ainsi
+`LN.1`, `LN.2` et `LN.4` mesurent respectivement 960, 1920 et 3840 px avant
+défilement : le quadrillage ne déforme jamais une longueur pour remplir la
+fenêtre.
+La réserve blanche de navigation est ajoutée après ces mesures réelles ; elle
+ne remplace donc jamais la longueur choisie par `LN`.
+
 ## Pourquoi ce modèle existe
 
 Le jeu pédagogique et le studio utilisaient auparavant la même forme minimale

@@ -561,8 +561,10 @@ de l'application, y compris pour l'éditeur plein écran et le banc de test.
 
 ## Étape 4.3 — longueur native des patterns `LN.n`
 
-Statut : contrôle Studio livré le 11 août 2026, validation matérielle de
-l'écriture encore verrouillée.
+Statut : socle publié jusqu'au commit `fed3dec`. Les raffinements indiqués
+**LOCAL** ci-dessous sont testés (`npm test`, `npm run build`) mais volontairement
+gardés au chaud, sans commit ni push, à la demande de l'utilisateur. Validation
+visuelle navigateur et validation matérielle de l'écriture encore à faire.
 
 - [x] notice OS 2.0 vérifiée : `LN.1` = une mesure et longueur maximale 99 ;
 - [x] contrôle `−  LN.n  ＋` ajouté à côté du pattern actif ;
@@ -575,13 +577,28 @@ l'écriture encore verrouillée.
   au moins une note ;
 - [x] toile d'édition blanche étendue à toute la largeur et toute la hauteur
   disponibles, même pour `LN.1`, sans créer de faux pas hors longueur.
-- [x] une zone contenant des notes verrouille la borne minimale de `LN` : le
-  bouton moins ne peut plus tronquer une partie déjà écrite ; son bandeau
-  orange arrondi matérialise cette zone figée.
+- [x] **LOCAL** — le bouton `LN` modifie directement la longueur native `1–99`
+  du pattern, indépendamment des notes présentes ; le bandeau orange reste
+  affiché mais sera traité séparément.
+- [x] **LOCAL** — modifier ou étendre `LN` conserve la position horizontale de travail ;
+- [x] **LOCAL** — menu `•••` sur chaque bloc orange avec copie vers le bloc suivant et
+  suppression confirmée de toutes les notes du bloc.
+- [x] **LOCAL** — le menu `•••` expose aussi `LN− / LN.n / LN＋` pour régler la
+  longueur du pattern depuis son bloc.
+- [x] **LOCAL** — longueur indépendante visible sous chaque bouton de groupe A/B/C/D ;
+  vérification sur le projet réel (`A01 LN.2`, `C01 LN.1`, `C02 LN.4`).
+- [x] **LOCAL** — géométrie alignée sur la notice : 16 pas fixes par mesure et
+  largeur constante de 60 px par pas (`LN.1 = 960 px`, `LN.2 = 1920 px`).
+- [x] **LOCAL** — la réserve blanche est placée après la longueur native ; le
+  canvas s'allonge réellement quand on passe de `LN.1` à `LN.2`, `LN.3` ou `LN.4`.
+- [x] **LOCAL** — après une augmentation de `LN`, la vue reste focalisée sur le
+  pattern en cours ; aucune navigation automatique vers la fin du fichier.
 - [x] suppression de la mesure de réserve automatique dans le Studio complet ;
 - [x] grille principale libellée avec la longueur native plutôt que « MESURE » ;
-- [x] diminution protégée par confirmation si des notes seraient tronquées ;
+- [ ] comportement de troncature/gel du bandeau orange à spécifier séparément ;
 - [x] valeur `bars` importée des projets réels et conservée à l'export JSON ;
 - [x] longueur propre à chaque couple groupe/pattern ;
 - [ ] compilation `.ppak`, écriture sur projet brouillon et relecture sur un
   vrai EP-133 avant de déclarer la synchronisation matérielle compatible.
+- [ ] contrôle visuel des raffinements **LOCAL** dans Chrome/Chromium avant
+  leur futur commit groupé.

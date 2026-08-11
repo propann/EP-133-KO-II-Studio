@@ -20,14 +20,22 @@ interface RhythmGridProps {
   onSelectPad: (pad: number) => void;
   onOpenKeys: () => void;
   onToggleStep: (measure: number, pad: number, step: number) => void;
+  patternLength?: number;
+  onPatternLengthChange?: (length: number) => void;
+  onCopyBlock?: (measure: number) => void;
+  onDeleteBlock?: (measure: number) => void;
   onToggleCommittedStep?: (sectionKey: string, measure: number, pad: number, step: number) => void;
 }
 
 export function RhythmGrid(props: RhythmGridProps) {
+  const STEP_WIDTH = 60;
+  const STEPS_PER_BAR = 16;
   const committedSections = props.committedSections || [];
   const committedBars = committedSections.reduce((total, section) => total + section.bars, 0);
   const totalBars = committedBars + props.bars;
-  const canvasBars = props.mode === 'complete' ? Math.max(totalBars, committedBars + 8) : totalBars;
+  // Le KO-II allonge le pattern réel, puis l'éditeur garde une réserve blanche
+  // après celui-ci. Une réserve globale de 8 mesures masquait LN.1 → LN.4.
+  const canvasBars = props.mode === 'complete' ? totalBars + 8 : totalBars;
   const sectionAtMeasure = (measure: number) => {
     let start = 0;
     for (const section of committedSections) {
@@ -36,8 +44,8 @@ export function RhythmGrid(props: RhythmGridProps) {
     }
     return null;
   };
-  return <div className="editor-grid" ref={props.gridRef} onWheelCapture={horizontalWheelScroll}><div className="editor-horizontal" style={{ width: `${160 + canvasBars * 960}px` }}>
-    {props.playing && <i className="editor-playhead" style={{ left: `${160 + props.playbackBeat / 4 * 960}px` }} />}
+  return <div className="editor-grid" ref={props.gridRef} onWheelCapture={horizontalWheelScroll}><div className="editor-horizontal" style={{ width: `${160 + canvasBars * STEPS_PER_BAR * STEP_WIDTH}px` }}>
+    {props.playing && <i className="editor-playhead" style={{ left: `${160 + props.playbackBeat / 4 * STEP_WIDTH}px` }} />}
     <div className="editor-measure-line"><span className="editor-corner">PISTES</span><div className="editor-measure-heads" style={{ gridTemplateColumns: `repeat(${canvasBars}, 1fr)` }}>{Array.from({ length: canvasBars }, (_, measure) => {
       const committed = sectionAtMeasure(measure);
       const draftMeasure = measure - committedBars;
@@ -45,7 +53,7 @@ export function RhythmGrid(props: RhythmGridProps) {
       const localMeasure = committed ? committed.localMeasure : draftMeasure;
       const hasNotes = sourceTargets.some((note) => Math.floor(note.beat / 4) === localMeasure);
       const outsideLength = !committed && draftMeasure >= props.bars;
-      return <b className={`${hasNotes ? 'has-notes' : ''} ${outsideLength ? 'outside-length' : ''} ${committed ? 'committed' : ''} ${committed?.localMeasure === 0 ? 'section-start' : ''} ${committed && committed.localMeasure === committed.section.bars - 1 ? 'section-end' : ''}`} key={measure}>{committed ? `${committed.section.label} · ${committed.localMeasure + 1}/${committed.section.bars}` : props.mode === 'complete' ? outsideLength ? `${draftMeasure + 1}` : `${draftMeasure + 1}/${props.bars}` : `MESURE ${draftMeasure + 1}`}</b>;
+      return <b className={`${hasNotes ? 'has-notes' : ''} ${outsideLength ? 'outside-length' : ''} ${committed ? 'committed' : ''} ${committed?.localMeasure === 0 ? 'section-start' : ''} ${committed && committed.localMeasure === committed.section.bars - 1 ? 'section-end' : ''}`} key={measure}><span>{committed ? `${committed.section.label} · ${committed.localMeasure + 1}/${committed.section.bars}` : props.mode === 'complete' ? outsideLength ? `${draftMeasure + 1}` : `${draftMeasure + 1}/${props.bars}` : `MESURE ${draftMeasure + 1}`}</span>{hasNotes && !committed && props.mode === 'complete' && <details className="pattern-block-menu" onClick={(event) => event.stopPropagation()}><summary aria-label={`Actions du bloc ${draftMeasure + 1}`}>•••</summary><div><span className="pattern-length-menu"><button disabled={props.patternLength === undefined || props.patternLength <= 1} onClick={() => props.patternLength !== undefined && props.onPatternLengthChange?.(props.patternLength - 1)}>−</button><b>LN.{props.patternLength}</b><button disabled={props.patternLength === undefined || props.patternLength >= 99} onClick={() => props.patternLength !== undefined && props.onPatternLengthChange?.(props.patternLength + 1)}>＋</button></span><button onClick={() => props.onCopyBlock?.(draftMeasure)}>COPIER</button><button className="danger" onClick={() => props.onDeleteBlock?.(draftMeasure)}>SUPPRIMER</button></div></details>}</b>;
     })}</div></div>
     <div className="editor-step-line"><span className="editor-corner">PAS</span><div style={{ gridTemplateColumns: `repeat(${canvasBars * 16}, 1fr)` }}>{Array.from({ length: canvasBars * 16 }, (_, globalStep) => <b className={`${globalStep >= totalBars * 16 ? 'outside-length' : ''} ${globalStep % 16 === 0 ? 'bar-line' : globalStep % 4 === 0 ? 'beat-line' : ''} ${globalStep < committedBars * 16 ? 'committed' : ''}`} key={globalStep}>{globalStep % 16 + 1}</b>)}</div></div>
     {EP133_SCORE_TRACKS.map((track) => {

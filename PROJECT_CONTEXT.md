@@ -24,6 +24,10 @@ Hero reste inclus comme module secondaire d'apprentissage du finger-drumming.
   de préserver les projets et mappings déjà enregistrés dans les navigateurs.
 - Le suivi des interfaces et documents FR/EN/ES est centralisé dans
   `docs/SUIVI_TRADUCTIONS.md` et doit être mis à jour avec chaque traduction.
+- Point local non publié du 11 août 2026 : finitions de la grille Pattern
+  (focus horizontal conservé, menu de bloc `•••`, longueurs LN indépendantes
+  visibles sous A/B/C/D). Ne pas perdre ni publier ces changements avant la
+  validation visuelle demandée ; voir `docs/SUIVI_IMPLEMENTATION.md`, étape 4.3.
 
 ## Fusion des deux prototypes
 
