@@ -8,6 +8,7 @@ import { AudioEngine, type PadSoundSettings } from './core/audio/AudioEngine';
 import { MachineSampleBank } from './core/audio/MachineSampleBank';
 import { emptyScore, scoreHit } from './core/engine/scoring';
 import type { Exercise, Grade, Score } from './core/engine/types';
+import { createSixBarExercise, STYLES } from './core/engine/patterns';
 import {
   createEp133ProjectDocument,
   createMidiFile,
@@ -53,11 +54,8 @@ import { SongArranger } from './components/editor/SongArranger';
 import { MachineCloneDialog } from './components/editor/MachineCloneDialog';
 import { chooseLocalDirectory, collectLocalFiles } from './core/storage/localFolders';
 import './style.css';
-import catalogue from '../exercises/catalogue-exercices-v1.json';
 import { APP_LANGUAGE_KEY, loadAppLanguage, type AppLanguage } from './core/i18n';
 
-const styleLabel = (key: string) => key.replace(/([a-z])([A-Z])/g, '$1 $2').replaceAll('_', ' ').toUpperCase();
-const STYLES = catalogue.exercises.map((item) => ({ id: item.key, label: `${String(item.id).padStart(2, '0')} · ${styleLabel(item.key)}`, bpm: item.bpm }));
 const STUDIO_DEMOS = [
   { id: 'groove', title: 'DEMO GROOVE', file: 'demo-groove.json' },
   { id: 'lofi', title: 'DEMO LOFI', file: 'demo-lofi.json' },
@@ -65,57 +63,6 @@ const STUDIO_DEMOS = [
   { id: 'trap', title: 'DEMO TRAP', file: 'demo-trap.json' },
   { id: 'break', title: 'DEMO BREAK', file: 'demo-break.json' },
 ] as const;
-
-function createBoomBapTargets(difficulty: number): Exercise['targets'] {
-  const targets: Exercise['targets'] = [];
-  const addSteps = (bar: number, pad: number, steps: number[]) => steps.forEach((step) => targets.push({ id: `boom-${difficulty}-${bar}-${pad}-${step}`, beat: bar * 4 + step / 4, pad }));
-  const levels = [
-    { kick: [0, 8], snare: [4, 12], hat: [0, 4, 8, 12], perc: [] },
-    { kick: [0, 6, 8, 14], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], perc: [] },
-    { kick: [0, 3, 7, 8, 11, 14], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], perc: [2, 10] },
-    { kick: [0, 3, 6, 8, 11, 14], snare: [4, 7, 12, 15], hat: [0, 1, 2, 4, 6, 8, 9, 10, 12, 14], perc: [2, 5, 10, 13] },
-    { kick: [0, 3, 6, 8, 11, 14, 15], snare: [4, 7, 12, 15], hat: [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 14, 15], perc: [2, 5, 10, 13] },
-  ][difficulty - 1];
-  for (let bar = 0; bar < 6; bar += 1) {
-    addSteps(bar, 0, levels.kick);
-    addSteps(bar, 2, levels.snare);
-    addSteps(bar, 4, levels.hat);
-    addSteps(bar, 6, levels.perc);
-    if (bar === 4 && difficulty >= 2) addSteps(bar, 0, [13]);
-    if (bar === 5) {
-      if (difficulty >= 3) addSteps(bar, 7, [13, 14]);
-      if (difficulty >= 4) addSteps(bar, 8, [12, 13, 14, 15]);
-      if (difficulty === 5) addSteps(bar, 2, [10, 11, 13, 14]);
-    }
-  }
-  return [...new Map(targets.map((target) => [`${target.beat}-${target.pad}`, target])).values()];
-}
-
-function createSixBarExercise(styleId: string, difficulty: number, tempo: number): Exercise {
-  const style = STYLES.find((item) => item.id === styleId) || STYLES[0];
-  if (style.id === 'boom') {
-    return { id: `boom-${difficulty}`, title: `BOOM-BAP · NIVEAU ${difficulty}`, description: `Partition Boom-Bap ${difficulty}/5 · 6 mesures`, bpm: tempo, bars: 6, timeSignature: '4/4', countInBars: 1, backingTrack: null, grading: { perfectMs: 35, goodMs: 90 }, targets: createBoomBapTargets(difficulty) };
-  }
-  const targets: Exercise['targets'] = [];
-  const add = (bar: number, beat: number, pad: number) => targets.push({ id: `${bar}-${beat}-${pad}`, beat: bar * 4 + beat, pad });
-  for (let bar = 0; bar < 6; bar += 1) {
-    const kick = style.id === 'house' ? [0, 1, 2, 3] : style.id === 'funk' ? [0, .75, 2, 2.75] : style.id === 'afro' ? [0, 1.75, 3] : style.id === 'garage' || style.id === 'dnb' ? [0, 2.5] : style.id === 'electro' ? [0, 1.5, 2.5] : [0, 2];
-    kick.forEach((beat) => add(bar, beat, 0));
-    (style.id === 'garage' || style.id === 'dnb' ? [2] : [1, 3]).forEach((beat) => add(bar, beat, 2));
-    if (style.id === 'house' && difficulty >= 2) [1, 3].forEach((beat) => add(bar, beat, 1));
-    const hatStep = difficulty >= 4 ? 0.25 : difficulty >= 2 ? 0.5 : 1;
-    const hatOffset = style.id === 'house' || style.id === 'funk' ? .5 : 0;
-    for (let beat = hatOffset; beat < 4; beat += hatStep) add(bar, beat, 4);
-    if (style.id === 'rock' && difficulty >= 2) [0, 2].forEach((beat) => add(bar, beat, 5));
-    if (style.id === 'afro' || style.id === 'funk' || difficulty >= 3) [0.75, 2.75].forEach((beat) => add(bar, beat, 6));
-    if (style.id === 'afro' && difficulty >= 2) [1.5, 3.5].forEach((beat) => add(bar, beat, 7));
-    if (difficulty >= 4 && bar >= 3) [1.5, 3.25].forEach((beat) => add(bar, beat, 7));
-    if (difficulty === 5 && bar >= 4) [3, 3.25, 3.5, 3.75].forEach((beat) => add(bar, beat, 8));
-    if (difficulty >= 3 && bar % 2 === 1) add(bar, 3.5, 0);
-  }
-  const uniqueTargets = [...new Map(targets.map((target) => [`${target.beat}-${target.pad}`, target])).values()];
-  return { id: `${style.id}-${difficulty}`, title: style.label, description: `Niveau ${difficulty} · 6 mesures progressives`, bpm: tempo, bars: 6, timeSignature: '4/4', countInBars: 1, backingTrack: null, grading: { perfectMs: 35, goodMs: 90 }, targets: uniqueTargets };
-}
 
 const audio = new AudioEngine();
 const machineSampleBank = new MachineSampleBank();
