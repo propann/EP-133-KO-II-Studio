@@ -86,6 +86,10 @@
   `LN.1` à `LN.99` de l'EP-133. Il remplace la « mesure de réserve » automatique
   et reste enregistré séparément pour chaque groupe et numéro de pattern. La
   grille continue marque chaque temps par une ligne verticale plus sombre.
+- Travail local non publié du 11 août : conservation du focus lors des
+  changements de longueur, menu `•••` copier/supprimer sur les blocs orange et
+  affichage des longueurs indépendantes sous A/B/C/D. Tests et build passent ;
+  validation visuelle requise avant commit.
 - Le Studio possède maintenant un vrai cycle local `NOUVEAU / SAVE / OUVRIR`
   basé sur `ep.project.v1`. Il conserve les quatre groupes, le BPM, la hauteur,
   la vélocité, la durée et les modes de pad sans fermer l'éditeur.

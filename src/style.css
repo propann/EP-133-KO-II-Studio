@@ -310,7 +310,8 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .editor-home-button:hover,.editor-home-button:focus-visible { background:var(--ko-orange)!important; color:var(--ko-black)!important; }
 .editor-home-button:active { transform:translate(3px,3px); box-shadow:none; }
 .editor-groups { display:flex!important; grid-auto-flow:column; gap:5px!important; }
-.editor-groups button { width:43px; height:43px; border:2px solid var(--ko-black); background:#d9d7d1; font-weight:900; font-size:16px; box-shadow:2px 2px 0 var(--ko-black); }
+.editor-groups button { width:48px; height:46px; display:grid; place-items:center; gap:0; padding:3px; border:2px solid var(--ko-black); background:#d9d7d1; font-weight:900; font-size:16px; box-shadow:2px 2px 0 var(--ko-black); }
+.editor-groups button small { font:900 6px monospace; }
 .editor-groups button.active { background:var(--ko-orange); transform:translate(2px,2px); box-shadow:none; }
 .editor-midi-out { min-width:112px; background:#d9d7d1!important; font-size:9px!important; font-weight:bold!important; }
 .editor-midi-out.active { background:var(--ko-orange)!important; }
@@ -535,7 +536,20 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .editor-corner,.editor-horizontal-row > strong { position:sticky; left:0; z-index:12; display:flex; align-items:center; padding:0 9px; border-right:2px solid var(--ko-black); background:#dedcd6; box-shadow:4px 0 7px rgba(26,26,26,.14); }
 .editor-measure-line { position:sticky; top:0; z-index:10; }
 .editor-measure-heads b { padding:8px; text-align:center; background:#d2d0ca; border-right:2px solid #77736c; font-size:10px; }
-.editor-measure-heads b.has-notes { background:var(--ko-orange); color:#fff; }
+.editor-measure-heads b.has-notes { margin:2px 3px; padding:6px 8px; border:2px solid var(--ko-black); border-radius:9px; background:var(--ko-orange); color:#fff; box-shadow:2px 2px 0 rgba(26,26,26,.42); }
+.editor-measure-heads b.has-notes { position:relative; display:flex; align-items:center; justify-content:center; gap:8px; }
+.pattern-block-menu { position:absolute; z-index:25; right:5px; top:3px; font-weight:normal; }
+.pattern-block-menu summary { width:28px; height:22px; display:grid; place-items:center; border:1px solid var(--ko-black); border-radius:6px; background:#f4f1e9; color:var(--ko-black); cursor:pointer; list-style:none; letter-spacing:1px; }
+.pattern-block-menu summary::-webkit-details-marker { display:none; }
+.pattern-block-menu > div { position:absolute; right:0; top:26px; display:grid; min-width:108px; padding:4px; border:2px solid var(--ko-black); border-radius:7px; background:#f4f1e9; box-shadow:3px 3px 0 var(--ko-black); }
+.pattern-length-menu { display:flex; align-items:center; justify-content:space-between; gap:3px; padding:3px; border-bottom:1px solid #aaa69f; }
+.pattern-length-menu b { min-width:34px; text-align:center; font:900 8px monospace; }
+.pattern-length-menu button { min-width:24px; min-height:24px; padding:2px; text-align:center; }
+.pattern-block-menu button { min-height:28px; padding:4px 7px; border:0; border-radius:4px; background:transparent; font-size:7px; font-weight:900; text-align:left; }
+.pattern-block-menu button:hover { background:var(--ko-amber); }
+.pattern-block-menu button.danger:hover { background:#e6a08a; }
+.editor-measure-heads b.outside-length { background:#eceae5; color:#918e87; }
+.editor-measure-heads b.outside-length.has-notes { background:var(--ko-orange); color:#fff; }
 .editor-measure-heads b.reserve { background:#d9d7d1; color:#65625d; border-style:dashed; }
 .editor-measure-heads b.committed { background:#d7b18b; box-shadow:inset 0 2px 0 var(--ko-black); }
 .editor-measure-heads b.committed.has-notes { background:var(--ko-orange); }
@@ -555,6 +569,7 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .editor-horizontal-row:last-child button.committed.section-end { border-bottom-right-radius:var(--radius); }
 .editor-horizontal-row > strong { min-height:34px; height:100%; border-top:1px solid #aaa69f; font-size:10px; }
 .editor-horizontal-row > div button { min-width:0; height:100%; min-height:34px; border-width:1px 1px 0 0; border-color:#aaa69f; background:#f3f1ec; }
+.editor-horizontal-row > div button.outside-length,.key-row > div button.outside-length { background:#faf9f6; }
 .editor-horizontal-row > div button.beat-line,.key-row > div button.beat-line { border-left:2px solid #77736c; }
 .editor-horizontal-row > div button.bar-line,.key-row > div button.bar-line { border-left:3px solid #34322f; }
 .editor-horizontal-row > div button:hover { background:var(--ko-amber); }
