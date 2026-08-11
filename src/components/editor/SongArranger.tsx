@@ -3,6 +3,7 @@ import { EDITOR_GROUPS, type EditorGroup } from '../../core/project/exporters';
 import { usedBars } from '../../core/project/editor';
 import type { SequencerNote } from '../../core/project/model';
 import { patternNumbersForGroup, songPositionsForScene, type PatternBank, type SceneDefinition } from '../../core/project/song';
+import { horizontalWheelScroll } from './fastHorizontalWheel';
 
 interface SongArrangerProps {
   scenes: SceneDefinition[];
@@ -12,8 +13,8 @@ interface SongArrangerProps {
   onReorderSong: (fromIndex: number, toIndex: number) => void;
   onDuplicateSongPosition: (index: number) => void;
   onDeleteSongPosition: (index: number) => void;
-  onAddSongPosition: () => void;
   onAuditionSongPosition: (index: number) => void;
+  onEditPattern: (sceneNumber: number, group: EditorGroup, patternNumber: number) => void;
 }
 
 const twoDigits = (value: number) => String(value).padStart(2, '0');
@@ -49,11 +50,11 @@ function PatternPreview({ notes }: { notes: SequencerNote[] }) {
  * deux (fidèle au fonctionnement réel de la machine) ; `[DUP]` sert
  * précisément à en sortir pour créer une variante indépendante.
  */
-export function SongArranger({ scenes, song, patternBank, onAssignCell, onReorderSong, onDuplicateSongPosition, onDeleteSongPosition, onAddSongPosition, onAuditionSongPosition }: SongArrangerProps) {
+export function SongArranger({ scenes, song, patternBank, onAssignCell, onReorderSong, onDuplicateSongPosition, onDeleteSongPosition, onAuditionSongPosition, onEditPattern }: SongArrangerProps) {
   const sceneByNumber = new Map(scenes.map((scene) => [scene.scene, scene]));
 
   return <section className="song-arranger" aria-label="Structure du morceau — Song Arranger">
-    <div className="song-arranger-track">
+    <div className="song-arranger-track" onWheel={horizontalWheelScroll}>
       {song.map((sceneNumber, index) => {
         const scene = sceneByNumber.get(sceneNumber);
         const activeGroups = scene ? EDITOR_GROUPS.filter((group) => scene.groupPatterns[group] !== null) : [];
@@ -62,6 +63,7 @@ export function SongArranger({ scenes, song, patternBank, onAssignCell, onReorde
         return <Fragment key={`${index}-${sceneNumber}`}>
           <article
             className="song-position-card"
+            style={{ width: `${Math.max(420, bars * 240)}px` }}
             draggable
             onDragStart={(event) => { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData(SONG_POSITION_DRAG_TYPE, String(index)); }}
             onDragOver={(event) => { if (event.dataTransfer.types.includes(SONG_POSITION_DRAG_TYPE)) event.preventDefault(); }}
@@ -72,7 +74,7 @@ export function SongArranger({ scenes, song, patternBank, onAssignCell, onReorde
               onReorderSong(Number(raw), index);
             }}
           >
-            <header className="song-position-head"><b>SONG POS {index + 1}<small>(L.{twoDigits(index + 1)})</small></b><button className="song-position-audition" aria-label="Écouter cette Song Position" onClick={() => onAuditionSongPosition(index)}>▶</button></header>
+            <header className="song-position-head"><b>SONG POS {index + 1}<small>(L.{twoDigits(index + 1)})</small></b><button className="song-position-audition" aria-label="Écouter cette Song Position" onClick={() => onAuditionSongPosition(index)}>▶ LECTURE</button><details className="song-position-menu"><summary aria-label="Actions de la Song Position">⋯</summary><div><button onClick={() => onDuplicateSongPosition(index)}>DUPLIQUER</button><button className="song-position-delete" onClick={() => onDeleteSongPosition(index)}>SUPPRIMER</button></div></details></header>
             <div className="song-position-scene"><b>SCENE {sceneNumber}<small>(S.{twoDigits(sceneNumber)})</small></b><span>{bars} BAR{bars > 1 ? 'S' : ''}</span></div>
             {sharedWith.length > 0 && <p className="song-position-shared">partagée avec L.{sharedWith.map((position) => twoDigits(position + 1)).join(', L.')}</p>}
             <div className="song-position-groups">
@@ -94,19 +96,22 @@ export function SongArranger({ scenes, song, patternBank, onAssignCell, onReorde
                 >
                   <div className="pattern-block-head">
                     <b className={`pattern-badge group-${group.toLowerCase()}`}>{group}</b>
-                    <span>{patternNumber !== null ? `${group}${twoDigits(patternNumber)}` : 'MUTE'}</span>
-                    <button className="pattern-block-mute" aria-label={`Basculer MUTE pour le groupe ${group}`} onClick={() => onAssignCell(sceneNumber, group, patternNumber === null ? (patternNumbersForGroup(patternBank, group)[0] ?? 1) : null)}>··</button>
+                    <div className="pattern-block-score"><small>{patternNumber === null ? `${group}-- · MUET` : `${group}${twoDigits(patternNumber)}`}</small><PatternPreview notes={notes} /></div>
+                    <details className="pattern-block-menu">
+                      <summary aria-label={`Actions du pattern ${group}`}>⋯</summary>
+                      <div>
+                        {patternNumber !== null && <button onClick={() => onEditPattern(sceneNumber, group, patternNumber)}>ÉDITER</button>}
+                        <button onClick={() => onAssignCell(sceneNumber, group, patternNumber === null ? (patternNumbersForGroup(patternBank, group)[0] ?? 1) : null)}>{patternNumber === null ? 'RÉACTIVER' : 'METTRE EN MUET'}</button>
+                      </div>
+                    </details>
                   </div>
-                  {patternNumber !== null && <PatternPreview notes={notes} />}
                 </div>;
               })}
             </div>
-            <footer className="song-position-actions"><button onClick={() => onDuplicateSongPosition(index)}>DUP</button><button className="song-position-delete" onClick={() => onDeleteSongPosition(index)}>DELETE</button></footer>
           </article>
           {index < song.length - 1 && <span className="song-position-arrow" aria-hidden="true">→</span>}
         </Fragment>;
       })}
-      <button className="song-position-add" onClick={onAddSongPosition}>＋ NEW SONG POS</button>
     </div>
 
     <div className="pattern-pool" aria-label="Bibliothèque de patterns à glisser">
@@ -124,7 +129,7 @@ export function SongArranger({ scenes, song, patternBank, onAssignCell, onReorde
           >{group}{twoDigits(number)}</span>)}
         </div>;
       })}
-      {!EDITOR_GROUPS.some((group) => patternNumbersForGroup(patternBank, group).length) && <p>Aucun pattern créé — retour à EDIT PATTERN pour en écrire un premier.</p>}
+      {!EDITOR_GROUPS.some((group) => patternNumbersForGroup(patternBank, group).length) && <p>Aucun pattern créé — retour à PATTERNS pour en écrire un premier.</p>}
     </div>
   </section>;
 }

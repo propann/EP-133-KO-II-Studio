@@ -2,6 +2,7 @@ import type { RefObject } from 'react';
 import type { SequencerNote } from '../../core/project/model';
 import { KEY_EDITOR_NOTES, midiNoteName, type EditorGroup } from '../../core/project/exporters';
 import { EP133_PADS } from '../../core/project/pads';
+import { horizontalWheelScroll } from './fastHorizontalWheel';
 
 interface PianoRollProps {
   gridRef: RefObject<HTMLDivElement | null>;
@@ -17,7 +18,7 @@ interface PianoRollProps {
 }
 
 export function PianoRoll({ gridRef, group, selectedPad, bars, playing, playbackBeat, targets, onClose, onPreviewNote, onToggleNote }: PianoRollProps) {
-  return <div className="key-editor"><div className="key-editor-title"><span>GROUPE {group} · PAD {EP133_PADS[selectedPad].key} · {EP133_PADS[selectedPad].name}</span><b>MODE KEYS · PIANO-ROLL</b><button onClick={onClose}>RETOUR AUX 12 PADS</button></div><div className="editor-grid key-grid" ref={gridRef}><div className="key-roll" style={{ width: `${160 + bars * 960}px` }}>
+  return <div className="key-editor"><div className="key-editor-title"><span>GROUPE {group} · PAD {EP133_PADS[selectedPad].key} · {EP133_PADS[selectedPad].name}</span><b>MODE KEYS · PIANO-ROLL</b><button onClick={onClose}>RETOUR AUX 12 PADS</button></div><div className="editor-grid key-grid" ref={gridRef} onWheel={horizontalWheelScroll}><div className="key-roll" style={{ width: `${160 + bars * 960}px` }}>
     {playing && <i className="editor-playhead" style={{ left: `${160 + playbackBeat / 4 * 960}px` }} />}
     <div className="editor-measure-line"><span className="editor-corner">CLAVIER</span><div className="editor-measure-heads" style={{ gridTemplateColumns: `repeat(${bars}, 1fr)` }}>{Array.from({ length: bars }, (_, measure) => <b key={measure}>MESURE {measure + 1}</b>)}</div></div>
     <div className="editor-step-line"><span className="editor-corner">NOTES</span><div style={{ gridTemplateColumns: `repeat(${bars * 16}, 1fr)` }}>{Array.from({ length: bars * 16 }, (_, step) => <b className={`measure-tone-${Math.floor(step / 16) % 2}`} key={step}>{step % 16 + 1}</b>)}</div></div>

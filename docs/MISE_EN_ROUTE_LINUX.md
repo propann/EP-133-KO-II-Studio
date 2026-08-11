@@ -7,8 +7,8 @@ Linux devient la machine principale pour jouer et tester le MIDI du EP-133 K.O. 
 ```bash
 sudo apt update
 sudo apt install -y git python3 alsa-utils
-git clone https://github.com/propann/ep133-rhythm-hero.git
-cd ep133-rhythm-hero
+git clone https://github.com/propann/ep133-ko-ii-studio.git
+cd ep133-ko-ii-studio
 chmod +x tools/start-linux.sh tools/check-ep133-linux.sh
 ```
 
@@ -17,7 +17,7 @@ chmod +x tools/start-linux.sh tools/check-ep133-linux.sh
 Brancher le K.O. II avec un câble USB-C de données, puis :
 
 ```bash
-cd ~/ep133-rhythm-hero
+cd ~/ep133-ko-ii-studio
 ./tools/start-linux.sh
 ```
 

@@ -8,5 +8,5 @@ if ! command -v python3 >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "EP-133 Rhythm Hero : http://127.0.0.1:8787/docs/ep133-pad-player.html"
+echo "EP-133 KO II Studio : http://127.0.0.1:8787/docs/ep133-pad-player.html"
 python3 tools/serve_local.py --host 127.0.0.1 --port 8787 --open

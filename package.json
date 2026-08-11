@@ -1,5 +1,5 @@
 {
-  "name": "ep133-rhythm-hero",
+  "name": "ep133-ko-ii-studio",
   "private": true,
   "version": "0.2.0",
   "type": "module",
@@ -21,6 +21,7 @@
     "vite": "latest"
   },
   "devDependencies": {
+    "@types/node": "^26.2.0",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "typescript": "latest"

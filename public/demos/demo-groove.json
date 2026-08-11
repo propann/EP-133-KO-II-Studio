@@ -1,0 +1,678 @@
+{
+  "schema": "ep.project.v1",
+  "product": "ep133",
+  "metadata": {
+    "title": "DEMO GROOVE"
+  },
+  "settings": {
+    "bpm": 96
+  },
+  "pads": [
+    {
+      "group": "B",
+      "pad": 11,
+      "slot": 0,
+      "playMode": 1,
+      "rootNote": 60
+    }
+  ],
+  "patterns": [
+    {
+      "id": "A01",
+      "bars": 2,
+      "events": [
+        {
+          "tick": 0,
+          "pad": 1,
+          "note": 60,
+          "velocity": 115,
+          "duration": 29
+        },
+        {
+          "tick": 384,
+          "pad": 1,
+          "note": 60,
+          "velocity": 115,
+          "duration": 29
+        },
+        {
+          "tick": 192,
+          "pad": 3,
+          "note": 60,
+          "velocity": 108,
+          "duration": 24
+        },
+        {
+          "tick": 576,
+          "pad": 3,
+          "note": 60,
+          "velocity": 108,
+          "duration": 24
+        },
+        {
+          "tick": 0,
+          "pad": 5,
+          "note": 60,
+          "velocity": 78,
+          "duration": 19
+        },
+        {
+          "tick": 96,
+          "pad": 5,
+          "note": 60,
+          "velocity": 78,
+          "duration": 19
+        },
+        {
+          "tick": 192,
+          "pad": 5,
+          "note": 60,
+          "velocity": 78,
+          "duration": 19
+        },
+        {
+          "tick": 288,
+          "pad": 5,
+          "note": 60,
+          "velocity": 78,
+          "duration": 19
+        },
+        {
+          "tick": 384,
+          "pad": 5,
+          "note": 60,
+          "velocity": 78,
+          "duration": 19
+        },
+        {
+          "tick": 480,
+          "pad": 5,
+          "note": 60,
+          "velocity": 78,
+          "duration": 19
+        },
+        {
+          "tick": 576,
+          "pad": 5,
+          "note": 60,
+          "velocity": 78,
+          "duration": 19
+        },
+        {
+          "tick": 672,
+          "pad": 5,
+          "note": 60,
+          "velocity": 78,
+          "duration": 19
+        }
+      ]
+    },
+    {
+      "id": "A02",
+      "bars": 2,
+      "events": [
+        {
+          "tick": 0,
+          "pad": 1,
+          "note": 60,
+          "velocity": 116,
+          "duration": 29
+        },
+        {
+          "tick": 240,
+          "pad": 1,
+          "note": 60,
+          "velocity": 116,
+          "duration": 29
+        },
+        {
+          "tick": 384,
+          "pad": 1,
+          "note": 60,
+          "velocity": 116,
+          "duration": 29
+        },
+        {
+          "tick": 624,
+          "pad": 1,
+          "note": 60,
+          "velocity": 116,
+          "duration": 29
+        },
+        {
+          "tick": 192,
+          "pad": 3,
+          "note": 60,
+          "velocity": 110,
+          "duration": 24
+        },
+        {
+          "tick": 576,
+          "pad": 3,
+          "note": 60,
+          "velocity": 110,
+          "duration": 24
+        },
+        {
+          "tick": 0,
+          "pad": 5,
+          "note": 60,
+          "velocity": 82,
+          "duration": 19
+        },
+        {
+          "tick": 48,
+          "pad": 5,
+          "note": 60,
+          "velocity": 82,
+          "duration": 19
+        },
+        {
+          "tick": 96,
+          "pad": 5,
+          "note": 60,
+          "velocity": 82,
+          "duration": 19
+        },
+        {
+          "tick": 144,
+          "pad": 5,
+          "note": 60,
+          "velocity": 82,
+          "duration": 19
+        },
+        {
+          "tick": 192,
+          "pad": 5,
+          "note": 60,
+          "velocity": 82,
+          "duration": 19
+        },
+        {
+          "tick": 240,
+          "pad": 5,
+          "note": 60,
+          "velocity": 82,
+          "duration": 19
+        },
+        {
+          "tick": 288,
+          "pad": 5,
+          "note": 60,
+          "velocity": 82,
+          "duration": 19
+        },
+        {
+          "tick": 336,
+          "pad": 5,
+          "note": 60,
+          "velocity": 82,
+          "duration": 19
+        },
+        {
+          "tick": 384,
+          "pad": 5,
+          "note": 60,
+          "velocity": 82,
+          "duration": 19
+        },
+        {
+          "tick": 432,
+          "pad": 5,
+          "note": 60,
+          "velocity": 82,
+          "duration": 19
+        },
+        {
+          "tick": 480,
+          "pad": 5,
+          "note": 60,
+          "velocity": 82,
+          "duration": 19
+        },
+        {
+          "tick": 528,
+          "pad": 5,
+          "note": 60,
+          "velocity": 82,
+          "duration": 19
+        },
+        {
+          "tick": 576,
+          "pad": 5,
+          "note": 60,
+          "velocity": 82,
+          "duration": 19
+        },
+        {
+          "tick": 624,
+          "pad": 5,
+          "note": 60,
+          "velocity": 82,
+          "duration": 19
+        },
+        {
+          "tick": 672,
+          "pad": 5,
+          "note": 60,
+          "velocity": 82,
+          "duration": 19
+        },
+        {
+          "tick": 720,
+          "pad": 5,
+          "note": 60,
+          "velocity": 82,
+          "duration": 19
+        }
+      ]
+    },
+    {
+      "id": "A03",
+      "bars": 2,
+      "events": [
+        {
+          "tick": 0,
+          "pad": 1,
+          "note": 60,
+          "velocity": 118,
+          "duration": 29
+        },
+        {
+          "tick": 144,
+          "pad": 1,
+          "note": 60,
+          "velocity": 118,
+          "duration": 29
+        },
+        {
+          "tick": 192,
+          "pad": 1,
+          "note": 60,
+          "velocity": 118,
+          "duration": 29
+        },
+        {
+          "tick": 384,
+          "pad": 1,
+          "note": 60,
+          "velocity": 118,
+          "duration": 29
+        },
+        {
+          "tick": 528,
+          "pad": 1,
+          "note": 60,
+          "velocity": 118,
+          "duration": 29
+        },
+        {
+          "tick": 576,
+          "pad": 1,
+          "note": 60,
+          "velocity": 118,
+          "duration": 29
+        },
+        {
+          "tick": 192,
+          "pad": 3,
+          "note": 60,
+          "velocity": 112,
+          "duration": 24
+        },
+        {
+          "tick": 360,
+          "pad": 3,
+          "note": 60,
+          "velocity": 112,
+          "duration": 24
+        },
+        {
+          "tick": 576,
+          "pad": 3,
+          "note": 60,
+          "velocity": 112,
+          "duration": 24
+        },
+        {
+          "tick": 0,
+          "pad": 5,
+          "note": 60,
+          "velocity": 86,
+          "duration": 19
+        },
+        {
+          "tick": 48,
+          "pad": 5,
+          "note": 60,
+          "velocity": 86,
+          "duration": 19
+        },
+        {
+          "tick": 96,
+          "pad": 5,
+          "note": 60,
+          "velocity": 86,
+          "duration": 19
+        },
+        {
+          "tick": 144,
+          "pad": 5,
+          "note": 60,
+          "velocity": 86,
+          "duration": 19
+        },
+        {
+          "tick": 192,
+          "pad": 5,
+          "note": 60,
+          "velocity": 86,
+          "duration": 19
+        },
+        {
+          "tick": 240,
+          "pad": 5,
+          "note": 60,
+          "velocity": 86,
+          "duration": 19
+        },
+        {
+          "tick": 288,
+          "pad": 5,
+          "note": 60,
+          "velocity": 86,
+          "duration": 19
+        },
+        {
+          "tick": 336,
+          "pad": 5,
+          "note": 60,
+          "velocity": 86,
+          "duration": 19
+        },
+        {
+          "tick": 384,
+          "pad": 5,
+          "note": 60,
+          "velocity": 86,
+          "duration": 19
+        },
+        {
+          "tick": 432,
+          "pad": 5,
+          "note": 60,
+          "velocity": 86,
+          "duration": 19
+        },
+        {
+          "tick": 480,
+          "pad": 5,
+          "note": 60,
+          "velocity": 86,
+          "duration": 19
+        },
+        {
+          "tick": 528,
+          "pad": 5,
+          "note": 60,
+          "velocity": 86,
+          "duration": 19
+        },
+        {
+          "tick": 576,
+          "pad": 5,
+          "note": 60,
+          "velocity": 86,
+          "duration": 19
+        },
+        {
+          "tick": 624,
+          "pad": 5,
+          "note": 60,
+          "velocity": 86,
+          "duration": 19
+        },
+        {
+          "tick": 672,
+          "pad": 5,
+          "note": 60,
+          "velocity": 86,
+          "duration": 19
+        },
+        {
+          "tick": 720,
+          "pad": 5,
+          "note": 60,
+          "velocity": 86,
+          "duration": 19
+        },
+        {
+          "tick": 0,
+          "pad": 6,
+          "note": 60,
+          "velocity": 92,
+          "duration": 38
+        },
+        {
+          "tick": 384,
+          "pad": 6,
+          "note": 60,
+          "velocity": 92,
+          "duration": 38
+        }
+      ]
+    },
+    {
+      "id": "B01",
+      "bars": 2,
+      "events": [
+        {
+          "tick": 0,
+          "pad": 11,
+          "note": 36,
+          "velocity": 100,
+          "duration": 144
+        },
+        {
+          "tick": 384,
+          "pad": 11,
+          "note": 36,
+          "velocity": 98,
+          "duration": 144
+        }
+      ]
+    },
+    {
+      "id": "B02",
+      "bars": 2,
+      "events": [
+        {
+          "tick": 0,
+          "pad": 11,
+          "note": 36,
+          "velocity": 102,
+          "duration": 72
+        },
+        {
+          "tick": 192,
+          "pad": 11,
+          "note": 38,
+          "velocity": 98,
+          "duration": 72
+        },
+        {
+          "tick": 384,
+          "pad": 11,
+          "note": 41,
+          "velocity": 100,
+          "duration": 72
+        },
+        {
+          "tick": 576,
+          "pad": 11,
+          "note": 43,
+          "velocity": 98,
+          "duration": 72
+        }
+      ]
+    },
+    {
+      "id": "B03",
+      "bars": 2,
+      "events": [
+        {
+          "tick": 0,
+          "pad": 11,
+          "note": 36,
+          "velocity": 106,
+          "duration": 38
+        },
+        {
+          "tick": 144,
+          "pad": 11,
+          "note": 36,
+          "velocity": 100,
+          "duration": 38
+        },
+        {
+          "tick": 240,
+          "pad": 11,
+          "note": 41,
+          "velocity": 104,
+          "duration": 38
+        },
+        {
+          "tick": 384,
+          "pad": 11,
+          "note": 43,
+          "velocity": 106,
+          "duration": 38
+        },
+        {
+          "tick": 528,
+          "pad": 11,
+          "note": 43,
+          "velocity": 100,
+          "duration": 38
+        },
+        {
+          "tick": 624,
+          "pad": 11,
+          "note": 38,
+          "velocity": 102,
+          "duration": 38
+        }
+      ]
+    },
+    {
+      "id": "D01",
+      "bars": 2,
+      "events": [
+        {
+          "tick": 24,
+          "pad": 10,
+          "note": 60,
+          "velocity": 80,
+          "duration": 19
+        },
+        {
+          "tick": 120,
+          "pad": 10,
+          "note": 60,
+          "velocity": 80,
+          "duration": 19
+        },
+        {
+          "tick": 216,
+          "pad": 10,
+          "note": 60,
+          "velocity": 80,
+          "duration": 19
+        },
+        {
+          "tick": 312,
+          "pad": 10,
+          "note": 60,
+          "velocity": 80,
+          "duration": 19
+        },
+        {
+          "tick": 408,
+          "pad": 10,
+          "note": 60,
+          "velocity": 80,
+          "duration": 19
+        },
+        {
+          "tick": 504,
+          "pad": 10,
+          "note": 60,
+          "velocity": 80,
+          "duration": 19
+        },
+        {
+          "tick": 600,
+          "pad": 10,
+          "note": 60,
+          "velocity": 80,
+          "duration": 19
+        },
+        {
+          "tick": 696,
+          "pad": 10,
+          "note": 60,
+          "velocity": 80,
+          "duration": 19
+        }
+      ]
+    }
+  ],
+  "scenes": [
+    {
+      "scene": 1,
+      "groupPatterns": [
+        1,
+        1,
+        0,
+        0
+      ],
+      "timeSignature": [
+        4,
+        4
+      ]
+    },
+    {
+      "scene": 2,
+      "groupPatterns": [
+        2,
+        2,
+        0,
+        0
+      ],
+      "timeSignature": [
+        4,
+        4
+      ]
+    },
+    {
+      "scene": 3,
+      "groupPatterns": [
+        3,
+        3,
+        0,
+        1
+      ],
+      "timeSignature": [
+        4,
+        4
+      ]
+    }
+  ],
+  "song": [
+    1,
+    1,
+    2,
+    3
+  ],
+  "currentScene": 3
+}

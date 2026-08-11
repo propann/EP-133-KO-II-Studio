@@ -1,14 +1,14 @@
-# Feuille de route — EP-133 Rhythm Hero
+# Feuille de route — EP-133 KO II Studio
 
 ## Vision
 
 Construire une suite locale en français autour du Teenage Engineering EP-133 :
 
-1. apprendre le rythme avec un jeu pédagogique ;
-2. créer des exercices simples ;
-3. composer dans un éditeur complet raccordé à la machine ;
-4. gérer projets, partitions et banques de sons sans dépendre du matériel ;
-5. préparer des fichiers contrôlés avant tout transfert vers l'appareil.
+1. cloner et comprendre les projets et sons de la machine ;
+2. composer et arranger dans un éditeur complet raccordé à l'EP-133 ;
+3. gérer patterns, scènes, Songs et banques de sons hors ligne ;
+4. préparer des changements contrôlés avant leur retour vers l'appareil ;
+5. apprendre le rythme avec le module pédagogique Rhythm Hero.
 
 L'application doit rester utile lorsque l'EP-133 est déconnecté. Le matériel
 apporte ses pads, ses sons et son séquenceur, mais ne doit pas être une condition
@@ -25,7 +25,7 @@ pour ouvrir, écouter ou modifier un projet.
 - Toute idée, même reportée ou écartée, reste tracée dans
   [REGISTRE_IDEES.md](REGISTRE_IDEES.md).
 - Les sons de la machine ne sont pas copiés ou redistribués sans droit explicite.
-- Le jeu et le studio restent deux outils séparés sur la page d'accueil.
+- Rhythm Hero reste un module séparé du Studio sur la page d'accueil.
 
 ## État consolidé — 9 août 2026
 

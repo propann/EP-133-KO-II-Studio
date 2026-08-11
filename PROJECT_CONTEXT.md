@@ -1,15 +1,27 @@
-# Contexte de travail — EP-133 Rhythm Hero
+# Contexte de travail — EP-133 KO II Studio
 
 ## Dépôt de référence
 
-- Dépôt principal : `propann/ep133-rhythm-hero`
+- Dépôt principal : `propann/ep133-ko-ii-studio`
 - Ancien dépôt à absorber : `propann/Pad-Hero`
 - Toute nouvelle évolution doit être faite dans le dépôt principal.
 - Le dépôt `Pad-Hero` ne doit être supprimé sur GitHub qu'après validation du déploiement et accord explicite du propriétaire.
 
 ## Objectif produit
 
-Créer un coach de finger-drumming pour le Teenage Engineering EP-133 K.O. II : apprendre un groove, le jouer sur les pads réels via Web MIDI, mesurer l'avance ou le retard, puis progresser en tempo.
+Créer le studio compagnon open source du Teenage Engineering EP-133 K.O. II :
+cloner la machine, ouvrir ses projets et ses sons, éditer patterns, scènes et
+Songs hors ligne, puis préparer un retour matériel vérifié. Le coach Rhythm
+Hero reste inclus comme module secondaire d'apprentissage du finger-drumming.
+
+## Décision de positionnement — 11 août 2026
+
+- Nom produit : **EP-133 KO II Studio**.
+- Slug GitHub cible : `propann/ep133-ko-ii-studio`.
+- Le Studio, le clone, l'édition et le transfert constituent le produit principal.
+- Rhythm Hero est conservé comme module pédagogique inclus.
+- Les clés locales `ep133-rhythm-hero:*` restent temporairement inchangées afin
+  de préserver les projets et mappings déjà enregistrés dans les navigateurs.
 
 ## Fusion des deux prototypes
 
@@ -41,7 +53,7 @@ a réussi, mais la validation utilisateur de la communication web reste négativ
 
 - Branche active : `agent/consolidation-suite-ep133`.
 - Dernier commit publié : `7cea244` — « Consolider le clone et la gestion des sons EP-133 ».
-- PR brouillon : <https://github.com/propann/ep133-rhythm-hero/pull/1>.
+- PR brouillon : <https://github.com/propann/ep133-ko-ii-studio/pull/1>.
 - `npm test`, `npm run build`, `git diff --check` et GitGuardian réussissent.
 - Le clone incrémental réel est validé ; ne pas recommencer ce chantier.
 - La priorité est d’instrumenter Web MIDI dans Sons & Transfert : noms exacts des entrées/sorties, dernier message reçu, dernier message envoyé, canal et note.
@@ -177,6 +189,9 @@ a réussi, mais la validation utilisateur de la communication web reste négativ
   Voir `docs/VALIDATION_SAVE_LOAD_STUDIO.md`.
 - Le menu `FICHIER` regroupe Nouveau, Ouvrir, Enregistrer, Enregistrer sous,
   Renommer, Dupliquer, Supprimer et Exporter.
+- Le menu `FICHIER → Ouvrir` expose cinq compositions de démonstration
+  versionnées (Groove, Lo-fi, Electro, Trap et Break), séparées des projets
+  personnels et chargeables sans EP-133 pour tester patterns, scènes et Song.
 - Priorités suivantes : import de fichier, Annuler/Rétablir, puis édition
   visuelle vélocité/gate.
 - Le bandeau `SongModeBar` suit la hiérarchie du manuel : Song Position,

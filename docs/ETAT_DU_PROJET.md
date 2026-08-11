@@ -112,6 +112,13 @@
 - Le menu FICHIER permet de choisir séparément la banque samples d'un clone.
   Le Studio joue alors les PCM locaux quand la machine est absente et garde le
   MIDI matériel prioritaire quand elle est connectée.
+- Cinq projets de démonstration (Groove, Lo-fi, Electro, Trap et Break) sont
+  livrés dans le menu `FICHIER → Ouvrir`. Ils couvrent chacun plusieurs
+  patterns, trois scènes et quatre Song Positions pour contrôler l'affichage
+  et le transport sans modifier la bibliothèque personnelle.
+- L'ouverture d'un projet Studio complet arrive sur `SONG`, afin de montrer
+  toutes ses Song Positions et scènes. La vue `PATTERNS` édite un pattern
+  explicitement choisi ; chaque pattern reste extensible sur plusieurs mesures.
 - La banque est maintenant ouverte directement sur le HDD : aucun sample n'est
   envoyé au site. La fenêtre Clone écrit déjà son manifeste dans le dossier PC.
 - Export MIDI ou description `ep.project.v1` JSON.

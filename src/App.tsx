@@ -31,6 +31,7 @@ import {
   nextFreeSceneNumber,
   patternNumbersForGroup,
   patternsForScene,
+  MAX_SCENE_NUMBER,
   MAX_PATTERN_NUMBER,
   type PatternBank,
   type SceneDefinition,
@@ -39,6 +40,7 @@ import { deleteStudioProject, duplicateStudioProject, loadStudioLibrary, renameS
 import { HomePage } from './pages/HomePage';
 import { SoundsPage } from './pages/SoundsPage';
 import { DocumentationPage } from './pages/DocumentationPage';
+import { MachineTestPage } from './pages/MachineTestPage';
 import { ScoreView } from './components/game/ScoreView';
 import { PerformancePanel } from './components/game/PerformancePanel';
 import { PadSoundEditor } from './components/game/PadSoundEditor';
@@ -55,6 +57,13 @@ import catalogue from '../exercises/catalogue-exercices-v1.json';
 
 const styleLabel = (key: string) => key.replace(/([a-z])([A-Z])/g, '$1 $2').replaceAll('_', ' ').toUpperCase();
 const STYLES = catalogue.exercises.map((item) => ({ id: item.key, label: `${String(item.id).padStart(2, '0')} · ${styleLabel(item.key)}`, bpm: item.bpm }));
+const STUDIO_DEMOS = [
+  { id: 'groove', title: 'DEMO GROOVE', file: 'demo-groove.json' },
+  { id: 'lofi', title: 'DEMO LOFI', file: 'demo-lofi.json' },
+  { id: 'electro', title: 'DEMO ELECTRO', file: 'demo-electro.json' },
+  { id: 'trap', title: 'DEMO TRAP', file: 'demo-trap.json' },
+  { id: 'break', title: 'DEMO BREAK', file: 'demo-break.json' },
+] as const;
 
 function createBoomBapTargets(difficulty: number): Exercise['targets'] {
   const targets: Exercise['targets'] = [];
@@ -125,7 +134,7 @@ function loadUserExercises(): Exercise[] {
 }
 
 export default function App() {
-  const [workspaceView, setWorkspaceView] = useState<'home' | 'game' | 'sounds' | 'docs'>('home');
+  const [workspaceView, setWorkspaceView] = useState<'home' | 'game' | 'sounds' | 'docs' | 'machine-test'>('home');
   const [styleId, setStyleId] = useState('boom');
   const [difficulty, setDifficulty] = useState(1);
   const [tempo, setTempo] = useState<number>(STYLES[0].bpm);
@@ -140,6 +149,9 @@ export default function App() {
   const [score, setScore] = useState<Score>(emptyScore());
   const [last, setLast] = useState<{ grade: Grade; deltaMs: number } | null>(null);
   const [lastMidi, setLastMidi] = useState<MidiObservation | null>(null);
+  const [midiObservations, setMidiObservations] = useState<MidiObservation[]>([]);
+  const [editorMidiHit, setEditorMidiHit] = useState<{ pad: number; group: EditorGroup } | null>(null);
+  const [midiRequestedEditorGroup, setMidiRequestedEditorGroup] = useState<EditorGroup | null>(null);
   const [playerNotes, setPlayerNotes] = useState<PlayerNote[]>([]);
   const [flashedPad, setFlashedPad] = useState<{ pad: number; grade: Grade } | null>(null);
   const [soundPad, setSoundPad] = useState<number | null>(null);
@@ -173,11 +185,13 @@ export default function App() {
   const targets = useRef(activeExercise.targets.map((target, index) => ({ ...target, id: `target-${index}` })));
   const frame = useRef<number | undefined>(undefined);
   const flashTimer = useRef<number | undefined>(undefined);
+  const editorMidiFlashTimer = useRef<number | undefined>(undefined);
   const countTimer = useRef<number | undefined>(undefined);
   const startTimer = useRef<number | undefined>(undefined);
   const gameEndTimer = useRef<number | undefined>(undefined);
   const scoreScroll = useRef<HTMLDivElement | null>(null);
   const editorGrid = useRef<HTMLDivElement | null>(null);
+  const editorScrollToEnd = useRef(false);
   const editorPlaybackFrame = useRef<number | undefined>(undefined);
   const editorLoopTimer = useRef<number | undefined>(undefined);
   const editorEndTimer = useRef<number | undefined>(undefined);
@@ -204,7 +218,14 @@ export default function App() {
 
   const onHit = useCallback((hit: MidiHit) => {
     // En mode EP-133, la machine produit déjà le son : ne pas le doubler côté PC.
-    if (editorOpen && editorMode === 'complete') return;
+    if (editorOpen && editorMode === 'complete') {
+      const receivedGroup = EDITOR_GROUPS[hit.groupIndex ?? 0];
+      setEditorMidiHit({ pad: hit.pad, group: receivedGroup });
+      setMidiRequestedEditorGroup(receivedGroup);
+      if (editorMidiFlashTimer.current !== undefined) window.clearTimeout(editorMidiFlashTimer.current);
+      editorMidiFlashTimer.current = window.setTimeout(() => setEditorMidiHit(null), 180);
+      return;
+    }
     audio.playPad(hit.pad, hit.velocity);
     setFlashedPad({ pad: hit.pad, grade: 'GOOD' });
     if (flashTimer.current !== undefined) window.clearTimeout(flashTimer.current);
@@ -228,6 +249,7 @@ export default function App() {
 
   const onMidiObservation = useCallback((message: MidiObservation) => {
     setLastMidi(message);
+    setMidiObservations((current) => [message, ...current].slice(0, 100));
   }, []);
 
   const midi = useWebMidi(onHit, onMidiObservation);
@@ -409,6 +431,10 @@ export default function App() {
     setWorkspaceView('game');
     openEditor();
     setEditorMode('complete');
+    // Dans le Studio, le pattern initial reste un brouillon carré jusqu'au
+    // premier COMMIT ; aucune scène fantôme n'est ajoutée au Song.
+    setEditorScenes([]);
+    setEditorSong([]);
   };
 
   /** Flush les frappes en cours vers la banque, en repartant du groupe/numéro de pattern actifs — pas seulement du groupe comme avant l'introduction des patterns multiples. */
@@ -420,6 +446,7 @@ export default function App() {
   const patternsForActiveScene = (): ProjectPatterns => patternsForScene(currentPatternBank(), editorScenes, editorActiveScene);
 
   const changeEditorGroup = (nextGroup: EditorGroup) => {
+    editorScrollToEnd.current = false;
     setEditorPatternBank((current) => ({ ...current, [editorGroup]: { ...current[editorGroup], [editorPatternNumbers[editorGroup]]: editorTargets } }));
     const nextNotes = editorPatternBank[nextGroup][editorPatternNumbers[nextGroup]] || [];
     setEditorTargets(nextNotes);
@@ -427,14 +454,41 @@ export default function App() {
     setEditorBars(Math.max(1, usedBars(nextNotes) + 1));
   };
 
+  // Une note jouée sur la machine porte aussi son groupe (A=36–47,
+  // B=48–59, C=60–71, D=72–83). Elle sélectionne donc la même banque dans
+  // le Studio. Ce chemin est du MIDI standard et a été validé sur l'EP-133 ;
+  // il ne tente pas d'imiter les boutons de groupe via un SysEx propriétaire.
+  useEffect(() => {
+    if (!midiRequestedEditorGroup) return;
+    if (midiRequestedEditorGroup !== editorGroup) changeEditorGroup(midiRequestedEditorGroup);
+    setMidiRequestedEditorGroup(null);
+  }, [editorGroup, midiRequestedEditorGroup]);
+
   /** Bascule vers un autre numéro de pattern (01–99) du groupe actif ; le crée vide s'il n'existe pas encore — choix d'UX du Studio, pas un fait matériel confirmé. */
   const changeEditorPattern = (nextNumber: number) => {
+    editorScrollToEnd.current = false;
     const clamped = Math.max(1, Math.min(MAX_PATTERN_NUMBER, nextNumber));
     setEditorPatternBank((current) => ({ ...current, [editorGroup]: { ...current[editorGroup], [editorPatternNumbers[editorGroup]]: editorTargets } }));
     const nextNotes = editorPatternBank[editorGroup][clamped] || [];
     setEditorTargets(nextNotes);
     setEditorPatternNumbers((current) => ({ ...current, [editorGroup]: clamped }));
     setEditorBars(Math.max(1, usedBars(nextNotes) + 1));
+  };
+
+  /** Pont explicite ARRANGEMENT → EDIT PATTERN : conserve le pattern en cours puis ouvre la cellule exacte de la scène choisie. */
+  const editArrangedPattern = (sceneNumber: number, group: EditorGroup, patternNumber: number) => {
+    editorScrollToEnd.current = false;
+    const bank = currentPatternBank();
+    const nextNotes = bank[group][patternNumber] || [];
+    setEditorPatternBank(bank);
+    setEditorActiveScene(sceneNumber);
+    setEditorGroup(group);
+    setEditorPatternNumbers((current) => ({ ...current, [group]: patternNumber }));
+    setEditorTargets(nextNotes);
+    setEditorBars(Math.max(1, usedBars(nextNotes) + 1));
+    setEditorSelectedPad(nextNotes[0]?.pad ?? 0);
+    setKeyEditorOpen(false);
+    setStudioView('pattern');
   };
 
   const exportEditorMidi = () => {
@@ -458,6 +512,18 @@ export default function App() {
 
   const exportEditor = () => editorExportFormat === 'midi' ? exportEditorMidi() : exportEditorProjectJson();
 
+  /** Routage unique des préécoutes Studio : machine, puis clone PCM, puis synthèse interne. */
+  const previewEditorPad = async (group: EditorGroup, pad: number, note?: number) => {
+    if (midi.outputConnected) {
+      if (note !== undefined) midi.sendNote(note, 110);
+      else midi.sendPad(pad, EDITOR_GROUPS.indexOf(group), 110);
+      return;
+    }
+    const machinePad = deviceInventory?.pads.find((candidate) => candidate.group === group && candidate.pad === pad + 1);
+    if (machinePad?.slot && await machineSampleBank.play(machinePad.slot, 110, performance.now(), note, machinePad.rootNote)) return;
+    await audio.previewPad(pad);
+  };
+
   const toggleEditorStep = (measure: number, pad: number, step: number) => {
     const beat = measure * 4 + step / 4;
     const exists = editorTargets.some((target) => target.pad === pad && target.beat === beat);
@@ -465,12 +531,9 @@ export default function App() {
       ? current.filter((target) => !(target.pad === pad && target.beat === beat))
       : [...current, { id: `editor-${measure}-${pad}-${step}`, group: editorGroup, beat, pad, velocity: DEFAULT_NOTE_VELOCITY, duration: DEFAULT_NOTE_DURATION }]);
     if (!exists && editorMode === 'complete') {
-      if (midi.outputConnected) midi.sendPad(pad, EDITOR_GROUPS.indexOf(editorGroup), 110);
-      else {
-        const machinePad = deviceInventory?.pads.find((candidate) => candidate.group === editorGroup && candidate.pad === pad + 1);
-        if (machinePad?.slot) void machineSampleBank.play(machinePad.slot, 110, performance.now(), undefined, machinePad.rootNote);
-      }
+      void previewEditorPad(editorGroup, pad);
     }
+    if (!exists && measure === editorBars - 1) editorScrollToEnd.current = true;
     setEditorBars((bars) => barsAfterStepEdit(bars, measure, exists));
   };
 
@@ -481,16 +544,53 @@ export default function App() {
       ? current.filter((target) => !(target.pad === editorSelectedPad && target.beat === beat && target.note === note))
       : [...current, { id: `key-${editorGroup}-${editorSelectedPad}-${note}-${globalStep}`, group: editorGroup, beat, pad: editorSelectedPad, note, velocity: DEFAULT_NOTE_VELOCITY, duration: DEFAULT_NOTE_DURATION }]);
     if (!exists) {
-      if (midi.outputConnected) midi.sendNote(note, 110);
-      else {
-        const machinePad = deviceInventory?.pads.find((candidate) => candidate.group === editorGroup && candidate.pad === editorSelectedPad + 1);
-        if (machinePad?.slot) void machineSampleBank.play(machinePad.slot, 110, performance.now(), note, machinePad.rootNote);
-      }
+      void previewEditorPad(editorGroup, editorSelectedPad, note);
     }
-    setEditorBars((bars) => barsAfterStepEdit(bars, measureFromGlobalStep(globalStep), exists));
+    const editedMeasure = measureFromGlobalStep(globalStep);
+    if (!exists && editedMeasure === editorBars - 1) editorScrollToEnd.current = true;
+    setEditorBars((bars) => barsAfterStepEdit(bars, editedMeasure, exists));
   };
 
   const effectiveEditorBars = usedBars(editorTargets);
+  const editorCommittedSections = (() => {
+    if (editorMode !== 'complete') return [];
+    const bank = currentPatternBank();
+    return editorSong.flatMap((sceneNumber, position) => {
+      const scene = editorScenes.find((candidate) => candidate.scene === sceneNumber);
+      const patternNumber = scene?.groupPatterns[editorGroup];
+      const notes = patternNumber === null || patternNumber === undefined ? [] : bank[editorGroup][patternNumber] || [];
+      // Comme sur le K.O.II, la durée d'une Song Position est celle du plus
+      // long pattern de la scène, tous groupes A–D confondus.
+      const sceneBars = Math.max(1, ...EDITOR_GROUPS.map((group) => {
+        const groupPatternNumber = scene?.groupPatterns[group];
+        return groupPatternNumber === null || groupPatternNumber === undefined ? 0 : usedBars(bank[group][groupPatternNumber] || []);
+      }));
+      return [{
+        key: `${position}-${sceneNumber}-${editorGroup}-${patternNumber ?? 'mute'}`,
+        sceneNumber,
+        patternNumber,
+        label: `L.${String(position + 1).padStart(2, '0')} · S.${String(sceneNumber).padStart(2, '0')} · ${patternNumber === null || patternNumber === undefined ? `${editorGroup}--` : `${editorGroup}${String(patternNumber).padStart(2, '0')}`}`,
+        bars: sceneBars,
+        targets: notes,
+      }];
+    });
+  })();
+
+  /** Édition directe d'un pattern déjà commité : les coins arrondis signalent la scène, ils ne verrouillent jamais les notes. */
+  const toggleCommittedEditorStep = (sectionKey: string, measure: number, pad: number, step: number) => {
+    const section = editorCommittedSections.find((candidate) => candidate.key === sectionKey);
+    if (!section || section.patternNumber === null || section.patternNumber === undefined) return;
+    const beat = measure * 4 + step / 4;
+    const bank = currentPatternBank();
+    const notes = bank[editorGroup][section.patternNumber] || [];
+    const exists = notes.some((target) => target.pad === pad && target.beat === beat);
+    const nextNotes = exists
+      ? notes.filter((target) => !(target.pad === pad && target.beat === beat))
+      : [...notes, { id: `scene-${section.sceneNumber}-${editorGroup}-${section.patternNumber}-${measure}-${pad}-${step}`, group: editorGroup, beat, pad, velocity: DEFAULT_NOTE_VELOCITY, duration: DEFAULT_NOTE_DURATION }];
+    setEditorPatternBank({ ...bank, [editorGroup]: { ...bank[editorGroup], [section.patternNumber]: nextNotes } });
+    if (editorPatternNumbers[editorGroup] === section.patternNumber) setEditorTargets(nextNotes);
+    if (!exists) void previewEditorPad(editorGroup, pad);
+  };
 
   const editorExercise = (): Exercise => ({ id: 'editor-preview', title: editorName.trim() || 'MON GROOVE', description: 'Exercice utilisateur', bpm: tempo, bars: effectiveEditorBars, timeSignature: '4/4', countInBars: 0, backingTrack: null, grading: { perfectMs: 35, goodMs: 90 }, targets: notesToExerciseTargets(editorTargets) });
 
@@ -500,15 +600,30 @@ export default function App() {
       stopEditorTransport();
       return;
     }
+    await audio.unlock();
     const activeScene = sceneOverride ?? editorActiveScene;
     if (sceneOverride !== undefined) setEditorActiveScene(sceneOverride);
     setEditorPlaying(true);
     const run = ++editorRun.current;
     setEditorPlaybackBeat(0);
     if (editorGrid.current) editorGrid.current.scrollLeft = 0;
-    const patterns = patternsForScene(currentPatternBank(), editorScenes, activeScene);
-    const allTargets = EDITOR_GROUPS.flatMap((group) => patterns[group]);
-    const playbackBars = allTargets.length ? usedBars(allTargets) : effectiveEditorBars;
+    const playbackBank = currentPatternBank();
+    const sceneNumbers = editorMode === 'complete' && sceneOverride === undefined && editorSong.length ? editorSong : [activeScene];
+    let beatOffset = 0;
+    const scheduledTargets: Array<{ group: EditorGroup; target: SequencerNote }> = [];
+    sceneNumbers.forEach((sceneNumber) => {
+      const sceneExists = editorScenes.some((scene) => scene.scene === sceneNumber);
+      const scenePatterns = sceneExists
+        ? patternsForScene(playbackBank, editorScenes, sceneNumber)
+        : Object.fromEntries(EDITOR_GROUPS.map((group) => [group, playbackBank[group][editorPatternNumbers[group]] || []])) as ProjectPatterns;
+      const sceneBars = Math.max(1, ...EDITOR_GROUPS.map((group) => usedBars(scenePatterns[group])));
+      EDITOR_GROUPS.forEach((group) => scenePatterns[group].forEach((target) => {
+        scheduledTargets.push({ group, target: { ...target, beat: target.beat + beatOffset } });
+      }));
+      beatOffset += sceneBars * 4;
+    });
+    const allTargets = scheduledTargets.map(({ target }) => target);
+    const playbackBars = Math.max(1, beatOffset / 4);
     const playbackStart = performance.now() + (editorMode === 'complete' ? 80 : 0);
     const followPlayback = () => {
       const rawBeat = Math.max(0, (performance.now() - playbackStart) / (60000 / tempo));
@@ -522,11 +637,21 @@ export default function App() {
     };
     editorPlaybackFrame.current = requestAnimationFrame(followPlayback);
     if (editorMode === 'complete') {
+      if (!midi.outputConnected && !machineSampleCount) {
+        const internalExercise: Exercise = {
+          ...editorExercise(),
+          id: 'studio-internal-preview',
+          bars: playbackBars,
+          targets: notesToExerciseTargets(allTargets),
+        };
+        await audio.start(internalExercise, 0, false, editorLoop);
+        if (run !== editorRun.current) return;
+      }
       const startAt = playbackStart;
       const cycleMs = 60000 / tempo * playbackBars * 4;
       const scheduleCycle = (cycleStart: number) => {
-        if (midi.outputConnected) midi.sendClockWindow(tempo, cycleStart, cycleMs);
-        EDITOR_GROUPS.forEach((group, groupIndex) => patterns[group].forEach((target) => {
+        scheduledTargets.forEach(({ group, target }) => {
+          const groupIndex = EDITOR_GROUPS.indexOf(group);
           const at = cycleStart + target.beat * 60000 / tempo;
           const duration = target.duration * 60000 / tempo;
           if (midi.outputConnected) {
@@ -534,13 +659,16 @@ export default function App() {
             else midi.sendPad(target.pad, groupIndex, target.velocity, at, duration);
           } else {
             const pad = deviceInventory?.pads.find((candidate) => candidate.group === group && candidate.pad === target.pad + 1);
-            if (pad?.slot) void machineSampleBank.play(pad.slot, target.velocity, at, target.note, pad.rootNote);
+            const scheduleInternalFallback = () => window.setTimeout(() => audio.playPad(target.pad, target.velocity), Math.max(0, at - performance.now()));
+            if (pad?.slot) void machineSampleBank.play(pad.slot, target.velocity, at, target.note, pad.rootNote).then((played) => { if (!played) scheduleInternalFallback(); });
+            else scheduleInternalFallback();
           }
-        }));
+        });
       };
-      if (midi.outputConnected) midi.startOutputTransport(startAt);
-      scheduleCycle(startAt);
-      if (editorLoop) editorLoopTimer.current = window.setInterval(() => scheduleCycle(performance.now() + 80), cycleMs);
+      if (midi.outputConnected || machineSampleCount) {
+        scheduleCycle(startAt);
+        if (editorLoop) editorLoopTimer.current = window.setInterval(() => scheduleCycle(performance.now() + 80), cycleMs);
+      }
     } else {
       // Dans l'éditeur jeu, la lecture sert à écouter le groove sans clic métronomique.
       await audio.start(editorExercise(), 0, false);
@@ -635,25 +763,32 @@ export default function App() {
     setSelectedStudioProject('');
   };
 
-  /** Commun à un chargement local et machine : repart sur le premier pattern réellement écrit par groupe (pas forcément 01, un trou est légal) pour ne pas ouvrir une grille vide. */
+  /** Commun à tous les chargements : ouvre exactement les patterns référencés par la première Song Position, afin que EDIT PATTERN et ARRANGEMENT montrent la même scène. */
   const applyLoadedStudioProject = (loaded: StudioProjectState) => {
     stopEditorTransport();
+    editorScrollToEnd.current = false;
     setEditorName(loaded.title.toUpperCase());
     setTempo(loaded.bpm);
-    setEditorGroup('A');
     setEditorPatternBank(loaded.patternBank);
+    const startingSceneNumber = loaded.song[0] ?? loaded.currentScene ?? loaded.scenes[0]?.scene ?? 1;
+    const startingScene = loaded.scenes.find((scene) => scene.scene === startingSceneNumber);
     const startingNumbers = Object.fromEntries(
-      EDITOR_GROUPS.map((group) => [group, patternNumbersForGroup(loaded.patternBank, group)[0] ?? 1]),
+      EDITOR_GROUPS.map((group) => [group, startingScene?.groupPatterns[group] ?? patternNumbersForGroup(loaded.patternBank, group)[0] ?? 1]),
     ) as Record<EditorGroup, number>;
+    const startingGroup = EDITOR_GROUPS.find((group) => startingScene?.groupPatterns[group] !== null && loaded.patternBank[group][startingNumbers[group]]?.length) ?? 'A';
     setEditorPatternNumbers(startingNumbers);
     setEditorScenes(loaded.scenes);
     setEditorSong(loaded.song);
-    setEditorActiveScene(loaded.song[0] ?? loaded.currentScene ?? 1);
-    const startingNotes = loaded.patternBank.A[startingNumbers.A] || [];
+    setEditorActiveScene(startingSceneNumber);
+    setEditorGroup(startingGroup);
+    const startingNotes = loaded.patternBank[startingGroup][startingNumbers[startingGroup]] || [];
     setEditorTargets(startingNotes);
     setEditorPadModes(loaded.padModes);
     setEditorBars(Math.max(1, usedBars(startingNotes) + 1));
-    setStudioView('pattern');
+    // Un document complet peut contenir plusieurs Song Positions, scènes et
+    // patterns. L'ouvrir sur ARRANGEMENT montre le fichier entier ; l'utilisateur
+    // choisit ensuite « A01 · ÉDITER » pour entrer dans un pattern précis.
+    setStudioView('arrangement');
     setKeyEditorOpen(false);
   };
 
@@ -670,6 +805,21 @@ export default function App() {
     }
     applyLoadedStudioProject(loaded);
     setSelectedStudioProject(id);
+  };
+
+  /** Charge une composition d'exemple versionnée avec l'application. Elle reste indépendante de la bibliothèque locale jusqu'à un Enregistrer sous. */
+  const openStudioDemo = async (id: string) => {
+    const demo = STUDIO_DEMOS.find((candidate) => candidate.id === id);
+    if (!demo || !confirmStudioReplacement()) return;
+    try {
+      const response = await fetch(`${import.meta.env.BASE_URL}demos/${demo.file}`, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`Impossible de charger la démonstration (${response.status}).`);
+      const document = await response.json() as Record<string, unknown>;
+      applyLoadedStudioProject(studioStateFromDocument(document));
+      setSelectedStudioProject('');
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : 'Cette démonstration est illisible.');
+    }
   };
 
   /**
@@ -773,13 +923,61 @@ export default function App() {
     setEditorSong((current) => current.filter((_, position) => position !== index));
   };
 
-  const addSongPosition = () => {
-    const lastSceneNumber = editorSong[editorSong.length - 1];
-    const source = editorScenes.find((scene) => scene.scene === lastSceneNumber);
-    const newSceneNumber = nextFreeSceneNumber(editorScenes);
-    const newScene: SceneDefinition = source ? { ...source, scene: newSceneNumber, groupPatterns: { ...source.groupPatterns } } : emptyScene(newSceneNumber);
-    setEditorScenes((current) => [...current, newScene]);
-    setEditorSong((current) => [...current, newSceneNumber]);
+  /** Reproduit COMMIT du K.O.II : fige la scène courante puis la duplique, patterns A–D compris, pour créer la variation suivante. */
+  const commitPatternsToScene = () => {
+    const bank = currentPatternBank();
+    const currentGroupPatterns = Object.fromEntries(EDITOR_GROUPS.map((group) => {
+      const patternNumber = editorPatternNumbers[group];
+      return [group, Object.prototype.hasOwnProperty.call(bank[group], patternNumber) ? patternNumber : null];
+    })) as SceneDefinition['groupPatterns'];
+    if (EDITOR_GROUPS.every((group) => {
+      const patternNumber = currentGroupPatterns[group];
+      return patternNumber === null || !(bank[group][patternNumber]?.length);
+    })) {
+      window.alert('Écris au moins un pattern avant de créer une scène.');
+      return;
+    }
+
+    const committedSceneNumber = editorActiveScene;
+    const sceneExists = editorScenes.some((scene) => scene.scene === committedSceneNumber);
+    const scenesWithCommit = sceneExists
+      ? editorScenes.map((scene) => scene.scene === committedSceneNumber ? { ...scene, groupPatterns: currentGroupPatterns } : scene)
+      : [...editorScenes, { scene: committedSceneNumber, groupPatterns: currentGroupPatterns, timeSignature: [4, 4] as [number, number] }];
+    if (scenesWithCommit.length >= MAX_SCENE_NUMBER) {
+      window.alert('La limite de 99 scènes est atteinte.');
+      return;
+    }
+
+    const nextSceneNumber = nextFreeSceneNumber(scenesWithCommit);
+    let nextBank = bank;
+    const nextPatternNumbers = { ...editorPatternNumbers };
+    const duplicatedGroupPatterns = { A: null, B: null, C: null, D: null } as SceneDefinition['groupPatterns'];
+    for (const group of EDITOR_GROUPS) {
+      const sourceNumber = currentGroupPatterns[group];
+      if (sourceNumber === null) continue;
+      const occupied = new Set(Object.keys(nextBank[group]).map(Number));
+      const targetNumber = [...Array(MAX_PATTERN_NUMBER)]
+        .map((_, index) => (sourceNumber + index) % MAX_PATTERN_NUMBER + 1)
+        .find((number) => !occupied.has(number));
+      if (targetNumber === undefined) {
+        window.alert(`Le groupe ${group} contient déjà 99 patterns.`);
+        return;
+      }
+      const copiedNotes = (nextBank[group][sourceNumber] || []).map((note, index) => ({ ...note, id: `${note.id}-commit-${nextSceneNumber}-${group}-${index}` }));
+      nextBank = { ...nextBank, [group]: { ...nextBank[group], [targetNumber]: copiedNotes } };
+      nextPatternNumbers[group] = targetNumber;
+      duplicatedGroupPatterns[group] = targetNumber;
+    }
+    const duplicatedScene: SceneDefinition = { scene: nextSceneNumber, groupPatterns: duplicatedGroupPatterns, timeSignature: [4, 4] };
+    setEditorPatternBank(nextBank);
+    setEditorScenes([...scenesWithCommit, duplicatedScene]);
+    setEditorSong((current) => current[current.length - 1] === committedSceneNumber ? current : [...current, committedSceneNumber]);
+    setEditorActiveScene(nextSceneNumber);
+    setEditorPatternNumbers(nextPatternNumbers);
+    const nextTargets = nextBank[editorGroup][nextPatternNumbers[editorGroup]] || [];
+    setEditorTargets(nextTargets);
+    setEditorBars(Math.max(1, usedBars(nextTargets) + 1));
+    editorScrollToEnd.current = true;
   };
 
   const auditionSongPosition = (index: number) => {
@@ -795,22 +993,21 @@ export default function App() {
     viewport.scrollLeft = Math.max(0, (viewport.scrollWidth - viewport.clientWidth) * progress);
   }, [pageStart, songBeat, transportActive]);
 
-  const previousEditorBars = useRef(editorBars);
   useEffect(() => {
     if (!editorOpen || !editorGrid.current) return;
-    // N'aller au bout de la grille (mesure de réserve) que si on vient d'écrire une note
-    // qui a fait grandir le pattern d'une seule mesure. Tout autre changement (chargement
-    // d'un projet, changement de groupe ou de pattern, nouveau projet) doit ramener au
-    // début — sinon le pattern chargé semble vide, on regarde une mesure de réserve loin
-    // devant les vraies frappes.
-    const grewByOneFromEditing = editorBars === previousEditorBars.current + 1;
-    editorGrid.current.scrollLeft = grewByOneFromEditing ? editorGrid.current.scrollWidth : 0;
-    previousEditorBars.current = editorBars;
-  }, [editorBars, editorOpen]);
+    // Aller à droite uniquement après une écriture réelle dans la mesure de réserve.
+    // Chargement, changement de scène/groupe/pattern et retour depuis ARRANGEMENT
+    // repartent toujours au début afin que les frappes ne « clignotent » pas avant
+    // de sortir du champ visible.
+    editorGrid.current.scrollLeft = editorScrollToEnd.current ? editorGrid.current.scrollWidth : 0;
+    editorScrollToEnd.current = false;
+  }, [editorBars, editorGroup, editorOpen, editorPatternNumbers, studioView]);
 
-  if (workspaceView === 'home') return <HomePage connected={midi.connected || midi.outputConnected} project={deviceInventory?.project} scannedSoundCount={deviceInventory ? Object.keys(deviceInventory.sounds).length : 0} onOpenGame={() => setWorkspaceView('game')} onOpenStudio={openCompleteEditor} onOpenSounds={() => setWorkspaceView('sounds')} onOpenDocumentation={() => setWorkspaceView('docs')} />;
+  if (workspaceView === 'home') return <HomePage connected={midi.connected || midi.outputConnected} project={deviceInventory?.project} scannedSoundCount={deviceInventory ? Object.keys(deviceInventory.sounds).length : 0} onOpenGame={() => setWorkspaceView('game')} onOpenStudio={openCompleteEditor} onOpenSounds={() => setWorkspaceView('sounds')} onOpenDocumentation={() => setWorkspaceView('docs')} onOpenMachineTest={() => setWorkspaceView('machine-test')} />;
 
-  if (workspaceView === 'sounds') return <SoundsPage inventory={deviceInventory} soundIndex={deviceSoundIndex} midiConnected={midi.outputConnected} liveMidi={lastMidi} padModes={editorPadModes} onBack={goHome} onConnectMidi={() => void connectMidi()} onPadModeChange={(group, pad, mode) => setEditorPadModes((current) => ({ ...current, [`${group}:${pad}`]: mode }))} onPadPreview={(group, pad, stagedSlot) => void previewSoundPagePad(group, pad, stagedSlot)} />;
+  if (workspaceView === 'machine-test') return <MachineTestPage connected={midi.connected} inputNames={midi.inputNames} observations={midiObservations} onBack={goHome} onConnect={() => void midi.connectMonitor()} onSendLearned={midi.sendLearnedMessage} onSelectMachineGroup={midi.selectMachineGroup} />;
+
+  if (workspaceView === 'sounds') return <SoundsPage inventory={deviceInventory} soundIndex={deviceSoundIndex} midiConnected={midi.outputConnected} liveMidi={lastMidi?.note !== undefined && lastMidi.velocity !== undefined ? { note: lastMidi.note, velocity: lastMidi.velocity, timestamp: lastMidi.timestamp } : null} padModes={editorPadModes} onBack={goHome} onConnectMidi={() => void connectMidi()} onPadModeChange={(group, pad, mode) => setEditorPadModes((current) => ({ ...current, [`${group}:${pad}`]: mode }))} onPadPreview={(group, pad, stagedSlot) => void previewSoundPagePad(group, pad, stagedSlot)} />;
 
   if (workspaceView === 'docs') return <DocumentationPage onBack={goHome} />;
 
@@ -818,13 +1015,13 @@ export default function App() {
     <GameToolbar difficulty={difficulty} tempo={tempo} activeBpm={activeExercise.bpm} styleId={styleId} styles={STYLES} userExercises={userExercises} phase={phase} sessionActive={sessionActive} midiConnected={midi.connected} onDifficultyChange={setDifficulty} onTempoChange={setTempo} onStyleChange={changeStyle} onHome={goHome} onOpenEditor={openEditor} onConnectMidi={() => void connectMidi()} onPreview={() => void togglePreview()} onPlay={() => void toggle()} />
     {phase === 'countin' && <div className="countdown" aria-live="assertive"><small>1 MESURE POUR SE PRÉPARER</small><b>{countdown}</b></div>}
     {editorOpen && <div className="editor-overlay"><section className="exercise-editor">
-      <EditorToolbar mode={editorMode} name={editorName} group={editorGroup} playing={editorPlaying} loop={editorLoop} exportFormat={editorExportFormat} canSave={Boolean(editorName.trim() && (editorMode === 'complete' || editorTargets.length || EDITOR_GROUPS.some((group) => Object.values(editorPatternBank[group]).some((notes) => notes.length))))} midiConnected={midi.outputConnected} scannedProject={deviceInventory?.project} machineProjectAvailable={Boolean(machineProjectDocument)} machineSampleCount={machineSampleCount} localProjects={studioLibrary.map((project) => ({ id: project.id, title: String((project.document.metadata as { title?: string } | undefined)?.title || 'PROJET SANS NOM') }))} selectedLocalProject={selectedStudioProject} studioView={studioView} patternNumber={editorPatternNumbers[editorGroup]} onHome={goHome} onNameChange={setEditorName} onGroupChange={changeEditorGroup} onStudioViewChange={setStudioView} onPatternNumberChange={changeEditorPattern} onConnectMidi={() => void connectMidi()} onNew={newStudioProject} onOpenProject={openStudioProject} onImportFiles={(files) => void importStudioProjectFiles(files)} onLoadMachineProject={loadMachineProject} onCloneMachine={() => setMachineCloneOpen(true)} onOpenSampleFolder={() => void openStudioSampleFolder()} onSave={saveEditor} onSaveAs={saveStudioProjectAs} onRename={renameSelectedStudioProject} onDuplicate={duplicateSelectedStudioProject} onDelete={deleteSelectedStudioProject} onPlayback={() => void toggleEditorPlayback()} onLoopChange={setEditorLoop} onExportFormatChange={setEditorExportFormat} onExport={exportEditor} onExportMidi={exportEditorMidi} onExportJson={exportEditorProjectJson} />
-      {editorMode === 'complete' && studioView === 'arrangement' && <SongArranger scenes={editorScenes} song={editorSong} patternBank={currentPatternBank()} onAssignCell={assignSceneGroupPattern} onReorderSong={reorderEditorSong} onDuplicateSongPosition={duplicateSongPosition} onDeleteSongPosition={deleteSongPosition} onAddSongPosition={addSongPosition} onAuditionSongPosition={auditionSongPosition} />}
+      <EditorToolbar mode={editorMode} name={editorName} group={editorGroup} playing={editorPlaying} loop={editorLoop} exportFormat={editorExportFormat} canSave={Boolean(editorName.trim() && (editorMode === 'complete' || editorTargets.length || EDITOR_GROUPS.some((group) => Object.values(editorPatternBank[group]).some((notes) => notes.length))))} midiConnected={midi.outputConnected} scannedProject={deviceInventory?.project} machineProjectAvailable={Boolean(machineProjectDocument)} machineSampleCount={machineSampleCount} demoProjects={STUDIO_DEMOS} localProjects={studioLibrary.map((project) => ({ id: project.id, title: String((project.document.metadata as { title?: string } | undefined)?.title || 'PROJET SANS NOM') }))} selectedLocalProject={selectedStudioProject} studioView={studioView} patternNumber={editorPatternNumbers[editorGroup]} activeSongPosition={Math.max(1, editorSong.findIndex((scene) => scene === editorActiveScene) + 1)} activeScene={editorActiveScene} onHome={goHome} onNameChange={setEditorName} onGroupChange={changeEditorGroup} onStudioViewChange={setStudioView} onPatternNumberChange={changeEditorPattern} onCommitScene={commitPatternsToScene} onConnectMidi={() => void connectMidi()} onNew={newStudioProject} onOpenProject={openStudioProject} onOpenDemo={(id) => void openStudioDemo(id)} onImportFiles={(files) => void importStudioProjectFiles(files)} onLoadMachineProject={loadMachineProject} onCloneMachine={() => setMachineCloneOpen(true)} onOpenSampleFolder={() => void openStudioSampleFolder()} onSave={saveEditor} onSaveAs={saveStudioProjectAs} onRename={renameSelectedStudioProject} onDuplicate={duplicateSelectedStudioProject} onDelete={deleteSelectedStudioProject} onPlayback={() => void toggleEditorPlayback()} onLoopChange={setEditorLoop} onExportFormatChange={setEditorExportFormat} onExport={exportEditor} onExportMidi={exportEditorMidi} onExportJson={exportEditorProjectJson} />
+      {editorMode === 'complete' && studioView === 'arrangement' && <SongArranger scenes={editorScenes} song={editorSong} patternBank={currentPatternBank()} onAssignCell={assignSceneGroupPattern} onReorderSong={reorderEditorSong} onDuplicateSongPosition={duplicateSongPosition} onDeleteSongPosition={deleteSongPosition} onAuditionSongPosition={auditionSongPosition} onEditPattern={editArrangedPattern} />}
       {(editorMode !== 'complete' || studioView === 'pattern') && <>
-        {editorMode === 'complete' && <PadStrip group={editorGroup} selectedPad={editorSelectedPad} padModes={editorPadModes} padName={devicePadName} padSlot={(pad) => devicePadInfo(pad)?.slot} onSelect={(pad) => { setEditorSelectedPad(pad); setKeyEditorOpen((editorPadModes[`${editorGroup}:${pad}`] || 'ONE') === 'KEYS'); }} onPreview={(pad) => { const info = devicePadInfo(pad); if (midi.outputConnected) midi.sendPad(pad, EDITOR_GROUPS.indexOf(editorGroup), 110); else if (info?.slot) void machineSampleBank.play(info.slot, 110, performance.now(), undefined, info.rootNote); }} onModeChange={(pad, mode) => { setEditorPadModes((current) => ({ ...current, [`${editorGroup}:${pad}`]: mode })); setKeyEditorOpen(mode === 'KEYS'); }} onOpenKeys={() => setKeyEditorOpen(true)} />}
+        {editorMode === 'complete' && <PadStrip group={editorGroup} selectedPad={editorSelectedPad} livePad={editorMidiHit?.pad} liveGroup={editorMidiHit?.group} padModes={editorPadModes} padName={devicePadName} padSlot={(pad) => devicePadInfo(pad)?.slot} onSelect={(pad) => { setEditorSelectedPad(pad); setKeyEditorOpen((editorPadModes[`${editorGroup}:${pad}`] || 'ONE') === 'KEYS'); }} onPreview={(pad) => void previewEditorPad(editorGroup, pad)} onModeChange={(pad, mode) => { setEditorPadModes((current) => ({ ...current, [`${editorGroup}:${pad}`]: mode })); setKeyEditorOpen(mode === 'KEYS'); }} onOpenKeys={() => setKeyEditorOpen(true)} />}
         {keyEditorOpen && editorMode === 'complete'
-          ? <PianoRoll gridRef={editorGrid} group={editorGroup} selectedPad={editorSelectedPad} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} targets={editorTargets} onClose={() => setKeyEditorOpen(false)} onPreviewNote={(note) => { const info = devicePadInfo(editorSelectedPad); if (midi.outputConnected) midi.sendNote(note, 110); else if (info?.slot) void machineSampleBank.play(info.slot, 110, performance.now(), note, info.rootNote); }} onToggleNote={toggleKeyStep} />
-          : <RhythmGrid gridRef={editorGrid} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} mode={editorMode} group={editorGroup} selectedPad={editorSelectedPad} targets={editorTargets} padModes={editorPadModes} padName={devicePadName} scannedPlayMode={(pad) => devicePadInfo(pad)?.playMode} onSelectPad={setEditorSelectedPad} onOpenKeys={() => setKeyEditorOpen(true)} onToggleStep={toggleEditorStep} />}
+          ? <PianoRoll gridRef={editorGrid} group={editorGroup} selectedPad={editorSelectedPad} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} targets={editorTargets} onClose={() => setKeyEditorOpen(false)} onPreviewNote={(note) => void previewEditorPad(editorGroup, editorSelectedPad, note)} onToggleNote={toggleKeyStep} />
+          : <RhythmGrid gridRef={editorGrid} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} mode={editorMode} group={editorGroup} selectedPad={editorSelectedPad} targets={editorTargets} committedSections={editorCommittedSections} padModes={editorPadModes} padName={devicePadName} scannedPlayMode={(pad) => devicePadInfo(pad)?.playMode} onSelectPad={setEditorSelectedPad} onOpenKeys={() => setKeyEditorOpen(true)} onToggleStep={toggleEditorStep} onToggleCommittedStep={toggleCommittedEditorStep} />}
       </>}
       <footer><span>{editorMode === 'complete' ? `${midi.outputConnected ? `SON EP‑133 · ${midi.outputNames.join(' + ')}` : 'EP‑133 NON CONNECTÉ'} · PATTERN ${editorGroup}${String(editorPatternNumbers[editorGroup]).padStart(2, '0')} · ` : ''}GROUPE {editorGroup} · {editorTargets.length} FRAPPE(S) · {effectiveEditorBars} MESURE(S) · {tempo} BPM · AJOUT AUTOMATIQUE ACTIF</span></footer>
       {machineCloneOpen && <MachineCloneDialog inventory={deviceInventory} soundIndex={deviceSoundIndex} onClose={() => setMachineCloneOpen(false)} />}

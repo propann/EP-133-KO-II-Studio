@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type CSSProperties } from 'react';
 import { EDITOR_GROUPS, type EditorGroup } from '../../core/project/exporters';
 import { PatternSelector } from './PatternSelector';
 
@@ -14,21 +14,28 @@ interface EditorToolbarProps {
   scannedProject?: number;
   machineProjectAvailable: boolean;
   machineSampleCount: number;
+  demoProjects: ReadonlyArray<{ id: string; title: string }>;
   localProjects: Array<{ id: string; title: string }>;
   selectedLocalProject: string;
-  /** Vue Studio active — [ EDIT PATTERN ] ou [ ARRANGEMENT ]. */
+  /** Vue Studio active — PATTERNS (édition multi-mesures) ou SONG (scènes et Song Positions). */
   studioView: 'pattern' | 'arrangement';
   patternNumber: number;
+  activeSongPosition: number;
+  activeScene: number;
   onHome: () => void;
   onNameChange: (name: string) => void;
   onGroupChange: (group: EditorGroup) => void;
   onStudioViewChange: (view: 'pattern' | 'arrangement') => void;
   onPatternNumberChange: (number: number) => void;
+  /** Crée une nouvelle scène avec les patterns A–D actuellement sélectionnés. */
+  onCommitScene: () => void;
   onConnectMidi: () => void;
   onSave: () => void;
   onNew: () => void;
   /** Ouvre directement le projet cliqué — pas de sélection préalable dans un menu déroulant séparé. */
   onOpenProject: (id: string) => void;
+  /** Charge un projet de démonstration livré avec l'application, sans l'ajouter aux sauvegardes personnelles. */
+  onOpenDemo: (id: string) => void;
   /** Importe un ou plusieurs fichiers .json (format « Exporter en projet EP-133 ») dans la bibliothèque locale, sans console. */
   onImportFiles: (files: FileList) => void;
   onSaveAs: () => void;
@@ -50,9 +57,12 @@ export function EditorToolbar(props: EditorToolbarProps) {
   const fileMenuRef = useRef<HTMLDetailsElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
   const [fileMenuOpen, setFileMenuOpen] = useState(false);
+  const [openProjectWindow, setOpenProjectWindow] = useState(false);
+  const [machineProjectsWindow, setMachineProjectsWindow] = useState(false);
+  const [gaze, setGaze] = useState({ x: 0, y: 0 });
   const closeFileMenu = () => { if (fileMenuRef.current) fileMenuRef.current.open = false; };
   return <>
-    <header><button className="editor-home-button" onClick={props.onHome}>← ACCUEIL</button><div><small>{props.mode === 'game' ? 'ÉDITEUR JEU' : 'ÉDITEUR EP‑133 COMPLET'}</small><input value={props.name} maxLength={32} onChange={(event) => props.onNameChange(event.target.value.toUpperCase())} aria-label="Nom de l'exercice" /></div>{props.mode === 'complete' && <><div className="editor-groups" aria-label="Groupes EP-133">{EDITOR_GROUPS.map((group) => <button className={props.group === group ? 'active' : ''} onClick={() => props.onGroupChange(group)} key={group}>{group}</button>)}</div><div className="studio-view-switch" aria-label="Vue du Studio"><button className={props.studioView === 'pattern' ? 'active' : ''} onClick={() => props.onStudioViewChange('pattern')}>EDIT PATTERN</button><button className={props.studioView === 'arrangement' ? 'active' : ''} onClick={() => props.onStudioViewChange('arrangement')}>ARRANGEMENT</button></div>{props.studioView === 'pattern' && <PatternSelector group={props.group} number={props.patternNumber} onChange={props.onPatternNumberChange} />}<span className={`device-scan-state ${props.scannedProject !== undefined ? 'active' : ''}`}>{props.scannedProject !== undefined ? `PROJET ${props.scannedProject} · SCAN LECTURE SEULE` : 'AUCUN SCAN'}</span><button className={`editor-midi-out ${props.midiConnected ? 'active' : ''}`} onClick={props.onConnectMidi}>{props.midiConnected ? 'MIDI OUT ✓' : 'CONNECTER EP‑133'}</button></>}<div className={`editor-vu ${props.playing ? 'active' : ''}`}><span>-20</span><span>-6</span><span>0</span><i /><b>VU</b></div></header>
+    <header><button className="editor-home-button" onClick={props.onHome}>← ACCUEIL</button><div><small>{props.mode === 'game' ? 'ÉDITEUR JEU' : 'ÉDITEUR EP‑133 COMPLET'}</small><input value={props.name} maxLength={32} onChange={(event) => props.onNameChange(event.target.value.toUpperCase())} aria-label="Nom de l'exercice" /></div>{props.mode === 'complete' && <><div className="editor-groups" aria-label="Groupes EP-133">{EDITOR_GROUPS.map((group) => <button className={props.group === group ? 'active' : ''} onClick={() => props.onGroupChange(group)} key={group}>{group}</button>)}</div><div className="studio-view-switch" aria-label="Vue du Studio"><button className={props.studioView === 'pattern' ? 'active' : ''} onClick={() => props.onStudioViewChange('pattern')}>PATTERNS</button><button className={props.studioView === 'arrangement' ? 'active' : ''} onClick={() => props.onStudioViewChange('arrangement')}>SONG</button></div>{props.studioView === 'pattern' && <PatternSelector group={props.group} number={props.patternNumber} onChange={props.onPatternNumberChange} />}<button className={`editor-midi-out ${props.midiConnected ? 'active' : ''}`} onClick={props.onConnectMidi}>{props.midiConnected ? 'MIDI OUT ✓' : 'CONNECTER EP‑133'}</button></>}<div className="editor-vu" aria-label="VU stéréo gauche droite" onMouseMove={(event) => { const box = event.currentTarget.getBoundingClientRect(); setGaze({ x: Math.max(-1, Math.min(1, (event.clientX - (box.left + box.width / 2)) / (box.width / 2))), y: Math.max(-1, Math.min(1, (event.clientY - (box.top + box.height / 2)) / (box.height / 2))) }); }} onMouseLeave={() => setGaze({ x: 0, y: 0 })} style={{ '--gaze-x': gaze.x, '--gaze-y': gaze.y } as CSSProperties}>{['L', 'R'].map((channel) => <span className={`editor-channel-vu ${props.playing ? 'active' : ''}`} key={channel}><i /><b>{channel}</b></span>)}</div></header>
     <div className="editor-commandbar">
       {props.mode === 'complete' ? <>
         {fileMenuOpen && <div className="file-menu-backdrop" onClick={closeFileMenu} />}
@@ -61,12 +71,7 @@ export function EditorToolbar(props: EditorToolbarProps) {
           <div className="file-menu-panel">
             <div className="file-menu-panel-head"><b>FICHIER</b><button className="file-menu-close" aria-label="Fermer le menu" onClick={closeFileMenu}>✕</button></div>
             <button className="file-row" onClick={() => { props.onNew(); closeFileMenu(); }}>Nouveau</button>
-            <div className="file-row file-row-label">Ouvrir</div>
-            <div className="file-menu-open-list">
-              {props.localProjects.length
-                ? props.localProjects.map((project) => <button key={project.id} className={`file-row nested ${project.id === props.selectedLocalProject ? 'active' : ''}`} onClick={() => { props.onOpenProject(project.id); closeFileMenu(); }}>{project.title}</button>)
-                : <p className="file-row nested muted">Aucun projet enregistré.</p>}
-            </div>
+            <button className="file-row" onClick={() => { closeFileMenu(); setOpenProjectWindow(true); }}>Ouvrir…</button>
             <button className="file-row" onClick={() => importInputRef.current?.click()}>Importer un fichier…</button>
             <input ref={importInputRef} type="file" accept=".json" multiple hidden onChange={(event) => { if (event.target.files?.length) props.onImportFiles(event.target.files); event.target.value = ''; closeFileMenu(); }} />
             <hr className="file-menu-divider" />
@@ -81,11 +86,24 @@ export function EditorToolbar(props: EditorToolbarProps) {
             <button className="file-row" onClick={() => { props.onExportJson(); closeFileMenu(); }}>Exporter en projet EP‑133 (.json)</button>
           </div>
         </details>
-        <button className="machine-project-load" disabled={!props.machineProjectAvailable} onClick={props.onLoadMachineProject} title={props.machineProjectAvailable ? 'Charger le projet scanné sur la machine' : 'Aucun projet scanné'}>↓ PROJET MACHINE</button>
+        <button className="machine-project-load" onClick={() => setMachineProjectsWindow(true)} title="Parcourir les 9 projets de la machine">↓ PROJETS MACHINE · 9</button>
         <button className="clone-machine" onClick={props.onCloneMachine} title="Cloner la machine (miroir hors ligne)">▣ CLONER</button>
         <button className="studio-sample-folder" onClick={props.onOpenSampleFolder} title="Ouvrir la banque de samples locale">▤ SAMPLES{props.machineSampleCount ? ` · ${props.machineSampleCount}` : ''}</button>
+        {props.studioView === 'pattern' && <><button className="studio-commit-scene" onClick={props.onCommitScene}>COMMIT · CRÉER SCÈNE</button><span className="studio-pattern-context">SONG POSITION L.{String(props.activeSongPosition).padStart(2, '0')} · SCÈNE S.{String(props.activeScene).padStart(2, '0')} · PATTERN {props.group}{String(props.patternNumber).padStart(2, '0')}</span></>}
       </> : <><button className="save" disabled={!props.canSave} onClick={props.onSave}>● SAVE</button><label className="export-select">EXPORT <select value={props.exportFormat} onChange={(event) => props.onExportFormatChange(event.target.value as 'midi' | 'json')}><option value="midi">MIDI (.mid)</option><option value="json">PROJET EP‑133 (.json)</option></select></label><button className="midi-export" onClick={props.onExport}>⇩ EXPORTER</button></>}
-      <button className="transport-play" disabled={props.mode === 'complete' && !props.midiConnected && !props.machineSampleCount} onClick={props.onPlayback}>{props.playing ? '■ STOP' : '▶ LECTURE'}</button><button className={`loop-toggle ${props.loop ? 'active' : ''}`} disabled={props.mode !== 'complete' || props.playing} onClick={() => props.onLoopChange(!props.loop)}>↻ BOUCLE {props.loop ? 'ON' : 'OFF'}</button>
+      <button className="transport-play" onClick={props.onPlayback}>{props.playing ? '■ STOP' : '▶ LECTURE'}</button><button className={`loop-toggle ${props.loop ? 'active' : ''}`} disabled={props.mode !== 'complete' || props.playing} onClick={() => props.onLoopChange(!props.loop)}>↻ BOUCLE {props.loop ? 'ON' : 'OFF'}</button>
     </div>
+    {openProjectWindow && <div className="project-open-overlay" role="dialog" aria-modal="true" aria-labelledby="project-open-title" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpenProjectWindow(false); }}>
+      <section className="project-open-dialog">
+        <header><div><small>STUDIO EP-133</small><h2 id="project-open-title">OUVRIR UN PROJET</h2></div><button aria-label="Fermer" onClick={() => setOpenProjectWindow(false)}>✕</button></header>
+        <div className="project-open-content">
+          <section><h3>PROJETS DE DÉMONSTRATION</h3><p>Compositions fournies pour tester les patterns, les scènes et l’arrangement.</p><div className="project-open-list">{props.demoProjects.map((project) => <button key={project.id} onClick={() => { props.onOpenDemo(project.id); setOpenProjectWindow(false); }}><span>▶</span><b>{project.title}</b><small>PROJET D’EXEMPLE</small></button>)}</div></section>
+          <section><h3>MES PROJETS</h3><p>Projets enregistrés dans la bibliothèque locale de ce navigateur.</p><div className="project-open-list">{props.localProjects.length ? props.localProjects.map((project) => <button key={project.id} className={project.id === props.selectedLocalProject ? 'active' : ''} onClick={() => { props.onOpenProject(project.id); setOpenProjectWindow(false); }}><span>▤</span><b>{project.title}</b><small>{project.id === props.selectedLocalProject ? 'PROJET ACTUEL' : 'PROJET PERSONNEL'}</small></button>) : <div className="project-open-empty">Aucun projet personnel enregistré.</div>}</div></section>
+          <section className="project-open-machine"><h3>PROJET MACHINE</h3><p>Instantané du projet EP-133 scanné en lecture seule.</p><div className="project-open-list"><button disabled={!props.machineProjectAvailable} onClick={() => { props.onLoadMachineProject(); setOpenProjectWindow(false); }}><span>↓</span><b>{props.machineProjectAvailable ? `PROJET ${props.scannedProject ?? 'EP-133'}` : 'AUCUN PROJET SCANNÉ'}</b><small>{props.machineProjectAvailable ? 'CHARGER SANS ÉCRIRE SUR LA MACHINE' : 'CONNECTEZ ET SCANNEZ LA MACHINE'}</small></button></div></section>
+        </div>
+        <footer><button onClick={() => setOpenProjectWindow(false)}>ANNULER</button></footer>
+      </section>
+    </div>}
+    {machineProjectsWindow && <div className="project-open-overlay" role="dialog" aria-modal="true" aria-labelledby="machine-projects-title" onMouseDown={(event) => { if (event.target === event.currentTarget) setMachineProjectsWindow(false); }}><section className="machine-projects-dialog"><header><div><small>EP‑133 K.O.II</small><h2 id="machine-projects-title">PROJETS MACHINE</h2></div><button aria-label="Fermer" onClick={() => setMachineProjectsWindow(false)}>✕</button></header><p className="machine-projects-intro">Les neuf emplacements du projet EP‑133. Un projet scanné avec musique affiche sa mini-partition.</p><div className="machine-projects-grid">{Array.from({ length: 9 }, (_, index) => { const number = index + 1; const available = number === (props.scannedProject ?? 1) && props.machineProjectAvailable; return <button className={`machine-project-card ${available ? 'available' : ''}`} disabled={!available} onClick={() => { props.onLoadMachineProject(); setMachineProjectsWindow(false); }} key={number}><b>PROJET {number}</b>{available ? <><small>SCAN LECTURE SEULE · MUSIQUE</small><span className="machine-mini-partition">{Array.from({ length: 16 }, (_, step) => <i className={step % 3 === 0 || step === 7 || step === 12 ? 'on' : ''} key={step} />)}</span><em>CHARGER</em></> : <small>NON SCANNÉ</small>}</button>; })}</div></section></div>}
   </>;
 }

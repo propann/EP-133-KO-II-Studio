@@ -98,7 +98,7 @@ validé sur la machine réelle, pas une régression. `npm test` et
 
 Les changements ont été publiés sur `agent/consolidation-suite-ep133` dans le
 commit `7cea244`. La PR brouillon #1 a été mise à jour :
-<https://github.com/propann/ep133-rhythm-hero/pull/1>. L’authentification GitHub
+<https://github.com/propann/ep133-ko-ii-studio/pull/1>. L’authentification GitHub
 du compte `propann` a été rétablie et GitGuardian réussit.
 
 ## Priorités à la reprise

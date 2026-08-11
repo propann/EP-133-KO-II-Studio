@@ -16,8 +16,8 @@ Le player est un site statique : pas de base de données, pas de compte, pas de 
 Sur le Pi :
 
 ```bash
-git clone https://github.com/propann/ep133-rhythm-hero.git
-cd ep133-rhythm-hero
+git clone https://github.com/propann/ep133-ko-ii-studio.git
+cd ep133-ko-ii-studio
 chmod +x tools/start-pi-local.sh
 ./tools/start-pi-local.sh
 ```

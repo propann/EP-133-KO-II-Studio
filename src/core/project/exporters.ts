@@ -118,7 +118,7 @@ export function createEp133ProjectDocument({ title, bpm, patternBank, scenes, so
   return {
     schema: 'ep.project.v1',
     product: 'ep133',
-    metadata: { title: title.trim() || 'RHYTHM HERO' },
+    metadata: { title: title.trim() || 'EP-133 KO II STUDIO' },
     settings: { bpm: Math.max(20, Math.min(300, bpm)) },
     pads: [...padMap.values()].map((pad) => ({
       group: pad.group,

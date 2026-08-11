@@ -1,10 +1,10 @@
-# Passation IA — EP-133 Rhythm Hero
+# Passation IA — EP-133 KO II Studio
 
 > Lire ce document avant toute modification. Le projet est volontairement petit et concret : ne pas le transformer en usine à gaz avant d'avoir fait fonctionner un premier exercice avec le vrai EP-133 K.O. II connecté.
 
 ## 1. Mission du projet
 
-**EP-133 Rhythm Hero** est un coach de finger-drumming pour le Teenage Engineering **EP-133 K.O. II**. L'idée est proche de Melodics, mais pensée pour cette machine : le logiciel montre une partition courte, indique le pad et le doigt, joue une référence, écoute le joueur sur la vraie machine, puis explique simplement les erreurs et augmente la difficulté.
+**EP-133 KO II Studio** est un studio compagnon open source pour le Teenage Engineering **EP-133 K.O. II**. Son cœur est un éditeur de patterns, scènes, Songs et sons capable de cloner des éléments de la machine, de les travailler hors ligne et de préparer leur retour. Le coach Rhythm Hero reste inclus comme module secondaire d'entraînement au finger-drumming.
 
 La boucle produit visée :
 
@@ -136,8 +136,8 @@ Point technique à connaître : les patterns joués sont encore codés dans l'ob
 Le K.O. II se branche directement sur le PC Linux. C'est la machine de développement et de test MIDI.
 
 ```bash
-git clone https://github.com/propann/ep133-rhythm-hero.git
-cd ep133-rhythm-hero
+git clone https://github.com/propann/ep133-ko-ii-studio.git
+cd ep133-ko-ii-studio
 sudo apt update
 sudo apt install -y python3 alsa-utils
 chmod +x tools/start-linux.sh tools/check-ep133-linux.sh

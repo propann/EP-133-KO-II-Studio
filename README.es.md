@@ -1,36 +1,32 @@
-# EP-133 Rhythm Hero
+# EP-133 KO II Studio
 
 [Français](README.md) · [English](README.en.md) · [Español](README.es.md)
 
-**Aprende, toca, compone y crea copias de seguridad — con o sin un EP-133.**
+**El estudio complementario de código abierto para el EP-133 K.O. II.**
 
-EP-133 Rhythm Hero es una suite local y de código abierto dedicada al Teenage
-Engineering EP-133 K.O. II. Reúne un entrenador de finger drumming, un Studio
-con cuatro grupos, una biblioteca de sonidos sin conexión y un sistema de
-clonado de la máquina en modo de solo lectura.
+EP-133 KO II Studio clona proyectos y sonidos, abre patterns reales, construye
+escenas y Songs, trabaja sin conexión y prepara cambios verificados para el
+hardware. Todo permanece local, inspeccionable y sin cuenta.
 
-> Proyecto comunitario independiente. La escritura en el dispositivo permanece
-> desactivada hasta completar las protecciones de copia, confirmación y
+> **Máquina → Studio → creación → máquina.** El proyecto va más allá de mover
+> samples: entiende y transforma la música guardada dentro del EP-133.
+
+> Proyecto comunitario independiente. La lectura, la reproducción MIDI y la
+> selección activa A–D están disponibles; las escrituras persistentes de
+> proyectos o samples siguen bloqueadas hasta validar copia, confirmación y
 > verificación posterior.
 
-## ¿Por qué este proyecto?
+## Qué permite el Studio
 
-El objetivo es hacer más visuales el aprendizaje y la creación: elegir un
-ritmo, ver qué pads hay que tocar, interpretarlo en la máquina real, medir los
-golpes adelantados o retrasados y convertir las ideas en composiciones
-guardadas. La aplicación sigue funcionando con el EP-133 desconectado.
+- clonar los 9 proyectos, samples PCM, metadatos, hashes e historial incremental;
+- leer `.pak/.ppak`, patterns, escenas, Songs, pads y tempo reales;
+- editar patterns, notas KEYS, bancos, escenas y Song Positions;
+- usar el EP-133, los samples clonados o el motor de audio interno;
+- preparar escrituras protegidas y diagnosticar MIDI/SysEx.
 
 ## Funciones
 
-### Rhythm Hero
-
-- 39 estilos rítmicos y cinco niveles de dificultad;
-- partitura de varios compases con pads y digitación sugerida;
-- Web MIDI, puntuación PERFECT / GOOD / MISS, combo y precisión;
-- cuenta atrás, tempo ajustable y sonidos de práctica;
-- editor de ejercicios USER con longitud ampliable.
-
-### Studio EP-133
+### Pattern & Song Studio
 
 - cuatro grupos A–D y 12 pads por grupo;
 - secuenciador ampliable, piano roll KEYS, velocidad y duración;
@@ -38,7 +34,7 @@ guardadas. La aplicación sigue funcionando con el EP-133 desconectado.
 - guardado local, biblioteca de proyectos y exportación MIDI/JSON;
 - reproducción Song basada en escenas y patrones decodificados.
 
-### Espejo privado de la máquina
+### Clon y biblioteca sonora
 
 - exploración SysEx estrictamente en modo de solo lectura;
 - copia local de los 9 proyectos, archivos PCM y metadatos;
@@ -50,13 +46,18 @@ La validación con la máquina real del 10 de agosto de 2026 reconoció **9
 proyectos y 527 sonidos sin cambios en 30,7 segundos**, sin descargas ni errores.
 Los 536 hashes se verificaron de forma independiente.
 
+### Rhythm Hero — módulo incluido
+
+El entrenador original permanece como herramienta secundaria: 39 estilos,
+cinco niveles, partitura animada, puntuación y pads reales.
+
 ## Inicio rápido
 
 Requisitos: una versión reciente de Node.js, npm y Chrome/Chromium para Web MIDI.
 
 ```bash
-git clone https://github.com/propann/ep133-rhythm-hero.git
-cd ep133-rhythm-hero
+git clone https://github.com/propann/ep133-ko-ii-studio.git
+cd ep133-ko-ii-studio
 npm ci
 npm run dev
 ```
@@ -75,7 +76,7 @@ sus ejercicios.
 
 ## Estado del proyecto
 
-El juego, el Studio, Save/Load, la lectura de `.pak/.ppak`, el espejo sin
+El Studio, Save/Load, la lectura de `.pak/.ppak`, el espejo sin
 conexión, el clonado incremental y la jerarquía completa Patrones/Escenas/Song
 (vistas Pattern Editor y Song Arranger) están operativos. Quedan pendientes el
 avance automático de una Song Position a la siguiente durante la reproducción,

@@ -83,7 +83,7 @@ export class AudioEngine {
     this.prepareInstruments();
   }
 
-  async start(exercise: Exercise, countInBars = 1, withMetronome = true) {
+  async start(exercise: Exercise, countInBars = 1, withMetronome = true, loop = false) {
     this.stop();
     const token = this.startToken;
     await Tone.start();
@@ -91,6 +91,9 @@ export class AudioEngine {
     this.prepareInstruments();
     Tone.Transport.bpm.value = exercise.bpm;
     this.countInSeconds = countInBars * 4 * 60 / exercise.bpm;
+    Tone.Transport.loop = loop;
+    Tone.Transport.loopStart = 0;
+    Tone.Transport.loopEnd = this.countInSeconds + exercise.bars * 4 * 60 / exercise.bpm;
     if (withMetronome) {
       this.metronomeId = Tone.Transport.scheduleRepeat((time) => {
         const downbeat = this.metronomeBeat % 4 === 0;
@@ -123,6 +126,7 @@ export class AudioEngine {
     this.scheduledNotes.forEach((id) => Tone.Transport.clear(id));
     Tone.Transport.cancel(0);
     Tone.Transport.seconds = 0;
+    Tone.Transport.loop = false;
     this.metronomeId = null;
     this.scheduledNotes = [];
     this.metronomeBeat = 0;

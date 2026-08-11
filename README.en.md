@@ -1,34 +1,31 @@
-# EP-133 Rhythm Hero
+# EP-133 KO II Studio
 
 [Français](README.md) · [English](README.en.md) · [Español](README.es.md)
 
-**Learn, perform, compose, and back up — with or without an EP-133.**
+**The open-source companion studio for the EP-133 K.O. II.**
 
-EP-133 Rhythm Hero is a local, open-source suite built for the Teenage
-Engineering EP-133 K.O. II. It combines a finger-drumming coach, a four-group
-Studio, an offline sound library, and a read-only machine cloning system.
+EP-133 KO II Studio clones projects and sounds, opens real patterns, builds
+scenes and Songs, works offline, and prepares verified changes for the device.
+Everything stays local, inspectable, and account-free.
 
-> Independent community project. Writing to the device remains disabled until
-> backup, confirmation, and read-back safeguards are complete.
+> **Machine → Studio → creation → machine.** This project goes beyond sample
+> transfer to understand and reshape the music stored inside the EP-133.
 
-## Why this project?
+> Independent community project. Reading, MIDI playing, and active A–D group
+> selection are available; persistent project or sample writes remain locked
+> until backup, confirmation, and read-back safeguards are validated.
 
-The goal is to make learning and creation more visual: choose a rhythm, see
-which pads to hit, perform it on the real device, measure early and late hits,
-then turn ideas into saved compositions. The application remains useful when
-the EP-133 is disconnected.
+## What the Studio does
+
+- clones all 9 projects, PCM samples, metadata, hashes, and incremental history;
+- reads `.pak/.ppak` projects, patterns, scenes, Songs, pads, and tempo;
+- edits patterns, KEYS notes, pattern banks, scenes, and Song Positions;
+- uses the connected EP-133, cloned samples, or the internal audio engine;
+- provides safeguarded write preparation and full MIDI/SysEx diagnostics.
 
 ## Features
 
-### Rhythm Hero
-
-- 39 rhythm styles with five difficulty levels;
-- multi-bar notation with pad numbers and suggested fingering;
-- Web MIDI, PERFECT / GOOD / MISS scoring, combos, and accuracy;
-- count-in, adjustable tempo, and practice sounds;
-- unlimited-length USER exercise editor.
-
-### EP-133 Studio
+### Pattern & Song Studio
 
 - four A–D groups with 12 pads per group;
 - expandable sequencer, KEYS piano roll, velocity, and duration;
@@ -36,7 +33,7 @@ the EP-133 is disconnected.
 - local saves, project library, and MIDI/JSON export;
 - Song-mode playback from decoded scenes and patterns.
 
-### Private device mirror
+### Clone & sound library
 
 - strictly read-only SysEx scanning;
 - local copies of all 9 projects, PCM files, and metadata;
@@ -48,13 +45,18 @@ The real-device validation on August 10, 2026 recognized **9 unchanged projects
 and 527 unchanged sounds in 30.7 seconds**, with no downloads or errors. All 536
 hashes were independently verified.
 
+### Rhythm Hero — included module
+
+The original trainer remains as a secondary tool: 39 styles, five levels,
+animated notation, scoring, and input from the real pads.
+
 ## Quick start
 
 Requirements: a recent Node.js version, npm, and Chrome/Chromium for Web MIDI.
 
 ```bash
-git clone https://github.com/propann/ep133-rhythm-hero.git
-cd ep133-rhythm-hero
+git clone https://github.com/propann/ep133-ko-ii-studio.git
+cd ep133-ko-ii-studio
 npm ci
 npm run dev
 ```
@@ -73,7 +75,7 @@ migrated.
 
 ## Project status
 
-The game, Studio, Save/Load workflow, `.pak/.ppak` reading, offline mirror,
+The Studio, Save/Load workflow, `.pak/.ppak` reading, offline mirror,
 incremental cloning, and the full Pattern/Scene/Song hierarchy (Pattern Editor
 and Song Arranger views) are operational. Remaining work includes automatic
 playback advance from one Song Position to the next, advanced velocity/gate

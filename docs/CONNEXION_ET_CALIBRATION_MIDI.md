@@ -112,3 +112,65 @@ seconde grille et garde davantage de place pour le jeu.
 Pour chaque pad, relever : groupe, position, canal, note, vélocité minimale et
 maximale observées. Indiquer également le nom exact du port MIDI, le navigateur
 et toute différence après un changement de groupe ou de scène sur le EP-133.
+
+## Banc TEST MACHINE — diagnostic temporaire du 11 août 2026
+
+La page **TEST MACHINE**, accessible depuis l'accueil, reproduit la disposition
+physique de la façade et possède deux modes :
+
+- **CONFIGURER** : cliquer un contrôle, puis l'actionner sur la machine ; le
+  message suivant est associé au contrôle dans `localStorage` ;
+- **TEST** : les messages entrants surlignent les contrôles associés et les
+  messages MIDI de canal appris peuvent être rejoués vers la machine.
+
+Cette page demande l'accès Web MIDI avec SysEx et écoute volontairement toutes
+les entrées et les 16 canaux. Le Studio et le jeu restent filtrés sur les ports
+nommés EP-133 afin de ne pas réintroduire le problème `Midi Through`.
+
+### Sélection officielle des groupes A–D
+
+L'analyse du bundle public EP Sample Tool et du protocole MIT
+`kmorrill/ep-series-sysex` montre que l'outil officiel ne change pas de groupe
+avec une note ou un CC. Il utilise le protocole SysEx FILE :
+
+1. initialisation FILE avec abonnement aux événements ;
+2. lecture de la métadonnée `active` du nœud `/projects` (fid `2000`) ;
+3. calcul du dossier `groups` et du fid A, B, C ou D dans le projet actif ;
+4. fusion de `{"active": groupFid}` sur le dossier `groups` ;
+5. relecture obligatoire de `active` et comparaison avec la valeur demandée.
+
+Pour un projet de fid `P`, le dossier des groupes vaut `P + 100` et les groupes
+A à D valent respectivement `P + 200`, `P + 300`, `P + 400` et `P + 500`.
+L'implémentation navigateur est limitée à cette métadonnée d'interface : elle
+ne modifie ni archive projet, ni pattern, ni sample, ni affectation de pad.
+
+Observation réelle du 11 août : le journal de l'outil officiel a exposé
+`{"active":4000}` pour le projet courant, `{"active":4500}` pour son groupe D
+et `{"active":4510}` pour le pad actif du groupe D. Cela confirme sur la
+machine réelle la séparation projet → groupe → pad et les fids calculés. Les
+nombreuses réponses contenant `sym`, `sound.playmode`, `sample.start/end`, etc.
+venaient du balayage de métadonnées de l'EP Sample Tool, pas de boutons de
+façade supplémentaires.
+
+### Capture locale provisoire
+
+Pendant l'identification matérielle, Vite expose uniquement en développement
+`POST /__midi-capture`. La page y envoie chaque observation brute et le serveur
+l'ajoute à `tmp/ep133-midi-capture.ndjson`. Le fichier est ignoré par Git et
+ne quitte pas l'ordinateur.
+
+Après validation de la cartographie, supprimer :
+
+- le plugin `temporary-midi-capture` de `vite.config.ts` ;
+- les deux effets `fetch('/__midi-capture', ...)` de `MachineTestPage.tsx` ;
+- l'entrée `tmp/ep133-midi-capture.ndjson` de `.gitignore` ;
+- le dossier local `tmp/` s'il ne contient rien d'autre d'utile.
+
+### Validation encore requise sur l'EP-133 réel
+
+- réception exhaustive des messages de chaque contrôle ;
+- A, B, C et D machine → page ;
+- A, B, C et D page → machine avec relecture `active` correcte ;
+- absence de modification des contenus musicaux et des samples.
+
+Un build ou un test navigateur ne constitue pas une validation matérielle.
