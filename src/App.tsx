@@ -996,17 +996,11 @@ export default function App() {
       {machineCloneOpen && <MachineCloneDialog inventory={deviceInventory} soundIndex={deviceSoundIndex} onClose={() => setMachineCloneOpen(false)} />}
     </section></div>}
 
-    {/* Pads à gauche, partition à droite, côte à côte plutôt qu'empilées —
-        la colonne du milieu reste vide, réservée pour un futur mode KEYS
-        mélodique (idée du 11/08, pas encore construit). */}
+    {/* Partition en haut sur toute la largeur ; en dessous, pads à gauche
+        et analyse à droite. */}
     <div className="game-layout">
-      <div className="game-layout-left">
-        <PerformancePanel transportActive={transportActive} expectedPad={expectedPad} flashedPad={flashedPad} score={score} onPlayPad={clickPad} onEditPad={editPad} />
-      </div>
-      <div className="game-layout-middle" aria-hidden="true" />
-      <div className="game-layout-right">
-        <ScoreView viewportRef={scoreScroll} pageStart={pageStart} songBeat={songBeat} transportActive={transportActive} playheadProgress={playheadProgress} expectedTargets={visibleTargets} playedNotes={visiblePlayerNotes} />
-      </div>
+      <ScoreView viewportRef={scoreScroll} pageStart={pageStart} songBeat={songBeat} transportActive={transportActive} playheadProgress={playheadProgress} expectedTargets={visibleTargets} playedNotes={visiblePlayerNotes} />
+      <PerformancePanel transportActive={transportActive} expectedPad={expectedPad} flashedPad={flashedPad} score={score} onPlayPad={clickPad} onEditPad={editPad} />
     </div>
 
     {soundPad !== null && <PadSoundEditor pad={soundPad} settings={soundSettings[soundPad]} onChange={(patch) => updateSound(soundPad, patch)} onPreview={() => void audio.previewPad(soundPad)} onClose={() => setSoundPad(null)} />}
