@@ -27,6 +27,10 @@ interface PlayerProfilePageProps {
   sampleFolderNeedsReconnect: boolean;
   onOpenSampleFolder: () => void;
   onReconnectSampleFolder: () => void;
+  localLibraryFolderName: string;
+  localLibraryNeedsReconnect: boolean;
+  onOpenLocalLibraryFolder: () => void;
+  onReconnectLocalLibraryFolder: () => void;
   onResetStats: () => void;
 }
 
@@ -49,7 +53,7 @@ const activeSpec = (avatarId: string) => AVATAR_PRESETS.find((spec) => spec.id =
  *   (`saveDeviceProfile` + `createDeviceClone` + `writeCloneManifest`),
  *   juste déclenché d'un clic ici plutôt que de rouvrir la fenêtre de clone.
  */
-export function PlayerProfilePage({ profile, machineConnected, midiStatus, midiInputNames, midiOutputNames, machineSampleCount, deviceInventory, deviceSoundIndex, onBack, onChange, onChangeMachine, onAddMachine, onRemoveMachine, onConnectMidi, onCloneMachine, onScanMachine, onViewScanReport, lastScanSave, scanSaveError, scanSaveMachineId, sampleFolderName, sampleFolderNeedsReconnect, onOpenSampleFolder, onReconnectSampleFolder, onResetStats }: PlayerProfilePageProps) {
+export function PlayerProfilePage({ profile, machineConnected, midiStatus, midiInputNames, midiOutputNames, machineSampleCount, deviceInventory, deviceSoundIndex, onBack, onChange, onChangeMachine, onAddMachine, onRemoveMachine, onConnectMidi, onCloneMachine, onScanMachine, onViewScanReport, lastScanSave, scanSaveError, scanSaveMachineId, sampleFolderName, sampleFolderNeedsReconnect, onOpenSampleFolder, onReconnectSampleFolder, localLibraryFolderName, localLibraryNeedsReconnect, onOpenLocalLibraryFolder, onReconnectLocalLibraryFolder, onResetStats }: PlayerProfilePageProps) {
   const { stats } = profile;
   const totalHits = stats.perfect + stats.good + stats.miss;
   const accuracy = totalHits > 0 ? Math.round(((stats.perfect + stats.good) / totalHits) * 100) : null;
@@ -113,6 +117,20 @@ export function PlayerProfilePage({ profile, machineConnected, midiStatus, midiI
       </div>
       <button className="profile-add-machine" onClick={onAddMachine}>+ DÉCLARER UNE AUTRE MACHINE</button>
       <p className="profile-gear-note">Le dossier de travail est mémorisé sur cet ordinateur (IndexedDB) — plus besoin de le rechoisir à chaque visite, seulement de reconfirmer l’autorisation si le navigateur la redemande. Un support de type drive/cloud est envisagé plus tard.</p>
+    </section>
+
+    <section className="profile-library">
+      <h2>BIBLIOTHÈQUE PERSO</h2>
+      <p className="profile-gear-note">Tes propres sons sur cet ordinateur — celui d’avant le dossier de sauvegarde machine ci-dessus. Réglé ici ; parcouru, écouté et glissé sur les pads depuis SONS &amp; TRANSFERT.</p>
+      <div className="profile-machine-scan-summary">
+        <span>{localLibraryFolderName ? `DOSSIER · ${localLibraryFolderName}` : 'AUCUN DOSSIER CONNECTÉ'}</span>
+        {localLibraryNeedsReconnect && <span className="profile-folder-warning">AUTORISATION À RENOUVELER</span>}
+      </div>
+      <div className="profile-machine-actions">
+        {localLibraryNeedsReconnect
+          ? <button className="profile-connect" onClick={onReconnectLocalLibraryFolder}>RECONNECTER LE DOSSIER</button>
+          : <button className={localLibraryFolderName ? '' : 'profile-connect'} onClick={onOpenLocalLibraryFolder}>{localLibraryFolderName ? 'CHANGER DE DOSSIER' : 'CONNECTER MA BIBLIOTHÈQUE'}</button>}
+      </div>
     </section>
 
     <section className="profile-stats">

@@ -43,7 +43,6 @@ import { SoundsPage } from './pages/SoundsPage';
 import { DocumentationPage } from './pages/DocumentationPage';
 import { MachineTestPage } from './pages/MachineTestPage';
 import { PlayerProfilePage } from './pages/PlayerProfilePage';
-import { LocalSoundsPage } from './pages/LocalSoundsPage';
 import { addSessionToProfile, emptyMachine, emptyPlayerStats, loadPlayerProfile, savePlayerProfile, type PlayerMachine, type PlayerProfile } from './core/project/playerProfile';
 import { ScoreView } from './components/game/ScoreView';
 import { PerformancePanel } from './components/game/PerformancePanel';
@@ -56,7 +55,7 @@ import { EditorToolbar } from './components/editor/EditorToolbar';
 import { SongArranger } from './components/editor/SongArranger';
 import { MachineCloneDialog } from './components/editor/MachineCloneDialog';
 import { chooseLocalDirectory, collectLocalFiles, writeCloneManifest, type LocalDirectoryHandle } from './core/storage/localFolders';
-import { SAMPLE_FOLDER_KEY, hasStoredPermission, loadDirectoryHandle, requestStoredPermission, saveDirectoryHandle } from './core/storage/directoryHandleStore';
+import { LOCAL_LIBRARY_FOLDER_KEY, SAMPLE_FOLDER_KEY, hasStoredPermission, loadDirectoryHandle, requestStoredPermission, saveDirectoryHandle } from './core/storage/directoryHandleStore';
 import { createDeviceClone, saveDeviceProfile } from './core/project/deviceProfile';
 import './style.css';
 import { APP_LANGUAGE_KEY, loadAppLanguage, type AppLanguage } from './core/i18n';
@@ -88,7 +87,7 @@ function loadUserExercises(): Exercise[] {
 
 export default function App() {
   const [language, setLanguage] = useState<AppLanguage>(loadAppLanguage);
-  const [workspaceView, setWorkspaceView] = useState<'home' | 'game' | 'sounds' | 'docs' | 'machine-test' | 'profile' | 'local-sounds'>('home');
+  const [workspaceView, setWorkspaceView] = useState<'home' | 'game' | 'sounds' | 'docs' | 'machine-test' | 'profile'>('home');
   const [playerProfile, setPlayerProfile] = useState<PlayerProfile>(() => loadPlayerProfile(localStorage));
   const [styleId, setStyleId] = useState('boom');
   const [difficulty, setDifficulty] = useState(1);
@@ -147,6 +146,12 @@ export default function App() {
   const [lastScanSave, setLastScanSave] = useState<{ machineId: string; path: string; at: string } | null>(null);
   const [scanSaveError, setScanSaveError] = useState<{ machineId: string; message: string } | null>(null);
   const [scanSaveMachineId, setScanSaveMachineId] = useState('');
+  // Bibliothèque de sons personnelle (distincte du dossier de travail machine ci-dessus) —
+  // les réglages de dossier se font depuis la Fiche personnage, la navigation/écoute depuis
+  // SONS & TRANSFERT (SoundsPage), qui a donc besoin du handle lui-même, pas seulement du nom.
+  const [localLibraryHandle, setLocalLibraryHandle] = useState<LocalDirectoryHandle | null>(null);
+  const [localLibraryFolderName, setLocalLibraryFolderName] = useState('');
+  const [localLibraryNeedsReconnect, setLocalLibraryNeedsReconnect] = useState(false);
   const targets = useRef(activeExercise.targets.map((target, index) => ({ ...target, id: `target-${index}` })));
   const frame = useRef<number | undefined>(undefined);
   const flashTimer = useRef<number | undefined>(undefined);
@@ -194,6 +199,17 @@ export default function App() {
       } else {
         setSampleFolderNeedsReconnect(true);
       }
+    })();
+  }, []);
+
+  /** Même principe que ci-dessus, pour la bibliothèque de sons personnelle — dossier distinct, jamais confondu avec le dossier de travail machine. */
+  useEffect(() => {
+    void (async () => {
+      const handle = await loadDirectoryHandle(LOCAL_LIBRARY_FOLDER_KEY);
+      if (!handle) return;
+      setLocalLibraryHandle(handle);
+      setLocalLibraryFolderName(handle.name);
+      setLocalLibraryNeedsReconnect(!(await hasStoredPermission(handle, 'read')));
     })();
   }, []);
 
@@ -318,6 +334,26 @@ export default function App() {
     } catch (error) {
       window.alert(error instanceof Error ? error.message : 'Impossible de relire ce dossier.');
     }
+  };
+
+  /** Réglage explicite — fait uniquement depuis la Fiche personnage, jamais depuis SONS & TRANSFERT (qui ne fait que lire ce dossier une fois connecté). */
+  const openLocalLibraryFolder = async () => {
+    try {
+      const directory = await chooseLocalDirectory('read');
+      setLocalLibraryHandle(directory);
+      setLocalLibraryFolderName(directory.name);
+      setLocalLibraryNeedsReconnect(false);
+      try { await saveDirectoryHandle(LOCAL_LIBRARY_FOLDER_KEY, directory); } catch { /* pas grave : juste pas mémorisé pour la prochaine visite */ }
+    } catch (error) {
+      if ((error as { name?: string }).name !== 'AbortError') window.alert(error instanceof Error ? error.message : 'Impossible d’ouvrir le dossier local.');
+    }
+  };
+
+  const reconnectLocalLibraryFolder = async () => {
+    if (!localLibraryHandle) return;
+    const granted = await requestStoredPermission(localLibraryHandle, 'read');
+    if (!granted) { window.alert('Autorisation refusée pour ce dossier. Choisis-le à nouveau si besoin.'); return; }
+    setLocalLibraryNeedsReconnect(false);
   };
 
   /**
@@ -1073,13 +1109,11 @@ export default function App() {
 
   const changeLanguage = (nextLanguage: AppLanguage) => { setLanguage(nextLanguage); localStorage.setItem(APP_LANGUAGE_KEY, nextLanguage); document.documentElement.lang = nextLanguage; };
 
-  if (workspaceView === 'home') return <HomePage connected={midi.connected || midi.outputConnected} project={deviceInventory?.project} scannedSoundCount={deviceInventory ? Object.keys(deviceInventory.sounds).length : 0} language={language} onLanguageChange={changeLanguage} onOpenGame={() => setWorkspaceView('game')} onOpenStudio={openCompleteEditor} onOpenSounds={() => setWorkspaceView('sounds')} onOpenDocumentation={() => setWorkspaceView('docs')} onOpenMachineTest={() => setWorkspaceView('machine-test')} onOpenProfile={() => setWorkspaceView('profile')} onOpenLocalSounds={() => setWorkspaceView('local-sounds')} />;
+  if (workspaceView === 'home') return <HomePage connected={midi.connected || midi.outputConnected} project={deviceInventory?.project} scannedSoundCount={deviceInventory ? Object.keys(deviceInventory.sounds).length : 0} language={language} onLanguageChange={changeLanguage} onOpenGame={() => setWorkspaceView('game')} onOpenStudio={openCompleteEditor} onOpenSounds={() => setWorkspaceView('sounds')} onOpenDocumentation={() => setWorkspaceView('docs')} onOpenMachineTest={() => setWorkspaceView('machine-test')} onOpenProfile={() => setWorkspaceView('profile')} />;
 
   if (workspaceView === 'machine-test') return <MachineTestPage connected={midi.connected} inputNames={midi.inputNames} observations={midiObservations} onBack={goHome} onConnect={() => void midi.connectMonitor()} onSendLearned={midi.sendLearnedMessage} onSelectMachineGroup={midi.selectMachineGroup} />;
 
-  if (workspaceView === 'sounds') return <SoundsPage inventory={deviceInventory} soundIndex={deviceSoundIndex} midiConnected={midi.outputConnected} liveMidi={lastMidi?.note !== undefined && lastMidi.velocity !== undefined ? { note: lastMidi.note, velocity: lastMidi.velocity, timestamp: lastMidi.timestamp } : null} padModes={editorPadModes} onBack={goHome} onConnectMidi={() => void connectMidi()} onPadModeChange={(group, pad, mode) => setEditorPadModes((current) => ({ ...current, [`${group}:${pad}`]: mode }))} onPadPreview={(group, pad, stagedSlot) => void previewSoundPagePad(group, pad, stagedSlot)} />;
-
-  if (workspaceView === 'local-sounds') return <LocalSoundsPage onBack={goHome} />;
+  if (workspaceView === 'sounds') return <SoundsPage inventory={deviceInventory} soundIndex={deviceSoundIndex} midiConnected={midi.outputConnected} liveMidi={lastMidi?.note !== undefined && lastMidi.velocity !== undefined ? { note: lastMidi.note, velocity: lastMidi.velocity, timestamp: lastMidi.timestamp } : null} padModes={editorPadModes} onBack={goHome} onConnectMidi={() => void connectMidi()} onPadModeChange={(group, pad, mode) => setEditorPadModes((current) => ({ ...current, [`${group}:${pad}`]: mode }))} onPadPreview={(group, pad, stagedSlot) => void previewSoundPagePad(group, pad, stagedSlot)} localLibraryHandle={localLibraryHandle} localLibraryFolderName={localLibraryFolderName} localLibraryNeedsReconnect={localLibraryNeedsReconnect} onReconnectLocalLibrary={() => void reconnectLocalLibraryFolder()} />;
 
   if (workspaceView === 'docs') return <DocumentationPage language={language} onBack={goHome} />;
 
@@ -1111,6 +1145,10 @@ export default function App() {
         sampleFolderNeedsReconnect={sampleFolderNeedsReconnect}
         onOpenSampleFolder={() => void openStudioSampleFolder()}
         onReconnectSampleFolder={() => void reconnectSampleFolder()}
+        localLibraryFolderName={localLibraryFolderName}
+        localLibraryNeedsReconnect={localLibraryNeedsReconnect}
+        onOpenLocalLibraryFolder={() => void openLocalLibraryFolder()}
+        onReconnectLocalLibraryFolder={() => void reconnectLocalLibraryFolder()}
         onResetStats={() => updateProfile((profile) => ({ ...profile, stats: emptyPlayerStats() }))}
       />
       {machineCloneOpen && <MachineCloneDialog inventory={deviceInventory} soundIndex={deviceSoundIndex} onClose={() => setMachineCloneOpen(false)} />}
