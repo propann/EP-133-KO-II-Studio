@@ -83,7 +83,7 @@ nouvelles preuves apparaissent.
 | E-22 | B outil lame | REPORTÉ | Faible priorité pour des événements de notes ; la poignée de durée suffit d'abord |
 | E-23 | Ctrl+1/2 résolution de grille | RETENU | Intercepter uniquement dans l'éditeur |
 | E-24 | Espace lecture/pause | RETENU | Ne jamais faire défiler la page quand l'éditeur a le focus |
-| E-25 | Annuler/Rétablir | RETENU | Prérequis à toute édition rapide à la souris |
+| E-25 | Annuler/Rétablir | RÉALISÉ (partiel) | Fait pour l'édition d'un pattern (11 août, coalescé, Ctrl/Cmd+Z) ; scènes/Song pas encore couverts |
 | E-26 | Accessibilité clavier | RETENU | Toute action souris essentielle doit avoir un équivalent clavier |
 
 ## Paramètres, scènes et contrôle live

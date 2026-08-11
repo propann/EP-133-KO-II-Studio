@@ -88,7 +88,9 @@ autorisation MIDI du navigateur.
 - Les dépendances (`react`, `vite`, `tone`, `@vitejs/plugin-react`) sont
   encore déclarées en `latest` ; un lockfile est committé mais les versions
   ne sont pas figées à la source.
-- Aucun historique Annuler/Rétablir ni autosauvegarde dans le Studio.
+- Annuler/Rétablir (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z) existe désormais pour
+  l'édition d'un pattern (11 août) — pas encore pour les scènes/Song ni de
+  vraie autosauvegarde de secours.
 - La Song Position affichée avance désormais avec la lecture (11 août),
   mais reste basée sur le numéro de scène — deux positions consécutives de
   la même scène ne sont pas encore distinguées visuellement.
@@ -125,7 +127,11 @@ Transformer `SAVE` en menu de fichiers :
 - [ ] Lister les exercices officiels du jeu dans la même bibliothèque, en
   lecture seule, avec action « Dupliquer pour modifier ».
 - [ ] Miniatures, date de modification, BPM, longueur et groupes utilisés.
-- [ ] Autosauvegarde de secours et historique Annuler/Rétablir.
+- [x] Historique Annuler/Rétablir du pattern actif (Ctrl/Cmd+Z, boutons
+  ANNULER/RÉTABLIR) — rafales d'édition coalescées, 50 entrées max par
+  pattern. Limite connue : scènes/Song/tempo/nom ne sont pas encore
+  couverts, une prochaine étape si le besoin se confirme.
+- [ ] Autosauvegarde de secours.
 
 **Validation :** quitter, rouvrir une sauvegarde machine et retrouver une
 composition identique sans machine connectée ; échanger ses notes en MIDI.

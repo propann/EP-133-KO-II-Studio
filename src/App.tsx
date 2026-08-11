@@ -167,6 +167,21 @@ export default function App() {
   const editorEndTimer = useRef<number | undefined>(undefined);
   const gameRun = useRef(0);
   const editorRun = useRef(0);
+  /** Historique Annuler/Rétablir — un pattern (groupe:numéro) à la fois, pas encore les
+   * scènes/Song : c'est le geste le plus fréquent et le plus risqué à la souris (E-25 du
+   * registre des idées). Rafales d'édition coalescées par un court silence (voir l'effet
+   * plus bas) plutôt qu'une entrée par frappe de pas. */
+  const editorHistory = useRef<Record<string, { past: SequencerNote[][]; future: SequencerNote[][] }>>({});
+  /** Référence exacte (pas un booléen) du prochain `editorTargets` à traiter comme un
+   * chargement plutôt qu'une édition — comparaison par identité, idempotente si l'effet
+   * ci-dessous est invoqué deux fois pour la même valeur (StrictMode en développement
+   * double les effets au montage ; un simple booléen consommé une fois s'y faisait piéger). */
+  const editorHistorySkipTarget = useRef<SequencerNote[] | null>(null);
+  // Initialisée à la référence de départ d'editorTargets (pas un nouveau `[]`, qui ne lui
+  // serait pas identique) pour que le tout premier rendu ne compte pas comme une édition.
+  const editorHistoryBaseline = useRef<SequencerNote[]>(editorTargets);
+  const editorHistoryTimer = useRef<number | undefined>(undefined);
+  const [editorHistoryVersion, setEditorHistoryVersion] = useState(0);
   const running = phase === 'playing';
   const sessionActive = phase !== 'idle';
   const transportActive = phase === 'playing' || phase === 'preview';
@@ -499,6 +514,7 @@ export default function App() {
     const selected = userExercises.find((item) => `user:${item.id}` === styleId);
     setEditorName(selected?.title || 'MON GROOVE');
     const selectedNotes = selected ? exerciseTargetsToNotes(selected.targets, 'A') : [];
+    editorHistorySkipTarget.current = selectedNotes;
     setEditorTargets(selectedNotes);
     const bank = emptyPatternBank();
     bank.A[1] = selectedNotes;
@@ -525,6 +541,85 @@ export default function App() {
     setEditorSong([]);
   };
 
+  const editorPatternKey = `${editorGroup}:${editorPatternNumbers[editorGroup]}`;
+
+  /** Enregistre une entrée d'historique ~500ms après la dernière frappe — regroupe une
+   * rafale d'édition en un seul geste Annuler plutôt qu'un clic = un pas = une entrée.
+   * Deux gardes par identité de référence, pas par booléen consommé une fois (piégé par
+   * le double appel d'effet de StrictMode en développement, qui rejouerait un « skip »
+   * déjà consommé comme une édition) :
+   * - si `editorTargets` est déjà la référence connue (`editorHistoryBaseline`), rien de
+   *   nouveau ne s'est produit depuis le dernier passage, on ignore ;
+   * - si `editorTargets` est la référence explicitement annoncée par un chargement
+   *   (changeEditorGroup, changeEditorPattern, editorUndo/Redo, nouveau/ouvrir projet…),
+   *   on l'adopte comme référence connue sans l'enregistrer comme une édition. */
+  useEffect(() => {
+    if (editorTargets === editorHistoryBaseline.current) return;
+    if (editorTargets === editorHistorySkipTarget.current) {
+      editorHistoryBaseline.current = editorTargets;
+      return;
+    }
+    if (editorHistoryTimer.current !== undefined) window.clearTimeout(editorHistoryTimer.current);
+    const key = editorPatternKey;
+    const previous = editorHistoryBaseline.current;
+    editorHistoryTimer.current = window.setTimeout(() => {
+      const bucket = editorHistory.current[key] || { past: [], future: [] };
+      editorHistory.current[key] = { past: [...bucket.past, previous].slice(-50), future: [] };
+      editorHistoryBaseline.current = editorTargets;
+      setEditorHistoryVersion((version) => version + 1);
+    }, 500);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editorTargets]);
+
+  const editorUndo = () => {
+    const key = editorPatternKey;
+    const bucket = editorHistory.current[key];
+    if (!bucket || !bucket.past.length) return;
+    if (editorHistoryTimer.current !== undefined) { window.clearTimeout(editorHistoryTimer.current); editorHistoryTimer.current = undefined; }
+    const previous = bucket.past[bucket.past.length - 1];
+    editorHistory.current[key] = { past: bucket.past.slice(0, -1), future: [editorTargets, ...bucket.future].slice(0, 50) };
+    editorHistorySkipTarget.current = previous;
+    setEditorTargets(previous);
+    setEditorPatternBank((current) => ({ ...current, [editorGroup]: { ...current[editorGroup], [editorPatternNumbers[editorGroup]]: previous } }));
+    setEditorHistoryVersion((version) => version + 1);
+  };
+  const editorRedo = () => {
+    const key = editorPatternKey;
+    const bucket = editorHistory.current[key];
+    if (!bucket || !bucket.future.length) return;
+    if (editorHistoryTimer.current !== undefined) { window.clearTimeout(editorHistoryTimer.current); editorHistoryTimer.current = undefined; }
+    const [next, ...restFuture] = bucket.future;
+    editorHistory.current[key] = { past: [...bucket.past, editorTargets].slice(-50), future: restFuture };
+    editorHistorySkipTarget.current = next;
+    setEditorTargets(next);
+    setEditorPatternBank((current) => ({ ...current, [editorGroup]: { ...current[editorGroup], [editorPatternNumbers[editorGroup]]: next } }));
+    setEditorHistoryVersion((version) => version + 1);
+  };
+  const editorCanUndo = Boolean(editorHistory.current[editorPatternKey]?.past.length);
+  const editorCanRedo = Boolean(editorHistory.current[editorPatternKey]?.future.length);
+  void editorHistoryVersion; // force le recalcul de editorCanUndo/editorCanRedo à chaque changement d'historique
+
+  /** Raccourcis clavier — seulement quand l'éditeur complet a la grille de pattern à l'écran
+   * et que le focus n'est pas dans un champ texte (nom du projet, recherche…). Écouteur
+   * attaché une seule fois (pas à chaque rendu) ; l'état frais est lu via une ref mise à
+   * jour à chaque rendu, pour éviter à la fois la fermeture périmée et le réabonnement
+   * répété d'un composant qui se re-rend très souvent (transport, jeu). */
+  const editorHotkeyState = useRef({ editorOpen, editorMode, studioView, editorUndo, editorRedo });
+  editorHotkeyState.current = { editorOpen, editorMode, studioView, editorUndo, editorRedo };
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const state = editorHotkeyState.current;
+      if (!state.editorOpen || state.editorMode !== 'complete' || state.studioView !== 'pattern') return;
+      if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 'z') return;
+      const target = event.target as HTMLElement | null;
+      if (target && /^(input|textarea|select)$/i.test(target.tagName)) return;
+      event.preventDefault();
+      if (event.shiftKey) state.editorRedo(); else state.editorUndo();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   /** Flush les frappes en cours vers la banque, en repartant du groupe/numéro de pattern actifs — pas seulement du groupe comme avant l'introduction des patterns multiples. */
   const currentPatternBank = (): PatternBank => ({
     ...editorPatternBank,
@@ -537,6 +632,7 @@ export default function App() {
     editorScrollToEnd.current = false;
     setEditorPatternBank((current) => ({ ...current, [editorGroup]: { ...current[editorGroup], [editorPatternNumbers[editorGroup]]: editorTargets } }));
     const nextNotes = editorPatternBank[nextGroup][editorPatternNumbers[nextGroup]] || [];
+    editorHistorySkipTarget.current = nextNotes; // charge le pattern du nouveau groupe, ce n'est pas une édition
     setEditorTargets(nextNotes);
     setEditorGroup(nextGroup);
     setEditorBars(editorPatternLengths[`${nextGroup}:${editorPatternNumbers[nextGroup]}`] || usedBars(nextNotes));
@@ -558,6 +654,7 @@ export default function App() {
     const clamped = Math.max(1, Math.min(MAX_PATTERN_NUMBER, nextNumber));
     setEditorPatternBank((current) => ({ ...current, [editorGroup]: { ...current[editorGroup], [editorPatternNumbers[editorGroup]]: editorTargets } }));
     const nextNotes = editorPatternBank[editorGroup][clamped] || [];
+    editorHistorySkipTarget.current = nextNotes; // charge un autre numéro de pattern, ce n'est pas une édition
     setEditorTargets(nextNotes);
     setEditorPatternNumbers((current) => ({ ...current, [editorGroup]: clamped }));
     setEditorBars(editorPatternLengths[`${editorGroup}:${clamped}`] || usedBars(nextNotes));
@@ -572,6 +669,7 @@ export default function App() {
     setEditorActiveScene(sceneNumber);
     setEditorGroup(group);
     setEditorPatternNumbers((current) => ({ ...current, [group]: patternNumber }));
+    editorHistorySkipTarget.current = nextNotes;
     setEditorTargets(nextNotes);
     setEditorBars(editorPatternLengths[`${group}:${patternNumber}`] || usedBars(nextNotes));
     setEditorSelectedPad(nextNotes[0]?.pad ?? 0);
@@ -843,7 +941,10 @@ export default function App() {
     stopEditorTransport();
     setEditorName('NOUVEAU PROJET');
     setEditorGroup('A');
-    setEditorTargets([]);
+    editorHistory.current = {};
+    const emptyTargets: SequencerNote[] = [];
+    editorHistorySkipTarget.current = emptyTargets;
+    setEditorTargets(emptyTargets);
     setEditorPatternBank(emptyPatternBank());
     setEditorPatternLengths({ 'A:1':1, 'B:1':1, 'C:1':1, 'D:1':1 });
     setEditorPatternNumbers({ A: 1, B: 1, C: 1, D: 1 });
@@ -926,6 +1027,8 @@ export default function App() {
     setEditorActiveScene(startingSceneNumber);
     setEditorGroup(startingGroup);
     const startingNotes = loaded.patternBank[startingGroup][startingNumbers[startingGroup]] || [];
+    editorHistory.current = {};
+    editorHistorySkipTarget.current = startingNotes;
     setEditorTargets(startingNotes);
     setEditorPadModes(loaded.padModes);
     setEditorBars(loaded.patternLengths[`${startingGroup}:${startingNumbers[startingGroup]}`] || usedBars(startingNotes));
@@ -1134,6 +1237,7 @@ export default function App() {
     setEditorActiveScene(nextSceneNumber);
     setEditorPatternNumbers(nextPatternNumbers);
     const nextTargets = nextBank[editorGroup][nextPatternNumbers[editorGroup]] || [];
+    editorHistorySkipTarget.current = nextTargets;
     setEditorTargets(nextTargets);
     setEditorBars(nextPatternLengths[`${editorGroup}:${nextPatternNumbers[editorGroup]}`] || usedBars(nextTargets));
     editorScrollToEnd.current = true;
@@ -1214,7 +1318,7 @@ export default function App() {
     <GameToolbar difficulty={difficulty} tempo={tempo} activeBpm={activeExercise.bpm} styleId={styleId} styles={STYLES} userExercises={userExercises} phase={phase} sessionActive={sessionActive} midiConnected={midi.connected} onDifficultyChange={setDifficulty} onTempoChange={setTempo} onStyleChange={changeStyle} onHome={goHome} onOpenEditor={openEditor} onConnectMidi={() => void connectMidi()} onPreview={() => void togglePreview()} onPlay={() => void toggle()} />
     {phase === 'countin' && <div className="countdown" aria-live="assertive"><small>1 MESURE POUR SE PRÉPARER</small><b>{countdown}</b></div>}
     {editorOpen && <div className="editor-overlay"><section className="exercise-editor">
-      <EditorToolbar mode={editorMode} name={editorName} group={editorGroup} playing={editorPlaying} loop={editorLoop} exportFormat={editorExportFormat} canSave={Boolean(editorName.trim() && (editorMode === 'complete' || editorTargets.length || EDITOR_GROUPS.some((group) => Object.values(editorPatternBank[group]).some((notes) => notes.length))))} midiConnected={midi.outputConnected} scannedProject={deviceInventory?.project} machineProjectAvailable={Boolean(machineProjectDocument)} machineSampleCount={machineSampleCount} demoProjects={STUDIO_DEMOS} localProjects={studioLibrary.map((project) => ({ id: project.id, title: String((project.document.metadata as { title?: string } | undefined)?.title || 'PROJET SANS NOM') }))} selectedLocalProject={selectedStudioProject} studioView={studioView} patternNumber={editorPatternNumbers[editorGroup]} patternLength={editorBars} groupPatternLengths={Object.fromEntries(EDITOR_GROUPS.map((group) => { const number = editorPatternNumbers[group]; const notes = group === editorGroup ? editorTargets : editorPatternBank[group][number] || []; return [group, editorPatternLengths[`${group}:${number}`] || usedBars(notes)]; })) as Record<EditorGroup, number>} activeSongPosition={Math.max(1, editorSong.findIndex((scene) => scene === editorActiveScene) + 1)} activeScene={editorActiveScene} onHome={goHome} onNameChange={setEditorName} onGroupChange={changeEditorGroup} onStudioViewChange={setStudioView} onPatternLengthChange={changePatternLength} onCommitScene={commitPatternsToScene} onConnectMidi={() => void connectMidi()} onNew={newStudioProject} onOpenProject={openStudioProject} onOpenDemo={(id) => void openStudioDemo(id)} onImportFiles={(files) => void importStudioProjectFiles(files)} onLoadMachineProject={loadMachineProject} onCloneMachine={() => setMachineCloneOpen(true)} onOpenSampleFolder={() => void openStudioSampleFolder()} onSave={saveEditor} onSaveAs={saveStudioProjectAs} onRename={renameSelectedStudioProject} onDuplicate={duplicateSelectedStudioProject} onDelete={deleteSelectedStudioProject} onPlayback={() => void toggleEditorPlayback()} onLoopChange={setEditorLoop} onExportFormatChange={setEditorExportFormat} onExport={exportEditor} onExportMidi={exportEditorMidi} onExportJson={exportEditorProjectJson} />
+      <EditorToolbar mode={editorMode} name={editorName} group={editorGroup} playing={editorPlaying} loop={editorLoop} exportFormat={editorExportFormat} canSave={Boolean(editorName.trim() && (editorMode === 'complete' || editorTargets.length || EDITOR_GROUPS.some((group) => Object.values(editorPatternBank[group]).some((notes) => notes.length))))} midiConnected={midi.outputConnected} scannedProject={deviceInventory?.project} machineProjectAvailable={Boolean(machineProjectDocument)} machineSampleCount={machineSampleCount} demoProjects={STUDIO_DEMOS} localProjects={studioLibrary.map((project) => ({ id: project.id, title: String((project.document.metadata as { title?: string } | undefined)?.title || 'PROJET SANS NOM') }))} selectedLocalProject={selectedStudioProject} studioView={studioView} patternNumber={editorPatternNumbers[editorGroup]} patternLength={editorBars} groupPatternLengths={Object.fromEntries(EDITOR_GROUPS.map((group) => { const number = editorPatternNumbers[group]; const notes = group === editorGroup ? editorTargets : editorPatternBank[group][number] || []; return [group, editorPatternLengths[`${group}:${number}`] || usedBars(notes)]; })) as Record<EditorGroup, number>} activeSongPosition={Math.max(1, editorSong.findIndex((scene) => scene === editorActiveScene) + 1)} activeScene={editorActiveScene} onHome={goHome} onNameChange={setEditorName} onGroupChange={changeEditorGroup} onStudioViewChange={setStudioView} onPatternLengthChange={changePatternLength} onCommitScene={commitPatternsToScene} canUndo={editorCanUndo} canRedo={editorCanRedo} onUndo={editorUndo} onRedo={editorRedo} onConnectMidi={() => void connectMidi()} onNew={newStudioProject} onOpenProject={openStudioProject} onOpenDemo={(id) => void openStudioDemo(id)} onImportFiles={(files) => void importStudioProjectFiles(files)} onLoadMachineProject={loadMachineProject} onCloneMachine={() => setMachineCloneOpen(true)} onOpenSampleFolder={() => void openStudioSampleFolder()} onSave={saveEditor} onSaveAs={saveStudioProjectAs} onRename={renameSelectedStudioProject} onDuplicate={duplicateSelectedStudioProject} onDelete={deleteSelectedStudioProject} onPlayback={() => void toggleEditorPlayback()} onLoopChange={setEditorLoop} onExportFormatChange={setEditorExportFormat} onExport={exportEditor} onExportMidi={exportEditorMidi} onExportJson={exportEditorProjectJson} />
       {editorMode === 'complete' && studioView === 'arrangement' && <SongArranger scenes={editorScenes} song={editorSong} patternBank={currentPatternBank()} onAssignCell={assignSceneGroupPattern} onReorderSong={reorderEditorSong} onDuplicateSongPosition={duplicateSongPosition} onDeleteSongPosition={deleteSongPosition} onAuditionSongPosition={auditionSongPosition} onEditPattern={editArrangedPattern} />}
       {(editorMode !== 'complete' || studioView === 'pattern') && <>
         {editorMode === 'complete' && <PadStrip group={editorGroup} selectedPad={editorSelectedPad} livePad={editorMidiHit?.pad} liveGroup={editorMidiHit?.group} padModes={editorPadModes} padName={devicePadName} padSlot={(pad) => devicePadInfo(pad)?.slot} onSelect={(pad) => { setEditorSelectedPad(pad); setKeyEditorOpen((editorPadModes[`${editorGroup}:${pad}`] || 'ONE') === 'KEYS'); }} onPreview={(pad) => void previewEditorPad(editorGroup, pad)} onModeChange={(pad, mode) => { setEditorPadModes((current) => ({ ...current, [`${editorGroup}:${pad}`]: mode })); setKeyEditorOpen(mode === 'KEYS'); }} onOpenKeys={() => setKeyEditorOpen(true)} />}

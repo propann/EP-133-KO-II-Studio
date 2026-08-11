@@ -30,6 +30,11 @@ interface EditorToolbarProps {
   onPatternLengthChange: (length: number) => void;
   /** Crée une nouvelle scène avec les patterns A–D actuellement sélectionnés. */
   onCommitScene: () => void;
+  /** Historique Annuler/Rétablir du pattern actif (groupe:numéro) — pas encore les scènes/Song. */
+  canUndo: boolean;
+  canRedo: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
   onConnectMidi: () => void;
   onSave: () => void;
   onNew: () => void;
@@ -90,7 +95,7 @@ export function EditorToolbar(props: EditorToolbarProps) {
         <button className="machine-project-load" onClick={() => setMachineProjectsWindow(true)} title="Parcourir les 9 projets de la machine">↓ PROJETS MACHINE · 9</button>
         <button className="clone-machine" onClick={props.onCloneMachine} title="Cloner la machine (miroir hors ligne)">▣ CLONER</button>
         <button className="studio-sample-folder" onClick={props.onOpenSampleFolder} title="Ouvrir la banque de samples locale">▤ SAMPLES{props.machineSampleCount ? ` · ${props.machineSampleCount}` : ''}</button>
-        {props.studioView === 'pattern' && <><button className="studio-commit-scene" onClick={props.onCommitScene}>COMMIT · CRÉER SCÈNE</button><span className="studio-pattern-context">SONG POSITION L.{String(props.activeSongPosition).padStart(2, '0')} · SCÈNE S.{String(props.activeScene).padStart(2, '0')} · PATTERN {props.group}{String(props.patternNumber).padStart(2, '0')}</span></>}
+        {props.studioView === 'pattern' && <><button className="studio-commit-scene" onClick={props.onCommitScene}>COMMIT · CRÉER SCÈNE</button><button className="studio-undo" disabled={!props.canUndo} title="Annuler (Ctrl/Cmd+Z)" onClick={props.onUndo}>↶ ANNULER</button><button className="studio-redo" disabled={!props.canRedo} title="Rétablir (Ctrl/Cmd+Shift+Z)" onClick={props.onRedo}>↷ RÉTABLIR</button><span className="studio-pattern-context">SONG POSITION L.{String(props.activeSongPosition).padStart(2, '0')} · SCÈNE S.{String(props.activeScene).padStart(2, '0')} · PATTERN {props.group}{String(props.patternNumber).padStart(2, '0')}</span></>}
       </> : <><button className="save" disabled={!props.canSave} onClick={props.onSave}>● SAVE</button><label className="export-select">EXPORT <select value={props.exportFormat} onChange={(event) => props.onExportFormatChange(event.target.value as 'midi' | 'json')}><option value="midi">MIDI (.mid)</option><option value="json">PROJET EP‑133 (.json)</option></select></label><button className="midi-export" onClick={props.onExport}>⇩ EXPORTER</button></>}
       <button className="transport-play" onClick={props.onPlayback}>{props.playing ? '■ STOP' : '▶ LECTURE'}</button><button className={`loop-toggle ${props.loop ? 'active' : ''}`} disabled={props.mode !== 'complete' || props.playing} onClick={() => props.onLoopChange(!props.loop)}>↻ BOUCLE {props.loop ? 'ON' : 'OFF'}</button>{props.mode === 'complete' && props.studioView === 'pattern' && <div className="pattern-length-control" aria-label="Longueur du pattern"><button disabled={props.patternLength <= 1} title={props.patternLength <= 1 ? 'Longueur minimale : LN.1' : 'Réduire la longueur du pattern'} onClick={() => props.onPatternLengthChange(props.patternLength - 1)}>−</button><b>LN.{props.patternLength}</b><button disabled={props.patternLength >= 99} title={props.patternLength >= 99 ? 'Longueur maximale : LN.99' : 'Augmenter la longueur du pattern'} onClick={() => props.onPatternLengthChange(props.patternLength + 1)}>＋</button></div>}
     </div>
