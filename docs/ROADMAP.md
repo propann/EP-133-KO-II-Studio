@@ -88,8 +88,10 @@ autorisation MIDI du navigateur.
 - Les dépendances (`react`, `vite`, `tone`, `@vitejs/plugin-react`) sont
   encore déclarées en `latest` ; un lockfile est committé mais les versions
   ne sont pas figées à la source.
-- Aucun historique Annuler/Rétablir ni autosauvegarde dans le Studio ; la
-  Song Position ne s'enchaîne pas encore automatiquement pendant la lecture.
+- Aucun historique Annuler/Rétablir ni autosauvegarde dans le Studio.
+- La Song Position affichée avance désormais avec la lecture (11 août),
+  mais reste basée sur le numéro de scène — deux positions consécutives de
+  la même scène ne sont pas encore distinguées visuellement.
 
 ## Phase 1 — stabiliser avant d'ajouter
 
@@ -135,7 +137,15 @@ composition identique sans machine connectée ; échanger ses notes en MIDI.
 - [ ] Gérer réellement les patterns A01–D99.
 - [ ] Créer et éditer les scènes S.01–S.99.
 - [ ] Ordonner les Song Positions L.01–L.99.
-- [ ] Faire suivre la Song Position active par le transport et l'export.
+- [x] Faire suivre la Song Position active par le transport pendant la
+  lecture d'un Song multi-positions (`editorActiveScene` avance en temps
+  réel avec la scène qui sonne, vérifié par un vrai scénario Playwright sur
+  la démo GROOVE — L.01 → L.03 observé pendant la lecture). Limite connue :
+  le repère est basé sur le numéro de **scène**, donc deux positions
+  consécutives qui pointent vers la même scène (ex. `[1, 1, 2, 3]`, L.01 et
+  L.02) affichent la même étiquette — distinguer les positions par leur
+  index plutôt que par leur scène reste à faire si nécessaire.
+- [ ] Faire suivre la Song Position dans l'export.
 
 ## Phase 3 — deux banques de sons hors ligne
 

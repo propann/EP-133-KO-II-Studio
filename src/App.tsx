@@ -731,7 +731,14 @@ export default function App() {
     const sceneNumbers = editorMode === 'complete' && sceneOverride === undefined && editorSong.length ? editorSong : [activeScene];
     let beatOffset = 0;
     const scheduledTargets: Array<{ group: EditorGroup; target: SequencerNote }> = [];
+    // Une position par scène jouée, à son décalage de départ — sert à faire suivre
+    // SONG POSITION/SCÈNE au fil de la lecture (voir followPlayback), pas seulement
+    // à programmer l'audio. Le pattern affiché dans la grille n'en dépend pas
+    // (editorTargets reste lié à editorGroup/patternNumbers), donc rien n'est
+    // perturbé si l'utilisateur édite pendant que le morceau joue.
+    const songSegments: Array<{ scene: number; startBeat: number }> = [];
     sceneNumbers.forEach((sceneNumber) => {
+      songSegments.push({ scene: sceneNumber, startBeat: beatOffset });
       const sceneExists = editorScenes.some((scene) => scene.scene === sceneNumber);
       const scenePatterns = sceneExists
         ? patternsForScene(playbackBank, editorScenes, sceneNumber)
@@ -749,10 +756,21 @@ export default function App() {
     const allTargets = scheduledTargets.map(({ target }) => target);
     const playbackBars = Math.max(1, beatOffset / 4);
     const playbackStart = performance.now() + (editorMode === 'complete' ? 80 : 0);
+    // Comparaison à une variable locale plutôt qu'à l'état React `editorActiveScene`,
+    // qui resterait figé à sa valeur de départ dans cette fermeture (rAF planifié
+    // une seule fois, pas à chaque rendu) — piège classique de fermeture périmée.
+    let lastReportedScene = activeScene;
     const followPlayback = () => {
       const rawBeat = Math.max(0, (performance.now() - playbackStart) / (60000 / tempo));
       const beat = editorLoop ? rawBeat % (playbackBars * 4) : rawBeat;
       setEditorPlaybackBeat(Math.min(playbackBars * 4, beat));
+      if (songSegments.length > 1) {
+        const segment = [...songSegments].reverse().find((candidate) => beat >= candidate.startBeat) || songSegments[0];
+        if (segment.scene !== lastReportedScene) {
+          lastReportedScene = segment.scene;
+          setEditorActiveScene(segment.scene);
+        }
+      }
       if (editorGrid.current) {
         const playheadX = 160 + beat / 4 * 960;
         editorGrid.current.scrollLeft = Math.max(0, playheadX - editorGrid.current.clientWidth * 0.42);
