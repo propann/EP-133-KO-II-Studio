@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { classifyHit, emptyScore, scoreHit } from '../src/core/engine/scoring.ts';
 import { barsAfterStepEdit, measureFromGlobalStep, usedBars } from '../src/core/project/editor.ts';
+import { adviseTempo, buildPadReport } from '../src/core/engine/report.ts';
 
 assert.equal(classifyHit(0, 35, 90), 'PERFECT');
 assert.equal(classifyHit(-35, 35, 90), 'PERFECT');
@@ -43,5 +44,31 @@ assert.equal(barsAfterStepEdit(2, 4, false), 6, 'une édition distante conserve 
 assert.equal(usedBars([]), 1);
 assert.equal(usedBars([{ beat: 0 }, { beat: 3.75 }]), 1);
 assert.equal(usedBars([{ beat: 4 }]), 2);
+
+const sessionNotes = [
+  { pad: 0, grade: 'PERFECT', deltaMs: 5 },
+  { pad: 0, grade: 'GOOD', deltaMs: -60 },
+  { pad: 0, grade: 'MISS', deltaMs: Infinity },
+  { pad: 2, grade: 'MISS', deltaMs: Infinity },
+  { pad: 2, grade: 'MISS', deltaMs: Infinity },
+  { pad: 4, grade: 'PERFECT', deltaMs: -10 },
+];
+const padReport = buildPadReport(sessionNotes);
+assert.equal(padReport.length, 3, 'un pad jamais joué ne doit pas apparaître');
+assert.equal(padReport[0].pad, 2, 'le pad le plus fautif (2 MISS) doit passer en premier');
+assert.equal(padReport[0].miss, 2);
+assert.equal(padReport[0].averageDeltaMs, null, 'aucune frappe jugeable pour un pad tout en MISS');
+const padZero = padReport.find((entry) => entry.pad === 0);
+assert.equal(padZero.hits, 3);
+assert.equal(padZero.perfect, 1);
+assert.equal(padZero.good, 1);
+assert.equal(padZero.miss, 1);
+assert.equal(Math.round(padZero.averageDeltaMs), -27, 'moyenne signée des seules frappes jugées (5 et -60), pas du MISS');
+assert.deepEqual(buildPadReport([]), [], 'aucune frappe -> aucune ligne, jamais une exception');
+
+assert.equal(adviseTempo({ perfect: 0, good: 0, miss: 0 }).direction, 'garder', 'pas assez de données -> pas de conseil');
+assert.equal(adviseTempo({ perfect: 2, good: 3, miss: 5 }).direction, 'reduire', '50% de MISS doit inviter à ralentir');
+assert.equal(adviseTempo({ perfect: 18, good: 1, miss: 0 }).direction, 'augmenter', '95% PERFECT doit inviter à accélérer');
+assert.equal(adviseTempo({ perfect: 8, good: 8, miss: 4 }).direction, 'garder', 'ni trop propre ni trop fautif -> pas de conseil forcé');
 
 console.log('Score et extension automatique des partitions : OK');

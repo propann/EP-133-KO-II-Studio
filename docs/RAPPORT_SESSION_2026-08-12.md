@@ -140,6 +140,45 @@ electro 8→44, dnb 8→46, afro 8→52) ; aucune erreur console ; capture
 d'écran confirmant un rendu propre (pads colorés par catégorie, BPM du
 catalogue affiché correctement pour chaque style).
 
+## Plan P1 — premier chantier : rapport de progression par pad
+
+Le plan P0 étant clos, premier chantier du P1 (priorité 1 des deux audits
+et de l'analyse GPT indépendante : « rapport après exercice — avance/
+retard, pad fautif, régularité et tempo conseillé »).
+
+Nouveau module pur `src/core/engine/report.ts` (`buildPadReport`,
+`adviseTempo`), testé directement par `tools/check-engine.mjs` (pas
+seulement branché puis regardé) : regroupe les frappes d'une session par
+pad, trie du plus fauté au moins fauté, calcule un écart moyen **signé**
+par pad (avance/retard, pas juste une magnitude comme l'ancien indicateur
+ÉCART agrégé), et propose un conseil de tempo simple (ralentir si plus de
+25 % de MISS, accélérer si plus de 70 % de PERFECT et moins de 5 % de
+MISS, silence sinon plutôt qu'un pourcentage inventé). Affiché dans
+`PerformancePanel`, sous les statistiques agrégées existantes.
+
+**Bug réel trouvé et corrigé en vérifiant ce rapport avec un vrai scénario
+Playwright** (jouer une session, cliquer des pads, lire le contenu du
+panneau ANALYSE) — pas par relecture de code : `onHit` appelait
+`setPlayerNotes`/`setFlashedPad` **à l'intérieur** de l'updater fonctionnel
+de `setScore`. Piégé par le même mécanisme que le bug Annuler/Rétablir du
+11 août — React StrictMode rejoue exprès un updater fonctionnel une
+deuxième fois en développement pour détecter ce genre d'impureté ; le
+score final restait juste (seul le second appel est retenu), mais
+`playerNotes` et `flashedPad` doublaient à **chaque** frappe, faussant
+silencieusement tout ce qui en dépend. Repéré parce que le total du
+rapport par pad (37 frappes) ne correspondait pas au total agrégé du
+score (19 frappes) sur une même session de test.
+
+Corrigé en calculant le score une seule fois à partir de `scoreRef`
+(ref déjà existante, tenue à jour de façon fiable — mise à jour
+manuellement dans `onHit` en plus du rendu, pour rester juste même entre
+deux frappes du même tick), puis en posant tous les `setState` côte à
+côte plutôt qu'imbriqués.
+
+Revérifié avec le même scénario après correctif : total du rapport par
+pad et total agrégé du score strictement égaux (19 = 7+7+5). `npm run
+typecheck` + `npm run build` + `npm test` au vert.
+
 ## Méthode
 
 Chaque chantier a suivi le même principe : comprendre le code existant
@@ -166,12 +205,14 @@ partagées par les deux audits externes et l'analyse GPT sont maintenant
 faites (identité de marque déjà en cours par ailleurs, Song Position,
 Undo/Redo, dépendances+CI, audit Save/Load, dix parcours pédagogiques).
 
-1. P1 maintenant que le P0 est clos : rapport de progression par pad
-   après une session (le contenu nécessaire — dix styles à 5 niveaux —
-   est désormais prêt), conversion Projet → Exercice, édition vélocité/
-   gate/micro-timing, bibliothèque unifiée ;
-2. mode KEYS mélodique pour Rhythm Hero — idée notée le 11/08, toujours
+1. P1 en cours : rapport de progression par pad fait (ci-dessus) —
+   restent conversion Projet → Exercice, édition vélocité/gate/micro-
+   timing, bibliothèque unifiée, parcours 7/30 jours ;
+2. « pad confondu » du rapport par pad, volontairement pas couvert
+   aujourd'hui — comparer chaque MISS à ce qui était attendu sur un autre
+   pad au même instant, pas juste le pad réellement joué ;
+3. mode KEYS mélodique pour Rhythm Hero — idée notée le 11/08, toujours
    remise à plus tard (voir mémoire `rhythm-hero-keys-mode-idea`) ;
-3. vérifier côté utilisateur si les autorisations MIDI du navigateur
+4. vérifier côté utilisateur si les autorisations MIDI du navigateur
    expliquent le « NON CONNECTÉ » persistant signalé le 11/08 — toujours
    sans confirmation de l'utilisateur.

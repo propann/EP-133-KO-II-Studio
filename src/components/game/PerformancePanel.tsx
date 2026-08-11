@@ -1,4 +1,5 @@
 import type { Grade, Score } from '../../core/engine/types';
+import { adviseTempo, buildPadReport, type PlayerNoteRecord } from '../../core/engine/report';
 import { EP133_PADS } from '../../core/project/pads';
 
 interface PerformancePanelProps {
@@ -6,18 +7,33 @@ interface PerformancePanelProps {
   expectedPad?: number;
   flashedPad: { pad: number; grade: Grade } | null;
   score: Score;
+  playerNotes: PlayerNoteRecord[];
   onPlayPad: (pad: number) => void;
   onEditPad: (pad: number) => void;
 }
+
+const formatDelta = (ms: number | null) => {
+  if (ms === null) return '—';
+  const rounded = Math.round(ms);
+  if (Math.abs(rounded) < 3) return 'PILE';
+  return `${rounded > 0 ? '+' : ''}${rounded}ms ${rounded > 0 ? 'RETARD' : 'AVANCE'}`;
+};
 
 /**
  * Pads réduits et décalés sur le côté (11/08), avec un vrai cadre de
  * retour de performance à côté — plus de VU-mètres décoratifs ni de badge
  * combo isolé, l'analyse de la session (PERFECT/GOOD/MISS, combo, meilleur
  * combo, écart moyen) vit ici, dans un seul bloc lisible.
+ *
+ * Rapport par pad ajouté le 12 août (P1, voir docs/ROADMAP.md et
+ * docs/REGISTRE_IDEES.md Q-07) : montre où travailler en premier — les
+ * pads les plus fautifs en tête — plutôt qu'un seul écart moyen global qui
+ * peut masquer un pad très en retard compensé par un autre très en avance.
  */
-export function PerformancePanel({ transportActive, expectedPad, flashedPad, score, onPlayPad, onEditPad }: PerformancePanelProps) {
+export function PerformancePanel({ transportActive, expectedPad, flashedPad, score, playerNotes, onPlayPad, onEditPad }: PerformancePanelProps) {
   const averageMs = score.hits > 0 ? score.totalDeltaMs / score.hits : null;
+  const padReport = buildPadReport(playerNotes);
+  const tempoAdvice = adviseTempo(score);
   return <section className="performance-panel">
     <section className="pads">{EP133_PADS.map((pad, index) => {
       const expected = transportActive && expectedPad === index;
@@ -41,6 +57,23 @@ export function PerformancePanel({ transportActive, expectedPad, flashedPad, sco
         <div className="performance-stat"><span>MEILLEUR</span><b>{score.maxCombo}</b></div>
         <div className="performance-stat"><span>ÉCART</span><b>{averageMs === null ? '—' : `${averageMs > 0 ? '+' : ''}${averageMs.toFixed(0)}ms`}</b></div>
       </div>
+      {padReport.length > 0 && <>
+        <b className="performance-report-title">PAR PAD · À TRAVAILLER EN PREMIER</b>
+        <ul className="performance-pad-report">
+          {padReport.map((entry) => {
+            const visual = EP133_PADS[entry.pad];
+            return <li className={`cat-${visual.category}`} key={entry.pad}>
+              <span className="performance-pad-name"><i className="pad-dot" />{visual.name}</span>
+              <span className="performance-pad-counts">{entry.perfect}P · {entry.good}G · {entry.miss}M</span>
+              <span className="performance-pad-delta">{formatDelta(entry.averageDeltaMs)}</span>
+            </li>;
+          })}
+        </ul>
+        {tempoAdvice.direction !== 'garder' && <p className={`performance-tempo-advice ${tempoAdvice.direction}`}>
+          {tempoAdvice.direction === 'reduire' ? `↓ RALENTIR DE ${tempoAdvice.percent}%` : `↑ ACCÉLÉRER DE ${tempoAdvice.percent}%`}
+          <small>{tempoAdvice.reason}</small>
+        </p>}
+      </>}
     </aside>
   </section>;
 }

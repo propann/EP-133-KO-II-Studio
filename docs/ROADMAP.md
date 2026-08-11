@@ -279,10 +279,13 @@ la machine sans toucher aux autres projets.
   et Latin/Afrobeat (12 août — cible « dix parcours pédagogiques finis »
   du plan P0 atteinte). Les 29 styles restants gardent la génération
   procédurale en attendant leur tour.
-- [ ] Rapport de progression par pad après une session (avance/retard, pad
-  confondu, tempo conseillé — voir REGISTRE_IDEES.md Q-07, différenciant
-  fort face aux coachs génériques comme Melodics) — le prérequis contenu
-  est désormais rempli, reste à construire le rapport lui-même.
+- [x] Rapport de progression par pad après une session (12 août, P1 —
+  voir REGISTRE_IDEES.md Q-07) : pads triés du plus fauté au moins fauté,
+  écart moyen signé (avance/retard) par pad, conseil de tempo simple
+  (ralentir si trop de MISS, accélérer si très propre). « Pad confondu »
+  volontairement pas encore couvert — nécessiterait de comparer chaque
+  MISS à ce qui était attendu sur un AUTRE pad au même instant, pas juste
+  le pad réellement joué ; noté comme limite connue, pas caché.
 - [ ] Historique local des scores et progression.
 - [ ] Conseils ciblés sur timing, main, doigt et pad.
 - [ ] Importer une composition du studio comme exercice du jeu.

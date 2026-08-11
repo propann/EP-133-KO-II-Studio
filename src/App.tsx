@@ -76,6 +76,8 @@ interface PlayerNote {
   beat: number;
   pad: number;
   grade: Grade;
+  /** Écart signé en ms — alimente le rapport par pad (report.ts), pas seulement l'écart agrégé de Score. */
+  deltaMs: number;
 }
 
 const USER_EXERCISES_KEY = 'ep133-rhythm-hero:user-exercises:v1';
@@ -243,20 +245,22 @@ export default function App() {
     if (flashTimer.current !== undefined) window.clearTimeout(flashTimer.current);
     flashTimer.current = window.setTimeout(() => setFlashedPad(null), 180);
     if (!running) return;
-    setScore((currentScore) => {
-      const beat = (audio.time * 1000) / (60000 / activeExercise.bpm);
-      const result = scoreHit(
-        activeExercise,
-        hit,
-        beat,
-        targets.current,
-        currentScore,
-      );
-      setLast({ grade: result.grade, deltaMs: result.deltaMs });
-      setPlayerNotes((notes) => [...notes, { id: performance.now(), beat, pad: hit.pad, grade: result.grade }]);
-      setFlashedPad({ pad: hit.pad, grade: result.grade });
-      return result.score;
-    });
+    // Score calculé une seule fois à partir de scoreRef (toujours à jour, y compris entre deux
+    // frappes du même tick — mis à jour manuellement ci-dessous, pas seulement au rendu suivant),
+    // puis tous les setState posés côte à côte, plus aucun appel imbriqué dans l'updater
+    // fonctionnel d'un autre. L'ancienne version appelait setPlayerNotes/setFlashedPad DANS
+    // l'updater de setScore — piégé par le double appel StrictMode en développement (React
+    // rejoue exprès un updater fonctionnel pour détecter ce genre d'impureté) : le score final
+    // restait juste (seul le second appel est retenu), mais playerNotes doublait à chaque
+    // frappe, faussant silencieusement le rapport par pad. Trouvé en vérifiant ce rapport avec
+    // un vrai scénario Playwright, pas par relecture de code.
+    const beat = (audio.time * 1000) / (60000 / activeExercise.bpm);
+    const result = scoreHit(activeExercise, hit, beat, targets.current, scoreRef.current);
+    scoreRef.current = result.score;
+    setScore(result.score);
+    setLast({ grade: result.grade, deltaMs: result.deltaMs });
+    setPlayerNotes((notes) => [...notes, { id: performance.now(), beat, pad: hit.pad, grade: result.grade, deltaMs: result.deltaMs }]);
+    setFlashedPad({ pad: hit.pad, grade: result.grade });
   }, [activeExercise, editorMode, editorOpen, running]);
 
   const onMidiObservation = useCallback((message: MidiObservation) => {
@@ -1334,7 +1338,7 @@ export default function App() {
         et analyse à droite. */}
     <div className="game-layout">
       <ScoreView viewportRef={scoreScroll} pageStart={pageStart} songBeat={songBeat} transportActive={transportActive} playheadProgress={playheadProgress} expectedTargets={visibleTargets} playedNotes={visiblePlayerNotes} />
-      <PerformancePanel transportActive={transportActive} expectedPad={expectedPad} flashedPad={flashedPad} score={score} onPlayPad={clickPad} onEditPad={editPad} />
+      <PerformancePanel transportActive={transportActive} expectedPad={expectedPad} flashedPad={flashedPad} score={score} playerNotes={playerNotes} onPlayPad={clickPad} onEditPad={editPad} />
     </div>
 
     {soundPad !== null && <PadSoundEditor pad={soundPad} settings={soundSettings[soundPad]} onChange={(patch) => updateSound(soundPad, patch)} onPreview={() => void audio.previewPad(soundPad)} onClose={() => setSoundPad(null)} />}

@@ -231,6 +231,19 @@ header { display:flex; justify-content:space-between; gap:30px; align-items:star
 .performance-stat.perfect b { color:var(--ko-orange); }
 .performance-stat.good b { color:#9a6500; }
 .performance-stat.miss b { color:#c62818; }
+/* Rapport par pad (12 août, P1) — les pads les plus fautifs en tête, pas un
+   simple écart moyen global qui peut masquer une avance et un retard qui
+   s'annulent entre deux pads différents. */
+.performance-report-title { margin-top:2px; padding-top:6px; border-top:1px solid #d2cfc8; }
+.performance-pad-report { display:flex; flex-direction:column; gap:3px; margin:0; padding:0; list-style:none; max-height:120px; overflow-y:auto; }
+.performance-pad-report li { display:grid; grid-template-columns:1fr auto; grid-template-rows:auto auto; gap:0 6px; padding:3px 5px; border-radius:4px; background:#e9e6df; }
+.performance-pad-name { grid-column:1; display:flex; align-items:center; gap:5px; font-size:7.5px; font-weight:900; letter-spacing:.02em; }
+.performance-pad-counts { grid-column:2; grid-row:1; font-size:7px; font-variant-numeric:tabular-nums; color:#65625d; white-space:nowrap; }
+.performance-pad-delta { grid-column:1/-1; grid-row:2; font-size:7px; font-variant-numeric:tabular-nums; color:#65625d; padding-left:11px; }
+.performance-tempo-advice { display:flex; flex-direction:column; gap:1px; margin:2px 0 0; padding:5px 6px; border-radius:4px; font-size:8px; font-weight:900; }
+.performance-tempo-advice.reduire { background:#f2c6bd; color:#8a2818; }
+.performance-tempo-advice.augmenter { background:#c9e6cf; color:#1a5c2c; }
+.performance-tempo-advice small { font-size:6.5px; font-weight:600; }
 .sound-editor {
   display:grid; grid-template-columns:1.1fr repeat(3,1.4fr) auto auto; gap:14px; align-items:center;
   margin-top:12px; padding:12px; border:2px solid var(--ko-black); border-radius:var(--radius); background:var(--ko-panel);
