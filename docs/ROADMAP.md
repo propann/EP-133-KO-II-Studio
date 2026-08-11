@@ -29,17 +29,29 @@ pour ouvrir, écouter ou modifier un projet.
 - Les sons de la machine ne sont pas copiés ou redistribués sans droit explicite.
 - Rhythm Hero reste un module séparé du Studio sur la page d'accueil.
 
-## État consolidé — 9 août 2026
+## État consolidé — 11 août 2026
 
-Mise à jour du 10 août : clonage incrémental validé sur la machine et refonte
-Sons & Transfert réalisée. Le diagnostic Web MIDI de cette page reste ouvert :
-le test MIDI direct fonctionne, mais pas encore le trajet navigateur ↔ machine.
-Voir [RAPPORT_SESSION_2026-08-10.md](RAPPORT_SESSION_2026-08-10.md).
+Mise à jour du 11 août : fusion complète des deux branches de travail dans
+`main` (fiche personnage, bibliothèque perso intégrée à Sons & Transfert,
+niveau 1 du catalogue Rhythm Hero écrit à la main, refonte Song/grille du
+Studio). Croisement avec deux études externes apportées par l'utilisateur et
+deux synthèses indépendantes (une par agent, l'une convergeant fortement avec
+l'autre) — voir le détail des idées nouvelles dans
+[REGISTRE_IDEES.md](REGISTRE_IDEES.md#qualité-logicielle-et-stratégie-produit),
+la synthèse complète dans
+[ANALYSE_GPT_EP133_KOII_STUDIO.md](ANALYSE_GPT_EP133_KOII_STUDIO.md) et le
+rapport de session dans
+[RAPPORT_SESSION_2026-08-11.md](RAPPORT_SESSION_2026-08-11.md). Le diagnostic
+Web MIDI reste ouvert côté utilisateur : le test direct fonctionne, mais
+« NON CONNECTÉ » persiste par moments — cause probable non confirmée,
+autorisation MIDI du navigateur.
 
 ### Disponible
 
-- Accueil modulaire : Rhythm Hero, Studio EP-133, Sons & Transfert.
-- Jeu avec 39 styles, cinq difficultés, compte à rebours, score et Web MIDI.
+- Accueil modulaire : Rhythm Hero, Studio EP-133, Sons & Transfert, Fiche
+  personnage, Test machine, Documentation.
+- Jeu avec 39 styles, cinq difficultés, compte à rebours, score et Web MIDI ;
+  niveau 1 de Boom-Bap, House, Rock, Reggae et Minimal écrit à la main.
 - Éditeur du jeu à mesures extensibles et sauvegarde locale.
 - Studio quatre groupes A–D, 12 pads par groupe et piano-roll KEYS.
 - Lecture des sons par l'ordinateur ou par la sortie MIDI de l'EP-133.
@@ -48,6 +60,12 @@ Voir [RAPPORT_SESSION_2026-08-10.md](RAPPORT_SESSION_2026-08-10.md).
 - Scan matériel en lecture seule : projet, pads, slots, noms, modes et notes
   racines. Le scan validé a trouvé 527 sons et 56,21 Mo sur la machine testée.
 - Cache local de l'inventaire du projet 1, sans contenu audio.
+- Fiche personnage : identité, plusieurs machines déclarées, bilan cumulé,
+  CONNECTER/SCANNER/CLONER, dossier de travail et bibliothèque perso
+  mémorisés entre deux visites (IndexedDB).
+- Sons & Transfert : bibliothèque perso et banque machine côte à côte, même
+  code visuel, glisser-déposer dans les deux sens, bouton d'écoute sur
+  chaque slot, copie réelle des sons perso vers le dossier de travail.
 
 ### Expérimental ou incomplet
 
@@ -57,10 +75,21 @@ Voir [RAPPORT_SESSION_2026-08-10.md](RAPPORT_SESSION_2026-08-10.md).
   articulations ne disposent pas encore de leurs éditeurs complets.
 - Les modes ONE, KEYS et LEGATO lus sur la machine ne sont pas tous modifiables
   et persistés de bout en bout.
-- Le bouton de transfert WAV reste volontairement désactivé.
-- Les autres styles que Boom-Bap utilisent encore des partitions générées
-  provisoires.
-- Les tests automatisés sont insuffisants.
+- Aucune écriture directe vers l'EP-133 n'existe encore (aucun protocole
+  SysEx d'écriture dans le projet) ; SYNCHRONISER dans Sons & Transfert
+  copie désormais réellement les sons perso choisis vers le dossier de
+  travail local, mais rien n'est jamais envoyé à la machine elle-même.
+- Seul le niveau 1 des cinq styles (Boom-Bap, House, Rock, Reggae, Minimal)
+  est écrit à la main ; les niveaux 2 à 5 et les 34 autres styles utilisent
+  encore des partitions générées provisoires.
+- Les tests automatisés sont insuffisants : 3 scripts ciblés (moteur,
+  transport, exports), aucun test d'intégration ni E2E committé, aucune CI
+  de qualité (seul un workflow de déploiement existe).
+- Les dépendances (`react`, `vite`, `tone`, `@vitejs/plugin-react`) sont
+  encore déclarées en `latest` ; un lockfile est committé mais les versions
+  ne sont pas figées à la source.
+- Aucun historique Annuler/Rétablir ni autosauvegarde dans le Studio ; la
+  Song Position ne s'enchaîne pas encore automatiquement pendant la lecture.
 
 ## Phase 1 — stabiliser avant d'ajouter
 
@@ -71,6 +100,10 @@ Voir [RAPPORT_SESSION_2026-08-10.md](RAPPORT_SESSION_2026-08-10.md).
 - [x] Ajouter une gestion centralisée du transport et nettoyer tous les timers.
 - [ ] Tester manuellement Chrome/Chromium, écran large et petit écran.
 - [ ] Mettre à jour systématiquement l'état du projet après chaque livraison.
+- [ ] Pinner les dépendances (`react`, `vite`, `tone`, `@vitejs/plugin-react` —
+  retirer `latest`), garder le lockfile committé (voir REGISTRE_IDEES.md Q-01).
+- [ ] CI qualité minimale sur chaque pull request : typecheck, `npm test`,
+  build (voir REGISTRE_IDEES.md Q-02).
 
 **Validation :** build reproductible, aucune note bloquée, navigation et boucle
 stables, restauration correcte d'une session locale.
@@ -130,9 +163,16 @@ composition identique sans machine connectée ; échanger ses notes en MIDI.
 
 ### Banque ordinateur
 
-- Sons libres ou créés par l'utilisateur, versionnés par identifiant et hash.
-- Pré-écoute Web Audio, tags, favoris et recherche.
-- Kit de secours permettant de jouer tous les projets hors ligne.
+- [x] Parcourir la bibliothèque personnelle (dossier réglé depuis la Fiche
+  personnage, navigation en fil d'Ariane, un niveau à la fois) et l'écouter
+  directement dans Sons & Transfert, à côté de la banque machine.
+- [x] Glisser un son personnel sur un pad ou directement sur un slot de la
+  banque machine ; copier les sons choisis vers le dossier de travail
+  (`a-importer/`) — une vraie préparation sur disque, jamais une écriture
+  machine.
+- [ ] Sons libres ou créés par l'utilisateur, versionnés par identifiant et hash.
+- [ ] Tags, favoris et recherche avancée (recherche par nom déjà disponible).
+- [ ] Kit de secours permettant de jouer tous les projets hors ligne.
 
 ### Banque miroir EP-133
 
@@ -198,7 +238,11 @@ la machine sans toucher aux autres projets.
 
 ## Phase 6 — contenu pédagogique
 
-- [ ] Finaliser cinq partitions validées par style, par blocs de cinq.
+- [x] Niveau 1 écrit à la main pour Boom-Bap, House, Rock, Reggae et Minimal.
+- [ ] Finaliser les niveaux 2 à 5 pour ces cinq styles, puis les 34 autres.
+- [ ] Rapport de progression par pad après une session (avance/retard, pad
+  confondu, tempo conseillé — voir REGISTRE_IDEES.md Q-07, différenciant
+  fort face aux coachs génériques comme Melodics).
 - [ ] Historique local des scores et progression.
 - [ ] Conseils ciblés sur timing, main, doigt et pad.
 - [ ] Importer une composition du studio comme exercice du jeu.

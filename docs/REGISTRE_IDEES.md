@@ -121,6 +121,29 @@ nouvelles preuves apparaissent.
 | X-11 | Générateur algorithmique | REPORTÉ | Après éditeur, formats et bibliothèque stables |
 | X-12 | Application hors ligne installable | RETENU | PWA d'abord ; paquet desktop seulement si nécessaire |
 
+## Qualité logicielle et stratégie produit
+
+Issues du croisement du 11 août 2026 entre deux études externes apportées par
+l'utilisateur (`Rapport_audit_EP133_KOII_Studio.docx`,
+`Etude_produit_concurrents_EP133_Studio_2026.docx`) et l'état réel vérifié du
+dépôt à cette date (`git log`, `package.json`, recherche de code). Une
+synthèse indépendante des mêmes documents, produite en parallèle
+([ANALYSE_GPT_EP133_KOII_STUDIO.md](ANALYSE_GPT_EP133_KOII_STUDIO.md)),
+aboutit aux mêmes priorités P0 — recoupement qui renforce la confiance dans
+ce classement plutôt qu'un simple avis isolé.
+
+| ID | Idée | Statut | Décision ou condition |
+|---|---|---|---|
+| Q-01 | Pinner les dépendances (retirer tous les `latest`) | RETENU | `package-lock.json` déjà committé, protège `npm ci` aujourd'hui ; les versions déclarées restent flottantes, risque de dérive à la prochaine régénération du lockfile |
+| Q-02 | CI qualité (typecheck + tests + build sur chaque PR) | RETENU | Seul `deploy-pages.yml` existe aujourd'hui (déploiement) ; aucune vérification automatisée avant fusion |
+| Q-03 | Pyramide de tests (unitaire/intégration/E2E) | RETENU | Suite actuelle limitée à 3 scripts ciblés (moteur, transport, exports) ; Playwright déjà utilisé en pratique pour vérifier visuellement chaque changement, mais hors suite committée — à formaliser |
+| Q-04 | Adaptateur versionné autour d'`ep-series-sysex` (MIT) | EXPÉRIMENTER | Éviter de réimplémenter seul le protocole d'écriture SysEx ; dépendance stratégique externe à évaluer avant la Phase 5 |
+| Q-05 | Positionnement « Learning & Project OS » (Coach / Composer / Time Machine / Open Interop / Local First) | RETENU | Cadre de différenciation face à EP-PatchStudio (menace critique identifiée) ; à formaliser dans la doc produit et la page d'accueil, pas de changement de code requis |
+| Q-06 | Écran diagnostic MIDI complet (latence, jitter, port filtré, dernière note) | RETENU | Symptôme réel déjà observé cette session (« NON CONNECTÉ » persistant côté utilisateur malgré un port libre) — pas seulement une recommandation théorique |
+| Q-07 | Rapport de progression par pad après une session Rhythm Hero | RETENU | Différenciant fort face à Melodics (générique, ne connaît pas les projets réels) ; nécessite d'abord des partitions niveau 1-5 écrites à la main sur tous les styles, pas seulement Boom-Bap |
+| Q-08 | Onboarding « Découvrir sans machine » avec projet exemple | REPORTÉ | Utile pour l'adoption, mais la Phase 1 (socle) doit rester prioritaire |
+| Q-09 | Terminologie rassurante (« copie de sécurité », « plan de modifications » plutôt que « synchroniser ») | EXPÉRIMENTER | Déjà partiellement appliqué (SYNCHRONISER décrit précisément ce qu'il fait dans Sons & Transfert) ; à généraliser à toute l'interface |
+
 ## Règle de suivi
 
 Toute nouvelle étude ajoute ou modifie des lignes ici. Une fonctionnalité ne
