@@ -772,6 +772,7 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .docs-fader i { position:absolute; left:58%; top:-17px; width:26px; height:52px; border:2px solid var(--ko-black); background:var(--ko-orange); box-shadow:3px 3px 0 var(--ko-black); }
 .docs-library { border:2px solid var(--ko-black); background:#f3f1ec; }
 .docs-library > header { align-items:center; padding:15px 18px; border-bottom:8px solid var(--ko-black); }
+.docs-library > header p { max-width:720px; margin:7px 0 0; font-size:9px; }
 .docs-library h2,.docs-sources h2 { margin:4px 0 0; font-size:clamp(22px,3vw,38px); letter-spacing:-2px; }
 .docs-library > header > span { font-size:8px; }
 .docs-library > div { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
@@ -780,9 +781,20 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .docs-library a > b { font-size:26px; color:var(--ko-orange); }
 .docs-library a strong { font-size:15px; }
 .docs-library a p { margin:5px 0 0; font-size:9px; }
+.docs-library a em { display:inline-block; margin-top:8px; padding:3px 5px; background:var(--ko-black); color:#fff; font-size:7px; font-style:normal; font-weight:900; letter-spacing:.08em; }
 .docs-library a > span { font-size:8px; font-weight:bold; }
+.docs-index { display:grid; grid-template-columns:repeat(3,1fr); border:2px solid var(--ko-black); background:#f3f1ec; }
+.docs-index a { display:flex; align-items:center; gap:14px; min-height:86px; padding:14px 18px; border-right:1px solid var(--ko-black); color:var(--ko-black); text-decoration:none; }
+.docs-index a:last-child { border-right:0; }
+.docs-index a:hover { background:var(--ko-amber); }
+.docs-index b { color:var(--ko-orange); font-size:28px; }
+.docs-index span { display:grid; font-size:13px; font-weight:900; }
+.docs-index small { margin-top:5px; color:#68655f; font-size:7px; font-weight:normal; }
+.documentation-page > div[id] { scroll-margin-top:16px; }
 .docs-sources { display:flex; align-items:center; justify-content:space-between; gap:24px; padding:22px; border:2px solid var(--ko-black); background:var(--ko-panel); }
 .docs-sources a { flex:none; padding:14px 18px; border:2px solid var(--ko-black); background:var(--ko-orange); color:#fff; box-shadow:4px 4px 0 var(--ko-black); text-decoration:none; font-weight:bold; }
+.docs-source-actions { display:flex; flex-direction:column; gap:12px; }
+.docs-sources a.secondary { background:#f3f1ec; color:var(--ko-black); }
 .sound-library-summary { display:grid; grid-template-columns:repeat(3,1fr) auto; gap:9px; margin:16px 0; }
 .sound-library-summary > div { display:grid; padding:12px; border:2px solid var(--ko-black); background:var(--ko-panel); }
 .sound-library-summary b { font-size:24px; }
@@ -816,7 +828,7 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .home-back { background:var(--ko-black); color:var(--ko-beige); border:1px solid var(--ko-black); cursor:pointer; box-shadow:3px 3px 0 var(--ko-orange); transition:transform .12s,box-shadow .12s,background .12s; }
 .home-back:hover,.home-back:focus-visible { background:var(--ko-orange); color:var(--ko-black); }
 .home-back:active { transform:translate(3px,3px); box-shadow:none; }
-@media(max-width:950px) { .home-tools { grid-template-columns:1fr; } .home-card { min-height:280px; } .device-profile { grid-template-columns:1fr 1fr; } .sound-inventory > div { grid-template-columns:repeat(2,1fr); } .docs-hero { grid-template-columns:1fr; } .docs-hero > div:first-child { border-right:0; border-bottom:1px solid var(--ko-black); } .docs-conventions { grid-template-columns:1fr; } .docs-conventions article { border-right:0; border-bottom:1px solid var(--ko-black); } .docs-library > div { grid-template-columns:1fr; } .docs-sources { align-items:stretch; flex-direction:column; } }
+@media(max-width:950px) { .home-tools { grid-template-columns:1fr; } .home-card { min-height:280px; } .device-profile { grid-template-columns:1fr 1fr; } .sound-inventory > div { grid-template-columns:repeat(2,1fr); } .docs-hero { grid-template-columns:1fr; } .docs-hero > div:first-child { border-right:0; border-bottom:1px solid var(--ko-black); } .docs-conventions { grid-template-columns:1fr; } .docs-conventions article { border-right:0; border-bottom:1px solid var(--ko-black); } .docs-library > div,.docs-index { grid-template-columns:1fr; } .docs-index a { border-right:0; border-bottom:1px solid var(--ko-black); } .docs-index a:last-child { border-bottom:0; } .docs-sources { align-items:stretch; flex-direction:column; } }
 @media(max-width:650px) { .home-brand,.home-intro { align-items:flex-start; flex-direction:column; } .home-machine-status { width:100%; } .sound-library-summary { grid-template-columns:1fr 1fr; } .sound-transfer-zone { grid-template-columns:1fr; } .sound-transfer-zone aside { border-left:0; border-top:3px solid var(--ko-black); } .sound-inventory > div { grid-template-columns:1fr; } }
 
 /* Sons & Transfert — console visuelle inspirée des principes du SOUND MODE. */

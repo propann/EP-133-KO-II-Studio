@@ -46,16 +46,17 @@ fader et l'afficheur de la page sont dessinés en HTML/CSS pour le projet.
 
 ## Documentation originale exposée dans l'application
 
-- lancement local ;
-- connexion et diagnostic MIDI ;
-- modèle de données du séquenceur ;
-- décision sur les formats ;
-- validation du lecteur matériel ;
-- état courant du projet.
+La page forme désormais un centre documentaire en trois parties :
 
-Les autres documents du dépôt restent accessibles sur GitHub et pourront être
-ajoutés à l'index par catégories lorsque la navigation documentaire comportera
-une recherche.
+1. **Nos outils** : démarrage, Pattern & Song Studio, Save/Load, Sons &
+   Transfert, clonage, pont local, Test Machine/MIDI et Rhythm Hero ;
+2. **La machine** : mise en route Linux/Windows, chargement d'un projet réel,
+   samples, formats et modèle de données ;
+3. **Guide officiel** : liens externes vers le guide en ligne et les
+   téléchargements Teenage Engineering, sans recopier leur contenu protégé.
+
+Chaque fiche indique clairement quand une procédure est limitée à la lecture
+seule ou exige une validation sur le matériel réel.
 
 ## Ressources communautaires à indexer plus tard
 
