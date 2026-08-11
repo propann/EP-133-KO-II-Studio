@@ -12,20 +12,21 @@ interface HomePageProps {
   onOpenSounds: () => void;
   onOpenDocumentation: () => void;
   onOpenMachineTest: () => void;
+  onOpenProfile: () => void;
 }
 
 const copy = {
   fr: {
     tagline: 'CRÉER · CLONER · TRANSFÉRER', intro: 'Extrais les morceaux de ta machine, transforme patterns, scènes, Songs et sons, puis prépare leur retour vers l’EP‑133.', connected: 'EP‑133 CONNECTÉ', ready: 'EP‑133 PRÊT À CONNECTER', project: 'PROJET', sounds: 'SONS SCANNÉS',
-    cards: [['CRÉER','PATTERN & SONG STUDIO','Ouvre des morceaux de la machine et travaille groupes, patterns, scènes et positions Song dans un véritable éditeur.'],['CLONER · GÉRER','SONS & TRANSFERT','Clone projets et samples, inspecte la bibliothèque réelle et prépare précisément les emplacements de la machine.'],['CONNECTER','TEST MACHINE','Inspecte MIDI et SysEx, associe les contrôles physiques et vérifie la communication dans les deux sens.'],['MODULE INCLUS','RHYTHM HERO','Retrouve les exercices progressifs, partitions animées et entraînements avec les pads de l’EP‑133.'],['COMPRENDRE','DOCUMENTATION','Guides du Studio et de la machine, connexion MIDI, formats et procédures vérifiées.']], official: 'GUIDE OFFICIEL EP‑133 ↗', local: 'OPEN SOURCE · LOCAL · SANS COMPTE', language: 'Langue',
+    cards: [['CRÉER','PATTERN & SONG STUDIO','Ouvre des morceaux de la machine et travaille groupes, patterns, scènes et positions Song dans un véritable éditeur.'],['CLONER · GÉRER','SONS & TRANSFERT','Clone projets et samples, inspecte la bibliothèque réelle et prépare précisément les emplacements de la machine.'],['CONNECTER','TEST MACHINE','Inspecte MIDI et SysEx, associe les contrôles physiques et vérifie la communication dans les deux sens.'],['MODULE INCLUS','RHYTHM HERO','Retrouve les exercices progressifs, partitions animées et entraînements avec les pads de l’EP‑133.'],['COMPRENDRE','DOCUMENTATION','Guides du Studio et de la machine, connexion MIDI, formats et procédures vérifiées.'],['IDENTITÉ','FICHE PERSONNAGE','Avatar, matériel déclaré et bilan cumulé de toutes tes sessions de jeu.']], official: 'GUIDE OFFICIEL EP‑133 ↗', local: 'OPEN SOURCE · LOCAL · SANS COMPTE', language: 'Langue',
   },
   en: {
     tagline: 'CREATE · CLONE · TRANSFER', intro: 'Extract music from your device, reshape patterns, scenes, Songs and sounds, then prepare their return to the EP‑133.', connected: 'EP‑133 CONNECTED', ready: 'EP‑133 READY TO CONNECT', project: 'PROJECT', sounds: 'SCANNED SOUNDS',
-    cards: [['CREATE','PATTERN & SONG STUDIO','Open music from the device and edit groups, patterns, scenes and Song positions in a true editor.'],['CLONE · MANAGE','SOUNDS & TRANSFER','Clone projects and samples, inspect the real library and prepare device slots precisely.'],['CONNECT','MACHINE TEST','Inspect MIDI and SysEx, map physical controls and verify two-way communication.'],['INCLUDED MODULE','RHYTHM HERO','Practice with progressive exercises, animated notation and the real EP‑133 pads.'],['LEARN','DOCUMENTATION','Studio and device guides, MIDI connection, formats and verified procedures.']], official: 'OFFICIAL EP‑133 GUIDE ↗', local: 'OPEN SOURCE · LOCAL · NO ACCOUNT', language: 'Language',
+    cards: [['CREATE','PATTERN & SONG STUDIO','Open music from the device and edit groups, patterns, scenes and Song positions in a true editor.'],['CLONE · MANAGE','SOUNDS & TRANSFER','Clone projects and samples, inspect the real library and prepare device slots precisely.'],['CONNECT','MACHINE TEST','Inspect MIDI and SysEx, map physical controls and verify two-way communication.'],['INCLUDED MODULE','RHYTHM HERO','Practice with progressive exercises, animated notation and the real EP‑133 pads.'],['LEARN','DOCUMENTATION','Studio and device guides, MIDI connection, formats and verified procedures.'],['IDENTITY','CHARACTER SHEET','Avatar, declared gear and cumulative results across all your play sessions.']], official: 'OFFICIAL EP‑133 GUIDE ↗', local: 'OPEN SOURCE · LOCAL · NO ACCOUNT', language: 'Language',
   },
   es: {
     tagline: 'CREAR · CLONAR · TRANSFERIR', intro: 'Extrae la música de tu máquina, transforma patterns, escenas, Songs y sonidos, y prepara su regreso al EP‑133.', connected: 'EP‑133 CONECTADO', ready: 'EP‑133 LISTO PARA CONECTAR', project: 'PROYECTO', sounds: 'SONIDOS ESCANEADOS',
-    cards: [['CREAR','PATTERN & SONG STUDIO','Abre música de la máquina y edita grupos, patterns, escenas y posiciones Song.'],['CLONAR · GESTIONAR','SONIDOS Y TRANSFERENCIA','Clona proyectos y samples, inspecciona la biblioteca real y prepara los slots de la máquina.'],['CONECTAR','PRUEBA DE MÁQUINA','Inspecciona MIDI y SysEx, asigna controles físicos y verifica la comunicación bidireccional.'],['MÓDULO INCLUIDO','RHYTHM HERO','Practica con ejercicios progresivos, partitura animada y los pads reales del EP‑133.'],['COMPRENDER','DOCUMENTACIÓN','Guías del Studio y de la máquina, conexión MIDI, formatos y procedimientos verificados.']], official: 'GUÍA OFICIAL EP‑133 ↗', local: 'CÓDIGO ABIERTO · LOCAL · SIN CUENTA', language: 'Idioma',
+    cards: [['CREAR','PATTERN & SONG STUDIO','Abre música de la máquina y edita grupos, patterns, escenas y posiciones Song.'],['CLONAR · GESTIONAR','SONIDOS Y TRANSFERENCIA','Clona proyectos y samples, inspecciona la biblioteca real y prepara los slots de la máquina.'],['CONECTAR','PRUEBA DE MÁQUINA','Inspecciona MIDI y SysEx, asigna controles físicos y verifica la comunicación bidireccional.'],['MÓDULO INCLUIDO','RHYTHM HERO','Practica con ejercicios progresivos, partitura animada y los pads reales del EP‑133.'],['COMPRENDER','DOCUMENTACIÓN','Guías del Studio y de la máquina, conexión MIDI, formatos y procedimientos verificados.'],['IDENTIDAD','FICHA DE PERSONAJE','Avatar, equipo declarado y balance acumulado de todas tus sesiones de juego.']], official: 'GUÍA OFICIAL EP‑133 ↗', local: 'CÓDIGO ABIERTO · LOCAL · SIN CUENTA', language: 'Idioma',
   },
 } as const;
 
@@ -35,10 +36,10 @@ function activateWithKeyboard(event: KeyboardEvent<HTMLElement>, action: () => v
   action();
 }
 
-export function HomePage({ connected, project, scannedSoundCount, language, onLanguageChange, onOpenGame, onOpenStudio, onOpenSounds, onOpenDocumentation, onOpenMachineTest }: HomePageProps) {
+export function HomePage({ connected, project, scannedSoundCount, language, onLanguageChange, onOpenGame, onOpenStudio, onOpenSounds, onOpenDocumentation, onOpenMachineTest, onOpenProfile }: HomePageProps) {
   const t = copy[language];
-  const actions = [onOpenStudio, onOpenSounds, onOpenMachineTest, onOpenGame, onOpenDocumentation];
-  const classes = ['studio-card', 'sounds-card', 'machine-test-card', 'game-card', 'docs-card'];
+  const actions = [onOpenStudio, onOpenSounds, onOpenMachineTest, onOpenGame, onOpenDocumentation, onOpenProfile];
+  const classes = ['studio-card', 'sounds-card', 'machine-test-card', 'game-card', 'docs-card', 'profile-card'];
   return <main className="home-screen">
     <header className="home-brand"><span>EP‑133</span><b>KO II STUDIO</b><div className="language-switch" aria-label={t.language}>{(['fr','en','es'] as AppLanguage[]).map((item) => <button className={language === item ? 'active' : ''} onClick={() => onLanguageChange(item)} aria-pressed={language === item} key={item}>{item.toUpperCase()}</button>)}</div><small>{t.tagline}</small></header>
     <section className="home-intro"><p>{t.intro}</p><div className="home-machine-status"><i className={connected ? 'online' : ''} /><span>{connected ? t.connected : t.ready}</span>{project !== undefined && <small>{t.project} {project} · {scannedSoundCount} {t.sounds}</small>}</div></section>

@@ -42,6 +42,8 @@ import { HomePage } from './pages/HomePage';
 import { SoundsPage } from './pages/SoundsPage';
 import { DocumentationPage } from './pages/DocumentationPage';
 import { MachineTestPage } from './pages/MachineTestPage';
+import { PlayerProfilePage } from './pages/PlayerProfilePage';
+import { addSessionToProfile, emptyPlayerStats, loadPlayerProfile, savePlayerProfile, type PlayerProfile } from './core/project/playerProfile';
 import { ScoreView } from './components/game/ScoreView';
 import { PerformancePanel } from './components/game/PerformancePanel';
 import { PadSoundEditor } from './components/game/PadSoundEditor';
@@ -83,7 +85,8 @@ function loadUserExercises(): Exercise[] {
 
 export default function App() {
   const [language, setLanguage] = useState<AppLanguage>(loadAppLanguage);
-  const [workspaceView, setWorkspaceView] = useState<'home' | 'game' | 'sounds' | 'docs' | 'machine-test'>('home');
+  const [workspaceView, setWorkspaceView] = useState<'home' | 'game' | 'sounds' | 'docs' | 'machine-test' | 'profile'>('home');
+  const [playerProfile, setPlayerProfile] = useState<PlayerProfile>(() => loadPlayerProfile(localStorage));
   const [styleId, setStyleId] = useState('boom');
   const [difficulty, setDifficulty] = useState(1);
   const [tempo, setTempo] = useState<number>(STYLES[0].bpm);
@@ -96,6 +99,9 @@ export default function App() {
   const [countdown, setCountdown] = useState(4);
   const [songTime, setSongTime] = useState(0);
   const [score, setScore] = useState<Score>(emptyScore());
+  /** Toujours à jour, y compris dans les callbacks créés avant la dernière frappe — évite de lire un score périmé au STOP. */
+  const scoreRef = useRef(score);
+  scoreRef.current = score;
   const [last, setLast] = useState<{ grade: Grade; deltaMs: number } | null>(null);
   const [lastMidi, setLastMidi] = useState<MidiObservation | null>(null);
   const [midiObservations, setMidiObservations] = useState<MidiObservation[]>([]);
@@ -230,6 +236,14 @@ export default function App() {
     audio.stop();
     machineSampleBank.stopAll();
     setPhase('idle');
+    // Cumule le bilan de la session qui vient de s'arrêter dans la fiche
+    // personnage. Sans effet si rien n'a été joué (score vide) — couvre
+    // aussi bien un STOP manuel qu'une fin de session normale.
+    setPlayerProfile((profile) => {
+      const next = addSessionToProfile(profile, scoreRef.current);
+      if (next !== profile) savePlayerProfile(localStorage, next);
+      return next;
+    });
   }, [clearGameTimers]);
 
   const stopEditorTransport = useCallback((resetPlayhead = true) => {
@@ -972,13 +986,15 @@ export default function App() {
 
   const changeLanguage = (nextLanguage: AppLanguage) => { setLanguage(nextLanguage); localStorage.setItem(APP_LANGUAGE_KEY, nextLanguage); document.documentElement.lang = nextLanguage; };
 
-  if (workspaceView === 'home') return <HomePage connected={midi.connected || midi.outputConnected} project={deviceInventory?.project} scannedSoundCount={deviceInventory ? Object.keys(deviceInventory.sounds).length : 0} language={language} onLanguageChange={changeLanguage} onOpenGame={() => setWorkspaceView('game')} onOpenStudio={openCompleteEditor} onOpenSounds={() => setWorkspaceView('sounds')} onOpenDocumentation={() => setWorkspaceView('docs')} onOpenMachineTest={() => setWorkspaceView('machine-test')} />;
+  if (workspaceView === 'home') return <HomePage connected={midi.connected || midi.outputConnected} project={deviceInventory?.project} scannedSoundCount={deviceInventory ? Object.keys(deviceInventory.sounds).length : 0} language={language} onLanguageChange={changeLanguage} onOpenGame={() => setWorkspaceView('game')} onOpenStudio={openCompleteEditor} onOpenSounds={() => setWorkspaceView('sounds')} onOpenDocumentation={() => setWorkspaceView('docs')} onOpenMachineTest={() => setWorkspaceView('machine-test')} onOpenProfile={() => setWorkspaceView('profile')} />;
 
   if (workspaceView === 'machine-test') return <MachineTestPage connected={midi.connected} inputNames={midi.inputNames} observations={midiObservations} onBack={goHome} onConnect={() => void midi.connectMonitor()} onSendLearned={midi.sendLearnedMessage} onSelectMachineGroup={midi.selectMachineGroup} />;
 
   if (workspaceView === 'sounds') return <SoundsPage inventory={deviceInventory} soundIndex={deviceSoundIndex} midiConnected={midi.outputConnected} liveMidi={lastMidi?.note !== undefined && lastMidi.velocity !== undefined ? { note: lastMidi.note, velocity: lastMidi.velocity, timestamp: lastMidi.timestamp } : null} padModes={editorPadModes} onBack={goHome} onConnectMidi={() => void connectMidi()} onPadModeChange={(group, pad, mode) => setEditorPadModes((current) => ({ ...current, [`${group}:${pad}`]: mode }))} onPadPreview={(group, pad, stagedSlot) => void previewSoundPagePad(group, pad, stagedSlot)} />;
 
   if (workspaceView === 'docs') return <DocumentationPage language={language} onBack={goHome} />;
+
+  if (workspaceView === 'profile') return <PlayerProfilePage profile={playerProfile} machineConnected={midi.connected || midi.outputConnected} onBack={goHome} onChange={(patch) => setPlayerProfile((profile) => { const next = { ...profile, ...patch }; savePlayerProfile(localStorage, next); return next; })} onChangeGear={(patch) => setPlayerProfile((profile) => { const next = { ...profile, gear: { ...profile.gear, ...patch } }; savePlayerProfile(localStorage, next); return next; })} onResetStats={() => setPlayerProfile((profile) => { const next = { ...profile, stats: emptyPlayerStats() }; savePlayerProfile(localStorage, next); return next; })} />;
 
   return <main className={last ? `impact impact-${last.grade.toLowerCase()}` : ''}>
     <GameToolbar difficulty={difficulty} tempo={tempo} activeBpm={activeExercise.bpm} styleId={styleId} styles={STYLES} userExercises={userExercises} phase={phase} sessionActive={sessionActive} midiConnected={midi.connected} onDifficultyChange={setDifficulty} onTempoChange={setTempo} onStyleChange={changeStyle} onHome={goHome} onOpenEditor={openEditor} onConnectMidi={() => void connectMidi()} onPreview={() => void togglePreview()} onPlay={() => void toggle()} />
