@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { EditorGroup, EditorPadMode } from '../core/project/exporters';
 import type { DeviceInventory, DeviceSoundIndex } from '../core/project/device';
-import { loadDeviceProfile, saveDeviceProfile } from '../core/project/deviceProfile';
+import { loadDeviceProfile } from '../core/project/deviceProfile';
 import { EP133_PADS } from '../core/project/pads';
 import { officialGroupIndexFromNote, officialInternalPadFromNote } from '../core/midi/useWebMidi';
 import type { LocalDirectoryHandle } from '../core/storage/localFolders';
@@ -63,12 +63,12 @@ const bankForSlot = (slot: number) => SOUND_BANKS.slice(1).find((bank) => slot >
 const playModeName = (mode?: number) => mode === 1 ? 'KEYS' : mode === 2 ? 'LEGATO' : 'ONE';
 
 export function SoundsPage({ inventory, soundIndex, midiConnected, liveMidi, padModes, onBack, onConnectMidi, onPadModeChange, onPadPreview, localLibraryHandle, localLibraryFolderName, localLibraryNeedsReconnect, onReconnectLocalLibrary }: SoundsPageProps) {
+  // Nom/mémoire/statut affichés en tête de page — réglés depuis la Fiche personnage
+  // (plus de formulaire « PROFIL DE LA MACHINE » ici, retiré pour épurer la page).
   const existingProfile = loadDeviceProfile(localStorage);
-  const [deviceName, setDeviceName] = useState(existingProfile?.name || 'MON EP-133');
-  const [capacityMb, setCapacityMb] = useState<64 | 128>(existingProfile?.capacityMb || 64);
-  const [sampleFolderName, setSampleFolderName] = useState(existingProfile?.sampleFolderName || '');
-  const [localSampleCount, setLocalSampleCount] = useState(existingProfile?.localSampleCount || 0);
-  const [profileSaved, setProfileSaved] = useState(Boolean(existingProfile));
+  const [deviceName] = useState(existingProfile?.name || 'MON EP-133');
+  const [capacityMb] = useState<64 | 128>(existingProfile?.capacityMb || 64);
+  const [profileSaved] = useState(Boolean(existingProfile));
   const [activeGroup, setActiveGroup] = useState<EditorGroup>('A');
   const [selectedPad, setSelectedPad] = useState(1);
   const [activeBank, setActiveBank] = useState<(typeof SOUND_BANKS)[number]['id']>('all');
@@ -160,17 +160,6 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, liveMidi, pad
     setPlayingName(entry.name);
   };
 
-  const saveProfile = () => {
-    saveDeviceProfile(localStorage, { name: deviceName, capacityMb, sampleFolderName, localSampleCount });
-    setProfileSaved(true);
-  };
-  const chooseFolder = (files: FileList | null) => {
-    const list = files ? [...files] : [];
-    const firstPath = list[0]?.webkitRelativePath || '';
-    setSampleFolderName(firstPath.split('/')[0] || 'DOSSIER SAMPLES');
-    setLocalSampleCount(list.length);
-    setProfileSaved(false);
-  };
   const requestDelete = (slot: number) => {
     window.alert(`SUPPRESSION DU SLOT ${String(slot).padStart(3, '0')} VERROUILLÉE\n\nLa sauvegarde du son, le checkpoint et la relecture de contrôle doivent être disponibles avant toute suppression sur l’EP-133.`);
   };
@@ -311,8 +300,5 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, liveMidi, pad
         </section>
       </div>
     </section>
-
-    <section className="device-profile sound-profile-compact"><div><small>PROFIL DE LA MACHINE</small><h2>{profileSaved ? deviceName : 'PREMIÈRE CONNEXION'}</h2></div><label>NOM<input value={deviceName} maxLength={32} onChange={(event) => { setDeviceName(event.target.value.toUpperCase()); setProfileSaved(false); }} /></label><label>MÉMOIRE<select value={capacityMb} onChange={(event) => { setCapacityMb(Number(event.target.value) as 64 | 128); setProfileSaved(false); }}><option value={64}>64 MO</option><option value={128}>128 MO</option></select></label><label className="sample-folder">DOSSIER DU CLONE<input type="file" multiple {...({ webkitdirectory: '', directory: '' } as Record<string, string>)} onChange={(event) => chooseFolder(event.currentTarget.files)} /><span>{sampleFolderName || 'AUCUN DOSSIER'} · {localSampleCount} FICHIER(S)</span></label><button onClick={saveProfile}>ENREGISTRER</button></section>
-    <section className="sound-transfer-zone"><div><small>TRANSFERT SÉCURISÉ</small><h2>PRÉPARER UN NOUVEAU SON</h2><p>Glisse un son de la BIBLIOTHÈQUE PERSO ci-dessus sur un pad ou sur un slot de la banque machine, puis clique SYNCHRONISER pour le copier dans le dossier de travail.</p></div><aside><b>AUCUNE ÉCRITURE AUTOMATIQUE</b><span>Un slot occupé ne sera jamais remplacé sans sauvegarde et validation. Aucun protocole n’écrit encore directement sur l’EP‑133.</span></aside></section>
   </main>;
 }

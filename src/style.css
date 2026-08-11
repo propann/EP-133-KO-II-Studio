@@ -823,21 +823,8 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .sound-library-summary b { font-size:24px; }
 .sound-library-summary small { font-size:8px; }
 .sound-library-summary button { padding:10px 15px; border:2px solid var(--ko-black); background:var(--ko-orange); font-weight:bold; cursor:pointer; }
-.device-profile { display:grid; grid-template-columns:minmax(180px,1fr) minmax(150px,1fr) 150px minmax(220px,1.4fr) auto; align-items:end; gap:9px; margin-top:16px; padding:12px; border:3px solid var(--ko-black); background:#d5d3ce; }
-.device-profile h2 { margin:3px 0 0; font-size:18px; }
-.device-profile label { display:grid; gap:5px; font-size:8px; font-weight:bold; }
-.device-profile input,.device-profile select { min-width:0; height:36px; padding:6px 8px; border:2px solid var(--ko-black); background:var(--ko-panel); font:inherit; }
-.device-profile .sample-folder { position:relative; }
-.device-profile .sample-folder input { position:absolute; width:1px; height:1px; opacity:0; }
-.device-profile .sample-folder span { display:flex; align-items:center; height:36px; padding:6px 8px; border:2px solid var(--ko-black); background:var(--ko-panel); overflow:hidden; cursor:pointer; }
-.device-profile > button { min-height:36px; padding:7px 11px; border:2px solid var(--ko-black); background:var(--ko-amber); font-weight:bold; }
 .sound-library-summary i { height:6px; margin-top:7px; border:1px solid var(--ko-black); background:#bdb9b1; }
 .sound-library-summary i span { display:block; height:100%; background:var(--ko-orange); }
-.sound-transfer-zone { display:grid; grid-template-columns:1fr 300px; border:3px solid var(--ko-black); background:var(--ko-amber); }
-.sound-transfer-zone > div { padding:20px; }
-.sound-transfer-zone h2 { margin:5px 0; font-size:25px; }
-.sound-transfer-zone button { padding:10px; border:2px solid var(--ko-black); background:var(--ko-panel); }
-.sound-transfer-zone aside { display:flex; flex-direction:column; justify-content:center; gap:8px; padding:20px; border-left:3px solid var(--ko-black); background:var(--ko-orange); font-size:9px; }
 .sound-inventory { min-height:0; flex:1; margin-top:16px; overflow:auto; border:2px solid var(--ko-black); background:var(--ko-panel); }
 .sound-inventory > header { position:sticky; top:0; z-index:2; align-items:center; padding:9px 12px; background:var(--ko-black); color:var(--ko-beige); }
 .sound-inventory h2 { margin:0; font-size:13px; }
@@ -851,8 +838,8 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .home-back { background:var(--ko-black); color:var(--ko-beige); border:1px solid var(--ko-black); cursor:pointer; box-shadow:3px 3px 0 var(--ko-orange); transition:transform .12s,box-shadow .12s,background .12s; }
 .home-back:hover,.home-back:focus-visible { background:var(--ko-orange); color:var(--ko-black); }
 .home-back:active { transform:translate(3px,3px); box-shadow:none; }
-@media(max-width:950px) { .home-tools { grid-template-columns:1fr; } .home-card { min-height:280px; } .device-profile { grid-template-columns:1fr 1fr; } .sound-inventory > div { grid-template-columns:repeat(2,1fr); } .docs-hero { grid-template-columns:1fr; } .docs-hero > div:first-child { border-right:0; border-bottom:1px solid var(--ko-black); } .docs-conventions { grid-template-columns:1fr; } .docs-conventions article { border-right:0; border-bottom:1px solid var(--ko-black); } .docs-library > div,.docs-index { grid-template-columns:1fr; } .docs-index a { border-right:0; border-bottom:1px solid var(--ko-black); } .docs-index a:last-child { border-bottom:0; } .docs-sources { align-items:stretch; flex-direction:column; } }
-@media(max-width:650px) { .home-brand,.home-intro { align-items:flex-start; flex-direction:column; } .home-machine-status { width:100%; } .sound-library-summary { grid-template-columns:1fr 1fr; } .sound-transfer-zone { grid-template-columns:1fr; } .sound-transfer-zone aside { border-left:0; border-top:3px solid var(--ko-black); } .sound-inventory > div { grid-template-columns:1fr; } }
+@media(max-width:950px) { .home-tools { grid-template-columns:1fr; } .home-card { min-height:280px; } .sound-inventory > div { grid-template-columns:repeat(2,1fr); } .docs-hero { grid-template-columns:1fr; } .docs-hero > div:first-child { border-right:0; border-bottom:1px solid var(--ko-black); } .docs-conventions { grid-template-columns:1fr; } .docs-conventions article { border-right:0; border-bottom:1px solid var(--ko-black); } .docs-library > div,.docs-index { grid-template-columns:1fr; } .docs-index a { border-right:0; border-bottom:1px solid var(--ko-black); } .docs-index a:last-child { border-bottom:0; } .docs-sources { align-items:stretch; flex-direction:column; } }
+@media(max-width:650px) { .home-brand,.home-intro { align-items:flex-start; flex-direction:column; } .home-machine-status { width:100%; } .sound-library-summary { grid-template-columns:1fr 1fr; } .sound-inventory > div { grid-template-columns:1fr; } }
 
 /* Sons & Transfert — console visuelle inspirée des principes du SOUND MODE. */
 .sound-machine-page { gap:14px; }
@@ -876,7 +863,7 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .sound-pad-panel h2,.sound-bank-panel h2 { margin:2px 0 0; font-size:18px; letter-spacing:-.04em; }
 .sound-pad-panel > header > span,.sound-bank-panel > header > span { font-size:7px; font-weight:bold; }
 .sound-group-tabs { display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin-bottom:12px; }
-.sound-group-tabs button { display:flex; align-items:center; justify-content:space-between; min-height:48px; padding:7px 9px; border:2px solid var(--ko-black); background:#e2dfd8; box-shadow:3px 3px 0 #55524d; cursor:pointer; }
+.sound-group-tabs button { display:flex; align-items:center; justify-content:space-between; min-height:48px; padding:7px 9px; border:2px solid var(--ko-black); border-radius:9px; background:#e2dfd8; box-shadow:3px 3px 0 #55524d; cursor:pointer; }
 .sound-group-tabs button b { font-size:22px; }
 .sound-group-tabs button small { font-size:7px; }
 .sound-group-tabs button.active { color:#fff; background:var(--ko-orange); box-shadow:3px 3px 0 var(--ko-black); transform:translateY(-2px); }
@@ -912,7 +899,6 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .sound-bank-results article strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:9px; }
 .sound-bank-results article > span { padding:4px 5px; border:1px solid var(--ko-black); font-size:6px; font-weight:900; }
 .sound-bank-results p { padding:20px; font-size:9px; }
-.sound-profile-compact { margin-top:0; }
 .bank-kick::before,.bank-kick.sound-slot-badge { background:#e65c32!important; }
 .bank-snare::before,.bank-snare.sound-slot-badge { background:#f0a12e!important; }
 .bank-hat::before,.bank-hat.sound-slot-badge { background:#e9cf4c!important; }
@@ -925,7 +911,7 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .bank-extra::before,.bank-extra.sound-slot-badge { background:#777!important; }
 .bank-all::before { background:linear-gradient(#e65c32,#f0a12e,#6f9b8b,#8b68a4)!important; }
 @media(max-width:1050px) { .sound-machine-workspace { grid-template-columns:1fr; } .sound-pad-grid { max-width:620px; } .local-library-panel { border-left:0; border-top:3px solid var(--ko-black); } }
-@media(max-width:720px) { .sound-machine-console { box-shadow:4px 4px 0 #242321; } .sound-machine-topline { grid-template-columns:1fr; } .sound-machine-workspace { min-height:0; } .sound-pad-panel,.sound-bank-panel { padding:10px; } .sound-pad-grid { gap:7px; padding:9px; } .sound-pad-grid button { min-height:72px; } .sound-bank-browser { grid-template-columns:1fr; } .sound-bank-browser > nav { display:grid; grid-template-columns:repeat(2,1fr); border-right:0; border-bottom:2px solid var(--ko-black); } .sound-bank-results > div { max-height:430px; } .sound-profile-compact { grid-template-columns:1fr; } }
+@media(max-width:720px) { .sound-machine-console { box-shadow:4px 4px 0 #242321; } .sound-machine-topline { grid-template-columns:1fr; } .sound-machine-workspace { min-height:0; } .sound-pad-panel,.sound-bank-panel { padding:10px; } .sound-pad-grid { gap:7px; padding:9px; } .sound-pad-grid button { min-height:72px; } .sound-bank-browser { grid-template-columns:1fr; } .sound-bank-browser > nav { display:grid; grid-template-columns:repeat(2,1fr); border-right:0; border-bottom:2px solid var(--ko-black); } .sound-bank-results > div { max-height:430px; } }
 
 /* Disposition matérielle : groupes à gauche, pavé 3 × 4 à droite. */
 .sound-pad-machine { display:grid; grid-template-columns:70px minmax(0,1fr); gap:10px; }
