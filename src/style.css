@@ -118,38 +118,32 @@ header { display:flex; justify-content:space-between; gap:30px; align-items:star
 .sequence-cursor { position:absolute; top:21px; bottom:0; width:2px; background:var(--ko-orange); box-shadow:0 0 8px var(--ko-orange); z-index:3; pointer-events:none; }
 /* Bac de pads recessé dans la façade, comme le vrai pavé 3×4 de l'EP-133
    (voir .ep133-face sur le banc de test) : cadre sombre, puits en creux,
-   au lieu d'une simple grille de rectangles posée sur le fond du panneau. */
+   au lieu d'une simple grille de rectangles posée sur le fond du panneau.
+   Références : capture façade K.O.II fournie le 11/08 — touches très
+   arrondies façon keycap, légende sous la touche (pas dedans), petit point
+   repère à gauche de la légende. */
 .pads {
   display:grid;
   grid-template-columns:repeat(3, minmax(0, 1fr));
-  gap:10px;
+  gap:10px 12px;
   width:100%; max-width:640px;
   margin:0 auto;
-  padding:14px 14px 10px;
+  padding:16px 16px 12px;
   border:3px solid var(--ko-black);
   border-radius:var(--radius);
   background:linear-gradient(165deg,#2c2a26,#171615);
   box-shadow:inset 0 0 26px rgba(0,0,0,.6), inset 0 3px 0 rgba(0,0,0,.4);
 }
+.pad-cell { display:flex; flex-direction:column; gap:5px; }
 .pads button {
   position:relative; overflow:hidden;
-  height:76px; background:linear-gradient(165deg,#2e2e2e,#0c0c0c); color:#fff; border:1px solid #000;
-  border-radius:var(--radius-sm);
-  text-align:left; padding:10px 12px; cursor:pointer;
-  box-shadow:0 4px 6px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08);
+  height:68px; background:linear-gradient(165deg,#333230,#121211); color:#fff; border:1px solid #000;
+  border-radius:14px;
+  text-align:left; padding:9px 11px; cursor:pointer;
+  box-shadow:0 4px 6px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.12);
   transition:transform .1s ease,box-shadow .1s ease,background .1s ease;
 }
-/* Rail de couleur par famille de son — même code que les pastilles .bank-*
-   de Sons & Transfert, pour apprendre à repérer un rôle de pad d'un coup
-   d'œil plutôt que par la seule lecture du nom. */
-.pads button::before { content:''; position:absolute; inset:0 auto 0 0; width:5px; background:#555; }
-.pads button.cat-kick::before { background:var(--cat-kick); }
-.pads button.cat-snare::before { background:var(--cat-snare); }
-.pads button.cat-hat::before { background:var(--cat-hat); }
-.pads button.cat-perc::before { background:var(--cat-perc); }
-.pads button.cat-bass::before { background:var(--cat-bass); }
-.pads button.cat-fx::before { background:var(--cat-fx); }
-.pads button:hover { background:linear-gradient(165deg,var(--ko-orange),#c93700); color:#fff; transform:translateY(-2px); box-shadow:0 6px 8px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.15); }
+.pads button:hover { background:linear-gradient(165deg,var(--ko-orange),#c93700); color:#fff; transform:translateY(-2px); box-shadow:0 6px 8px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.2); }
 .pads button:active { transform:translateY(1px); box-shadow:0 1px 1px rgba(0,0,0,.6), inset 0 2px 4px rgba(0,0,0,.5); }
 .pads button.expected-pad {
   background:var(--ko-amber); color:var(--ko-black);
@@ -163,10 +157,18 @@ header { display:flex; justify-content:space-between; gap:30px; align-items:star
   background:var(--ko-amber); color:var(--ko-black);
   box-shadow:0 0 0 3px var(--ko-orange), 5px 5px 0 var(--ko-black);
 }
-.pads button.calibrating em { color:var(--ko-black); font-weight:bold; }
-.pads b { display:block; color:var(--ko-amber); font-size:13px; letter-spacing:.02em; }
-.pads em { display:block; margin-top:6px; padding-top:5px; border-top:1px solid rgba(255,255,255,.14); color:#a8a49b; font-style:normal; font-size:8px; letter-spacing:.02em; line-height:11px; }
-.pads button.expected-pad em,.pads button.played-pad em,.pads button.calibrating em { border-top-color:rgba(26,26,26,.25); }
+.pads b { display:block; color:var(--ko-amber); font-size:15px; letter-spacing:.01em; }
+/* Légende hors de la touche, comme les repères LPF/ATK/VEL imprimés sous
+   les touches réelles — famille de son signalée par la couleur du point,
+   pas par un bandeau plaqué sur la touche elle-même. */
+.pad-caption { display:flex; align-items:center; justify-content:center; gap:5px; padding:0 2px; color:#7a756c; font-style:normal; font-size:7.5px; letter-spacing:.05em; text-align:center; }
+.pad-dot { flex:0 0 auto; width:6px; height:6px; border-radius:50%; background:#6b6862; }
+.cat-kick .pad-dot { background:var(--cat-kick); }
+.cat-snare .pad-dot { background:var(--cat-snare); }
+.cat-hat .pad-dot { background:var(--cat-hat); }
+.cat-perc .pad-dot { background:var(--cat-perc); }
+.cat-bass .pad-dot { background:var(--cat-bass); }
+.cat-fx .pad-dot { background:var(--cat-fx); }
 .performance-panel {
   display:grid; grid-template-columns:150px minmax(420px,640px) 150px; justify-content:center; gap:14px;
   margin-top:14px; padding:14px; border:1px solid #77746e; border-radius:var(--radius);
@@ -578,7 +580,7 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
   .connect { margin-top:20px; width:100%; }
   .pads { grid-template-columns:repeat(3, minmax(0, 1fr)); gap:7px; }
   .pads button { min-width:0; height:92px; padding:9px; font-size:11px; }
-  .pads em { font-size:8px; overflow-wrap:anywhere; }
+  .pad-caption { font-size:7px; overflow-wrap:anywhere; }
   .sound-editor { grid-template-columns:1fr; }
   .sound-editor label { grid-template-columns:110px 1fr auto; align-items:center; }
   .sound-editor input { grid-column:2; grid-row:1; }
