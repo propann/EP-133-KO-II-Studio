@@ -103,6 +103,7 @@ matérielle sécurisée.
 - [État détaillé](docs/ETAT_DU_PROJET.md)
 - [Feuille de route](docs/ROADMAP.md)
 - [Journal d'implémentation](docs/SUIVI_IMPLEMENTATION.md)
+- [Suivi des traductions FR / EN / ES](docs/SUIVI_TRADUCTIONS.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Validation du clone réel](docs/VALIDATION_CLONE_REEL.md)
 - [Point d'étape Sons & Transfert](docs/POINT_SONS_ET_TRANSFERT.md)

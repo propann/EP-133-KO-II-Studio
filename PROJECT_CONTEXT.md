@@ -22,6 +22,8 @@ Hero reste inclus comme module secondaire d'apprentissage du finger-drumming.
 - Rhythm Hero est conservé comme module pédagogique inclus.
 - Les clés locales `ep133-rhythm-hero:*` restent temporairement inchangées afin
   de préserver les projets et mappings déjà enregistrés dans les navigateurs.
+- Le suivi des interfaces et documents FR/EN/ES est centralisé dans
+  `docs/SUIVI_TRADUCTIONS.md` et doit être mis à jour avec chaque traduction.
 
 ## Fusion des deux prototypes
 

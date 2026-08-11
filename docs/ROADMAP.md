@@ -24,6 +24,8 @@ pour ouvrir, écouter ou modifier un projet.
 - Les valeurs binaires non confirmées sont préservées, jamais réinventées.
 - Toute idée, même reportée ou écartée, reste tracée dans
   [REGISTRE_IDEES.md](REGISTRE_IDEES.md).
+- Toute avancée FR/EN/ES est tracée dans
+  [SUIVI_TRADUCTIONS.md](SUIVI_TRADUCTIONS.md).
 - Les sons de la machine ne sont pas copiés ou redistribués sans droit explicite.
 - Rhythm Hero reste un module séparé du Studio sur la page d'accueil.
 

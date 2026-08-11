@@ -6,6 +6,9 @@
 > Mise à jour consolidée : 9 août 2026. La source principale est désormais
 > l'application React/TypeScript. Le player HTML reste une référence historique.
 
+> Traductions : la matrice à jour et l'ordre de travail sont tenus dans
+> [SUIVI_TRADUCTIONS.md](SUIVI_TRADUCTIONS.md).
+
 ## Socle validé
 
 - Player autonome, sans dépendance JavaScript externe
@@ -70,6 +73,10 @@
   précision, même si le mapping physique est validé.
 
 ## Suite modulaire et studio
+
+- L'accueil et le centre documentaire sont disponibles en français, anglais et
+  espagnol avec choix mémorisé. Les autres modules restent en français et sont
+  suivis explicitement dans `docs/SUIVI_TRADUCTIONS.md`.
 
 - Page d'accueil avec trois modules : jeu, studio et sons/transfert.
 - Éditeur du jeu et studio complet séparés, chacun revenant à l'accueil.

@@ -538,3 +538,23 @@ groupe A a les patterns 01/02/03, groupe B seulement 02/03, 3 scènes).
   chantier ; seule l'audition d'une scène à la fois est possible.
 
 Voir `docs/STRUCTURE_SONG_MODE.md` et `docs/MODELE_DONNEES_PROJET.md`.
+
+## Étape 4.2 — identité multilingue et suivi des traductions
+
+Statut : première tranche livrée le 11 août 2026, tests et build réussis.
+
+- [x] sélecteur `FR / EN / ES` après la marque KO II Studio ;
+- [x] choix mémorisé dans le navigateur ;
+- [x] page d'accueil traduite dans les trois langues ;
+- [x] centre documentaire, navigation et fiches traduits ;
+- [x] README français, anglais et espagnol ;
+- [x] registre central créé dans `docs/SUIVI_TRADUCTIONS.md` ;
+- [ ] composants communs et messages système ;
+- [ ] Pattern & Song Studio ;
+- [ ] Sons & Transfert ;
+- [ ] Test Machine / MIDI ;
+- [ ] Rhythm Hero ;
+- [ ] contenu intégral des guides techniques en anglais et espagnol.
+
+Le fond quadrillé de la présentation est désormais la toile de fond commune
+de l'application, y compris pour l'éditeur plein écran et le banc de test.
