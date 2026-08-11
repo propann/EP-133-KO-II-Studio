@@ -40,7 +40,10 @@ export function RhythmGrid(props: RhythmGridProps) {
     <div className="editor-measure-line"><span className="editor-corner">PISTES</span><div className="editor-measure-heads" style={{ gridTemplateColumns: `repeat(${totalBars}, 1fr)` }}>{Array.from({ length: totalBars }, (_, measure) => {
       const committed = sectionAtMeasure(measure);
       const draftMeasure = measure - committedBars;
-      return <b className={`${committed ? 'committed' : ''} ${committed?.localMeasure === 0 ? 'section-start' : ''} ${committed && committed.localMeasure === committed.section.bars - 1 ? 'section-end' : ''}`} key={measure}>{committed ? `${committed.section.label} · ${committed.localMeasure + 1}/${committed.section.bars}` : props.mode === 'complete' ? `LN.${props.bars} · ${draftMeasure + 1}/${props.bars}` : `MESURE ${draftMeasure + 1}`}</b>;
+      const sourceTargets = committed?.section.targets || props.targets;
+      const localMeasure = committed ? committed.localMeasure : draftMeasure;
+      const hasNotes = sourceTargets.some((note) => Math.floor(note.beat / 4) === localMeasure);
+      return <b className={`${hasNotes ? 'has-notes' : ''} ${committed ? 'committed' : ''} ${committed?.localMeasure === 0 ? 'section-start' : ''} ${committed && committed.localMeasure === committed.section.bars - 1 ? 'section-end' : ''}`} key={measure}>{committed ? `${committed.section.label} · ${committed.localMeasure + 1}/${committed.section.bars}` : props.mode === 'complete' ? `${draftMeasure + 1}/${props.bars}` : `MESURE ${draftMeasure + 1}`}</b>;
     })}</div></div>
     <div className="editor-step-line"><span className="editor-corner">PAS</span><div style={{ gridTemplateColumns: `repeat(${totalBars * 16}, 1fr)` }}>{Array.from({ length: totalBars * 16 }, (_, globalStep) => <b className={`${globalStep % 16 === 0 ? 'bar-line' : globalStep % 4 === 0 ? 'beat-line' : ''} ${globalStep < committedBars * 16 ? 'committed' : ''}`} key={globalStep}>{globalStep % 16 + 1}</b>)}</div></div>
     {EP133_SCORE_TRACKS.map((track) => {

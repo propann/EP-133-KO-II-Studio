@@ -570,6 +570,9 @@ l'écriture encore verrouillée.
   de longueur ; le pattern exact reste identifié dans le contexte et la Song ;
 - [x] grille continue avec séparations verticales sombres à chaque temps et
   renforcées au début de chaque bloc de 16 pas, y compris dans le piano-roll ;
+- [x] afficheur `LN.n` compact déplacé à côté de `BOUCLE ON/OFF`, sans libellé
+  secondaire ; en-têtes de grille gris à vide et orange dès qu'ils contiennent
+  au moins une note ;
 - [x] suppression de la mesure de réserve automatique dans le Studio complet ;
 - [x] grille principale libellée avec la longueur native plutôt que « MESURE » ;
 - [x] diminution protégée par confirmation si des notes seraient tronquées ;
