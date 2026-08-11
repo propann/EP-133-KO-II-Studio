@@ -12,6 +12,9 @@ import type { LocalDirectoryHandle } from './localFolders';
 const DB_NAME = 'ep133-rhythm-hero-handles';
 const STORE_NAME = 'directories';
 export const SAMPLE_FOLDER_KEY = 'sample-folder';
+/** Bibliothèque de sons personnelle de l'utilisateur — distincte du dossier de travail machine
+ * (`SAMPLE_FOLDER_KEY`) : c'est la source (ses propres sons rangés), pas la destination (le clone). */
+export const LOCAL_LIBRARY_FOLDER_KEY = 'local-library-folder';
 
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
