@@ -84,7 +84,8 @@
   piano-roll KEYS, lecture, boucle, horloge et sortie MIDI vers l'EP-133.
 - Dans la vue Pattern du Studio, la longueur suit désormais le réglage natif
   `LN.1` à `LN.99` de l'EP-133. Il remplace la « mesure de réserve » automatique
-  et reste enregistré séparément pour chaque groupe et numéro de pattern.
+  et reste enregistré séparément pour chaque groupe et numéro de pattern. La
+  grille continue marque chaque temps par une ligne verticale plus sombre.
 - Le Studio possède maintenant un vrai cycle local `NOUVEAU / SAVE / OUVRIR`
   basé sur `ep.project.v1`. Il conserve les quatre groupes, le BPM, la hauteur,
   la vélocité, la durée et les modes de pad sans fermer l'éditeur.
