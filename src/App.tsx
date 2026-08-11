@@ -43,7 +43,7 @@ import { SoundsPage } from './pages/SoundsPage';
 import { DocumentationPage } from './pages/DocumentationPage';
 import { MachineTestPage } from './pages/MachineTestPage';
 import { PlayerProfilePage } from './pages/PlayerProfilePage';
-import { addSessionToProfile, emptyPlayerStats, loadPlayerProfile, savePlayerProfile, type PlayerProfile } from './core/project/playerProfile';
+import { addSessionToProfile, emptyMachine, emptyPlayerStats, loadPlayerProfile, savePlayerProfile, type PlayerMachine, type PlayerProfile } from './core/project/playerProfile';
 import { ScoreView } from './components/game/ScoreView';
 import { PerformancePanel } from './components/game/PerformancePanel';
 import { PadSoundEditor } from './components/game/PadSoundEditor';
@@ -994,7 +994,25 @@ export default function App() {
 
   if (workspaceView === 'docs') return <DocumentationPage language={language} onBack={goHome} />;
 
-  if (workspaceView === 'profile') return <PlayerProfilePage profile={playerProfile} machineConnected={midi.connected || midi.outputConnected} onBack={goHome} onChange={(patch) => setPlayerProfile((profile) => { const next = { ...profile, ...patch }; savePlayerProfile(localStorage, next); return next; })} onChangeGear={(patch) => setPlayerProfile((profile) => { const next = { ...profile, gear: { ...profile.gear, ...patch } }; savePlayerProfile(localStorage, next); return next; })} onResetStats={() => setPlayerProfile((profile) => { const next = { ...profile, stats: emptyPlayerStats() }; savePlayerProfile(localStorage, next); return next; })} />;
+  if (workspaceView === 'profile') {
+    const updateProfile = (updater: (profile: PlayerProfile) => PlayerProfile) => setPlayerProfile((profile) => { const next = updater(profile); savePlayerProfile(localStorage, next); return next; });
+    return <>
+      <PlayerProfilePage
+        profile={playerProfile}
+        machineConnected={midi.connected || midi.outputConnected}
+        machineSampleCount={machineSampleCount}
+        onBack={goHome}
+        onChange={(patch) => updateProfile((profile) => ({ ...profile, ...patch }))}
+        onChangeMachine={(id, patch) => updateProfile((profile) => ({ ...profile, machines: profile.machines.map((machine) => machine.id === id ? { ...machine, ...patch } : machine) }))}
+        onAddMachine={() => updateProfile((profile) => ({ ...profile, machines: [...profile.machines, emptyMachine()] }))}
+        onRemoveMachine={(id) => updateProfile((profile) => ({ ...profile, machines: profile.machines.filter((machine) => machine.id !== id) }))}
+        onScanMachine={() => setMachineCloneOpen(true)}
+        onOpenSampleFolder={() => void openStudioSampleFolder()}
+        onResetStats={() => updateProfile((profile) => ({ ...profile, stats: emptyPlayerStats() }))}
+      />
+      {machineCloneOpen && <MachineCloneDialog inventory={deviceInventory} soundIndex={deviceSoundIndex} onClose={() => setMachineCloneOpen(false)} />}
+    </>;
+  }
 
   return <main className={last ? `impact impact-${last.grade.toLowerCase()}` : ''}>
     <GameToolbar difficulty={difficulty} tempo={tempo} activeBpm={activeExercise.bpm} styleId={styleId} styles={STYLES} userExercises={userExercises} phase={phase} sessionActive={sessionActive} midiConnected={midi.connected} onDifficultyChange={setDifficulty} onTempoChange={setTempo} onStyleChange={changeStyle} onHome={goHome} onOpenEditor={openEditor} onConnectMidi={() => void connectMidi()} onPreview={() => void togglePreview()} onPlay={() => void toggle()} />

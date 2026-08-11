@@ -1,23 +1,29 @@
 import { AVATAR_PRESETS, Avatar } from '../components/shared/Avatar';
-import type { PlayerProfile } from '../core/project/playerProfile';
+import type { PlayerMachine, PlayerProfile } from '../core/project/playerProfile';
 
 interface PlayerProfilePageProps {
   profile: PlayerProfile;
   machineConnected: boolean;
+  machineSampleCount: number;
   onBack: () => void;
   onChange: (patch: Partial<PlayerProfile>) => void;
-  onChangeGear: (patch: Partial<PlayerProfile['gear']>) => void;
+  onChangeMachine: (id: string, patch: Partial<PlayerMachine>) => void;
+  onAddMachine: () => void;
+  onRemoveMachine: (id: string) => void;
+  onScanMachine: () => void;
+  onOpenSampleFolder: () => void;
   onResetStats: () => void;
 }
 
 const activeSpec = (avatarId: string) => AVATAR_PRESETS.find((spec) => spec.id === avatarId) || AVATAR_PRESETS[0];
 
 /**
- * Fiche personnage — identité du joueur, matériel déclaré et bilan cumulé
- * sur toutes les sessions. Module de l'écosystème Studio (accessible
- * depuis l'accueil), pas seulement du jeu.
+ * Fiche personnage — identité du joueur, machines EP-133 déclarées (le scan
+ * et le dossier de travail se lancent d'ici) et bilan cumulé sur toutes les
+ * sessions. Module de l'écosystème Studio (accessible depuis l'accueil),
+ * pas seulement du jeu.
  */
-export function PlayerProfilePage({ profile, machineConnected, onBack, onChange, onChangeGear, onResetStats }: PlayerProfilePageProps) {
+export function PlayerProfilePage({ profile, machineConnected, machineSampleCount, onBack, onChange, onChangeMachine, onAddMachine, onRemoveMachine, onScanMachine, onOpenSampleFolder, onResetStats }: PlayerProfilePageProps) {
   const { stats } = profile;
   const totalHits = stats.perfect + stats.good + stats.miss;
   const accuracy = totalHits > 0 ? Math.round(((stats.perfect + stats.good) / totalHits) * 100) : null;
@@ -33,16 +39,27 @@ export function PlayerProfilePage({ profile, machineConnected, onBack, onChange,
     </section>
 
     <section className="profile-gear">
-      <h2>MATOS DÉCLARÉ</h2>
-      <div className="profile-gear-grid">
-        <label>MODÈLE<input value={profile.gear.model} maxLength={40} onChange={(event) => onChangeGear({ model: event.target.value })} /></label>
-        <label>MÉMOIRE<select value={profile.gear.memory} onChange={(event) => onChangeGear({ memory: event.target.value as PlayerProfile['gear']['memory'] })}>
-          <option value="">NON DÉCLARÉE</option>
-          <option value="64">64 MO</option>
-          <option value="128">128 MO</option>
-        </select></label>
-        <div className="profile-gear-status"><small>CONNEXION</small><span className={machineConnected ? 'online' : ''}><i />{machineConnected ? 'EP‑133 CONNECTÉ' : 'NON CONNECTÉ'}</span></div>
+      <h2>MACHINES DÉCLARÉES · {profile.machines.length}</h2>
+      <div className="profile-machines">
+        {profile.machines.map((machine) => <article className="profile-machine" key={machine.id}>
+          <div className="profile-machine-fields">
+            <label>NOM<input value={machine.name} maxLength={40} onChange={(event) => onChangeMachine(machine.id, { name: event.target.value })} /></label>
+            <label>MÉMOIRE<select value={machine.memory} onChange={(event) => onChangeMachine(machine.id, { memory: event.target.value as PlayerMachine['memory'] })}>
+              <option value="">NON DÉCLARÉE</option>
+              <option value="64">64 MO</option>
+              <option value="128">128 MO</option>
+            </select></label>
+          </div>
+          <div className="profile-machine-status"><span className={machineConnected ? 'online' : ''}><i />{machineConnected ? 'EP‑133 CONNECTÉ' : 'NON CONNECTÉ'}</span>{machineSampleCount > 0 && <small>{machineSampleCount} ÉCHANTILLONS CHARGÉS</small>}</div>
+          <div className="profile-machine-actions">
+            <button className="profile-scan" onClick={onScanMachine}>CLONER · SCANNER</button>
+            <button onClick={onOpenSampleFolder}>DOSSIER DE TRAVAIL</button>
+            {profile.machines.length > 1 && <button className="profile-machine-remove" onClick={() => { if (window.confirm(`Retirer « ${machine.name} » de la fiche ?`)) onRemoveMachine(machine.id); }}>RETIRER</button>}
+          </div>
+        </article>)}
       </div>
+      <button className="profile-add-machine" onClick={onAddMachine}>+ DÉCLARER UNE AUTRE MACHINE</button>
+      <p className="profile-gear-note">Le dossier de travail reste en local sur cet ordinateur pour l’instant ; un support de type drive/cloud est envisagé plus tard.</p>
     </section>
 
     <section className="profile-stats">
@@ -54,7 +71,7 @@ export function PlayerProfilePage({ profile, machineConnected, onBack, onChange,
         <div className="profile-stat"><span>MEILLEUR COMBO</span><b>{stats.bestCombo}</b></div>
         <div className="profile-stat"><span>PRÉCISION</span><b>{accuracy === null ? '—' : `${accuracy}%`}</b></div>
       </div>
-      <button className="profile-reset" disabled={totalHits === 0 && stats.sessionsPlayed === 0} onClick={() => { if (window.confirm('Remettre le bilan cumulé à zéro ? Le pseudo, l’avatar et le matos déclaré restent inchangés.')) onResetStats(); }}>RÉINITIALISER LE BILAN</button>
+      <button className="profile-reset" disabled={totalHits === 0 && stats.sessionsPlayed === 0} onClick={() => { if (window.confirm('Remettre le bilan cumulé à zéro ? Le pseudo, l’avatar et les machines déclarées restent inchangés.')) onResetStats(); }}>RÉINITIALISER LE BILAN</button>
     </section>
   </main>;
 }
