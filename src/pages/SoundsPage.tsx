@@ -283,11 +283,13 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, liveMidi, pad
           {!localLibraryHandle && <p className="local-library-hint">Connecte ta bibliothèque personnelle depuis la <b>FICHE PERSONNAGE</b> pour la parcourir ici.</p>}
           {localLibraryHandle && localLibraryNeedsReconnect && <div className="local-empty"><p>Autorisation à renouveler pour « {localLibraryFolderName} ».</p><button className="profile-connect" onClick={onReconnectLocalLibrary}>RECONNECTER</button></div>}
           {localLibraryHandle && !localLibraryNeedsReconnect && <div className="local-browser">
-            <nav className="local-breadcrumb" aria-label="Chemin bibliothèque perso">
-              <button onClick={() => gotoPerso(-1)}>{localLibraryFolderName}</button>
-              {persoStack.map((item, index) => <button key={item.name + index} onClick={() => gotoPerso(index)}>{item.name}</button>)}
-            </nav>
-            <label className="local-search">RECHERCHER<input value={persoQuery} onChange={(event) => setPersoQuery(event.target.value)} placeholder="NOM" /></label>
+            <div className="local-browser-controls">
+              <nav className="local-breadcrumb" aria-label="Chemin bibliothèque perso">
+                <button onClick={() => gotoPerso(-1)}>{localLibraryFolderName}</button>
+                {persoStack.map((item, index) => <button key={item.name + index} onClick={() => gotoPerso(index)}>{item.name}</button>)}
+              </nav>
+              <label className="local-search">RECHERCHER<input value={persoQuery} onChange={(event) => setPersoQuery(event.target.value)} placeholder="NOM" /></label>
+            </div>
             {persoLoading && <p className="local-loading">Lecture…</p>}
             {!persoLoading && <div className="local-entries">
               {filteredPersoEntries.map((entry) => entry.kind === 'directory'

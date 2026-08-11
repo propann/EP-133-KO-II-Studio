@@ -866,7 +866,7 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .sound-memory > small { grid-column:1/-1; }
 .sound-memory i { height:10px; border:2px solid var(--ko-black); background:#85827c; }
 .sound-memory i span { display:block; height:100%; background:var(--ko-orange); }
-.sound-machine-workspace { display:grid; grid-template-columns:minmax(340px,.68fr) minmax(340px,1fr) minmax(280px,.8fr); min-height:610px; }
+.sound-machine-workspace { display:grid; grid-template-columns:minmax(390px,.8fr) minmax(480px,1.35fr); min-height:610px; }
 .sound-pad-panel,.sound-bank-panel { min-width:0; padding:15px; }
 .sound-pad-panel { border-right:3px solid var(--ko-black); background:#bcb9b2; }
 .sound-bank-panel { background:#cfccc5; }
@@ -968,31 +968,34 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .sound-machine-topline .sound-sync.active { color:#fff; background:var(--ko-orange); }
 @media(max-width:720px) { .sound-pad-machine { grid-template-columns:52px minmax(0,1fr); } .sound-pad-machine .sound-group-tabs button { display:grid; justify-content:center; } .sound-bank-browser { grid-template-columns:118px minmax(0,1fr); } .sound-bank-folders { border-right:2px solid var(--ko-black); border-bottom:0; } .sound-bank-controls { border-right:0; border-bottom:2px solid var(--ko-black); } }
 
-/* Bibliothèque perso intégrée à SONS & TRANSFERT (3e colonne, à côté de la
-   banque de sons DE LA MACHINE) — un son se glisse sur un pad ou directement
-   sur un slot machine. Réglage du dossier fait ailleurs (Fiche personnage) ;
-   cette page ne fait que le lire. Même code visuel que la banque de sons
-   machine (barre d'accent à gauche, lignes en grille, mêmes teintes) plutôt
-   qu'un style à part — juste un peu plus arrondi que ses angles vifs. */
-.local-library-panel { border-left:3px solid var(--ko-black); background:#c9d6cf; }
-.local-library-hint { max-width:260px; padding:16px 0; font-size:10px; font-weight:600; line-height:1.5; }
-.local-empty { display:flex; flex-direction:column; align-items:flex-start; gap:14px; padding:18px; border:3px solid var(--ko-black); border-radius:var(--radius); background:var(--ko-panel); box-shadow:6px 6px 0 var(--ko-black); }
-.local-empty p { max-width:260px; font-size:10px; font-weight:600; line-height:1.5; }
-.local-breadcrumb { display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:0; margin-bottom:9px; }
+/* Bibliothèque perso intégrée à SONS & TRANSFERT — bandeau pleine largeur en
+   bas de page (pas une 3e colonne en haut : ça écrasait PADS/BANQUE MACHINE).
+   En haut : PADS à gauche, BANQUE DE SONS machine à droite — l'info utile du
+   pad reste juste à côté de lui, rien de nouveau à construire là. Un son se
+   glisse sur un pad ou directement sur un slot machine. Réglage du dossier
+   fait ailleurs (Fiche personnage) ; cette page ne fait que le lire. Même
+   code visuel que la banque de sons machine (barre d'accent à gauche, lignes
+   en grille, mêmes teintes) plutôt qu'un style à part — juste un peu plus
+   arrondi que ses angles vifs. */
+.local-library-panel { grid-column:1/-1; border-left:0; border-top:3px solid var(--ko-black); background:#c9d6cf; }
+.local-library-hint { max-width:520px; padding:8px 0; font-size:10px; font-weight:600; line-height:1.5; }
+.local-empty { display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; gap:14px; padding:14px 18px; border:3px solid var(--ko-black); border-radius:var(--radius); background:var(--ko-panel); box-shadow:6px 6px 0 var(--ko-black); }
+.local-empty p { max-width:420px; font-size:10px; font-weight:600; line-height:1.5; }
+.local-browser { display:flex; flex-direction:column; gap:10px; min-height:0; }
+.local-browser-controls { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; }
+.local-breadcrumb { display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:0; }
 .local-breadcrumb button { position:relative; padding:6px 12px 6px 16px; overflow:hidden; border:2px solid var(--ko-black); border-radius:8px; background:#d5d2cb; font-size:8px; font-weight:900; cursor:pointer; }
 .local-breadcrumb button::before { content:""; position:absolute; inset:0 auto 0 0; width:6px; background:#777; }
 .local-breadcrumb button:last-child { color:#fff; background:var(--ko-orange); box-shadow:3px 3px 0 var(--ko-black); }
 .local-breadcrumb button:last-child::before { background:rgba(255,255,255,.35); }
-.local-send-feedback { margin:8px 0 0; padding:8px 14px; border-radius:8px; font-size:8px; font-weight:900; }
+.local-send-feedback { margin:0; padding:8px 14px; border-radius:8px; font-size:8px; font-weight:900; }
 .local-send-feedback.done { color:#0a4a1f; background:#bfe6c9; }
 .local-send-feedback.error { color:#5c1912; background:#f2c6bd; }
-.local-browser { display:grid; grid-template-rows:auto auto 1fr; gap:8px; min-height:0; }
-.local-search { display:grid; grid-template-columns:auto 1fr; align-items:center; gap:10px; padding:9px; border:2px solid var(--ko-black); border-radius:8px; background:#d6d3cc; font-size:7px; font-weight:bold; }
-.local-search input { min-width:0; height:31px; padding:5px 8px; border:2px solid var(--ko-black); border-radius:6px; background:#f5f2e9; font:inherit; }
+.local-search { display:grid; grid-template-columns:auto 1fr; align-items:center; gap:10px; padding:8px 9px; border:2px solid var(--ko-black); border-radius:8px; background:#d6d3cc; font-size:7px; font-weight:bold; width:min(320px,100%); }
+.local-search input { min-width:0; height:28px; padding:5px 8px; border:2px solid var(--ko-black); border-radius:6px; background:#f5f2e9; font:inherit; }
 .local-loading { padding:16px; font-size:9px; font-weight:700; }
-.local-entries { display:flex; flex-direction:column; max-height:495px; overflow:auto; border:2px solid var(--ko-black); border-radius:10px; background:#f2efe7; }
-.local-entry { position:relative; display:grid; grid-template-columns:38px 1fr auto; align-items:center; gap:8px; min-height:44px; padding:6px 8px 6px 16px; overflow:hidden; border-bottom:1px solid #aaa69f; background:transparent; text-align:left; }
-.local-entry:last-child { border-bottom:0; }
+.local-entries { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:8px; max-height:280px; overflow:auto; padding:2px; }
+.local-entry { position:relative; display:grid; grid-template-columns:34px 1fr auto; align-items:center; gap:6px; min-height:40px; padding:5px 6px 5px 14px; overflow:hidden; border:2px solid var(--ko-black); border-radius:8px; background:#f2efe7; text-align:left; }
 .local-entry::before { content:""; position:absolute; inset:0 auto 0 0; width:6px; background:#777; }
 .local-entry.local-folder { grid-template-columns:1fr auto; cursor:pointer; font-size:9px; font-weight:900; background:#e2dfd6; }
 .local-entry.local-folder::before { background:var(--ko-orange); }
@@ -1003,8 +1006,7 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .local-preview-btn { position:relative; z-index:1; flex:0 0 auto; width:26px; height:26px; border:2px solid var(--ko-black); border-radius:8px; background:var(--ko-orange); color:#fff; font-size:10px; cursor:pointer; }
 .local-assign-btn { position:relative; z-index:1; flex:0 0 auto; padding:5px 8px; border:1px solid var(--ko-black); border-radius:6px; background:#d8d4cc; font-size:6px; font-weight:900; cursor:pointer; white-space:nowrap; }
 .local-assign-btn:hover { color:#fff; background:var(--ko-orange); }
-@media(max-width:1300px) { .sound-machine-workspace { grid-template-columns:1fr 1fr; } .local-library-panel { grid-column:1/-1; border-left:0; border-top:3px solid var(--ko-black); } }
-@media(max-width:1050px) { .local-library-panel { grid-column:auto; } }
+@media(max-width:720px) { .local-entries { grid-template-columns:1fr; } .local-browser-controls { flex-direction:column; align-items:stretch; } .local-search { width:100%; } }
 
 /* Fiche personnage — module de l'écosystème Studio (accessible depuis
    l'accueil), pas seulement du jeu : identité, matériel déclaré et bilan
