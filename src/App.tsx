@@ -8,6 +8,7 @@ import { AudioEngine, type PadSoundSettings } from './core/audio/AudioEngine';
 import { MachineSampleBank } from './core/audio/MachineSampleBank';
 import { emptyScore, scoreHit } from './core/engine/scoring';
 import type { Exercise, Grade, Score } from './core/engine/types';
+import { createSixBarExercise, STYLES } from './core/engine/patterns';
 import {
   createEp133ProjectDocument,
   createMidiFile,
@@ -41,6 +42,8 @@ import { HomePage } from './pages/HomePage';
 import { SoundsPage } from './pages/SoundsPage';
 import { DocumentationPage } from './pages/DocumentationPage';
 import { MachineTestPage } from './pages/MachineTestPage';
+import { PlayerProfilePage } from './pages/PlayerProfilePage';
+import { addSessionToProfile, emptyMachine, emptyPlayerStats, loadPlayerProfile, savePlayerProfile, type PlayerMachine, type PlayerProfile } from './core/project/playerProfile';
 import { ScoreView } from './components/game/ScoreView';
 import { PerformancePanel } from './components/game/PerformancePanel';
 import { PadSoundEditor } from './components/game/PadSoundEditor';
@@ -51,13 +54,12 @@ import { PadStrip } from './components/editor/PadStrip';
 import { EditorToolbar } from './components/editor/EditorToolbar';
 import { SongArranger } from './components/editor/SongArranger';
 import { MachineCloneDialog } from './components/editor/MachineCloneDialog';
-import { chooseLocalDirectory, collectLocalFiles } from './core/storage/localFolders';
+import { chooseLocalDirectory, collectLocalFiles, writeCloneManifest, type LocalDirectoryHandle } from './core/storage/localFolders';
+import { LOCAL_LIBRARY_FOLDER_KEY, SAMPLE_FOLDER_KEY, hasStoredPermission, loadDirectoryHandle, requestStoredPermission, saveDirectoryHandle } from './core/storage/directoryHandleStore';
+import { createDeviceClone, saveDeviceProfile } from './core/project/deviceProfile';
 import './style.css';
-import catalogue from '../exercises/catalogue-exercices-v1.json';
 import { APP_LANGUAGE_KEY, loadAppLanguage, type AppLanguage } from './core/i18n';
 
-const styleLabel = (key: string) => key.replace(/([a-z])([A-Z])/g, '$1 $2').replaceAll('_', ' ').toUpperCase();
-const STYLES = catalogue.exercises.map((item) => ({ id: item.key, label: `${String(item.id).padStart(2, '0')} · ${styleLabel(item.key)}`, bpm: item.bpm }));
 const STUDIO_DEMOS = [
   { id: 'groove', title: 'DEMO GROOVE', file: 'demo-groove.json' },
   { id: 'lofi', title: 'DEMO LOFI', file: 'demo-lofi.json' },
@@ -65,57 +67,6 @@ const STUDIO_DEMOS = [
   { id: 'trap', title: 'DEMO TRAP', file: 'demo-trap.json' },
   { id: 'break', title: 'DEMO BREAK', file: 'demo-break.json' },
 ] as const;
-
-function createBoomBapTargets(difficulty: number): Exercise['targets'] {
-  const targets: Exercise['targets'] = [];
-  const addSteps = (bar: number, pad: number, steps: number[]) => steps.forEach((step) => targets.push({ id: `boom-${difficulty}-${bar}-${pad}-${step}`, beat: bar * 4 + step / 4, pad }));
-  const levels = [
-    { kick: [0, 8], snare: [4, 12], hat: [0, 4, 8, 12], perc: [] },
-    { kick: [0, 6, 8, 14], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], perc: [] },
-    { kick: [0, 3, 7, 8, 11, 14], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], perc: [2, 10] },
-    { kick: [0, 3, 6, 8, 11, 14], snare: [4, 7, 12, 15], hat: [0, 1, 2, 4, 6, 8, 9, 10, 12, 14], perc: [2, 5, 10, 13] },
-    { kick: [0, 3, 6, 8, 11, 14, 15], snare: [4, 7, 12, 15], hat: [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 14, 15], perc: [2, 5, 10, 13] },
-  ][difficulty - 1];
-  for (let bar = 0; bar < 6; bar += 1) {
-    addSteps(bar, 0, levels.kick);
-    addSteps(bar, 2, levels.snare);
-    addSteps(bar, 4, levels.hat);
-    addSteps(bar, 6, levels.perc);
-    if (bar === 4 && difficulty >= 2) addSteps(bar, 0, [13]);
-    if (bar === 5) {
-      if (difficulty >= 3) addSteps(bar, 7, [13, 14]);
-      if (difficulty >= 4) addSteps(bar, 8, [12, 13, 14, 15]);
-      if (difficulty === 5) addSteps(bar, 2, [10, 11, 13, 14]);
-    }
-  }
-  return [...new Map(targets.map((target) => [`${target.beat}-${target.pad}`, target])).values()];
-}
-
-function createSixBarExercise(styleId: string, difficulty: number, tempo: number): Exercise {
-  const style = STYLES.find((item) => item.id === styleId) || STYLES[0];
-  if (style.id === 'boom') {
-    return { id: `boom-${difficulty}`, title: `BOOM-BAP · NIVEAU ${difficulty}`, description: `Partition Boom-Bap ${difficulty}/5 · 6 mesures`, bpm: tempo, bars: 6, timeSignature: '4/4', countInBars: 1, backingTrack: null, grading: { perfectMs: 35, goodMs: 90 }, targets: createBoomBapTargets(difficulty) };
-  }
-  const targets: Exercise['targets'] = [];
-  const add = (bar: number, beat: number, pad: number) => targets.push({ id: `${bar}-${beat}-${pad}`, beat: bar * 4 + beat, pad });
-  for (let bar = 0; bar < 6; bar += 1) {
-    const kick = style.id === 'house' ? [0, 1, 2, 3] : style.id === 'funk' ? [0, .75, 2, 2.75] : style.id === 'afro' ? [0, 1.75, 3] : style.id === 'garage' || style.id === 'dnb' ? [0, 2.5] : style.id === 'electro' ? [0, 1.5, 2.5] : [0, 2];
-    kick.forEach((beat) => add(bar, beat, 0));
-    (style.id === 'garage' || style.id === 'dnb' ? [2] : [1, 3]).forEach((beat) => add(bar, beat, 2));
-    if (style.id === 'house' && difficulty >= 2) [1, 3].forEach((beat) => add(bar, beat, 1));
-    const hatStep = difficulty >= 4 ? 0.25 : difficulty >= 2 ? 0.5 : 1;
-    const hatOffset = style.id === 'house' || style.id === 'funk' ? .5 : 0;
-    for (let beat = hatOffset; beat < 4; beat += hatStep) add(bar, beat, 4);
-    if (style.id === 'rock' && difficulty >= 2) [0, 2].forEach((beat) => add(bar, beat, 5));
-    if (style.id === 'afro' || style.id === 'funk' || difficulty >= 3) [0.75, 2.75].forEach((beat) => add(bar, beat, 6));
-    if (style.id === 'afro' && difficulty >= 2) [1.5, 3.5].forEach((beat) => add(bar, beat, 7));
-    if (difficulty >= 4 && bar >= 3) [1.5, 3.25].forEach((beat) => add(bar, beat, 7));
-    if (difficulty === 5 && bar >= 4) [3, 3.25, 3.5, 3.75].forEach((beat) => add(bar, beat, 8));
-    if (difficulty >= 3 && bar % 2 === 1) add(bar, 3.5, 0);
-  }
-  const uniqueTargets = [...new Map(targets.map((target) => [`${target.beat}-${target.pad}`, target])).values()];
-  return { id: `${style.id}-${difficulty}`, title: style.label, description: `Niveau ${difficulty} · 6 mesures progressives`, bpm: tempo, bars: 6, timeSignature: '4/4', countInBars: 1, backingTrack: null, grading: { perfectMs: 35, goodMs: 90 }, targets: uniqueTargets };
-}
 
 const audio = new AudioEngine();
 const machineSampleBank = new MachineSampleBank();
@@ -136,7 +87,8 @@ function loadUserExercises(): Exercise[] {
 
 export default function App() {
   const [language, setLanguage] = useState<AppLanguage>(loadAppLanguage);
-  const [workspaceView, setWorkspaceView] = useState<'home' | 'game' | 'sounds' | 'docs' | 'machine-test'>('home');
+  const [workspaceView, setWorkspaceView] = useState<'home' | 'game' | 'sounds' | 'docs' | 'machine-test' | 'profile'>('home');
+  const [playerProfile, setPlayerProfile] = useState<PlayerProfile>(() => loadPlayerProfile(localStorage));
   const [styleId, setStyleId] = useState('boom');
   const [difficulty, setDifficulty] = useState(1);
   const [tempo, setTempo] = useState<number>(STYLES[0].bpm);
@@ -149,6 +101,9 @@ export default function App() {
   const [countdown, setCountdown] = useState(4);
   const [songTime, setSongTime] = useState(0);
   const [score, setScore] = useState<Score>(emptyScore());
+  /** Toujours à jour, y compris dans les callbacks créés avant la dernière frappe — évite de lire un score périmé au STOP. */
+  const scoreRef = useRef(score);
+  scoreRef.current = score;
   const [last, setLast] = useState<{ grade: Grade; deltaMs: number } | null>(null);
   const [lastMidi, setLastMidi] = useState<MidiObservation | null>(null);
   const [midiObservations, setMidiObservations] = useState<MidiObservation[]>([]);
@@ -185,6 +140,18 @@ export default function App() {
   const [machineProjectDocument, setMachineProjectDocument] = useState<Record<string, unknown> | null>(null);
   const [machineCloneOpen, setMachineCloneOpen] = useState(false);
   const [machineSampleCount, setMachineSampleCount] = useState(0);
+  const [sampleFolderName, setSampleFolderName] = useState('');
+  const [sampleFolderNeedsReconnect, setSampleFolderNeedsReconnect] = useState(false);
+  const sampleDirectoryHandleRef = useRef<LocalDirectoryHandle | null>(null);
+  const [lastScanSave, setLastScanSave] = useState<{ machineId: string; path: string; at: string } | null>(null);
+  const [scanSaveError, setScanSaveError] = useState<{ machineId: string; message: string } | null>(null);
+  const [scanSaveMachineId, setScanSaveMachineId] = useState('');
+  // Bibliothèque de sons personnelle (distincte du dossier de travail machine ci-dessus) —
+  // les réglages de dossier se font depuis la Fiche personnage, la navigation/écoute depuis
+  // SONS & TRANSFERT (SoundsPage), qui a donc besoin du handle lui-même, pas seulement du nom.
+  const [localLibraryHandle, setLocalLibraryHandle] = useState<LocalDirectoryHandle | null>(null);
+  const [localLibraryFolderName, setLocalLibraryFolderName] = useState('');
+  const [localLibraryNeedsReconnect, setLocalLibraryNeedsReconnect] = useState(false);
   const targets = useRef(activeExercise.targets.map((target, index) => ({ ...target, id: `target-${index}` })));
   const frame = useRef<number | undefined>(undefined);
   const flashTimer = useRef<number | undefined>(undefined);
@@ -217,6 +184,33 @@ export default function App() {
       .then((response) => response.ok ? response.json() as Promise<DeviceSoundIndex> : Promise.reject())
       .then(setDeviceSoundIndex)
       .catch(() => setDeviceSoundIndex(null));
+  }, []);
+
+  /** Restauration silencieuse du dossier de travail mémorisé — queryPermission seul (jamais requestPermission ici : il faut un vrai clic, voir reconnectSampleFolder). */
+  useEffect(() => {
+    void (async () => {
+      const handle = await loadDirectoryHandle(SAMPLE_FOLDER_KEY);
+      if (!handle) return;
+      sampleDirectoryHandleRef.current = handle;
+      setSampleFolderName(handle.name);
+      if (await hasStoredPermission(handle, 'read')) {
+        try { setMachineSampleCount(await machineSampleBank.load(await collectLocalFiles(handle))); }
+        catch { setSampleFolderNeedsReconnect(true); }
+      } else {
+        setSampleFolderNeedsReconnect(true);
+      }
+    })();
+  }, []);
+
+  /** Même principe que ci-dessus, pour la bibliothèque de sons personnelle — dossier distinct, jamais confondu avec le dossier de travail machine. */
+  useEffect(() => {
+    void (async () => {
+      const handle = await loadDirectoryHandle(LOCAL_LIBRARY_FOLDER_KEY);
+      if (!handle) return;
+      setLocalLibraryHandle(handle);
+      setLocalLibraryFolderName(handle.name);
+      setLocalLibraryNeedsReconnect(!(await hasStoredPermission(handle, 'read')));
+    })();
   }, []);
 
   const onHit = useCallback((hit: MidiHit) => {
@@ -283,6 +277,14 @@ export default function App() {
     audio.stop();
     machineSampleBank.stopAll();
     setPhase('idle');
+    // Cumule le bilan de la session qui vient de s'arrêter dans la fiche
+    // personnage. Sans effet si rien n'a été joué (score vide) — couvre
+    // aussi bien un STOP manuel qu'une fin de session normale.
+    setPlayerProfile((profile) => {
+      const next = addSessionToProfile(profile, scoreRef.current);
+      if (next !== profile) savePlayerProfile(localStorage, next);
+      return next;
+    });
   }, [clearGameTimers]);
 
   const stopEditorTransport = useCallback((resetPlayhead = true) => {
@@ -306,12 +308,94 @@ export default function App() {
     await midi.connect();
   };
 
+  /** Choix explicite : le handle est sauvegardé dans IndexedDB (voir directoryHandleStore.ts) pour ne plus jamais rouvrir ce sélecteur tant que la permission tient. */
   const openStudioSampleFolder = async () => {
     try {
       const directory = await chooseLocalDirectory();
+      sampleDirectoryHandleRef.current = directory;
+      setSampleFolderName(directory.name);
+      setSampleFolderNeedsReconnect(false);
       setMachineSampleCount(await machineSampleBank.load(await collectLocalFiles(directory)));
+      await saveDirectoryHandle(SAMPLE_FOLDER_KEY, directory);
     } catch (error) {
       if ((error as { name?: string }).name !== 'AbortError') window.alert(error instanceof Error ? error.message : 'Impossible d’ouvrir le dossier local.');
+    }
+  };
+
+  /** Redemande la permission sur le dossier déjà mémorisé — geste utilisateur requis, le navigateur ne la garde jamais indéfiniment tout seul. */
+  const reconnectSampleFolder = async () => {
+    const handle = sampleDirectoryHandleRef.current;
+    if (!handle) return;
+    const granted = await requestStoredPermission(handle, 'read');
+    if (!granted) { window.alert('Autorisation refusée pour ce dossier. Choisis-le à nouveau si besoin.'); return; }
+    try {
+      setMachineSampleCount(await machineSampleBank.load(await collectLocalFiles(handle)));
+      setSampleFolderNeedsReconnect(false);
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : 'Impossible de relire ce dossier.');
+    }
+  };
+
+  /** Réglage explicite — fait uniquement depuis la Fiche personnage, jamais depuis SONS & TRANSFERT (qui ne fait que lire ce dossier une fois connecté). */
+  const openLocalLibraryFolder = async () => {
+    try {
+      const directory = await chooseLocalDirectory('read');
+      setLocalLibraryHandle(directory);
+      setLocalLibraryFolderName(directory.name);
+      setLocalLibraryNeedsReconnect(false);
+      try { await saveDirectoryHandle(LOCAL_LIBRARY_FOLDER_KEY, directory); } catch { /* pas grave : juste pas mémorisé pour la prochaine visite */ }
+    } catch (error) {
+      if ((error as { name?: string }).name !== 'AbortError') window.alert(error instanceof Error ? error.message : 'Impossible d’ouvrir le dossier local.');
+    }
+  };
+
+  const reconnectLocalLibraryFolder = async () => {
+    if (!localLibraryHandle) return;
+    const granted = await requestStoredPermission(localLibraryHandle, 'read');
+    if (!granted) { window.alert('Autorisation refusée pour ce dossier. Choisis-le à nouveau si besoin.'); return; }
+    setLocalLibraryNeedsReconnect(false);
+  };
+
+  /**
+   * SCAN = état des lieux rapide (nombre de projets/sons, mémoire, chemin)
+   * écrit sur le disque — jamais les PCM eux-mêmes, ça reste le travail du
+   * CLONE (pont local, 20-30 min). Réutilise exactement les fonctions déjà
+   * écrites pour `MachineCloneDialog` (`saveDeviceProfile`,
+   * `createDeviceClone`, `writeCloneManifest`) au lieu d'en refaire une :
+   * c'est la même écriture de manifeste que le clone fait déjà en secours
+   * quand le pont local n'est pas lancé, juste déclenchée d'un clic depuis
+   * la fiche personnage. Écrit dans le dossier de travail déjà mémorisé —
+   * lisible par n'importe quel autre outil, ce n'est jamais un stockage
+   * propriétaire du navigateur.
+   */
+  const scanAndSaveMachine = async (machine: PlayerMachine) => {
+    // Toujours un retour visible, y compris pendant l'opération et en cas
+    // d'annulation — un « AbortError » silencieux ressemble exactement à
+    // « le bouton ne fait rien » vu de l'utilisateur, donc plus question de
+    // l'avaler sans un mot.
+    setScanSaveError(null);
+    setScanSaveMachineId(machine.id);
+    try {
+      let directory = sampleDirectoryHandleRef.current;
+      if (directory) {
+        if (!(await requestStoredPermission(directory, 'readwrite'))) { setScanSaveError({ machineId: machine.id, message: 'Autorisation d’écriture refusée pour le dossier de travail.' }); return; }
+      } else {
+        directory = await chooseLocalDirectory('readwrite');
+        sampleDirectoryHandleRef.current = directory;
+        setSampleFolderName(directory.name);
+        setSampleFolderNeedsReconnect(false);
+        await saveDirectoryHandle(SAMPLE_FOLDER_KEY, directory);
+      }
+      const deviceProfile = saveDeviceProfile(localStorage, { name: machine.name, capacityMb: machine.memory === '128' ? 128 : 64, sampleFolderName: directory.name, localSampleCount: machineSampleCount });
+      const manifest = createDeviceClone(localStorage, deviceProfile, deviceSoundIndex?.soundCount || 0, deviceSoundIndex?.usedBytes || 0, deviceInventory?.project || null);
+      const path = await writeCloneManifest(directory, machine.name, manifest);
+      setLastScanSave({ machineId: machine.id, path, at: new Date().toISOString() });
+    } catch (error) {
+      const name = (error as { name?: string }).name;
+      const message = name === 'AbortError' ? 'Sélection de dossier annulée — rien n’a été sauvegardé.' : error instanceof Error ? error.message : 'La sauvegarde de l’état des lieux a échoué.';
+      setScanSaveError({ machineId: machine.id, message });
+    } finally {
+      setScanSaveMachineId('');
     }
   };
 
@@ -931,6 +1015,18 @@ export default function App() {
     await audio.previewPad(pad);
   };
 
+  /**
+   * Écoute directe d'un slot de la banque machine (numéro arbitraire 001-999, pas
+   * forcément assigné à un pad) — contrairement à `previewSoundPagePad`, aucun
+   * repli synthétisé n'a de sens ici (pas de catégorie de pad à retomber dessus) :
+   * renvoie honnêtement si ça a vraiment joué, pour que la page affiche un message
+   * plutôt qu'un clic silencieux quand le dossier de travail n'est pas chargé.
+   */
+  const previewBankSound = async (slot: number) => {
+    await audio.unlock();
+    return machineSampleBank.play(slot, 110, performance.now(), undefined, deviceInventory?.sounds[String(slot)]?.rootNote || 60);
+  };
+
   // Vue Song Arranger — la Scène reste une ressource partagée (comme sur la machine réelle) :
   // modifier un bloc dans une Song Position modifie toutes celles qui pointent vers la même scène.
   const assignSceneGroupPattern = (sceneNumber: number, group: EditorGroup, patternNumber: number | null) => {
@@ -1050,13 +1146,51 @@ export default function App() {
 
   const changeLanguage = (nextLanguage: AppLanguage) => { setLanguage(nextLanguage); localStorage.setItem(APP_LANGUAGE_KEY, nextLanguage); document.documentElement.lang = nextLanguage; };
 
-  if (workspaceView === 'home') return <HomePage connected={midi.connected || midi.outputConnected} project={deviceInventory?.project} scannedSoundCount={deviceInventory ? Object.keys(deviceInventory.sounds).length : 0} language={language} onLanguageChange={changeLanguage} onOpenGame={() => setWorkspaceView('game')} onOpenStudio={openCompleteEditor} onOpenSounds={() => setWorkspaceView('sounds')} onOpenDocumentation={() => setWorkspaceView('docs')} onOpenMachineTest={() => setWorkspaceView('machine-test')} />;
+  if (workspaceView === 'home') return <HomePage connected={midi.connected || midi.outputConnected} project={deviceInventory?.project} scannedSoundCount={deviceInventory ? Object.keys(deviceInventory.sounds).length : 0} language={language} onLanguageChange={changeLanguage} onOpenGame={() => setWorkspaceView('game')} onOpenStudio={openCompleteEditor} onOpenSounds={() => setWorkspaceView('sounds')} onOpenDocumentation={() => setWorkspaceView('docs')} onOpenMachineTest={() => setWorkspaceView('machine-test')} onOpenProfile={() => setWorkspaceView('profile')} />;
 
   if (workspaceView === 'machine-test') return <MachineTestPage connected={midi.connected} inputNames={midi.inputNames} observations={midiObservations} onBack={goHome} onConnect={() => void midi.connectMonitor()} onSendLearned={midi.sendLearnedMessage} onSelectMachineGroup={midi.selectMachineGroup} />;
 
-  if (workspaceView === 'sounds') return <SoundsPage inventory={deviceInventory} soundIndex={deviceSoundIndex} midiConnected={midi.outputConnected} liveMidi={lastMidi?.note !== undefined && lastMidi.velocity !== undefined ? { note: lastMidi.note, velocity: lastMidi.velocity, timestamp: lastMidi.timestamp } : null} padModes={editorPadModes} onBack={goHome} onConnectMidi={() => void connectMidi()} onPadModeChange={(group, pad, mode) => setEditorPadModes((current) => ({ ...current, [`${group}:${pad}`]: mode }))} onPadPreview={(group, pad, stagedSlot) => void previewSoundPagePad(group, pad, stagedSlot)} />;
+  if (workspaceView === 'sounds') return <SoundsPage inventory={deviceInventory} soundIndex={deviceSoundIndex} midiConnected={midi.outputConnected} liveMidi={lastMidi?.note !== undefined && lastMidi.velocity !== undefined ? { note: lastMidi.note, velocity: lastMidi.velocity, timestamp: lastMidi.timestamp } : null} padModes={editorPadModes} onBack={goHome} onConnectMidi={() => void connectMidi()} onPadModeChange={(group, pad, mode) => setEditorPadModes((current) => ({ ...current, [`${group}:${pad}`]: mode }))} onPadPreview={(group, pad, stagedSlot) => void previewSoundPagePad(group, pad, stagedSlot)} onPreviewSound={(slot) => previewBankSound(slot)} localLibraryHandle={localLibraryHandle} localLibraryFolderName={localLibraryFolderName} localLibraryNeedsReconnect={localLibraryNeedsReconnect} onReconnectLocalLibrary={() => void reconnectLocalLibraryFolder()} />;
 
   if (workspaceView === 'docs') return <DocumentationPage language={language} onBack={goHome} />;
+
+  if (workspaceView === 'profile') {
+    const updateProfile = (updater: (profile: PlayerProfile) => PlayerProfile) => setPlayerProfile((profile) => { const next = updater(profile); savePlayerProfile(localStorage, next); return next; });
+    return <>
+      <PlayerProfilePage
+        profile={playerProfile}
+        machineConnected={midi.connected || midi.outputConnected}
+        midiStatus={midi.status}
+        midiInputNames={midi.inputNames}
+        midiOutputNames={midi.outputNames}
+        machineSampleCount={machineSampleCount}
+        deviceInventory={deviceInventory}
+        deviceSoundIndex={deviceSoundIndex}
+        onBack={goHome}
+        onChange={(patch) => updateProfile((profile) => ({ ...profile, ...patch }))}
+        onChangeMachine={(id, patch) => updateProfile((profile) => ({ ...profile, machines: profile.machines.map((machine) => machine.id === id ? { ...machine, ...patch } : machine) }))}
+        onAddMachine={() => updateProfile((profile) => ({ ...profile, machines: [...profile.machines, emptyMachine()] }))}
+        onRemoveMachine={(id) => updateProfile((profile) => ({ ...profile, machines: profile.machines.filter((machine) => machine.id !== id) }))}
+        onConnectMidi={() => void connectMidi()}
+        onCloneMachine={() => setMachineCloneOpen(true)}
+        onScanMachine={(id) => { const machine = playerProfile.machines.find((candidate) => candidate.id === id); if (machine) void scanAndSaveMachine(machine); }}
+        onViewScanReport={() => setWorkspaceView('sounds')}
+        lastScanSave={lastScanSave}
+        scanSaveError={scanSaveError}
+        scanSaveMachineId={scanSaveMachineId}
+        sampleFolderName={sampleFolderName}
+        sampleFolderNeedsReconnect={sampleFolderNeedsReconnect}
+        onOpenSampleFolder={() => void openStudioSampleFolder()}
+        onReconnectSampleFolder={() => void reconnectSampleFolder()}
+        localLibraryFolderName={localLibraryFolderName}
+        localLibraryNeedsReconnect={localLibraryNeedsReconnect}
+        onOpenLocalLibraryFolder={() => void openLocalLibraryFolder()}
+        onReconnectLocalLibraryFolder={() => void reconnectLocalLibraryFolder()}
+        onResetStats={() => updateProfile((profile) => ({ ...profile, stats: emptyPlayerStats() }))}
+      />
+      {machineCloneOpen && <MachineCloneDialog inventory={deviceInventory} soundIndex={deviceSoundIndex} onClose={() => setMachineCloneOpen(false)} />}
+    </>;
+  }
 
   return <main className={last ? `impact impact-${last.grade.toLowerCase()}` : ''}>
     <GameToolbar difficulty={difficulty} tempo={tempo} activeBpm={activeExercise.bpm} styleId={styleId} styles={STYLES} userExercises={userExercises} phase={phase} sessionActive={sessionActive} midiConnected={midi.connected} onDifficultyChange={setDifficulty} onTempoChange={setTempo} onStyleChange={changeStyle} onHome={goHome} onOpenEditor={openEditor} onConnectMidi={() => void connectMidi()} onPreview={() => void togglePreview()} onPlay={() => void toggle()} />
@@ -1074,9 +1208,12 @@ export default function App() {
       {machineCloneOpen && <MachineCloneDialog inventory={deviceInventory} soundIndex={deviceSoundIndex} onClose={() => setMachineCloneOpen(false)} />}
     </section></div>}
 
-    <ScoreView viewportRef={scoreScroll} pageStart={pageStart} songBeat={songBeat} transportActive={transportActive} playheadProgress={playheadProgress} expectedTargets={visibleTargets} playedNotes={visiblePlayerNotes} last={last} />
-
-    <PerformancePanel transportActive={transportActive} expectedPad={expectedPad} flashedPad={flashedPad} midiVelocity={lastMidi?.velocity || 100} combo={score.combo} onPlayPad={clickPad} onEditPad={editPad} />
+    {/* Partition en haut sur toute la largeur ; en dessous, pads à gauche
+        et analyse à droite. */}
+    <div className="game-layout">
+      <ScoreView viewportRef={scoreScroll} pageStart={pageStart} songBeat={songBeat} transportActive={transportActive} playheadProgress={playheadProgress} expectedTargets={visibleTargets} playedNotes={visiblePlayerNotes} />
+      <PerformancePanel transportActive={transportActive} expectedPad={expectedPad} flashedPad={flashedPad} score={score} onPlayPad={clickPad} onEditPad={editPad} />
+    </div>
 
     {soundPad !== null && <PadSoundEditor pad={soundPad} settings={soundSettings[soundPad]} onChange={(patch) => updateSound(soundPad, patch)} onPreview={() => void audio.previewPad(soundPad)} onClose={() => setSoundPad(null)} />}
   </main>;

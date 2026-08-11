@@ -1,4 +1,4 @@
-import type { RefObject } from 'react';
+import { useRef, type PointerEvent, type RefObject, type WheelEvent } from 'react';
 import type { Exercise, Grade } from '../../core/engine/types';
 import { EP133_PADS, EP133_SCORE_TRACKS } from '../../core/project/pads';
 
@@ -16,32 +16,60 @@ interface ScoreViewProps {
   playheadProgress: number;
   expectedTargets: Exercise['targets'];
   playedNotes: PlayedNote[];
-  last: { grade: Grade; deltaMs: number } | null;
 }
 
-export function ScoreView({ viewportRef, pageStart, songBeat, transportActive, playheadProgress, expectedTargets, playedNotes, last }: ScoreViewProps) {
+/**
+ * Rien que la partition. Deux cartes de mesure arrondies (pas de bandeau
+ * « MESURE 1/2 » — la carte matérialise déjà la coupure) dans une zone qui
+ * défile seule ; la colonne des noms de piste est un bloc à part, hors du
+ * conteneur qui défile, pour rester visible en toute circonstance — plus
+ * un simple `position: sticky` partagé avec la grille qui bouge pendant la
+ * lecture. Demandé le 11/08.
+ */
+export function ScoreView({ viewportRef, pageStart, songBeat, transportActive, playheadProgress, expectedTargets, playedNotes }: ScoreViewProps) {
+  /** Glisser-déposer à la souris pour naviguer dans la partition — en plus
+   * du défilement automatique pendant la lecture, qui reprend la main dès
+   * la frappe suivante. */
+  const drag = useRef<{ pointerId: number; startX: number; startScrollLeft: number } | null>(null);
+  const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
+    drag.current = { pointerId: event.pointerId, startX: event.clientX, startScrollLeft: event.currentTarget.scrollLeft };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (!drag.current || drag.current.pointerId !== event.pointerId) return;
+    event.currentTarget.scrollLeft = drag.current.startScrollLeft - (event.clientX - drag.current.startX);
+  };
+  const endDrag = () => { drag.current = null; };
+  const onWheel = (event: WheelEvent<HTMLDivElement>) => {
+    const viewport = event.currentTarget;
+    if (viewport.scrollWidth <= viewport.clientWidth) return;
+    event.preventDefault();
+    viewport.scrollLeft += event.deltaY || event.deltaX;
+  };
+
+  const renderRow = (track: (typeof EP133_SCORE_TRACKS)[number], half: number) => Array.from({ length: 16 }, (_, localStep) => {
+    const step = half * 16 + localStep;
+    const expected = expectedTargets.find((target) => target.pad === track.pad && Math.round((target.beat - pageStart) * 4) === step);
+    const played = playedNotes.filter((note) => note.pad === track.pad && Math.max(0, Math.min(31, Math.floor((note.beat - pageStart) * 4))) === step);
+    const activeStep = transportActive && Math.floor((songBeat - pageStart) * 4) === step;
+    const grade = played.at(-1)?.grade.toLowerCase();
+    return <i key={step} className={`sequence-step ${expected ? 'filled' : ''} ${played.length ? 'played' : ''} ${grade || ''} ${activeStep ? 'current' : ''}`}>{expected ? EP133_PADS[track.pad].key : ''}{played.length > 0 && <b className="player-mark" />}</i>;
+  });
+
   return <section className="score-view" aria-label="Partition sur deux mesures">
-    <div className="score-heading"><span>MESURES {Math.floor(pageStart / 4) + 1}–{Math.floor(pageStart / 4) + 2}</span><span>32 PAS · 12 PISTES</span></div>
-    <div className="sequencer-scroll" ref={viewportRef}>
-      <div className="sequencer">
-        <section className="sequence-block combined">
-          <h2>PARTITION MODÈLE + JOUEUR</h2>
-          <div className="measure-titles"><span /><b>MESURE {Math.floor(pageStart / 4) + 1}</b><b>MESURE {Math.floor(pageStart / 4) + 2}</b></div>
-          <div className="step-numbers"><span />{Array.from({ length: 32 }, (_, step) => <i key={step}>{step % 16 + 1}</i>)}</div>
-          {EP133_SCORE_TRACKS.map((track) => <div className="sequence-track" key={track.pad}>
-            <strong>{track.label}</strong>
-            {Array.from({ length: 32 }, (_, step) => {
-              const expected = expectedTargets.find((target) => target.pad === track.pad && Math.round((target.beat - pageStart) * 4) === step);
-              const played = playedNotes.filter((note) => note.pad === track.pad && Math.max(0, Math.min(31, Math.floor((note.beat - pageStart) * 4))) === step);
-              const activeStep = transportActive && Math.floor((songBeat - pageStart) * 4) === step;
-              const grade = played.at(-1)?.grade.toLowerCase();
-              return <i key={step} className={`sequence-step ${expected ? 'filled' : ''} ${played.length ? 'played' : ''} ${grade || ''} ${activeStep ? 'current' : ''}`}>{expected ? EP133_PADS[track.pad].key : ''}{played.length > 0 && <b className="player-mark" />}</i>;
-            })}
-          </div>)}
-          {transportActive && <div className="sequence-cursor" style={{ left: `calc(132px + (100% - 132px) * ${playheadProgress})` }} />}
-        </section>
+    <div className="score-body">
+      <div className="track-labels">
+        {EP133_SCORE_TRACKS.map((track) => <strong className={`cat-${track.category}`} key={track.pad}>{track.label}</strong>)}
+      </div>
+      <div className="sequencer-scroll" ref={viewportRef} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerCancel={endDrag} onWheel={onWheel}>
+        <div className="measure-cards">
+          {[0, 1].map((half) => <section className="measure-card" key={half}>
+            {EP133_SCORE_TRACKS.map((track) => <div className={`measure-card-row cat-${track.category}`} key={track.pad}>{renderRow(track, half)}</div>)}
+          </section>)}
+          {transportActive && <div className="sequence-cursor" style={{ left: `calc(100% * ${playheadProgress})` }} />}
+        </div>
       </div>
     </div>
-    <div className="score-legend"><span><i className="legend-model" /> modèle</span><span><i className="legend-perfect" /> PERFECT</span><span><i className="legend-good" /> GOOD</span><span><i className="legend-miss" /> MISS</span>{last && <strong className={last.grade.toLowerCase()}>{last.grade} {Number.isFinite(last.deltaMs) ? `${last.deltaMs > 0 ? '+' : ''}${last.deltaMs.toFixed(0)} ms` : ''}</strong>}</div>
   </section>;
 }
