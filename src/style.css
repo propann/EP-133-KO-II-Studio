@@ -879,7 +879,7 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .sound-group-tabs button small { font-size:7px; }
 .sound-group-tabs button.active { color:#fff; background:var(--ko-orange); box-shadow:3px 3px 0 var(--ko-black); transform:translateY(-2px); }
 .sound-pad-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:14px; border:2px solid var(--ko-black); background:#6d6a65; }
-.sound-pad-grid button { position:relative; display:grid; align-content:space-between; min-height:88px; padding:9px; overflow:hidden; border:2px solid #1c1b19; border-radius:4px; background:#d9d5cc; color:var(--ko-black); box-shadow:inset 0 -7px 0 rgba(0,0,0,.14),4px 4px 0 #292826; text-align:left; cursor:pointer; }
+.sound-pad-grid button { position:relative; display:grid; align-content:space-between; min-height:88px; padding:9px; overflow:hidden; border:2px solid #1c1b19; border-radius:9px; background:#d9d5cc; color:var(--ko-black); box-shadow:inset 0 -7px 0 rgba(0,0,0,.14),4px 4px 0 #292826; text-align:left; cursor:pointer; }
 .sound-pad-grid button > span { position:absolute; top:6px; right:8px; font-size:11px; font-weight:900; opacity:.55; }
 .sound-pad-grid button > b { font-size:22px; }
 .sound-pad-grid button > small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -892,7 +892,7 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .sound-slot-badge b { font-size:30px; }
 .sound-pad-detail h3 { margin:2px 0; font-size:17px; }
 .sound-pad-detail p { margin:0; font-size:8px; font-weight:bold; }
-.sound-bank-browser { display:grid; grid-template-columns:150px minmax(0,1fr); min-height:540px; border:2px solid var(--ko-black); background:#eeece5; }
+.sound-bank-browser { display:grid; grid-template-columns:150px minmax(0,1fr); min-height:540px; overflow:hidden; border:2px solid var(--ko-black); border-radius:10px; background:#eeece5; }
 .sound-bank-browser > nav { display:flex; flex-direction:column; border-right:2px solid var(--ko-black); background:#8e8b85; }
 .sound-bank-browser > nav button { position:relative; display:grid; grid-template-columns:1fr auto; gap:1px 6px; min-height:48px; padding:7px 9px 7px 15px; border:0; border-bottom:1px solid #3f3d39; background:#c8c5be; text-align:left; cursor:pointer; }
 .sound-bank-browser > nav button::before { content:""; position:absolute; inset:0 auto 0 0; width:7px; background:#777; }
@@ -942,7 +942,7 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .sound-readonly-note { display:block; margin-top:6px; color:#5b5852; }
 .sound-bank-browser { display:grid; grid-template-columns:150px minmax(0,1fr); grid-template-rows:1fr; }
 .sound-bank-folders { display:flex; flex-direction:column; gap:6px; padding:9px; overflow:auto; border-right:2px solid var(--ko-black); background:#aaa7a0; }
-.sound-bank-folders button { position:relative; display:grid; grid-template-columns:1fr auto; align-items:center; gap:3px 6px; min-height:43px; padding:5px 7px 5px 15px; overflow:hidden; border:2px solid var(--ko-black); background:#d5d2cb; text-align:left; cursor:pointer; }
+.sound-bank-folders button { position:relative; display:grid; grid-template-columns:1fr auto; align-items:center; gap:3px 6px; min-height:43px; padding:5px 7px 5px 15px; overflow:hidden; border:2px solid var(--ko-black); border-radius:8px; background:#d5d2cb; text-align:left; cursor:pointer; }
 .sound-bank-folders button::before { content:""; position:absolute; inset:0 auto 0 0; width:7px; background:#777; }
 .sound-bank-folders button b { font-size:12px; letter-spacing:.02em; }
 .sound-bank-folders button > span { font-size:8px; font-weight:900; }
@@ -971,31 +971,37 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 /* Bibliothèque perso intégrée à SONS & TRANSFERT (3e colonne, à côté de la
    banque de sons DE LA MACHINE) — un son se glisse sur un pad ou directement
    sur un slot machine. Réglage du dossier fait ailleurs (Fiche personnage) ;
-   cette page ne fait que le lire. Pastilles bien rondes plutôt que lignes
-   carrées, dans le même esprit que les keycaps arrondis du reste de l'appli. */
+   cette page ne fait que le lire. Même code visuel que la banque de sons
+   machine (barre d'accent à gauche, lignes en grille, mêmes teintes) plutôt
+   qu'un style à part — juste un peu plus arrondi que ses angles vifs. */
 .local-library-panel { border-left:3px solid var(--ko-black); background:#c9d6cf; }
 .local-library-hint { max-width:260px; padding:16px 0; font-size:10px; font-weight:600; line-height:1.5; }
 .local-empty { display:flex; flex-direction:column; align-items:flex-start; gap:14px; padding:18px; border:3px solid var(--ko-black); border-radius:var(--radius); background:var(--ko-panel); box-shadow:6px 6px 0 var(--ko-black); }
 .local-empty p { max-width:260px; font-size:10px; font-weight:600; line-height:1.5; }
-.local-breadcrumb { display:flex; flex-wrap:wrap; align-items:center; gap:4px; min-width:0; margin-bottom:9px; }
-.local-breadcrumb button { padding:6px 12px; border:2px solid var(--ko-black); border-radius:999px; background:#e8e5dc; font-size:8px; font-weight:900; cursor:pointer; }
-.local-breadcrumb button:last-child { color:#fff; background:var(--ko-orange); }
-.local-send-feedback { margin:8px 0 0; padding:8px 14px; border-radius:999px; font-size:8px; font-weight:900; }
+.local-breadcrumb { display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:0; margin-bottom:9px; }
+.local-breadcrumb button { position:relative; padding:6px 12px 6px 16px; overflow:hidden; border:2px solid var(--ko-black); border-radius:8px; background:#d5d2cb; font-size:8px; font-weight:900; cursor:pointer; }
+.local-breadcrumb button::before { content:""; position:absolute; inset:0 auto 0 0; width:6px; background:#777; }
+.local-breadcrumb button:last-child { color:#fff; background:var(--ko-orange); box-shadow:3px 3px 0 var(--ko-black); }
+.local-breadcrumb button:last-child::before { background:rgba(255,255,255,.35); }
+.local-send-feedback { margin:8px 0 0; padding:8px 14px; border-radius:8px; font-size:8px; font-weight:900; }
 .local-send-feedback.done { color:#0a4a1f; background:#bfe6c9; }
 .local-send-feedback.error { color:#5c1912; background:#f2c6bd; }
 .local-browser { display:grid; grid-template-rows:auto auto 1fr; gap:8px; min-height:0; }
-.local-search { display:grid; grid-template-columns:auto 1fr; align-items:center; gap:8px; font-size:7px; font-weight:900; }
-.local-search input { min-width:0; height:32px; padding:6px 10px; border:2px solid var(--ko-black); border-radius:999px; background:#f5f2e9; font:inherit; }
+.local-search { display:grid; grid-template-columns:auto 1fr; align-items:center; gap:10px; padding:9px; border:2px solid var(--ko-black); border-radius:8px; background:#d6d3cc; font-size:7px; font-weight:bold; }
+.local-search input { min-width:0; height:31px; padding:5px 8px; border:2px solid var(--ko-black); border-radius:6px; background:#f5f2e9; font:inherit; }
 .local-loading { padding:16px; font-size:9px; font-weight:700; }
-.local-entries { display:flex; flex-direction:column; gap:7px; max-height:495px; overflow:auto; padding-right:4px; }
-.local-entry { display:flex; align-items:center; gap:8px; min-height:40px; padding:5px 6px 5px 14px; border:2px solid var(--ko-black); border-radius:999px; background:#f2efe7; text-align:left; }
-.local-entry.local-folder { cursor:pointer; font-size:9px; font-weight:900; background:#e2dfd6; }
+.local-entries { display:flex; flex-direction:column; max-height:495px; overflow:auto; border:2px solid var(--ko-black); border-radius:10px; background:#f2efe7; }
+.local-entry { position:relative; display:grid; grid-template-columns:38px 1fr auto; align-items:center; gap:8px; min-height:44px; padding:6px 8px 6px 16px; overflow:hidden; border-bottom:1px solid #aaa69f; background:transparent; text-align:left; }
+.local-entry:last-child { border-bottom:0; }
+.local-entry::before { content:""; position:absolute; inset:0 auto 0 0; width:6px; background:#777; }
+.local-entry.local-folder { grid-template-columns:1fr auto; cursor:pointer; font-size:9px; font-weight:900; background:#e2dfd6; }
+.local-entry.local-folder::before { background:var(--ko-orange); }
 .local-entry.local-folder:hover { background:var(--ko-amber); }
 .local-entry.local-file[draggable="true"] { cursor:grab; }
 .local-entry.local-file[draggable="true"]:active { cursor:grabbing; }
 .local-entry span { overflow:hidden; flex:1; min-width:0; text-overflow:ellipsis; white-space:nowrap; font-size:8px; font-weight:700; }
-.local-preview-btn { flex:0 0 auto; width:26px; height:26px; border:2px solid var(--ko-black); border-radius:50%; background:var(--ko-orange); color:#fff; font-size:10px; cursor:pointer; }
-.local-assign-btn { flex:0 0 auto; padding:5px 8px; border:2px solid var(--ko-black); border-radius:999px; background:#d9d5cc; font-size:6px; font-weight:900; cursor:pointer; white-space:nowrap; }
+.local-preview-btn { position:relative; z-index:1; flex:0 0 auto; width:26px; height:26px; border:2px solid var(--ko-black); border-radius:8px; background:var(--ko-orange); color:#fff; font-size:10px; cursor:pointer; }
+.local-assign-btn { position:relative; z-index:1; flex:0 0 auto; padding:5px 8px; border:1px solid var(--ko-black); border-radius:6px; background:#d8d4cc; font-size:6px; font-weight:900; cursor:pointer; white-space:nowrap; }
 .local-assign-btn:hover { color:#fff; background:var(--ko-orange); }
 @media(max-width:1300px) { .sound-machine-workspace { grid-template-columns:1fr 1fr; } .local-library-panel { grid-column:1/-1; border-left:0; border-top:3px solid var(--ko-black); } }
 @media(max-width:1050px) { .local-library-panel { grid-column:auto; } }
