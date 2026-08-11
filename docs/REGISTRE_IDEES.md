@@ -143,6 +143,7 @@ ce classement plutôt qu'un simple avis isolé.
 | Q-07 | Rapport de progression par pad après une session Rhythm Hero | RETENU | Différenciant fort face à Melodics (générique, ne connaît pas les projets réels) ; nécessite d'abord des partitions niveau 1-5 écrites à la main sur tous les styles, pas seulement Boom-Bap |
 | Q-08 | Onboarding « Découvrir sans machine » avec projet exemple | REPORTÉ | Utile pour l'adoption, mais la Phase 1 (socle) doit rester prioritaire |
 | Q-09 | Terminologie rassurante (« copie de sécurité », « plan de modifications » plutôt que « synchroniser ») | EXPÉRIMENTER | Déjà partiellement appliqué (SYNCHRONISER décrit précisément ce qu'il fait dans Sons & Transfert) ; à généraliser à toute l'interface |
+| Q-10 | Audit du cycle Save→quitter→rouvrir | RÉALISÉ | 12 août — un vrai bug trouvé et corrigé : `note ?? 60` à l'export corrompait tout pad-trigger en note MIDI fixe après un aller-retour Sauvegarder→Ouvrir ; voir VALIDATION_SAVE_LOAD_STUDIO.md |
 
 ## Règle de suivi
 

@@ -83,7 +83,19 @@ interface ProjectDocumentOptions {
   patternLengths?: Record<string, number>;
 }
 
-/** Sérialise un pattern (frappes d'un seul groupe/numéro) vers le format `ep.project.v1`, en dérivant sa longueur en mesures. */
+/**
+ * Sérialise un pattern (frappes d'un seul groupe/numéro) vers le format `ep.project.v1`,
+ * en dérivant sa longueur en mesures.
+ *
+ * `note` n'est écrit que si la frappe en porte vraiment une (mode KEYS/mélodique) — jamais
+ * un `?? 60` par défaut. Trouvé lors de l'audit du cycle Save→quitter→rouvrir du 12 août :
+ * une frappe ONE simple (`note: undefined`, un déclenchement de pad) redevenait `note: 60`
+ * après un aller-retour Sauvegarder→Ouvrir, ce qui la faisait ensuite partir en MIDI comme
+ * une note fixe (`midi.sendNote`) au lieu d'un déclenchement de pad (`midi.sendPad`) —
+ * mauvais message MIDI envoyé à la machine dès la deuxième lecture d'un projet sauvegardé,
+ * jamais à la première. Voir studioStateFromDocument qui restaure déjà `undefined` quand le
+ * champ est absent ; c'est uniquement l'export qui l'inventait.
+ */
 function serializePattern(id: string, notes: SequencerNote[], explicitBars?: number) {
   return {
     id,
@@ -91,7 +103,7 @@ function serializePattern(id: string, notes: SequencerNote[], explicitBars?: num
     events: notes.map((target) => ({
       tick: Math.round(target.beat * 96),
       pad: target.pad + 1,
-      note: target.note ?? 60,
+      ...(target.note !== undefined ? { note: target.note } : {}),
       velocity: target.velocity,
       duration: Math.max(1, Math.round(target.duration * 96)),
     })),

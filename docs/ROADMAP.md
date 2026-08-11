@@ -29,7 +29,14 @@ pour ouvrir, écouter ou modifier un projet.
 - Les sons de la machine ne sont pas copiés ou redistribués sans droit explicite.
 - Rhythm Hero reste un module séparé du Studio sur la page d'accueil.
 
-## État consolidé — 11 août 2026
+## État consolidé — 11-12 août 2026
+
+Mise à jour du 12 août : plan P0 en cours — Song Position qui suit la
+lecture, Annuler/Rétablir sur l'édition de pattern, dépendances pinnées,
+CI qualité, et l'audit du cycle Save→quitter→rouvrir a trouvé un vrai bug
+(voir [VALIDATION_SAVE_LOAD_STUDIO.md](VALIDATION_SAVE_LOAD_STUDIO.md)) :
+une frappe ONE simple redevenait une note MIDI fixe après un aller-retour
+Sauvegarder→Ouvrir — corrigé et couvert par un test de non-régression.
 
 Mise à jour du 11 août : fusion complète des deux branches de travail dans
 `main` (fiche personnage, bibliothèque perso intégrée à Sons & Transfert,
@@ -122,6 +129,11 @@ Transformer `SAVE` en menu de fichiers :
 - [x] Nouveau projet quatre groupes avec protection avant remplacement.
 - [x] Sauvegarder et Sauvegarder sous.
 - [x] Charger un projet local `ep.project.v1` depuis la bibliothèque.
+- [x] Cycle Save→quitter→rouvrir audité (12 août) : un vrai bug trouvé et
+  corrigé (note MIDI inventée sur les frappes ONE, voir
+  VALIDATION_SAVE_LOAD_STUDIO.md), couvert par un test de non-régression.
+  Reste hors périmètre de cet audit : téléchargement de fichier local et
+  autosauvegarde de secours (juste en dessous).
 - [ ] Renommer, dupliquer, archiver et supprimer avec confirmation (tout est
   opérationnel sauf l'archivage).
 - [ ] Ouvrir et sauvegarder des projets `.pak/.ppak`.
