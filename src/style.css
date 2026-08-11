@@ -42,8 +42,13 @@ body {
 button { font: inherit; }
 main { max-width: 1280px; margin: auto; padding: 14px 24px 28px; display:flex; flex-direction:column; }
 .toolbar { order:1; }
-.score-view { order:2; margin-top:10px; }
-.performance-panel { order:3; }
+/* Pads à gauche / milieu réservé / partition à droite (11/08) — remplace
+   l'empilement partition-puis-pads. Le milieu reste vide pour l'instant :
+   destiné à un futur mode KEYS mélodique, pas encore construit. */
+.game-layout { order:2; display:grid; grid-template-columns:minmax(300px,1fr) minmax(80px,.4fr) minmax(560px,1.9fr); gap:18px; align-items:start; margin-top:10px; }
+.game-layout-left { min-width:0; }
+.game-layout-middle { min-height:1px; }
+.game-layout-right { min-width:0; }
 .sound-editor { order:5; }
 footer { order:7; }
 header { display:flex; justify-content:space-between; gap:30px; align-items:start; }
@@ -204,12 +209,12 @@ header { display:flex; justify-content:space-between; gap:30px; align-items:star
 .cat-shaker .pad-dot { background:var(--cat-shaker); }
 .cat-bass .pad-dot { background:var(--cat-bass); }
 .cat-fx .pad-dot { background:var(--cat-fx); }
-/* Pads décalés à gauche, cadre de retour de performance à droite (11/08) —
-   plus de VU-mètres décoratifs ni de badge combo isolé : l'analyse de la
-   session vit dans un seul bloc lisible, à côté du bac de pads. */
+/* Colonne de gauche de .game-layout : pads puis analyse empilés (plus de
+   VU-mètres décoratifs ni de badge combo isolé), pour rester lisible dans
+   une colonne étroite plutôt qu'un bloc large côte à côte. */
 .performance-panel {
-  display:flex; align-items:stretch; justify-content:center; gap:16px;
-  margin-top:14px; padding:14px; border:1px solid #77746e; border-radius:var(--radius);
+  display:flex; flex-direction:column; align-items:center; gap:14px;
+  padding:14px; border:1px solid #77746e; border-radius:var(--radius);
   background:linear-gradient(145deg,#dedcd6,#c7c4bd); box-shadow:4px 4px 0 var(--ko-black);
 }
 /* Compact — pas besoin d'un gros bloc pour six chiffres : grille 2×3, pas

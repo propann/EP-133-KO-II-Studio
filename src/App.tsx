@@ -996,9 +996,18 @@ export default function App() {
       {machineCloneOpen && <MachineCloneDialog inventory={deviceInventory} soundIndex={deviceSoundIndex} onClose={() => setMachineCloneOpen(false)} />}
     </section></div>}
 
-    <ScoreView viewportRef={scoreScroll} pageStart={pageStart} songBeat={songBeat} transportActive={transportActive} playheadProgress={playheadProgress} expectedTargets={visibleTargets} playedNotes={visiblePlayerNotes} />
-
-    <PerformancePanel transportActive={transportActive} expectedPad={expectedPad} flashedPad={flashedPad} score={score} onPlayPad={clickPad} onEditPad={editPad} />
+    {/* Pads à gauche, partition à droite, côte à côte plutôt qu'empilées —
+        la colonne du milieu reste vide, réservée pour un futur mode KEYS
+        mélodique (idée du 11/08, pas encore construit). */}
+    <div className="game-layout">
+      <div className="game-layout-left">
+        <PerformancePanel transportActive={transportActive} expectedPad={expectedPad} flashedPad={flashedPad} score={score} onPlayPad={clickPad} onEditPad={editPad} />
+      </div>
+      <div className="game-layout-middle" aria-hidden="true" />
+      <div className="game-layout-right">
+        <ScoreView viewportRef={scoreScroll} pageStart={pageStart} songBeat={songBeat} transportActive={transportActive} playheadProgress={playheadProgress} expectedTargets={visibleTargets} playedNotes={visiblePlayerNotes} />
+      </div>
+    </div>
 
     {soundPad !== null && <PadSoundEditor pad={soundPad} settings={soundSettings[soundPad]} onChange={(patch) => updateSound(soundPad, patch)} onPreview={() => void audio.previewPad(soundPad)} onClose={() => setSoundPad(null)} />}
   </main>;
