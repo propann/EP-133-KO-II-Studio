@@ -1,17 +1,21 @@
 import { AVATAR_PRESETS, Avatar } from '../components/shared/Avatar';
+import type { DeviceInventory, DeviceSoundIndex } from '../core/project/device';
 import type { PlayerMachine, PlayerProfile } from '../core/project/playerProfile';
 
 interface PlayerProfilePageProps {
   profile: PlayerProfile;
   machineConnected: boolean;
   machineSampleCount: number;
+  deviceInventory: DeviceInventory | null;
+  deviceSoundIndex: DeviceSoundIndex | null;
   onBack: () => void;
   onChange: (patch: Partial<PlayerProfile>) => void;
   onChangeMachine: (id: string, patch: Partial<PlayerMachine>) => void;
   onAddMachine: () => void;
   onRemoveMachine: (id: string) => void;
   onConnectMidi: () => void;
-  onScanMachine: () => void;
+  onCloneMachine: () => void;
+  onViewScanReport: () => void;
   onOpenSampleFolder: () => void;
   onResetStats: () => void;
 }
@@ -19,12 +23,22 @@ interface PlayerProfilePageProps {
 const activeSpec = (avatarId: string) => AVATAR_PRESETS.find((spec) => spec.id === avatarId) || AVATAR_PRESETS[0];
 
 /**
- * Fiche personnage — identité du joueur, machines EP-133 déclarées (le scan
+ * Fiche personnage — identité du joueur, machines EP-133 déclarées (le clone
  * et le dossier de travail se lancent d'ici) et bilan cumulé sur toutes les
  * sessions. Module de l'écosystème Studio (accessible depuis l'accueil),
  * pas seulement du jeu.
+ *
+ * SCAN et CLONE sont deux outils distincts, déjà construits ailleurs dans
+ * le projet — pas de doublon ici :
+ * - le scan (`tools/scan_ep133_readonly.py` côté machine) alimente
+ *   `deviceInventory`/`deviceSoundIndex`, déjà chargés par App.tsx et déjà
+ *   détaillés dans Sons & Transfert. « SCANNER » affiche juste le résumé et
+ *   renvoie vers ce rapport complet, sans le reconstruire.
+ * - le clone (`tools/clone_ep133_readonly.py` + pont local) copie
+ *   réellement projets/PCM/métadonnées ; « CLONER » ouvre `MachineCloneDialog`,
+ *   déjà entièrement fonctionnel.
  */
-export function PlayerProfilePage({ profile, machineConnected, machineSampleCount, onBack, onChange, onChangeMachine, onAddMachine, onRemoveMachine, onConnectMidi, onScanMachine, onOpenSampleFolder, onResetStats }: PlayerProfilePageProps) {
+export function PlayerProfilePage({ profile, machineConnected, machineSampleCount, deviceInventory, deviceSoundIndex, onBack, onChange, onChangeMachine, onAddMachine, onRemoveMachine, onConnectMidi, onCloneMachine, onViewScanReport, onOpenSampleFolder, onResetStats }: PlayerProfilePageProps) {
   const { stats } = profile;
   const totalHits = stats.perfect + stats.good + stats.miss;
   const accuracy = totalHits > 0 ? Math.round(((stats.perfect + stats.good) / totalHits) * 100) : null;
@@ -52,9 +66,15 @@ export function PlayerProfilePage({ profile, machineConnected, machineSampleCoun
             </select></label>
           </div>
           <div className="profile-machine-status"><span className={machineConnected ? 'online' : ''}><i />{machineConnected ? 'EP‑133 CONNECTÉ' : 'NON CONNECTÉ'}</span>{machineSampleCount > 0 && <small>{machineSampleCount} ÉCHANTILLONS CHARGÉS</small>}</div>
+          {(deviceInventory || deviceSoundIndex) && <div className="profile-machine-scan-summary">
+            <span>{deviceInventory ? `PROJET P${String(deviceInventory.project).padStart(2, '0')}` : 'PROJET —'}</span>
+            <span>{deviceSoundIndex?.soundCount ?? '—'} SONS</span>
+            <span>{deviceSoundIndex ? `${(deviceSoundIndex.usedBytes / 1e6).toFixed(1)} MO` : '— MO'}</span>
+          </div>}
           <div className="profile-machine-actions">
             {!machineConnected && <button className="profile-connect" onClick={onConnectMidi}>CONNECTER</button>}
-            <button className="profile-scan" onClick={onScanMachine}>CLONER · SCANNER</button>
+            <button onClick={onViewScanReport}>SCANNER · RAPPORT</button>
+            <button className="profile-scan" onClick={onCloneMachine}>CLONER</button>
             <button onClick={onOpenSampleFolder}>DOSSIER DE TRAVAIL</button>
             {profile.machines.length > 1 && <button className="profile-machine-remove" onClick={() => { if (window.confirm(`Retirer « ${machine.name} » de la fiche ?`)) onRemoveMachine(machine.id); }}>RETIRER</button>}
           </div>

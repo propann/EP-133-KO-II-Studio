@@ -996,6 +996,9 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .profile-machine-status span i { width:9px; height:9px; border-radius:50%; background:var(--ko-muted); }
 .profile-machine-status span.online i { background:var(--ko-orange); box-shadow:0 0 8px var(--ko-orange); }
 .profile-machine-status small { font-size:8px; color:#65625d; }
+/* Résumé du dernier scan — mêmes données que Sons & Transfert
+   (deviceInventory/deviceSoundIndex déjà chargés), pas un nouveau scan. */
+.profile-machine-scan-summary { display:flex; gap:10px; flex-wrap:wrap; width:100%; padding-top:8px; border-top:1px dashed #d8d5cf; font-size:9px; font-weight:bold; color:#65625d; }
 .profile-machine-actions { display:flex; gap:8px; flex-wrap:wrap; }
 .profile-machine-actions button { height:36px; padding:0 12px; border:2px solid var(--ko-black); border-radius:var(--radius-sm); background:#e5e2db; font-size:9px; font-weight:bold; letter-spacing:.04em; cursor:pointer; }
 .profile-machine-actions button.profile-connect { background:var(--ko-amber); }

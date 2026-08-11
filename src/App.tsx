@@ -1001,13 +1001,16 @@ export default function App() {
         profile={playerProfile}
         machineConnected={midi.connected || midi.outputConnected}
         machineSampleCount={machineSampleCount}
+        deviceInventory={deviceInventory}
+        deviceSoundIndex={deviceSoundIndex}
         onBack={goHome}
         onChange={(patch) => updateProfile((profile) => ({ ...profile, ...patch }))}
         onChangeMachine={(id, patch) => updateProfile((profile) => ({ ...profile, machines: profile.machines.map((machine) => machine.id === id ? { ...machine, ...patch } : machine) }))}
         onAddMachine={() => updateProfile((profile) => ({ ...profile, machines: [...profile.machines, emptyMachine()] }))}
         onRemoveMachine={(id) => updateProfile((profile) => ({ ...profile, machines: profile.machines.filter((machine) => machine.id !== id) }))}
         onConnectMidi={() => void connectMidi()}
-        onScanMachine={() => setMachineCloneOpen(true)}
+        onCloneMachine={() => setMachineCloneOpen(true)}
+        onViewScanReport={() => setWorkspaceView('sounds')}
         onOpenSampleFolder={() => void openStudioSampleFolder()}
         onResetStats={() => updateProfile((profile) => ({ ...profile, stats: emptyPlayerStats() }))}
       />
