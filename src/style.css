@@ -116,19 +116,27 @@ header { display:flex; justify-content:space-between; gap:30px; align-items:star
 .sequence-step.played.miss .player-mark { background:#c62818; }
 .sequence-step.played:not(.filled) { background:#dedcd6; }
 .sequence-cursor { position:absolute; top:21px; bottom:0; width:2px; background:var(--ko-orange); box-shadow:0 0 8px var(--ko-orange); z-index:3; pointer-events:none; }
+/* Bac de pads recessé dans la façade, comme le vrai pavé 3×4 de l'EP-133
+   (voir .ep133-face sur le banc de test) : cadre sombre, puits en creux,
+   au lieu d'une simple grille de rectangles posée sur le fond du panneau. */
 .pads {
   display:grid;
   grid-template-columns:repeat(3, minmax(0, 1fr));
-  gap:12px;
+  gap:10px;
   width:100%; max-width:640px;
   margin:0 auto;
+  padding:14px 14px 10px;
+  border:3px solid var(--ko-black);
+  border-radius:var(--radius);
+  background:linear-gradient(165deg,#2c2a26,#171615);
+  box-shadow:inset 0 0 26px rgba(0,0,0,.6), inset 0 3px 0 rgba(0,0,0,.4);
 }
 .pads button {
   position:relative; overflow:hidden;
-  height:76px; background:linear-gradient(145deg,#262626,#111); color:#fff; border:1px solid var(--ko-black);
+  height:76px; background:linear-gradient(165deg,#2e2e2e,#0c0c0c); color:#fff; border:1px solid #000;
   border-radius:var(--radius-sm);
-  text-align:left; padding:12px; cursor:pointer;
-  box-shadow:3px 3px 0 var(--ko-black);
+  text-align:left; padding:10px 12px; cursor:pointer;
+  box-shadow:0 4px 6px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08);
   transition:transform .1s ease,box-shadow .1s ease,background .1s ease;
 }
 /* Rail de couleur par famille de son — même code que les pastilles .bank-*
@@ -141,13 +149,13 @@ header { display:flex; justify-content:space-between; gap:30px; align-items:star
 .pads button.cat-perc::before { background:var(--cat-perc); }
 .pads button.cat-bass::before { background:var(--cat-bass); }
 .pads button.cat-fx::before { background:var(--cat-fx); }
-.pads button:hover { background:var(--ko-orange); color:#fff; transform:translateY(-2px); box-shadow:3px 5px 0 var(--ko-black); }
-.pads button:active { transform:translate(2px,2px); box-shadow:none; }
+.pads button:hover { background:linear-gradient(165deg,var(--ko-orange),#c93700); color:#fff; transform:translateY(-2px); box-shadow:0 6px 8px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.15); }
+.pads button:active { transform:translateY(1px); box-shadow:0 1px 1px rgba(0,0,0,.6), inset 0 2px 4px rgba(0,0,0,.5); }
 .pads button.expected-pad {
   background:var(--ko-amber); color:var(--ko-black);
   box-shadow:0 0 0 4px var(--ko-orange), 0 0 24px var(--ko-amber);
 }
-.pads button.played-pad { transform:translate(2px,2px); box-shadow:none; }
+.pads button.played-pad { transform:translateY(1px); box-shadow:0 1px 1px rgba(0,0,0,.6), inset 0 2px 4px rgba(0,0,0,.5); }
 .pads button.played-pad.perfect { background:var(--ko-amber); color:var(--ko-black); box-shadow:0 0 22px var(--ko-amber); }
 .pads button.played-pad.good { background:var(--ko-amber); color:var(--ko-black); box-shadow:0 0 22px var(--ko-amber); }
 .pads button.played-pad.miss { background:#c62818; box-shadow:0 0 22px #c62818; }
@@ -156,8 +164,9 @@ header { display:flex; justify-content:space-between; gap:30px; align-items:star
   box-shadow:0 0 0 3px var(--ko-orange), 5px 5px 0 var(--ko-black);
 }
 .pads button.calibrating em { color:var(--ko-black); font-weight:bold; }
-.pads b { display:block; color:var(--ko-amber); font-size:11px; }
-.pads em { display:block; color:#c4c0b8; font-style:normal; font-size:9px; line-height:11px; margin-top:6px; }
+.pads b { display:block; color:var(--ko-amber); font-size:13px; letter-spacing:.02em; }
+.pads em { display:block; margin-top:6px; padding-top:5px; border-top:1px solid rgba(255,255,255,.14); color:#a8a49b; font-style:normal; font-size:8px; letter-spacing:.02em; line-height:11px; }
+.pads button.expected-pad em,.pads button.played-pad em,.pads button.calibrating em { border-top-color:rgba(26,26,26,.25); }
 .performance-panel {
   display:grid; grid-template-columns:150px minmax(420px,640px) 150px; justify-content:center; gap:14px;
   margin-top:14px; padding:14px; border:1px solid #77746e; border-radius:var(--radius);
