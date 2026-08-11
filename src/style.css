@@ -66,18 +66,21 @@ header { display:flex; justify-content:space-between; gap:30px; align-items:star
 }
 /* Colonne des noms de piste : bloc indépendant, HORS du conteneur qui
    défile horizontalement pendant la lecture — plus un `position: sticky`
-   partagé avec la grille, un vrai second panneau toujours visible. */
-.score-body { display:flex; align-items:flex-start; }
-.track-labels { flex:0 0 148px; display:flex; flex-direction:column; background:#e9e7e1; border-right:2px solid var(--ko-black); }
-/* Pastilles arrondies, une par piste — hauteur + marge choisies pour que
-   chacune reste alignée pile sur sa bande de partition (23px + 2×4px de
-   marge = les 31px d'une ligne .sequence-step). */
+   partagé avec la grille, un vrai second panneau toujours visible.
+   L'alignement avec les lignes de partition tient à trois choses : même
+   padding en haut des deux colonnes (ici, sur .score-body, pas sur une
+   seule des deux) ; le contour des cartes de mesure est un box-shadow, pas
+   un border, pour ne pas grignoter 2px de hauteur en haut de la première
+   ligne ; et les pastilles utilisent `gap` (espace UNIQUEMENT entre elles)
+   plutôt qu'une marge haut+bas (qui décalait la première ligne). */
+.score-body { display:flex; align-items:flex-start; padding:10px; }
+.track-labels { flex:0 0 158px; display:flex; flex-direction:column; gap:9px; background:#e9e7e1; border-right:2px solid var(--ko-black); margin:-10px 0 -10px -10px; padding:10px 0 10px 10px; }
 .track-labels strong {
   display:flex; align-items:center; gap:6px;
-  height:23px; margin:4px 8px; padding:0 10px;
+  height:27px; margin:0 8px 0 0; padding:0 10px;
   border:1px solid var(--ko-black); border-radius:999px;
   background:#fff; box-shadow:1px 1px 0 var(--ko-black);
-  font-size:8.5px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  font-size:9px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 .track-labels strong::before { content:''; flex:0 0 auto; width:7px; height:7px; border-radius:50%; background:#999; }
 .track-labels strong.cat-kick::before { background:var(--cat-kick); }
@@ -92,21 +95,24 @@ header { display:flex; justify-content:space-between; gap:30px; align-items:star
 .track-labels strong.cat-shaker::before { background:var(--cat-shaker); }
 .track-labels strong.cat-bass::before { background:var(--cat-bass); }
 .track-labels strong.cat-fx::before { background:var(--cat-fx); }
-.sequencer-scroll { flex:1 1 auto; min-width:0; overflow-x:auto; padding:10px; scroll-behavior:auto; scrollbar-color:var(--ko-orange) #b8b5ae; cursor:grab; touch-action:pan-y; }
+.sequencer-scroll { flex:1 1 auto; min-width:0; overflow-x:auto; scroll-behavior:auto; scrollbar-color:var(--ko-orange) #b8b5ae; cursor:grab; touch-action:pan-y; }
 .sequencer-scroll:active { cursor:grabbing; }
 /* Cartes de mesure : la coupure entre mesures se voit à la carte (cadre +
-   coin arrondi + espace), plus besoin d'un bandeau « MESURE 1/2 » à lire. */
-.measure-cards { position:relative; display:flex; gap:14px; min-width:1420px; }
-.measure-card { flex:1 1 0; border:2px solid var(--ko-black); border-radius:var(--radius-sm); background:#f8f7f3; overflow:hidden; }
-.measure-card-row { display:grid; grid-template-columns:repeat(16, minmax(22px,1fr)); }
+   coin arrondi + espace), plus besoin d'un bandeau « MESURE 1/2 » à lire.
+   Le contour est un box-shadow (jamais un border) : un border aurait
+   grignoté 2px de hauteur au-dessus de la première ligne et désaligné la
+   grille par rapport aux pastilles de piste, qui n'ont pas ce problème. */
+.measure-cards { position:relative; display:flex; gap:14px; min-width:1500px; }
+.measure-card { flex:1 1 0; border-radius:var(--radius-sm); background:#f8f7f3; box-shadow:0 0 0 2px var(--ko-black); overflow:hidden; }
+.measure-card-row { display:grid; grid-template-columns:repeat(16, minmax(24px,1fr)); }
 .sequence-step {
-  display:grid; place-items:center; height:31px; border-left:1px solid #b8b5ae; border-top:1px solid #b8b5ae;
-  background:#f4f2ed; color:var(--ko-black); font-size:10px; font-style:normal; font-weight:bold;
+  display:grid; place-items:center; height:36px; border-left:1px solid #b8b5ae; border-top:1px solid #b8b5ae;
+  background:#f4f2ed; color:var(--ko-black); font-size:11px; font-style:normal; font-weight:bold;
 }
 .measure-card-row .sequence-step:first-child { border-left:0; }
 /* Un pas attendu prend la couleur de la famille de sa piste (même code que
    les pastilles à gauche) — plus tout en orange quel que soit le son. */
-.sequence-step.filled { background:var(--ko-orange); }
+.sequence-step.filled { background:var(--ko-orange); border-radius:7px; }
 .measure-card-row.cat-kick .sequence-step.filled { background:var(--cat-kick); }
 .measure-card-row.cat-clap .sequence-step.filled { background:var(--cat-clap); }
 .measure-card-row.cat-snare .sequence-step.filled { background:var(--cat-snare); }
@@ -121,15 +127,18 @@ header { display:flex; justify-content:space-between; gap:30px; align-items:star
 .measure-card-row.cat-fx .sequence-step.filled { background:var(--cat-fx); color:#fff; }
 /* La frappe réelle (juste/à côté/ratée) reste prioritaire sur la couleur
    de famille : c'est le retour le plus important à cet endroit précis. */
-.sequence-step.filled.perfect { background:var(--ko-amber); color:var(--ko-black); }
-.sequence-step.filled.good { background:var(--ko-amber); color:var(--ko-black); }
-.sequence-step.filled.miss { background:#c62818; color:#fff; }
+/* La frappe jouée se pose EN SURCOUCHE (box-shadow inset translucide),
+   au-dessus de la couleur de famille déjà là — la partition d'origine
+   reste lisible dessous, plutôt que d'être remplacée par le résultat. */
+.sequence-step.filled.perfect { box-shadow:inset 0 0 0 999px rgba(255,176,0,.45); }
+.sequence-step.filled.good { box-shadow:inset 0 0 0 999px rgba(255,176,0,.45); }
+.sequence-step.filled.miss { box-shadow:inset 0 0 0 999px rgba(198,40,24,.55); color:#fff; }
 .sequence-step.current { outline:2px solid var(--ko-orange); outline-offset:-2px; z-index:2; }
 .player-mark { width:13px; height:13px; border-radius:50%; background:#fff; border:2px solid var(--ko-black); box-shadow:0 0 0 2px #fff; }
 .sequence-step.played.perfect .player-mark { background:var(--ko-amber); }
 .sequence-step.played.good .player-mark { background:var(--ko-amber); }
 .sequence-step.played.miss .player-mark { background:#c62818; }
-.sequence-step.played:not(.filled) { background:#dedcd6; }
+.sequence-step.played:not(.filled) { background:#dedcd6; border-radius:7px; }
 .sequence-cursor { position:absolute; top:0; bottom:0; width:2px; background:var(--ko-orange); box-shadow:0 0 8px var(--ko-orange); z-index:3; pointer-events:none; }
 /* Plus de fond sombre derrière les pads (11/08) — le bac reste une simple
    grille posée sur le panneau, sans puits recessé. */
@@ -199,20 +208,22 @@ header { display:flex; justify-content:space-between; gap:30px; align-items:star
    plus de VU-mètres décoratifs ni de badge combo isolé : l'analyse de la
    session vit dans un seul bloc lisible, à côté du bac de pads. */
 .performance-panel {
-  display:flex; align-items:stretch; gap:16px;
+  display:flex; align-items:stretch; justify-content:center; gap:16px;
   margin-top:14px; padding:14px; border:1px solid #77746e; border-radius:var(--radius);
   background:linear-gradient(145deg,#dedcd6,#c7c4bd); box-shadow:4px 4px 0 var(--ko-black);
 }
+/* Compact — pas besoin d'un gros bloc pour six chiffres : grille 2×3, pas
+   de liste verticale à rallonge. */
 .performance-results {
-  flex:1 1 auto; min-width:190px; display:flex; flex-direction:column; gap:6px;
-  padding:12px 14px; border:1px solid var(--ko-black); border-radius:var(--radius-sm);
+  flex:0 0 auto; width:220px; display:flex; flex-direction:column; gap:6px;
+  padding:9px 10px; border:1px solid var(--ko-black); border-radius:var(--radius-sm);
   background:#f3f1ec; box-shadow:3px 3px 0 var(--ko-black);
 }
-.performance-results > b { font-size:10px; letter-spacing:.1em; color:#65625d; margin-bottom:2px; }
-.performance-stat { display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding-top:6px; border-top:1px solid #d8d5cf; }
-.performance-stat:first-of-type { padding-top:0; border-top:0; }
-.performance-stat span { font-size:9px; font-weight:bold; letter-spacing:.04em; color:#65625d; }
-.performance-stat b { font-variant-numeric:tabular-nums; font-size:16px; }
+.performance-results > b { font-size:8.5px; letter-spacing:.1em; color:#65625d; }
+.performance-grid { display:grid; grid-template-columns:1fr 1fr; gap:5px 10px; }
+.performance-stat { display:flex; flex-direction:column; gap:1px; }
+.performance-stat span { font-size:7.5px; font-weight:bold; letter-spacing:.03em; color:#65625d; }
+.performance-stat b { font-variant-numeric:tabular-nums; font-size:13px; }
 .performance-stat.perfect b { color:var(--ko-orange); }
 .performance-stat.good b { color:#9a6500; }
 .performance-stat.miss b { color:#c62818; }

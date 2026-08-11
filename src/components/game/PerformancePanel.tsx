@@ -33,12 +33,14 @@ export function PerformancePanel({ transportActive, expectedPad, flashedPad, sco
     })}</section>
     <aside className="performance-results">
       <b>ANALYSE</b>
-      <div className="performance-stat perfect"><span>PERFECT</span><b>{score.perfect}</b></div>
-      <div className="performance-stat good"><span>GOOD</span><b>{score.good}</b></div>
-      <div className="performance-stat miss"><span>MISS</span><b>{score.miss}</b></div>
-      <div className="performance-stat"><span>COMBO</span><b>{score.combo}</b></div>
-      <div className="performance-stat"><span>MEILLEUR COMBO</span><b>{score.maxCombo}</b></div>
-      <div className="performance-stat"><span>ÉCART MOYEN</span><b>{averageMs === null ? '—' : `${averageMs > 0 ? '+' : ''}${averageMs.toFixed(0)} ms`}</b></div>
+      <div className="performance-grid">
+        <div className="performance-stat perfect"><span>PERFECT</span><b>{score.perfect}</b></div>
+        <div className="performance-stat good"><span>GOOD</span><b>{score.good}</b></div>
+        <div className="performance-stat miss"><span>MISS</span><b>{score.miss}</b></div>
+        <div className="performance-stat"><span>COMBO</span><b>{score.combo}</b></div>
+        <div className="performance-stat"><span>MEILLEUR</span><b>{score.maxCombo}</b></div>
+        <div className="performance-stat"><span>ÉCART</span><b>{averageMs === null ? '—' : `${averageMs > 0 ? '+' : ''}${averageMs.toFixed(0)}ms`}</b></div>
+      </div>
     </aside>
   </section>;
 }
