@@ -16,13 +16,13 @@ Les deux analyses indépendantes ont abouti au même ordre de priorités —
 recoupement qui a servi de base au travail ci-dessous plutôt qu'un avis
 isolé.
 
-5 commits sur `main` (fusion directe, fast-forward à chaque fois — aucune
+Plusieurs commits sur `main` (fusion directe, fast-forward à chaque fois — aucune
 divergence à réconcilier), chacun vérifié par `npm run typecheck` +
 `npm run build` + `npm test`, et par un vrai scénario Playwright ou un
 script isolé quand le sujet le permettait — jamais une simple relecture de
 code présentée comme une vérification.
 
-## Plan P0 — quatre chantiers exécutés dans l'ordre convenu
+## Plan P0 — cinq chantiers exécutés dans l'ordre convenu
 
 ### 1. Song Position qui suit la lecture
 
@@ -67,7 +67,7 @@ raccourci clavier vérifié en plus des boutons.
 
 ### 3. Dépendances pinnées et CI qualité
 
-Le chantier le plus rapide et le moins risqué des quatre — aucune logique
+Le chantier le plus rapide et le moins risqué des cinq — aucune logique
 applicative touchée. `react`, `react-dom`, `vite`, `@vitejs/plugin-react`,
 `tone`, `typescript`, `@types/react`, `@types/react-dom` passent de
 `latest` à `^` figé sur ce qui était réellement installé.
@@ -104,6 +104,42 @@ ajoutées à `tools/check-project-exports.mjs`, confirmées défaillantes sur
 l'ancien code puis vertes après le correctif — la régression ne peut plus
 revenir sans qu'un test casse.
 
+### 5. Dix parcours pédagogiques finis
+
+Dernier chantier du plan P0. En relisant `src/core/engine/patterns.ts`
+avant d'écrire quoi que ce soit, découverte que ce rapport (et
+`docs/ROADMAP.md`) affirmaient à tort que seul le niveau 1 de Boom-Bap,
+House, Rock, Reggae et Minimal était écrit à la main — en réalité les 5
+niveaux des 5 styles existaient déjà (commit `4aa8401`, antérieur à cette
+session). Seule la documentation était restée en retard sur le code ;
+corrigée dans `ROADMAP.md`.
+
+Le vrai travail restant était donc d'ajouter 5 **nouveaux** styles à 5
+niveaux chacun pour atteindre la cible « dix parcours pédagogiques finis »
+recommandée par les deux audits externes et l'analyse GPT : **Funk/Boogie,
+UK Garage, Electro/Glitch, Drum'n'Bass et Latin/Afrobeat**. Choisis parmi
+les 34 styles procéduraux restants parce qu'ils avaient déjà un traitement
+spécial dans `createGenericExercise` (signe qu'ils étaient pressentis) et
+qu'ils ont tous une fiche dédiée dans
+`handbook/EP133_ATLAS_FINGER_DRUMMING.md` (§5, §8, §9, §7, §10).
+
+Même gabarit exact que les 5 styles existants : niveau 3 proche du motif
+de référence de l'atlas (même convention que House), niveaux 1-2
+simplifiés (kick + snare, puis hi-hat), niveaux 4-5 densifiés avec un fill
+en mesure 6 gradué par palier de difficulté — propre à chaque style
+(ghost kick pour Funk, rebond de kick pour Garage, glitch rare pour
+Electro, roulement de perc pour Drum'n'Bass, cascade de congas pour
+Afrobeat), pas un fill générique recopié cinq fois.
+
+Vérifié par un vrai scénario Playwright, pas par relecture de code
+seule : les 5 styles sélectionnés un par un dans le sélecteur du jeu,
+niveau glissé de 1 à 5 via le contrôle de difficulté (glisser-déposer réel
+simulé à la souris, pas un raccourci de test), nombre de pas affichés
+confirmé strictement croissant à chaque style (funk 8→50, garage 8→40,
+electro 8→44, dnb 8→46, afro 8→52) ; aucune erreur console ; capture
+d'écran confirmant un rendu propre (pads colorés par catégorie, BPM du
+catalogue affiché correctement pour chaque style).
+
 ## Méthode
 
 Chaque chantier a suivi le même principe : comprendre le code existant
@@ -117,22 +153,25 @@ partagé jamais touché directement.
 ## Vérifications logicielles
 
 - `npm run typecheck` + `npm run build` + `npm test` au vert après chacun
-  des 5 commits ;
+  des commits ;
 - CI GitHub Actions maintenant active pour vérifier automatiquement la
   suite (typecheck + tests + build) sur ce dépôt à partir de ce jour ;
-- captures d'écran et scénarios Playwright réels pour les items 1 et 2 ;
+- captures d'écran et scénarios Playwright réels pour les items 1, 2 et 5 ;
 - script Node isolé, avant/après correctif, pour l'item 4.
 
 ## Priorités à la reprise
 
-1. dernier chantier du plan P0 : dix parcours pédagogiques finis — les
-   niveaux 2 à 5 de Boom-Bap, House, Rock, Reggae et Minimal restent à
-   écrire à la main (seul le niveau 1 l'est), avant les 34 autres styles ;
-2. P1 une fois le P0 clos : rapport de progression par pad après une
-   session, conversion Projet → Exercice, édition vélocité/gate/
-   micro-timing, bibliothèque unifiée ;
-3. mode KEYS mélodique pour Rhythm Hero — idée notée le 11/08, toujours
+Plan P0 clos avec ce cinquième chantier — les cinq recommandations
+partagées par les deux audits externes et l'analyse GPT sont maintenant
+faites (identité de marque déjà en cours par ailleurs, Song Position,
+Undo/Redo, dépendances+CI, audit Save/Load, dix parcours pédagogiques).
+
+1. P1 maintenant que le P0 est clos : rapport de progression par pad
+   après une session (le contenu nécessaire — dix styles à 5 niveaux —
+   est désormais prêt), conversion Projet → Exercice, édition vélocité/
+   gate/micro-timing, bibliothèque unifiée ;
+2. mode KEYS mélodique pour Rhythm Hero — idée notée le 11/08, toujours
    remise à plus tard (voir mémoire `rhythm-hero-keys-mode-idea`) ;
-4. vérifier côté utilisateur si les autorisations MIDI du navigateur
+3. vérifier côté utilisateur si les autorisations MIDI du navigateur
    expliquent le « NON CONNECTÉ » persistant signalé le 11/08 — toujours
    sans confirmation de l'utilisateur.

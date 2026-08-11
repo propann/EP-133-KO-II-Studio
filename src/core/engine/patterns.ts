@@ -9,13 +9,14 @@
  *
  * Boom-Bap (`createBoomBapTargets`) reste la référence déjà validée : 5
  * niveaux écrits à la main, une variation en mesure 5 et un fill en mesure 6.
- * House, Rock, Reggae et Minimal suivent maintenant le même principe et
- * remplacent la génération procédurale générique qui restait pour ces
- * quatre styles — ce sont les quatre styles de niveau 1 du catalogue
- * (`exercises/catalogue-exercices-v1.json`), les patterns de référence
- * viennent de `handbook/EP133_ATLAS_FINGER_DRUMMING.md` quand une fiche
- * existe. Les 34 autres styles gardent `createGenericExercise` en attendant
- * leur tour.
+ * House, Rock, Reggae, Minimal, puis Funk, UK Garage, Electro, Drum'n'Bass
+ * et Latin/Afrobeat suivent le même principe — dix styles au total, la
+ * cible « dix parcours pédagogiques finis » du plan P0 (12 août, croisement
+ * des deux audits externes et de l'analyse GPT, voir docs/ROADMAP.md et
+ * docs/REGISTRE_IDEES.md Q-07). Les patterns de référence viennent de
+ * `handbook/EP133_ATLAS_FINGER_DRUMMING.md` quand une fiche existe (Rock et
+ * Minimal n'en ont pas, gabarits 4/4 conçus directement). Les 29 styles
+ * restants gardent `createGenericExercise` en attendant leur tour.
  *
  * Légende des pads utilisés (voir `src/core/project/pads.ts`) :
  * 0 KICK · 1 CLAP · 2 SNARE · 3 OPEN HAT · 4 CLOSED HAT · 5 RIDE ·
@@ -191,12 +192,180 @@ function createMinimalTargets(difficulty: number): Exercise['targets'] {
   return [...new Map(targets.map((target) => [`${target.beat}-${target.pad}`, target])).values()];
 }
 
+/**
+ * Funk / Boogie — 108 BPM (handbook § 5). Le niveau 3 reprend le motif de
+ * référence de l'atlas ; le kick syncopé (pas 3, 6, 8, 14) est la vraie
+ * difficulté du style, pas la vitesse. Ghost kick ajouté en mesure 5 comme
+ * ornement, jamais dans les niveaux 1-2 pour ne pas noyer l'oreille avant
+ * que le contretemps de base soit acquis.
+ */
+function createFunkTargets(difficulty: number): Exercise['targets'] {
+  const targets: Exercise['targets'] = [];
+  const addSteps = (bar: number, pad: number, steps: number[]) => steps.forEach((step) => targets.push({ id: `funk-${difficulty}-${bar}-${pad}-${step}`, beat: bar * 4 + step / 4, pad }));
+  const levels = [
+    { kick: [0, 8], snare: [4, 12], hat: [], perc: [], open: [] },
+    { kick: [0, 8], snare: [4, 12], hat: [0, 4, 8, 12], perc: [], open: [] },
+    { kick: [0, 3, 6, 8, 14], snare: [4, 12, 15], hat: [0, 4, 8, 12], perc: [2, 10], open: [] },
+    { kick: [0, 3, 6, 8, 14], snare: [4, 12, 15], hat: [0, 2, 4, 6, 8, 10, 12, 14], perc: [2, 10, 13], open: [7] },
+    { kick: [0, 3, 6, 8, 14], snare: [4, 12, 15], hat: [0, 2, 3, 4, 6, 7, 8, 10, 11, 12, 14, 15], perc: [2, 10, 13], open: [7, 15] },
+  ][difficulty - 1];
+  for (let bar = 0; bar < 6; bar += 1) {
+    addSteps(bar, 0, levels.kick);
+    addSteps(bar, 2, levels.snare);
+    addSteps(bar, 4, levels.hat);
+    addSteps(bar, 6, levels.perc);
+    addSteps(bar, 3, levels.open);
+    if (bar === 4 && difficulty >= 2) addSteps(bar, 0, [11]);
+    if (bar === 5) {
+      if (difficulty >= 3) addSteps(bar, 6, [5, 9]);
+      if (difficulty >= 4) addSteps(bar, 0, [9]);
+      if (difficulty === 5) addSteps(bar, 2, [7, 14]);
+    }
+  }
+  return [...new Map(targets.map((target) => [`${target.beat}-${target.pad}`, target])).values()];
+}
+
+/**
+ * Breakbeat / UK Garage — 132 BPM (handbook § 8). Le kick rebondit entre les
+ * pas 6 et 8 selon la mesure — la vraie compétence du style, introduite dès
+ * le niveau 3. « Déplacer occasionnellement le kick du pas 7 au pas 8 pour
+ * créer le rebond » (handbook) : les mesures impaires décalent le second
+ * kick d'un pas à partir du niveau 4.
+ */
+function createGarageTargets(difficulty: number): Exercise['targets'] {
+  const targets: Exercise['targets'] = [];
+  const addSteps = (bar: number, pad: number, steps: number[]) => steps.forEach((step) => targets.push({ id: `garage-${difficulty}-${bar}-${pad}-${step}`, beat: bar * 4 + step / 4, pad }));
+  const levels = [
+    { kick: [0, 8], snare: [4, 12], hat: [], perc: [], open: [] },
+    { kick: [0, 8], snare: [4, 12], hat: [0, 4, 8, 12], perc: [], open: [] },
+    { kick: [0, 6, 12], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], perc: [2], open: [] },
+    { kick: [0, 6, 12, 15], snare: [4, 12], hat: [0, 2, 4, 6, 7, 8, 10, 12, 14], perc: [2, 9], open: [7] },
+    { kick: [0, 6, 12, 15], snare: [4, 12], hat: [0, 2, 4, 6, 7, 8, 10, 12, 14, 15], perc: [2, 9, 15], open: [7] },
+  ][difficulty - 1];
+  for (let bar = 0; bar < 6; bar += 1) {
+    const bounce = difficulty >= 4 && bar % 2 === 1;
+    addSteps(bar, 0, bounce ? levels.kick.map((step) => step === 6 ? 7 : step) : levels.kick);
+    addSteps(bar, 2, levels.snare);
+    addSteps(bar, 4, levels.hat);
+    addSteps(bar, 6, levels.perc);
+    addSteps(bar, 3, levels.open);
+    if (bar === 4 && difficulty >= 2) addSteps(bar, 2, [14]);
+    if (bar === 5) {
+      if (difficulty >= 3) addSteps(bar, 6, [11]);
+      if (difficulty >= 4) addSteps(bar, 0, [10]);
+      if (difficulty === 5) addSteps(bar, 4, [13, 15]);
+    }
+  }
+  return [...new Map(targets.map((target) => [`${target.beat}-${target.pad}`, target])).values()];
+}
+
+/**
+ * Electro / Glitch — 118 BPM (handbook § 9). Le glitch (perc 1) reste rare
+ * jusqu'au niveau 4 — « un glitch rare paraît plus cher qu'un glitch épuisé »
+ * (handbook). Le vocal chop (FX) n'apparaît qu'au niveau 5, en accent isolé
+ * plutôt qu'en boucle.
+ */
+function createElectroTargets(difficulty: number): Exercise['targets'] {
+  const targets: Exercise['targets'] = [];
+  const addSteps = (bar: number, pad: number, steps: number[]) => steps.forEach((step) => targets.push({ id: `electro-${difficulty}-${bar}-${pad}-${step}`, beat: bar * 4 + step / 4, pad }));
+  const levels = [
+    { kick: [0, 8], snare: [4, 12], hat: [], glitch: [], fx: [] },
+    { kick: [0, 8], snare: [4, 12], hat: [0, 4, 8, 12], glitch: [], fx: [] },
+    { kick: [0, 7, 8], snare: [4, 12], hat: [0, 2, 4, 8, 10, 12], glitch: [], fx: [] },
+    { kick: [0, 7, 8], snare: [4, 12, 15], hat: [0, 2, 4, 5, 7, 8, 10, 12, 13, 14], glitch: [5, 7], fx: [] },
+    { kick: [0, 7, 8], snare: [4, 12, 15], hat: [0, 2, 4, 5, 7, 8, 10, 12, 13, 14], glitch: [5, 7, 12, 14, 15], fx: [10] },
+  ][difficulty - 1];
+  for (let bar = 0; bar < 6; bar += 1) {
+    addSteps(bar, 0, levels.kick);
+    addSteps(bar, 2, levels.snare);
+    addSteps(bar, 4, levels.hat);
+    addSteps(bar, 6, levels.glitch);
+    addSteps(bar, 11, levels.fx);
+    if (bar === 4 && difficulty >= 2) addSteps(bar, 2, [7]);
+    if (bar === 5) {
+      if (difficulty >= 3) addSteps(bar, 6, [3, 11]);
+      if (difficulty >= 4) addSteps(bar, 0, [3]);
+      if (difficulty === 5) addSteps(bar, 11, [8]);
+    }
+  }
+  return [...new Map(targets.map((target) => [`${target.beat}-${target.pad}`, target])).values()];
+}
+
+/**
+ * Drum'n'Bass — 174 BPM, mais compté comme un 4/4 lent d'entraînement
+ * (handbook § 7 : « commencer à 87 BPM, puis doubler le tempo après
+ * réussite »). La snare est le repère qui ne bouge jamais, quel que soit le
+ * niveau — « si elle disparaît, le bateau est déjà dans le mur ».
+ */
+function createDnbTargets(difficulty: number): Exercise['targets'] {
+  const targets: Exercise['targets'] = [];
+  const addSteps = (bar: number, pad: number, steps: number[]) => steps.forEach((step) => targets.push({ id: `dnb-${difficulty}-${bar}-${pad}-${step}`, beat: bar * 4 + step / 4, pad }));
+  const levels = [
+    { kick: [0, 10], snare: [4, 12], hat: [], perc: [], open: [] },
+    { kick: [0, 10], snare: [4, 12], hat: [0, 4, 8, 12], perc: [], open: [] },
+    { kick: [0, 10, 13], snare: [4, 12], hat: [0, 2, 4, 8, 10, 12], perc: [3, 6], open: [] },
+    { kick: [0, 10, 13], snare: [4, 12], hat: [0, 2, 3, 4, 6, 8, 10, 11, 12, 14], perc: [3, 6, 11, 13], open: [7] },
+    { kick: [0, 10, 13], snare: [4, 12], hat: [0, 2, 3, 4, 6, 7, 8, 10, 11, 12, 14, 15], perc: [3, 6, 11, 13], open: [7, 15] },
+  ][difficulty - 1];
+  for (let bar = 0; bar < 6; bar += 1) {
+    addSteps(bar, 0, levels.kick);
+    addSteps(bar, 2, levels.snare);
+    addSteps(bar, 4, levels.hat);
+    addSteps(bar, 6, levels.perc);
+    addSteps(bar, 3, levels.open);
+    if (bar === 4 && difficulty >= 2) addSteps(bar, 0, [7]);
+    if (bar === 5) {
+      if (difficulty >= 3) addSteps(bar, 6, [9, 14]);
+      if (difficulty >= 4) addSteps(bar, 0, [5]);
+      if (difficulty === 5) addSteps(bar, 2, [7, 10, 14]);
+    }
+  }
+  return [...new Map(targets.map((target) => [`${target.beat}-${target.pad}`, target])).values()];
+}
+
+/**
+ * Latin / Afrobeat — 105 BPM (handbook § 10, 104 BPM à la fiche — tempo du
+ * catalogue conservé). Le shaker croisé tient la pulsation en continu dès le
+ * niveau 3 pendant que le kick et les congas dessinent la clave — travailler
+ * l'indépendance des mains est le but, pas la densité.
+ */
+function createAfroTargets(difficulty: number): Exercise['targets'] {
+  const targets: Exercise['targets'] = [];
+  const addSteps = (bar: number, pad: number, steps: number[]) => steps.forEach((step) => targets.push({ id: `afro-${difficulty}-${bar}-${pad}-${step}`, beat: bar * 4 + step / 4, pad }));
+  const levels = [
+    { kick: [0, 8], snare: [4, 12], hat: [], perc: [], shaker: [] },
+    { kick: [0, 8], snare: [4, 12], hat: [0, 4, 8, 12], perc: [], shaker: [] },
+    { kick: [0, 7, 8, 14], snare: [4, 12], hat: [0, 4, 8, 12], perc: [2, 10], shaker: [] },
+    { kick: [0, 7, 8, 14], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], perc: [2, 7, 10, 15], shaker: [1, 5, 9, 13] },
+    { kick: [0, 7, 8, 14], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], perc: [2, 7, 10, 15], shaker: [1, 3, 5, 7, 9, 11, 13, 15] },
+  ][difficulty - 1];
+  for (let bar = 0; bar < 6; bar += 1) {
+    addSteps(bar, 0, levels.kick);
+    addSteps(bar, 2, levels.snare);
+    addSteps(bar, 4, levels.hat);
+    addSteps(bar, 6, levels.perc);
+    addSteps(bar, 9, levels.shaker);
+    if (bar === 4 && difficulty >= 2) addSteps(bar, 6, [5]);
+    if (bar === 5) {
+      if (difficulty >= 3) addSteps(bar, 6, [11, 13]);
+      if (difficulty >= 4) addSteps(bar, 0, [11]);
+      if (difficulty === 5) addSteps(bar, 2, [7, 14]);
+    }
+  }
+  return [...new Map(targets.map((target) => [`${target.beat}-${target.pad}`, target])).values()];
+}
+
 const DEDICATED_STYLES: Record<string, { title: string; targets: (difficulty: number) => Exercise['targets'] }> = {
   boom: { title: 'BOOM-BAP', targets: createBoomBapTargets },
   house: { title: 'HOUSE 4/4', targets: createHouseTargets },
   rock: { title: 'ROCK DROIT', targets: createRockTargets },
   reggae: { title: 'REGGAE ONE DROP', targets: createReggaeTargets },
   minimal: { title: 'MINIMAL PULSE', targets: createMinimalTargets },
+  funk: { title: 'FUNK / BOOGIE', targets: createFunkTargets },
+  garage: { title: 'UK GARAGE', targets: createGarageTargets },
+  electro: { title: 'ELECTRO / GLITCH', targets: createElectroTargets },
+  dnb: { title: "DRUM'N'BASS", targets: createDnbTargets },
+  afro: { title: 'LATIN / AFROBEAT', targets: createAfroTargets },
 };
 
 /** Génération procédurale provisoire pour les styles qui n'ont pas encore leurs 5 niveaux écrits à la main (voir docs/ETAT_DU_PROJET.md). */

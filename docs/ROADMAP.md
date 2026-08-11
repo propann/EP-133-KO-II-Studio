@@ -86,9 +86,14 @@ autorisation MIDI du navigateur.
   SysEx d'écriture dans le projet) ; SYNCHRONISER dans Sons & Transfert
   copie désormais réellement les sons perso choisis vers le dossier de
   travail local, mais rien n'est jamais envoyé à la machine elle-même.
-- Seul le niveau 1 des cinq styles (Boom-Bap, House, Rock, Reggae, Minimal)
-  est écrit à la main ; les niveaux 2 à 5 et les 34 autres styles utilisent
-  encore des partitions générées provisoires.
+- **Correction d'une inexactitude de ce document** : les 5 niveaux de
+  Boom-Bap, House, Rock, Reggae et Minimal étaient déjà tous écrits à la
+  main, contrairement à ce qu'affirmait cette ligne jusqu'au 12 août — seule
+  la documentation était restée en retard sur le code. Funk, UK Garage,
+  Electro, Drum'n'Bass et Latin/Afrobeat rejoignent le lot le 12 août : dix
+  styles à 5 niveaux écrits à la main au total, la cible « dix parcours
+  pédagogiques finis » du plan P0 est atteinte. Les 29 styles restants
+  utilisent encore des partitions générées provisoires.
 - Les tests automatisés restent limités à 3 scripts ciblés (moteur,
   transport, exports) — toujours aucun test d'intégration ni E2E committé,
   mais une CI qualité (typecheck + tests + build) tourne désormais sur
@@ -269,11 +274,15 @@ la machine sans toucher aux autres projets.
 
 ## Phase 6 — contenu pédagogique
 
-- [x] Niveau 1 écrit à la main pour Boom-Bap, House, Rock, Reggae et Minimal.
-- [ ] Finaliser les niveaux 2 à 5 pour ces cinq styles, puis les 34 autres.
+- [x] 5 niveaux écrits à la main pour dix styles : Boom-Bap, House, Rock,
+  Reggae, Minimal (déjà fait), puis Funk, UK Garage, Electro, Drum'n'Bass
+  et Latin/Afrobeat (12 août — cible « dix parcours pédagogiques finis »
+  du plan P0 atteinte). Les 29 styles restants gardent la génération
+  procédurale en attendant leur tour.
 - [ ] Rapport de progression par pad après une session (avance/retard, pad
   confondu, tempo conseillé — voir REGISTRE_IDEES.md Q-07, différenciant
-  fort face aux coachs génériques comme Melodics).
+  fort face aux coachs génériques comme Melodics) — le prérequis contenu
+  est désormais rempli, reste à construire le rapport lui-même.
 - [ ] Historique local des scores et progression.
 - [ ] Conseils ciblés sur timing, main, doigt et pad.
 - [ ] Importer une composition du studio comme exercice du jeu.
