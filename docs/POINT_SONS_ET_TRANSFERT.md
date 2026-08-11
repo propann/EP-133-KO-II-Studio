@@ -96,3 +96,41 @@ ce parcours complet n'est pas encore validé dans Rhythm Hero.
 - contrôle `git diff --check` réussi ;
 - validation visuelle utilisateur à effectuer dans Chrome/Chromium sur écran
   large puis étroit.
+
+## Évolution du 11 août 2026 — bibliothèque perso et disposition finale
+
+La page est devenue le gestionnaire de samples machine **et** perso, pas
+seulement machine (demande explicite de l'utilisateur). Disposition
+retenue après plusieurs itérations (voir `RAPPORT_SESSION_2026-08-11.md`
+pour le détail des essais écartés) :
+
+- **GROUPES & PADS** en bandeau pleine largeur en haut de page ;
+- **BANQUES DE SONS** (machine) et **BIBLIOTHÈQUE PERSO** côte à côte en
+  dessous, à la même hauteur (595 px mesurés) — la bibliothèque perso
+  réutilise littéralement les classes `.sound-bank-folders`/
+  `.sound-bank-results` de la banque machine (dossiers du niveau courant
+  à gauche, fichiers filtrables et glissables à droite), pas un style
+  maison à part.
+
+Le dossier de la bibliothèque perso (distinct du « dossier du clone » —
+clés IndexedDB séparées, `local-library-folder` contre `sample-folder`)
+se règle uniquement depuis la Fiche personnage ; cette page se contente de
+le lire. Un son glissé depuis la bibliothèque perso peut atterrir soit sur
+un pad, soit directement sur une ligne de la banque machine (marquée
+« SON PERSO PROPOSÉ »). `SYNCHRONISER` copie alors réellement les
+fichiers en attente dans `<dossier de travail>/a-importer/` — première
+fois que ce bouton fait un vrai travail sur disque, mais toujours aucune
+écriture directe sur l'EP-133 (voir « Préparation d'une synchronisation »
+ci-dessus, inchangé sur ce point).
+
+Chaque ligne de la banque machine a désormais un bouton d'écoute (▶), qui
+réutilise `machineSampleBank` (voir `BANQUE_SAMPLES_STUDIO.md`) sur un
+numéro de slot plutôt que sur un pad — sans repli synthétisé possible pour
+un slot brut, donc un message honnête remplace la ligne si le dossier de
+travail n'est pas chargé, plutôt qu'un clic silencieux.
+
+Les sections « PROFIL DE LA MACHINE » (formulaire nom/mémoire/dossier) et
+« TRANSFERT SÉCURISÉ » (bandeau d'instructions) ont été retirées : la
+première faisait doublon avec la Fiche personnage, la seconde était
+devenue redondante avec les indications déjà présentes sur chaque ligne
+de son.

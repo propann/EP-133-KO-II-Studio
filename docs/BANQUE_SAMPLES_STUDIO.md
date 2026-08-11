@@ -33,6 +33,18 @@ métadonnées.
 
 ## Limite du navigateur
 
-Pour des raisons de sécurité, le navigateur redemande actuellement le dossier après un
-rechargement de page. Le futur pont local conservera l'autorisation associée au
-profil de machine et reconnectera automatiquement sa banque privée.
+Le dossier choisi est mémorisé entre deux visites via IndexedDB
+(`src/core/storage/directoryHandleStore.ts`), pas seulement en mémoire —
+au rechargement, l'appli le relit silencieusement si l'autorisation tient
+encore (`hasStoredPermission`, jamais de redemande automatique sans geste
+utilisateur). Le navigateur peut malgré tout révoquer la permission de son
+propre chef ; dans ce cas un bouton RECONNECTER explicite est proposé,
+plutôt qu'un rechargement silencieux qui échouerait sans explication.
+
+## Utilisé aussi depuis Sons & Transfert (11 août 2026)
+
+`machineSampleBank.play(slot, …)` n'est plus réservé à l'écoute des pads
+du Studio : la page SONS & TRANSFERT l'utilise aussi pour le bouton
+d'écoute (▶) de chaque ligne de la banque machine, appelé directement sur
+un numéro de slot plutôt que sur un pad. Voir
+`POINT_SONS_ET_TRANSFERT.md`.

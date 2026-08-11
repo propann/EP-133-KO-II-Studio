@@ -180,6 +180,87 @@ laissée à l'utilisateur ou à une session dédiée, pour éviter un merge
 surprise pendant que l'autre agent travaille encore sur le Studio dans le
 répertoire principal.
 
+## Suite de session — bibliothèque perso et refonte de Sons & Transfert
+
+Deuxième volet de la même journée, sur la même branche `agent/jeu-niveau1-
+styles`, 8 commits supplémentaires. Point de départ : l'utilisateur a une
+bibliothèque de sons personnelle sur disque (`/home/azoth/Musique/sample`,
+55 490 fichiers WAV rangés par catégorie, 20 packs prêts pour la K.O. II —
+voir `ORGANISATION.md` dans ce dossier), distincte du dossier de travail
+machine (`/home/azoth/Musique/OP-133`, qui contient les clones
+`EP-133-K.O.-II` et `MON-EP-133` déjà documentés dans
+`FICHE_MACHINE_EP133.md`). Objectif : pouvoir la parcourir, l'écouter et
+préparer son transfert vers la machine depuis l'appli.
+
+**Itérations de disposition**, chacune vérifiée par capture d'écran
+réelle et test Playwright de bout en bout (dossier factice via un faux
+`showDirectoryPicker`, pour tester sans dialogue natif ni vrais fichiers) :
+
+1. page dédiée `LocalSoundsPage` accessible depuis une carte d'accueil —
+   construite, testée, puis **entièrement retirée** sur retour utilisateur :
+   la bibliothèque devait vivre dans l'outil SONS & TRANSFERT existant
+   (`SoundsPage`), pas à côté ;
+2. bibliothèque perso fusionnée dans `SoundsPage` en 3ᵉ colonne à côté des
+   pads et de la banque machine — retour : trop étroit, à mettre en bas ;
+3. bandeau pleine largeur en bas — retour : plutôt à côté de la banque
+   machine, avec le même concept d'affichage qu'elle, et les pads
+   au-dessus ;
+4. disposition finale : **GROUPES & PADS en bandeau pleine largeur en
+   haut** ; **BANQUES DE SONS (machine) et BIBLIOTHÈQUE PERSO côte à côte
+   en dessous**, toutes deux construites sur les mêmes classes CSS
+   `.sound-bank-folders`/`.sound-bank-results` (dossiers à gauche avec un
+   bouton REMONTER quand on n'est pas à la racine, fichiers filtrables et
+   glissables à droite) — un même code visuel plutôt qu'une imitation, et
+   les deux panneaux se retrouvent naturellement à la même taille (vérifié :
+   595 px de haut mesurés en vrai des deux côtés).
+
+**Glisser-déposer dans les deux sens**, testé avec un vrai cycle
+`DragEvent` (pas seulement le repli clic) : un son de la bibliothèque
+perso se dépose soit sur un pad (case orange, nom du fichier affiché),
+soit directement sur un slot de la banque machine (ligne marquée « SON
+PERSO PROPOSÉ · nom-du-fichier »). `SYNCHRONISER` copie alors réellement
+les fichiers perso en attente dans `<dossier de travail>/a-importer/` —
+une vraie préparation sur disque, honnête sur ses limites : aucun
+protocole d'écriture SysEx n'existe dans ce projet, donc aucune écriture
+directe sur l'EP-133 n'est jamais prétendue. Les réaffectations purement
+machine (sans fichier perso) restent un plan verrouillé, comme avant.
+
+**Bouton d'écoute ajouté sur la banque machine** : réutilise
+`machineSampleBank.play()` (déjà utilisé pour l'écoute des pads du
+Studio, voir `BANQUE_SAMPLES_STUDIO.md`) via une fonction dédiée côté
+`App.tsx`, appliquée à un numéro de slot plutôt qu'à un pad. Contrairement
+à l'écoute d'un pad, un slot brut n'a pas de repli synthétisé sensé — si
+le dossier de travail n'est pas chargé, un message honnête remplace la
+ligne quelques secondes (« AUCUN AUDIO LOCAL — charge le dossier de
+travail depuis la FICHE PERSONNAGE ») plutôt qu'un clic silencieux.
+
+**Réglages centralisés dans la Fiche personnage** : la bibliothèque perso
+a son propre dossier (clé IndexedDB `local-library-folder`, distincte du
+dossier de travail machine `sample-folder`), avec ses propres boutons
+CONNECTER/CHANGER/RECONNECTER dans une nouvelle section BIBLIOTHÈQUE PERSO
+de `PlayerProfilePage` — `SoundsPage` ne fait que lire ce dossier une fois
+connecté, aucun sélecteur de dossier n'y a été laissé, conformément à la
+consigne « tous les réglages de dossier dans la fiche perso ».
+
+**Décluttering demandé explicitement** : suppression des sections « PROFIL
+DE LA MACHINE » (formulaire nom/mémoire/dossier redondant avec la Fiche
+personnage) et « TRANSFERT SÉCURISÉ » (bandeau d'instructions devenu
+redondant, chaque son affiche déjà où le glisser) — avec nettoyage du code
+et des ~35 lignes de CSS qui ne servaient qu'à elles, vérifié qu'aucun
+autre composant ne les utilisait avant suppression.
+
+**Campagne d'arrondissement étendue à toute la page** : boutons A–D,
+cadre extérieur de la console (avec `overflow:hidden` pour que les
+panneaux internes, eux carrés, se découpent proprement sur les coins
+ronds — même principe que `.sound-bank-browser`), cadre des pads, boutons
+CONNECTER/SYNCHRONISER, jauge de mémoire, champs RECHERCHER, et le bouton
+← ACCUEIL du composant d'en-tête partagé par toutes les pages module.
+
+Vérifications à chaque commit : `npm run build` + `npm test` au vert ;
+Playwright avec faux `showDirectoryPicker` pour la navigation/écoute/
+glisser-déposer réels (impossible de piloter le vrai dialogue natif du
+système depuis Playwright) ; aucune erreur console à aucune étape.
+
 ## Priorités à la reprise
 
 1. vérifier côté utilisateur les autorisations MIDI du navigateur
@@ -194,4 +275,10 @@ répertoire principal.
    `rhythm-hero-keys-mode-idea`) ;
 5. étendre les vraies partitions aux niveaux suivants du catalogue (seul le
    niveau 1 est fait à la main, le reste utilise encore la génération
-   procédurale générique).
+   procédurale générique) ;
+6. écriture réelle vers l'EP-133 (import de sons perso, réaffectation de
+   pad) reste entièrement verrouillée — aucun protocole SysEx d'écriture
+   n'existe dans le projet ; `SYNCHRONISER` ne fait aujourd'hui qu'une
+   copie sur disque (`a-importer/`), jamais un envoi à la machine ;
+7. tri automatique par catégorie lors de l'import depuis la bibliothèque
+   perso, évoqué puis explicitement non demandé pour l'instant.
