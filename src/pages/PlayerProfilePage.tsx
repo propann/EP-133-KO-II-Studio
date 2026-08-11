@@ -10,6 +10,7 @@ interface PlayerProfilePageProps {
   onChangeMachine: (id: string, patch: Partial<PlayerMachine>) => void;
   onAddMachine: () => void;
   onRemoveMachine: (id: string) => void;
+  onConnectMidi: () => void;
   onScanMachine: () => void;
   onOpenSampleFolder: () => void;
   onResetStats: () => void;
@@ -23,7 +24,7 @@ const activeSpec = (avatarId: string) => AVATAR_PRESETS.find((spec) => spec.id =
  * sessions. Module de l'écosystème Studio (accessible depuis l'accueil),
  * pas seulement du jeu.
  */
-export function PlayerProfilePage({ profile, machineConnected, machineSampleCount, onBack, onChange, onChangeMachine, onAddMachine, onRemoveMachine, onScanMachine, onOpenSampleFolder, onResetStats }: PlayerProfilePageProps) {
+export function PlayerProfilePage({ profile, machineConnected, machineSampleCount, onBack, onChange, onChangeMachine, onAddMachine, onRemoveMachine, onConnectMidi, onScanMachine, onOpenSampleFolder, onResetStats }: PlayerProfilePageProps) {
   const { stats } = profile;
   const totalHits = stats.perfect + stats.good + stats.miss;
   const accuracy = totalHits > 0 ? Math.round(((stats.perfect + stats.good) / totalHits) * 100) : null;
@@ -52,6 +53,7 @@ export function PlayerProfilePage({ profile, machineConnected, machineSampleCoun
           </div>
           <div className="profile-machine-status"><span className={machineConnected ? 'online' : ''}><i />{machineConnected ? 'EP‑133 CONNECTÉ' : 'NON CONNECTÉ'}</span>{machineSampleCount > 0 && <small>{machineSampleCount} ÉCHANTILLONS CHARGÉS</small>}</div>
           <div className="profile-machine-actions">
+            {!machineConnected && <button className="profile-connect" onClick={onConnectMidi}>CONNECTER</button>}
             <button className="profile-scan" onClick={onScanMachine}>CLONER · SCANNER</button>
             <button onClick={onOpenSampleFolder}>DOSSIER DE TRAVAIL</button>
             {profile.machines.length > 1 && <button className="profile-machine-remove" onClick={() => { if (window.confirm(`Retirer « ${machine.name} » de la fiche ?`)) onRemoveMachine(machine.id); }}>RETIRER</button>}
