@@ -144,7 +144,8 @@ export default function App() {
   const [sampleFolderNeedsReconnect, setSampleFolderNeedsReconnect] = useState(false);
   const sampleDirectoryHandleRef = useRef<LocalDirectoryHandle | null>(null);
   const [lastScanSave, setLastScanSave] = useState<{ machineId: string; path: string; at: string } | null>(null);
-  const [scanSaveError, setScanSaveError] = useState('');
+  const [scanSaveError, setScanSaveError] = useState<{ machineId: string; message: string } | null>(null);
+  const [scanSaveMachineId, setScanSaveMachineId] = useState('');
   const targets = useRef(activeExercise.targets.map((target, index) => ({ ...target, id: `target-${index}` })));
   const frame = useRef<number | undefined>(undefined);
   const flashTimer = useRef<number | undefined>(undefined);
@@ -331,11 +332,16 @@ export default function App() {
    * propriétaire du navigateur.
    */
   const scanAndSaveMachine = async (machine: PlayerMachine) => {
-    setScanSaveError('');
+    // Toujours un retour visible, y compris pendant l'opération et en cas
+    // d'annulation — un « AbortError » silencieux ressemble exactement à
+    // « le bouton ne fait rien » vu de l'utilisateur, donc plus question de
+    // l'avaler sans un mot.
+    setScanSaveError(null);
+    setScanSaveMachineId(machine.id);
     try {
       let directory = sampleDirectoryHandleRef.current;
       if (directory) {
-        if (!(await requestStoredPermission(directory, 'readwrite'))) { setScanSaveError('Autorisation d’écriture refusée pour le dossier de travail.'); return; }
+        if (!(await requestStoredPermission(directory, 'readwrite'))) { setScanSaveError({ machineId: machine.id, message: 'Autorisation d’écriture refusée pour le dossier de travail.' }); return; }
       } else {
         directory = await chooseLocalDirectory('readwrite');
         sampleDirectoryHandleRef.current = directory;
@@ -348,7 +354,11 @@ export default function App() {
       const path = await writeCloneManifest(directory, machine.name, manifest);
       setLastScanSave({ machineId: machine.id, path, at: new Date().toISOString() });
     } catch (error) {
-      if ((error as { name?: string }).name !== 'AbortError') setScanSaveError(error instanceof Error ? error.message : 'La sauvegarde de l’état des lieux a échoué.');
+      const name = (error as { name?: string }).name;
+      const message = name === 'AbortError' ? 'Sélection de dossier annulée — rien n’a été sauvegardé.' : error instanceof Error ? error.message : 'La sauvegarde de l’état des lieux a échoué.';
+      setScanSaveError({ machineId: machine.id, message });
+    } finally {
+      setScanSaveMachineId('');
     }
   };
 
@@ -1090,6 +1100,7 @@ export default function App() {
         onViewScanReport={() => setWorkspaceView('sounds')}
         lastScanSave={lastScanSave}
         scanSaveError={scanSaveError}
+        scanSaveMachineId={scanSaveMachineId}
         sampleFolderName={sampleFolderName}
         sampleFolderNeedsReconnect={sampleFolderNeedsReconnect}
         onOpenSampleFolder={() => void openStudioSampleFolder()}

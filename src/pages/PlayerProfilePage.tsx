@@ -18,7 +18,8 @@ interface PlayerProfilePageProps {
   onScanMachine: (id: string) => void;
   onViewScanReport: () => void;
   lastScanSave: { machineId: string; path: string; at: string } | null;
-  scanSaveError: string;
+  scanSaveError: { machineId: string; message: string } | null;
+  scanSaveMachineId: string;
   sampleFolderName: string;
   sampleFolderNeedsReconnect: boolean;
   onOpenSampleFolder: () => void;
@@ -45,7 +46,7 @@ const activeSpec = (avatarId: string) => AVATAR_PRESETS.find((spec) => spec.id =
  *   (`saveDeviceProfile` + `createDeviceClone` + `writeCloneManifest`),
  *   juste déclenché d'un clic ici plutôt que de rouvrir la fenêtre de clone.
  */
-export function PlayerProfilePage({ profile, machineConnected, machineSampleCount, deviceInventory, deviceSoundIndex, onBack, onChange, onChangeMachine, onAddMachine, onRemoveMachine, onConnectMidi, onCloneMachine, onScanMachine, onViewScanReport, lastScanSave, scanSaveError, sampleFolderName, sampleFolderNeedsReconnect, onOpenSampleFolder, onReconnectSampleFolder, onResetStats }: PlayerProfilePageProps) {
+export function PlayerProfilePage({ profile, machineConnected, machineSampleCount, deviceInventory, deviceSoundIndex, onBack, onChange, onChangeMachine, onAddMachine, onRemoveMachine, onConnectMidi, onCloneMachine, onScanMachine, onViewScanReport, lastScanSave, scanSaveError, scanSaveMachineId, sampleFolderName, sampleFolderNeedsReconnect, onOpenSampleFolder, onReconnectSampleFolder, onResetStats }: PlayerProfilePageProps) {
   const { stats } = profile;
   const totalHits = stats.perfect + stats.good + stats.miss;
   const accuracy = totalHits > 0 ? Math.round(((stats.perfect + stats.good) / totalHits) * 100) : null;
@@ -75,9 +76,10 @@ export function PlayerProfilePage({ profile, machineConnected, machineSampleCoun
           <div className="profile-machine-status">
             <span className={machineConnected ? 'online' : ''}><i />{machineConnected ? 'EP‑133 CONNECTÉ' : 'NON CONNECTÉ'}</span>
             {machineSampleCount > 0 && <small>{machineSampleCount} ÉCHANTILLONS CHARGÉS</small>}
-            {/* Retour d'info du dernier SCAN, juste à côté du statut de connexion. */}
-            {lastScanSave?.machineId === machine.id && <small className="profile-scan-feedback">✓ SAUVEGARDÉ {new Date(lastScanSave.at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} · {lastScanSave.path}</small>}
-            {scanSaveError && <small className="profile-folder-warning">{scanSaveError}</small>}
+            {/* Retour d'info du dernier SCAN, juste à côté du statut de connexion — toujours quelque chose de visible, jamais un clic silencieux. */}
+            {scanSaveMachineId === machine.id && <small className="profile-scan-pending">⋯ SAUVEGARDE EN COURS</small>}
+            {scanSaveMachineId !== machine.id && lastScanSave?.machineId === machine.id && <small className="profile-scan-feedback">✓ SAUVEGARDÉ {new Date(lastScanSave.at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} · {lastScanSave.path}</small>}
+            {scanSaveMachineId !== machine.id && scanSaveError?.machineId === machine.id && <small className="profile-folder-warning">{scanSaveError.message}</small>}
           </div>
           {(deviceInventory || deviceSoundIndex) && <div className="profile-machine-scan-summary">
             <span>{deviceInventory ? `PROJET P${String(deviceInventory.project).padStart(2, '0')}` : 'PROJET —'}</span>
@@ -90,7 +92,7 @@ export function PlayerProfilePage({ profile, machineConnected, machineSampleCoun
           </div>}
           <div className="profile-machine-actions">
             {!machineConnected && <button className="profile-connect" onClick={onConnectMidi}>CONNECTER</button>}
-            <button className="profile-connect" onClick={() => onScanMachine(machine.id)}>SCANNER · SAUVEGARDER</button>
+            <button className="profile-connect" disabled={scanSaveMachineId === machine.id} onClick={() => onScanMachine(machine.id)}>{scanSaveMachineId === machine.id ? 'SAUVEGARDE EN COURS…' : 'SCANNER · SAUVEGARDER'}</button>
             <button onClick={onViewScanReport}>RAPPORT DÉTAILLÉ</button>
             <button className="profile-scan" onClick={onCloneMachine}>CLONER</button>
             {sampleFolderNeedsReconnect
