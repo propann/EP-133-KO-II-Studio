@@ -71,10 +71,10 @@ nouvelles preuves apparaissent.
 | E-10 | Alt + glisser sans grille | RETENU | Déplacement et durée au tick près |
 | E-11 | Pan par clic molette | RETENU | Ajouter aussi barres de défilement et gestes trackpad |
 | E-12 | Ctrl + molette zoom horizontal | RETENU | Zoom centré sur le pointeur |
-| E-13 | Alt + molette zoom vertical | EXPÉRIMENTER | Conflit avec le réglage de vélocité sur note ; arbitrage contextuel requis |
-| E-14 | Shift + molette défilement horizontal | RETENU | Convention répandue et utile aux longues partitions |
+| E-13 | Alt + molette zoom vertical | EXPÉRIMENTER | Conflit E-16 levé (vélocité passée sur Shift, pas Alt) ; reste à faire |
+| E-14 | Shift + molette défilement horizontal | CORRIGÉ | Le défilement horizontal utilise la molette seule (sans modificateur) depuis le début ; Shift+molette est réservé à la vélocité depuis le 12 août — ce document décrivait une intention jamais implémentée telle quelle |
 | E-15 | Sélection rectangulaire | RETENU | Ctrl/Cmd + glisser, avec alternative tactile future |
-| E-16 | Alt + molette vélocité | EXPÉRIMENTER | Conflit E-13 ; préférer bande de vélocité ou Shift+Alt |
+| E-16 | Alt + molette vélocité | RÉALISÉ (partiel) | Implémenté avec Shift, pas Alt (12 août) : Maj+molette sur un pas rempli de la grille rythmique, delta ±8, clampé 1–127, retour opacité+infobulle, écouteur natif non passif (le `onWheel` React délégué est passif et avale `preventDefault()` en silence — un vrai test Playwright l'a révélé : le second cran d'un même geste scrollait la grille au lieu d'ajuster la note). Couvre la grille rythmique seule ; le piano-roll KEYS (note à note) n'a pas encore cette édition |
 | E-17 | Dupliquer Ctrl/Cmd+D | RETENU | Duplication à la suite avec Annuler |
 | E-18 | Flèches : déplacer/transposer | RETENU | Seulement si la grille possède le focus |
 | E-19 | Shift + flèches : octave | RETENU | Pour les pistes mélodiques uniquement |
@@ -145,6 +145,7 @@ ce classement plutôt qu'un simple avis isolé.
 | Q-09 | Terminologie rassurante (« copie de sécurité », « plan de modifications » plutôt que « synchroniser ») | EXPÉRIMENTER | Déjà partiellement appliqué (SYNCHRONISER décrit précisément ce qu'il fait dans Sons & Transfert) ; à généraliser à toute l'interface |
 | Q-10 | Audit du cycle Save→quitter→rouvrir | RÉALISÉ | 12 août — un vrai bug trouvé et corrigé : `note ?? 60` à l'export corrompait tout pad-trigger en note MIDI fixe après un aller-retour Sauvegarder→Ouvrir ; voir VALIDATION_SAVE_LOAD_STUDIO.md |
 | Q-11 | Conversion Projet → Exercice (Studio → Rhythm Hero) | RÉALISÉ | 12 août — FICHIER › Envoyer le pattern vers Rhythm Hero, réutilise editorExercise()/saveEditorExercise déjà en place ; un seul pattern à la fois, pas encore toute une scène/Song ni de sélection de mesures |
+| Q-12 | Édition expressive : vélocité, gate, micro-timing, multi-sélection, nudge | RÉALISÉ (partiel) | 12 août — vélocité d'un pas éditable (Maj+molette, voir E-16) dans la grille rythmique uniquement ; gate/durée, micro-timing hors grille, multi-sélection et nudge restent à faire (piano-roll KEYS non couvert non plus) |
 
 ## Règle de suivi
 

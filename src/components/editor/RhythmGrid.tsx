@@ -1,4 +1,4 @@
-import type { RefObject } from 'react';
+import { useEffect, type RefObject } from 'react';
 import type { SequencerNote } from '../../core/project/model';
 import { midiNoteName, type EditorGroup, type EditorPadMode } from '../../core/project/exporters';
 import { EP133_PADS, EP133_SCORE_TRACKS } from '../../core/project/pads';
@@ -25,6 +25,9 @@ interface RhythmGridProps {
   onCopyBlock?: (measure: number) => void;
   onDeleteBlock?: (measure: number) => void;
   onToggleCommittedStep?: (sectionKey: string, measure: number, pad: number, step: number) => void;
+  /** Maj+molette sur un pas rempli : ajuste sa vélocité (delta signé, ±8 par cran). */
+  onAdjustVelocity?: (measure: number, pad: number, step: number, delta: number) => void;
+  onAdjustCommittedVelocity?: (sectionKey: string, measure: number, pad: number, step: number, delta: number) => void;
 }
 
 export function RhythmGrid(props: RhythmGridProps) {
@@ -44,6 +47,30 @@ export function RhythmGrid(props: RhythmGridProps) {
     }
     return null;
   };
+  // Maj+molette sur un pas rempli ajuste sa vélocité. On écoute en natif
+  // (passive:false) plutôt qu'en React onWheel : React enregistre son
+  // écouteur délégué comme passif, donc preventDefault() y échoue en
+  // silence et le second cran de molette d'un même geste finit par scroller
+  // la grille sous le curseur au lieu d'ajuster la note visée.
+  useEffect(() => {
+    const el = props.gridRef.current;
+    if (!el) return;
+    const handleWheel = (event: WheelEvent) => {
+      if (!event.shiftKey) return;
+      const cell = (event.target as HTMLElement).closest('button.checked') as HTMLElement | null;
+      if (!cell || !el.contains(cell)) return;
+      event.preventDefault();
+      const delta = event.deltaY < 0 ? 8 : -8;
+      const measure = Number(cell.dataset.measure);
+      const pad = Number(cell.dataset.pad);
+      const step = Number(cell.dataset.step);
+      const sectionKey = cell.dataset.sectionKey;
+      if (sectionKey) props.onAdjustCommittedVelocity?.(sectionKey, measure, pad, step, delta);
+      else props.onAdjustVelocity?.(measure, pad, step, delta);
+    };
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, [props.gridRef, props.onAdjustVelocity, props.onAdjustCommittedVelocity]);
   return <div className="editor-grid" ref={props.gridRef} onWheelCapture={horizontalWheelScroll}><div className="editor-horizontal" style={{ width: `${160 + canvasBars * STEPS_PER_BAR * STEP_WIDTH}px` }}>
     {props.playing && <i className="editor-playhead" style={{ left: `${160 + props.playbackBeat / 4 * STEP_WIDTH}px` }} />}
     <div className="editor-measure-line"><span className="editor-corner">PISTES</span><div className="editor-measure-heads" style={{ gridTemplateColumns: `repeat(${canvasBars}, 1fr)` }}>{Array.from({ length: canvasBars }, (_, measure) => {
@@ -67,7 +94,19 @@ export function RhythmGrid(props: RhythmGridProps) {
         const sourceTargets = committed?.section.targets || props.targets;
         const stepTargets = sourceTargets.filter((target) => target.pad === track.pad && target.beat === beat);
         const noteLabel = stepTargets.filter((target) => target.note !== undefined).map((target) => midiNoteName(target.note!)).join('/');
-        return <button className={`${!committed && localMeasure >= props.bars ? 'outside-length' : ''} ${stepTargets.length ? 'checked' : ''} ${globalStep % 16 === 0 ? 'bar-line' : globalStep % 4 === 0 ? 'beat-line' : ''} ${committed ? 'committed' : ''} ${committed?.localMeasure === 0 && step === 0 ? 'section-start' : ''} ${committed && committed.localMeasure === committed.section.bars - 1 && step === 15 ? 'section-end' : ''}`} onClick={() => committed ? props.onToggleCommittedStep?.(committed.section.key, localMeasure, track.pad, step) : melodic ? (props.onSelectPad(track.pad), props.onOpenKeys()) : props.onToggleStep(localMeasure, track.pad, step)} aria-label={`${props.padName(track.pad)}, longueur ${measure + 1}, pas ${step + 1}`} key={globalStep}>{stepTargets.length ? noteLabel || EP133_PADS[track.pad].key : ''}</button>;
+        const avgVelocity = stepTargets.length ? Math.round(stepTargets.reduce((total, target) => total + target.velocity, 0) / stepTargets.length) : undefined;
+        return <button
+          className={`${!committed && localMeasure >= props.bars ? 'outside-length' : ''} ${stepTargets.length ? 'checked' : ''} ${globalStep % 16 === 0 ? 'bar-line' : globalStep % 4 === 0 ? 'beat-line' : ''} ${committed ? 'committed' : ''} ${committed?.localMeasure === 0 && step === 0 ? 'section-start' : ''} ${committed && committed.localMeasure === committed.section.bars - 1 && step === 15 ? 'section-end' : ''}`}
+          style={avgVelocity !== undefined ? { opacity: 0.4 + 0.6 * (avgVelocity / 127) } : undefined}
+          onClick={() => committed ? props.onToggleCommittedStep?.(committed.section.key, localMeasure, track.pad, step) : melodic ? (props.onSelectPad(track.pad), props.onOpenKeys()) : props.onToggleStep(localMeasure, track.pad, step)}
+          aria-label={`${props.padName(track.pad)}, longueur ${measure + 1}, pas ${step + 1}`}
+          title={avgVelocity !== undefined ? `Vélocité ${avgVelocity}/127 · Maj+molette pour ajuster` : undefined}
+          data-measure={localMeasure}
+          data-pad={track.pad}
+          data-step={step}
+          data-section-key={committed ? committed.section.key : undefined}
+          key={globalStep}
+        >{stepTargets.length ? noteLabel || EP133_PADS[track.pad].key : ''}</button>;
       })}</div></div>;
     })}
   </div></div>;

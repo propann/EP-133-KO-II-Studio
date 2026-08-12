@@ -31,12 +31,15 @@ pour ouvrir, écouter ou modifier un projet.
 
 ## État consolidé — 11-12 août 2026
 
-Mise à jour du 12 août : plan P0 en cours — Song Position qui suit la
+Mise à jour du 12 août : plan P0 terminé — Song Position qui suit la
 lecture, Annuler/Rétablir sur l'édition de pattern, dépendances pinnées,
 CI qualité, et l'audit du cycle Save→quitter→rouvrir a trouvé un vrai bug
 (voir [VALIDATION_SAVE_LOAD_STUDIO.md](VALIDATION_SAVE_LOAD_STUDIO.md)) :
 une frappe ONE simple redevenait une note MIDI fixe après un aller-retour
 Sauvegarder→Ouvrir — corrigé et couvert par un test de non-régression.
+Puis plan P1 en cours : dix parcours pédagogiques (5 styles écrits en plus),
+rapport de progression par pad, conversion Projet → Exercice, et édition de
+la vélocité d'un pas (Maj+molette).
 
 Mise à jour du 11 août : fusion complète des deux branches de travail dans
 `main` (fiche personnage, bibliothèque perso intégrée à Sons & Transfert,
@@ -73,13 +76,20 @@ autorisation MIDI du navigateur.
 - Sons & Transfert : bibliothèque perso et banque machine côte à côte, même
   code visuel, glisser-déposer dans les deux sens, bouton d'écoute sur
   chaque slot, copie réelle des sons perso vers le dossier de travail.
+- Édition de la vélocité d'un pas (Maj+molette dans la grille rythmique,
+  1–127, retour visuel par opacité et infobulle) — couverte par
+  Annuler/Rétablir comme toute autre édition de pattern.
 
 ### Expérimental ou incomplet
 
 - Le JSON EP-133 doit encore être compilé et vérifié en `.ppak` sur une copie
   de projet de test.
-- Le mode KEYS écrit les hauteurs MIDI, mais la durée, la vélocité et les
-  articulations ne disposent pas encore de leurs éditeurs complets.
+- Le mode KEYS écrit les hauteurs MIDI, mais la durée (gate) et les
+  articulations ne disposent pas encore de leurs éditeurs, et le
+  piano-roll KEYS lui-même n'a pas encore d'édition de vélocité note à
+  note (seule la grille rythmique en dispose, 12 août — voir
+  REGISTRE_IDEES.md E-16). Le micro-timing (déplacement hors grille, au
+  tick) et la multi-sélection avec nudge restent également à construire.
 - Les modes ONE, KEYS et LEGATO lus sur la machine ne sont pas tous modifiables
   et persistés de bout en bout.
 - Aucune écriture directe vers l'EP-133 n'existe encore (aucun protocole

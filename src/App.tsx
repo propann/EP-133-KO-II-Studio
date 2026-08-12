@@ -731,6 +731,29 @@ export default function App() {
     if (editorMode !== 'complete') setEditorBars((bars) => barsAfterStepEdit(bars, measure, exists));
   };
 
+  /** Maj+molette sur un pas rempli : vélocité 1–127, comme sur la machine (touche + pression). */
+  const clampVelocity = (velocity: number) => Math.max(1, Math.min(127, velocity));
+
+  const adjustEditorVelocity = (measure: number, pad: number, step: number, delta: number) => {
+    const beat = measure * 4 + step / 4;
+    setEditorTargets((current) => current.map((target) => target.pad === pad && target.beat === beat
+      ? { ...target, velocity: clampVelocity(target.velocity + delta) }
+      : target));
+  };
+
+  const adjustCommittedEditorVelocity = (sectionKey: string, measure: number, pad: number, step: number, delta: number) => {
+    const section = editorCommittedSections.find((candidate) => candidate.key === sectionKey);
+    if (!section || section.patternNumber === null || section.patternNumber === undefined) return;
+    const beat = measure * 4 + step / 4;
+    const bank = currentPatternBank();
+    const notes = bank[editorGroup][section.patternNumber] || [];
+    const nextNotes = notes.map((target) => target.pad === pad && target.beat === beat
+      ? { ...target, velocity: clampVelocity(target.velocity + delta) }
+      : target);
+    setEditorPatternBank({ ...bank, [editorGroup]: { ...bank[editorGroup], [section.patternNumber]: nextNotes } });
+    if (editorPatternNumbers[editorGroup] === section.patternNumber) setEditorTargets(nextNotes);
+  };
+
   const toggleKeyStep = (note: number, globalStep: number) => {
     const beat = globalStep / 4;
     const exists = editorTargets.some((target) => target.pad === editorSelectedPad && target.beat === beat && target.note === note);
@@ -1349,7 +1372,7 @@ export default function App() {
         {editorMode === 'complete' && <PadStrip group={editorGroup} selectedPad={editorSelectedPad} livePad={editorMidiHit?.pad} liveGroup={editorMidiHit?.group} padModes={editorPadModes} padName={devicePadName} padSlot={(pad) => devicePadInfo(pad)?.slot} onSelect={(pad) => { setEditorSelectedPad(pad); setKeyEditorOpen((editorPadModes[`${editorGroup}:${pad}`] || 'ONE') === 'KEYS'); }} onPreview={(pad) => void previewEditorPad(editorGroup, pad)} onModeChange={(pad, mode) => { setEditorPadModes((current) => ({ ...current, [`${editorGroup}:${pad}`]: mode })); setKeyEditorOpen(mode === 'KEYS'); }} onOpenKeys={() => setKeyEditorOpen(true)} />}
         {keyEditorOpen && editorMode === 'complete'
           ? <PianoRoll gridRef={editorGrid} group={editorGroup} selectedPad={editorSelectedPad} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} targets={editorTargets} onClose={() => setKeyEditorOpen(false)} onPreviewNote={(note) => void previewEditorPad(editorGroup, editorSelectedPad, note)} onToggleNote={toggleKeyStep} />
-          : <RhythmGrid gridRef={editorGrid} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} mode={editorMode} group={editorGroup} selectedPad={editorSelectedPad} targets={editorTargets} committedSections={editorCommittedSections} padModes={editorPadModes} padName={devicePadName} scannedPlayMode={(pad) => devicePadInfo(pad)?.playMode} onSelectPad={setEditorSelectedPad} onOpenKeys={() => setKeyEditorOpen(true)} onToggleStep={toggleEditorStep} patternLength={editorBars} onPatternLengthChange={changePatternLength} onCopyBlock={copyPatternBlock} onDeleteBlock={deletePatternBlock} onToggleCommittedStep={toggleCommittedEditorStep} />}
+          : <RhythmGrid gridRef={editorGrid} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} mode={editorMode} group={editorGroup} selectedPad={editorSelectedPad} targets={editorTargets} committedSections={editorCommittedSections} padModes={editorPadModes} padName={devicePadName} scannedPlayMode={(pad) => devicePadInfo(pad)?.playMode} onSelectPad={setEditorSelectedPad} onOpenKeys={() => setKeyEditorOpen(true)} onToggleStep={toggleEditorStep} patternLength={editorBars} onPatternLengthChange={changePatternLength} onCopyBlock={copyPatternBlock} onDeleteBlock={deletePatternBlock} onToggleCommittedStep={toggleCommittedEditorStep} onAdjustVelocity={adjustEditorVelocity} onAdjustCommittedVelocity={adjustCommittedEditorVelocity} />}
       </>}
       <footer><span>{editorMode === 'complete' ? `${midi.outputConnected ? `SON EP‑133 · ${midi.outputNames.join(' + ')}` : 'EP‑133 NON CONNECTÉ'} · PATTERN ${editorGroup}${String(editorPatternNumbers[editorGroup]).padStart(2, '0')} · LN.${effectiveEditorBars} · ` : ''}GROUPE {editorGroup} · {editorTargets.length} FRAPPE(S) · {tempo} BPM{editorMode === 'game' ? ' · AJOUT AUTOMATIQUE ACTIF' : ''}</span></footer>
       {machineCloneOpen && <MachineCloneDialog inventory={deviceInventory} soundIndex={deviceSoundIndex} onClose={() => setMachineCloneOpen(false)} />}

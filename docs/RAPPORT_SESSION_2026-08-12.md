@@ -203,6 +203,67 @@ Limite assumée, pas cachée : un seul pattern à la fois, pas encore toute
 une scène ou une sélection de mesures dans le Song — suffisant pour ce
 premier chantier, à étendre si le besoin se confirme.
 
+## Plan P1 — troisième chantier : édition de la vélocité d'un pas
+
+`RhythmGrid.tsx` (grille rythmique du Studio) et `PianoRoll.tsx` (éditeur
+KEYS) ne permettaient que le tout-ou-rien : un pas est présent ou absent,
+avec `velocity`/`duration` toujours écrits à leur valeur par défaut
+(`DEFAULT_NOTE_VELOCITY = 100`, `DEFAULT_NOTE_DURATION = 0.25`) sans aucun
+moyen de les changer — alors que le modèle `SequencerNote`, l'export MIDI
+et l'export `ep.project.v1` savent déjà transporter une vélocité par note
+depuis le début. Premier morceau du chantier « édition expressive »
+(REGISTRE_IDEES.md Q-12/E-16) : rendre la vélocité éditable là où c'est le
+plus utilisé, la grille rythmique — gate/durée, micro-timing, multi-
+sélection/nudge et l'édition note à note du piano-roll KEYS restent hors
+scope, notés comme suite.
+
+Interaction retenue : **Maj+molette** sur un pas rempli, ±8 par cran,
+bornée à 1–127 (même échelle MIDI que l'export) ; retour visuel par
+opacité du pas (plus vif = plus fort) et infobulle `Vélocité N/127`. Choix
+du modificateur Maj plutôt qu'Alt (proposé par E-16 dans l'étude
+d'origine) : Alt était déjà réservé à un zoom vertical non construit
+(E-13), Maj était libre. La molette sans modificateur garde son usage
+existant (défilement horizontal de la grille).
+
+Bug réel trouvé en vérifiant avec Playwright, pas supposé : la première
+implémentation utilisait le `onWheel` React posé directement sur chaque
+bouton de pas. React enregistre son écouteur `wheel` délégué comme
+**passif** par défaut (optimisation de défilement) ; `event.preventDefault()`
+y échoue silencieusement (avertissement console seulement). Conséquence
+observée à l'écran : le premier cran de molette Maj+molette ajustait bien
+la vélocité, mais le deuxième cran du même geste scrollait la grille
+verticalement sous le curseur au lieu d'ajuster la note — parce que rien
+n'empêchait le défilement natif par défaut de s'exécuter en plus de notre
+gestionnaire. Corrigé en écoutant l'événement `wheel` en natif
+(`addEventListener('wheel', handler, { passive: false })`) directement sur
+le conteneur de la grille dans un `useEffect`, avec des attributs
+`data-measure`/`data-pad`/`data-step`/`data-section-key` sur chaque bouton
+pour retrouver le pas visé sans dépendre du système d'événements React.
+
+Couvre aussi bien un pas du pattern en cours d'édition qu'un pas d'une
+scène déjà commitée dans le Song (même distinction que pour
+`toggleEditorStep`/`toggleCommittedEditorStep`). Passe par le même
+mécanisme d'historique que toute autre édition de pattern : un
+Maj+molette isolé (plus de 500 ms après l'édition précédente) devient sa
+propre étape Annuler/Rétablir, vérifié par un vrai scénario Playwright
+(ajout d'une note, pause, changement de vélocité, pause, Ctrl+Z → revient
+à la vélocité par défaut en conservant la note, second Ctrl+Z → supprime
+la note).
+
+Vérifié par scénarios Playwright réels : molette sans Maj laissée
+inchangée (aucun effet sur la vélocité), Maj+molette haut/bas fait
+monter/descendre la valeur affichée et exportée (vérifié dans le JSON
+`ep.project.v1` téléchargé, pas seulement à l'écran), opacité CSS du pas
+mesurée réellement différente de 1, granularité Annuler/Rétablir
+confirmée sur deux scénarios distincts (édition groupée vs. espacée dans
+le temps) — aucune erreur console au-delà de l'avertissement
+`preventDefault` déjà présent ailleurs dans l'éditeur (défilement
+horizontal), sans lien avec cette fonctionnalité.
+
+Limite assumée, pas cachée : seule la grille rythmique (pas le piano-roll
+KEYS note à note), et seule la vélocité (pas le gate/durée ni le
+micro-timing) — le reste de Q-12 reste à faire.
+
 ## Méthode
 
 Chaque chantier a suivi le même principe : comprendre le code existant
@@ -220,7 +281,10 @@ partagé jamais touché directement.
 - CI GitHub Actions maintenant active pour vérifier automatiquement la
   suite (typecheck + tests + build) sur ce dépôt à partir de ce jour ;
 - captures d'écran et scénarios Playwright réels pour les items 1, 2 et 5 ;
-- script Node isolé, avant/après correctif, pour l'item 4.
+- script Node isolé, avant/après correctif, pour l'item 4 ;
+- scénarios Playwright réels pour le troisième chantier P1 (vélocité),
+  dont un qui a lui-même révélé et fait corriger un bug d'écouteur passif
+  avant d'être considéré comme preuve valable.
 
 ## Priorités à la reprise
 
@@ -229,9 +293,10 @@ partagées par les deux audits externes et l'analyse GPT sont maintenant
 faites (identité de marque déjà en cours par ailleurs, Song Position,
 Undo/Redo, dépendances+CI, audit Save/Load, dix parcours pédagogiques).
 
-1. P1 en cours : rapport de progression par pad fait (ci-dessus) —
-   restent conversion Projet → Exercice, édition vélocité/gate/micro-
-   timing, bibliothèque unifiée, parcours 7/30 jours ;
+1. P1 en cours : rapport de progression par pad, conversion Projet →
+   Exercice et édition de la vélocité d'un pas faits (ci-dessus) —
+   restent gate/micro-timing/multi-sélection/nudge (Q-12, partiel),
+   bibliothèque unifiée, parcours 7/30 jours ;
 2. « pad confondu » du rapport par pad, volontairement pas couvert
    aujourd'hui — comparer chaque MISS à ce qui était attendu sur un autre
    pad au même instant, pas juste le pad réellement joué ;
