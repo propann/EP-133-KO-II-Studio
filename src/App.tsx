@@ -26,7 +26,7 @@ import {
   type ProjectPatterns,
   type SequencerNote,
 } from './core/project/model';
-import { barsAfterStepEdit, measureFromGlobalStep, usedBars } from './core/project/editor';
+import { barsAfterStepEdit, measureFromGlobalStep, nudgeSelectedNotes, stepKeyFromBeat, usedBars } from './core/project/editor';
 import {
   emptyPatternBank,
   emptyScene,
@@ -135,6 +135,8 @@ export default function App() {
   const [studioView, setStudioView] = useState<'pattern' | 'arrangement'>('pattern');
   const [editorPlaybackBeat, setEditorPlaybackBeat] = useState(0);
   const [editorSelectedPad, setEditorSelectedPad] = useState(0);
+  /** Sélection multiple de pas (Ctrl/Cmd+clic), clés `mesure:pad:pas` — pattern en cours d'édition seulement, jamais les sections commitées. */
+  const [editorSelectedSteps, setEditorSelectedSteps] = useState<Set<string>>(new Set());
   const [editorPadModes, setEditorPadModes] = useState<Record<string, EditorPadMode>>({});
   const [keyEditorOpen, setKeyEditorOpen] = useState(false);
   const [deviceInventory, setDeviceInventory] = useState<DeviceInventory | null>(null);
@@ -596,6 +598,11 @@ export default function App() {
     if (editorTargets === editorHistoryBaseline.current) return;
     if (editorTargets === editorHistorySkipTarget.current) {
       editorHistoryBaseline.current = editorTargets;
+      // Un chargement (changement de groupe/pattern, Annuler/Rétablir, nouveau/ouvrir
+      // projet…) remplace le contenu affiché : une sélection multiple d'un autre contexte
+      // n'a plus de sens ici. Un nudge, à l'inverse, ne passe jamais par ce chemin — la
+      // sélection doit y survivre pour enchaîner plusieurs déplacements.
+      setEditorSelectedSteps((current) => current.size ? new Set() : current);
       return;
     }
     if (editorHistoryTimer.current !== undefined) window.clearTimeout(editorHistoryTimer.current);
@@ -643,17 +650,34 @@ export default function App() {
    * attaché une seule fois (pas à chaque rendu) ; l'état frais est lu via une ref mise à
    * jour à chaque rendu, pour éviter à la fois la fermeture périmée et le réabonnement
    * répété d'un composant qui se re-rend très souvent (transport, jeu). */
-  const editorHotkeyState = useRef({ editorOpen, editorMode, studioView, editorUndo, editorRedo });
-  editorHotkeyState.current = { editorOpen, editorMode, studioView, editorUndo, editorRedo };
+  /** Flèches gauche/droite : déplace toute la sélection d'un pas (E-18) — pur no-op si rien n'est sélectionné ou si ça sortirait de la grille. Déclarée ici (avant `editorHotkeyState` juste en dessous) plutôt qu'avec `toggleSelectEditorStep`/`adjustEditorDuration` plus bas dans le fichier : le ref du raccourci clavier l'utilise dès l'assignation synchrone à chaque rendu, pas seulement dans une fermeture différée — la référencer avant sa déclaration lexicale romprait le typecheck (TDZ). */
+  const nudgeEditorSelection = (deltaSteps: number) => {
+    const result = nudgeSelectedNotes(editorTargets, editorSelectedSteps, deltaSteps);
+    if (!result) return;
+    setEditorTargets(result.notes);
+    setEditorSelectedSteps(result.selectedKeys);
+  };
+
+  const editorHotkeyState = useRef({ editorOpen, editorMode, studioView, editorUndo, editorRedo, editorSelectedSteps, nudgeEditorSelection });
+  editorHotkeyState.current = { editorOpen, editorMode, studioView, editorUndo, editorRedo, editorSelectedSteps, nudgeEditorSelection };
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const state = editorHotkeyState.current;
       if (!state.editorOpen || state.editorMode !== 'complete' || state.studioView !== 'pattern') return;
-      if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 'z') return;
       const target = event.target as HTMLElement | null;
       if (target && /^(input|textarea|select)$/i.test(target.tagName)) return;
-      event.preventDefault();
-      if (event.shiftKey) state.editorRedo(); else state.editorUndo();
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
+        event.preventDefault();
+        if (event.shiftKey) state.editorRedo(); else state.editorUndo();
+        return;
+      }
+      // Flèches gauche/droite : déplace la sélection multiple d'un pas (E-18) — seulement si
+      // quelque chose est sélectionné, pour ne jamais voler le défilement/la navigation par
+      // défaut du clavier quand la grille n'a rien de particulier à faire de cette touche.
+      if ((event.key === 'ArrowLeft' || event.key === 'ArrowRight') && state.editorSelectedSteps.size) {
+        event.preventDefault();
+        state.nudgeEditorSelection(event.key === 'ArrowLeft' ? -1 : 1);
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -774,6 +798,26 @@ export default function App() {
     setEditorTargets((current) => current.map((target) => target.pad === pad && target.beat === beat
       ? { ...target, velocity: clampVelocity(target.velocity + delta) }
       : target));
+  };
+
+  /** Gate/durée d'un pas (Alt+molette) — 1/16 de temps mini (un geste perceptible), une mesure entière maxi, pas de limite plus fine imposée par le modèle lui-même. */
+  const clampDuration = (duration: number) => Math.max(0.0625, Math.min(4, duration));
+
+  const adjustEditorDuration = (measure: number, pad: number, step: number, delta: number) => {
+    const beat = measure * 4 + step / 4;
+    setEditorTargets((current) => current.map((target) => target.pad === pad && target.beat === beat
+      ? { ...target, duration: clampDuration(target.duration + delta) }
+      : target));
+  };
+
+  /** Ctrl/Cmd+clic sur un pas rempli : bascule sa sélection multiple (REGISTRE_IDEES.md E-15), sans toucher à la note elle-même. */
+  const toggleSelectEditorStep = (measure: number, pad: number, step: number) => {
+    const key = `${measure}:${pad}:${step}`;
+    setEditorSelectedSteps((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
   };
 
   const adjustCommittedEditorVelocity = (sectionKey: string, measure: number, pad: number, step: number, delta: number) => {
@@ -1425,7 +1469,7 @@ export default function App() {
         {editorMode === 'complete' && <PadStrip group={editorGroup} selectedPad={editorSelectedPad} livePad={editorMidiHit?.pad} liveGroup={editorMidiHit?.group} padModes={editorPadModes} padName={devicePadName} padSlot={(pad) => devicePadInfo(pad)?.slot} onSelect={(pad) => { setEditorSelectedPad(pad); setKeyEditorOpen((editorPadModes[`${editorGroup}:${pad}`] || 'ONE') === 'KEYS'); }} onPreview={(pad) => void previewEditorPad(editorGroup, pad)} onModeChange={(pad, mode) => { setEditorPadModes((current) => ({ ...current, [`${editorGroup}:${pad}`]: mode })); setKeyEditorOpen(mode === 'KEYS'); }} onOpenKeys={() => setKeyEditorOpen(true)} />}
         {keyEditorOpen && editorMode === 'complete'
           ? <PianoRoll gridRef={editorGrid} group={editorGroup} selectedPad={editorSelectedPad} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} targets={editorTargets} onClose={() => setKeyEditorOpen(false)} onPreviewNote={(note) => void previewEditorPad(editorGroup, editorSelectedPad, note)} onToggleNote={toggleKeyStep} onAdjustVelocity={adjustKeyVelocity} />
-          : <RhythmGrid gridRef={editorGrid} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} mode={editorMode} group={editorGroup} selectedPad={editorSelectedPad} targets={editorTargets} committedSections={editorCommittedSections} padModes={editorPadModes} padName={devicePadName} scannedPlayMode={(pad) => devicePadInfo(pad)?.playMode} onSelectPad={setEditorSelectedPad} onOpenKeys={() => setKeyEditorOpen(true)} onToggleStep={toggleEditorStep} patternLength={editorBars} onPatternLengthChange={changePatternLength} onCopyBlock={copyPatternBlock} onDeleteBlock={deletePatternBlock} onToggleCommittedStep={toggleCommittedEditorStep} onAdjustVelocity={adjustEditorVelocity} onAdjustCommittedVelocity={adjustCommittedEditorVelocity} />}
+          : <RhythmGrid gridRef={editorGrid} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} mode={editorMode} group={editorGroup} selectedPad={editorSelectedPad} targets={editorTargets} committedSections={editorCommittedSections} padModes={editorPadModes} padName={devicePadName} scannedPlayMode={(pad) => devicePadInfo(pad)?.playMode} onSelectPad={setEditorSelectedPad} onOpenKeys={() => setKeyEditorOpen(true)} onToggleStep={toggleEditorStep} patternLength={editorBars} onPatternLengthChange={changePatternLength} onCopyBlock={copyPatternBlock} onDeleteBlock={deletePatternBlock} onToggleCommittedStep={toggleCommittedEditorStep} onAdjustVelocity={adjustEditorVelocity} onAdjustCommittedVelocity={adjustCommittedEditorVelocity} onAdjustDuration={adjustEditorDuration} onToggleSelectStep={toggleSelectEditorStep} selectedSteps={editorSelectedSteps} />}
       </>}
       <footer><span>{editorMode === 'complete' ? `${midi.outputConnected ? `SON EP‑133 · ${midi.outputNames.join(' + ')}` : 'EP‑133 NON CONNECTÉ'} · PATTERN ${editorGroup}${String(editorPatternNumbers[editorGroup]).padStart(2, '0')} · LN.${effectiveEditorBars} · ` : ''}GROUPE {editorGroup} · {editorTargets.length} FRAPPE(S) · {tempo} BPM{editorMode === 'game' ? ' · AJOUT AUTOMATIQUE ACTIF' : ''}</span></footer>
       {machineCloneOpen && <MachineCloneDialog inventory={deviceInventory} soundIndex={deviceSoundIndex} onClose={() => setMachineCloneOpen(false)} />}

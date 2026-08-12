@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { classifyHit, emptyScore, scoreHit } from '../src/core/engine/scoring.ts';
-import { barsAfterStepEdit, measureFromGlobalStep, usedBars } from '../src/core/project/editor.ts';
+import { barsAfterStepEdit, measureFromGlobalStep, nudgeSelectedNotes, stepKeyFromBeat, usedBars } from '../src/core/project/editor.ts';
 import { adviseTempo, buildPadReport } from '../src/core/engine/report.ts';
 import { buildPracticePlan } from '../src/core/engine/practicePlan.ts';
 
@@ -65,6 +65,51 @@ assert.equal(barsAfterStepEdit(2, 4, false), 6, 'une édition distante conserve 
 assert.equal(usedBars([]), 1);
 assert.equal(usedBars([{ beat: 0 }, { beat: 3.75 }]), 1);
 assert.equal(usedBars([{ beat: 4 }]), 2);
+
+// Multi-sélection + nudge (plan P1/P2, REGISTRE_IDEES.md E-15/E-18).
+assert.equal(stepKeyFromBeat(0, 0), '0:0:0');
+assert.equal(stepKeyFromBeat(1, 0), '0:0:4', 'battement 1 = mesure 0, pas 4 (1 temps = 4 pas de 1/4)');
+assert.equal(stepKeyFromBeat(4, 0), '1:0:0', 'battement 4 = début de la mesure 1');
+assert.equal(stepKeyFromBeat(4.25, 2), '1:2:1');
+
+assert.equal(nudgeSelectedNotes([{ id: 'a', group: 'A', beat: 0, pad: 0, velocity: 100, duration: 0.25 }], new Set(), 1), null, 'sélection vide -> rien ne bouge');
+assert.equal(nudgeSelectedNotes([{ id: 'a', group: 'A', beat: 0, pad: 0, velocity: 100, duration: 0.25 }], new Set(['0:0:0']), 0), null, 'delta nul -> rien ne bouge');
+
+const simpleNudge = nudgeSelectedNotes(
+  [{ id: 'a', group: 'A', beat: 0, pad: 0, velocity: 100, duration: 0.25 }],
+  new Set(['0:0:0']),
+  1,
+);
+assert.equal(simpleNudge.notes[0].beat, 0.25, 'un pas vers la droite = +1/4 de temps');
+assert.deepEqual([...simpleNudge.selectedKeys], ['0:0:1'], 'la clé de sélection suit la note déplacée');
+
+const blockedNudge = nudgeSelectedNotes(
+  [{ id: 'a', group: 'A', beat: 0, pad: 0, velocity: 100, duration: 0.25 }],
+  new Set(['0:0:0']),
+  -1,
+);
+assert.equal(blockedNudge, null, 'un déplacement qui sortirait de la grille (mesure < 0) ne doit rien changer, pas même partiellement');
+
+const twoNotesNudge = nudgeSelectedNotes(
+  [
+    { id: 'a', group: 'A', beat: 0, pad: 0, velocity: 100, duration: 0.25 },
+    { id: 'b', group: 'A', beat: 1, pad: 0, velocity: 100, duration: 0.25 },
+  ],
+  new Set(['0:0:0', '0:0:4']),
+  1,
+);
+assert.deepEqual(twoNotesNudge.notes.map((note) => note.beat).sort(), [0.25, 1.25], 'les deux notes gardent leur écart relatif (1 temps) après le déplacement');
+
+const overwriteNudge = nudgeSelectedNotes(
+  [
+    { id: 'moving', group: 'A', beat: 0, pad: 0, velocity: 100, duration: 0.25 },
+    { id: 'still', group: 'A', beat: 0.25, pad: 0, velocity: 50, duration: 0.5 },
+  ],
+  new Set(['0:0:0']),
+  1,
+);
+assert.equal(overwriteNudge.notes.length, 1, 'la note déplacée remplace la note immobile déjà présente à la position d’arrivée, jamais de doublon');
+assert.equal(overwriteNudge.notes[0].id, 'moving', 'la note déplacée doit gagner, pas celle qui était déjà là');
 
 const sessionNotes = [
   { pad: 0, grade: 'PERFECT', deltaMs: 5 },

@@ -596,7 +596,8 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .editor-horizontal-row > div button.beat-line,.key-row > div button.beat-line { border-left:2px solid #77736c; }
 .editor-horizontal-row > div button.bar-line,.key-row > div button.bar-line { border-left:3px solid #34322f; }
 .editor-horizontal-row > div button:hover { background:var(--ko-amber); }
-.editor-horizontal-row > div button.checked { background:var(--ko-orange); font-weight:bold; }
+.editor-horizontal-row > div button.checked { background:var(--ko-orange); font-weight:bold; border-bottom-style:solid; border-bottom-color:#7a3a0f; }
+.editor-horizontal-row > div button.selected { outline:2px solid #1c6fd6; outline-offset:-2px; }
 .editor-horizontal-row > div button.reserve:not(.checked) { background:#e3e1db; border-style:dashed; }
 .editor-horizontal-row.selected-pad > strong { background:var(--ko-amber); box-shadow:inset 5px 0 0 var(--ko-orange),4px 0 7px rgba(26,26,26,.14); cursor:pointer; }
 .editor-horizontal-row.melodic-track > strong { background:#c7b16e; box-shadow:inset 5px 0 0 #bd3d16,4px 0 7px rgba(26,26,26,.14); cursor:pointer; }

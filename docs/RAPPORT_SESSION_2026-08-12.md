@@ -697,6 +697,71 @@ dans le chantier précédent) — pas des données inventées pour le test.
 Masquage du bandeau confirmé, aucun avertissement avant enregistrement ni
 après « Nouveau », aucune erreur console.
 
+## Gate/durée, multi-sélection et nudge dans la grille rythmique (E-05/E-15/E-18)
+
+Chantier explicitement choisi par l'utilisateur après une question directe
+sur la suite (« gate/durée + multi-sélection », plus gros morceau que ce
+qui a été fait jusqu'ici, prévenu à l'avance).
+
+**Gate/durée** — même mécanisme que la vélocité (E-16), Alt+molette plutôt
+que Maj+molette, delta ±1/16 de temps, borné 1/16–4 temps. Retour visuel
+par épaisseur de bordure basse plutôt que par opacité (déjà prise par la
+vélocité). **Vrai bug trouvé en vérifiant, pas supposé** : le premier
+essai n'a rien fait du tout. Cause : `horizontalWheelScroll`
+(`fastHorizontalWheel.ts`) n'avait qu'un bypass pour `shiftKey`, pas pour
+`altKey` — pour Alt+molette, cette fonction (React `onWheelCapture`,
+capture) continuait normalement et appelait `event.stopPropagation()`,
+empêchant l'écouteur natif dédié au gate (attaché en aval sur le même
+élément) de jamais recevoir l'événement. Trouvé en instrumentant
+temporairement le code source avec un `console.log` direct dans
+`handleWheel` (l'instrumentation externe via `page.evaluate` n'avait rien
+révélé, l'événement natif étant arrêté avant d'atteindre le point
+d'écoute). Corrigé en ajoutant `event.altKey` au bypass.
+
+**Multi-sélection** — Ctrl/Cmd+clic bascule un pas dans une sélection
+(état `editorSelectedSteps: Set<string>`, clés `mesure:pad:pas`) sans
+toucher à la note elle-même, contrairement à un clic simple. Sélection
+rectangulaire par glisser (proposée à l'origine dans l'étude) pas
+implémentée — bascule un pas à la fois, plus simple à livrer et déjà
+fonctionnellement complet pour sélectionner plusieurs pas.
+
+**Nudge** — nouvelle fonction pure `nudgeSelectedNotes` (`editor.ts`,
+testée indépendamment de React) : flèches gauche/droite déplacent toute la
+sélection d'un pas (1/4 de temps), en préservant les écarts relatifs entre
+notes sélectionnées. Tout ou rien si le déplacement ferait sortir une note
+de la grille (mesure < 0) — jamais de désynchronisation partielle de la
+sélection. Une note déplacée remplace toujours une note immobile déjà
+présente à sa position d'arrivée (dédoublonnage par `Map`, les notes
+déplacées insérées en dernier pour garantir qu'elles gagnent quel que soit
+l'ordre du tableau d'origine — un piège identifié et corrigé avant même de
+lancer le premier test). Réutilise le raccourci clavier déjà en place pour
+Annuler/Rétablir (`editorHotkeyState`), étendu pour gérer aussi les
+flèches — interception seulement si une sélection existe, pour ne jamais
+voler la navigation clavier par défaut sans raison. La sélection se
+réinitialise automatiquement à chaque chargement de contexte (changement
+de groupe/pattern, Annuler/Rétablir, nouveau/ouvrir projet), centralisé
+dans l'effet d'historique déjà existant plutôt que dupliqué à réinitialiser dans les neuf points d'appel — mais persiste correctement à travers plusieurs
+nudges successifs.
+
+Vérifié : `tools/check-engine.mjs` étendu pour `stepKeyFromBeat` et
+`nudgeSelectedNotes` (sélection vide, delta nul, déplacement simple,
+blocage aux limites, écarts relatifs préservés entre deux notes, note
+déplacée qui remplace une note immobile). Scénario Playwright réel de
+bout en bout : création d'une note, Alt+molette (0.25 → 0.38 confirmé
+dans l'infobulle et vérifié différent après le correctif), molette seule
+sans effet, Ctrl+clic qui sélectionne sans supprimer, flèche droite qui
+déplace visiblement la note d'un pas à l'autre, second Ctrl+clic qui
+désélectionne, flèche droite sans sélection qui ne fait rien. Deuxième
+scénario dédié à l'export : 4 crans Alt+molette (0.25 → 0.50 temps)
+confirmés exportés à 48 ticks dans le JSON `ep.project.v1` (96 ticks par
+temps) — pas seulement affichés à l'écran. `npm run typecheck/build/test`
+au vert.
+
+Portée assumée, pas cachée : grille rythmique seulement (pas le
+piano-roll KEYS ni les sections commitées pour le gate/la sélection),
+nudge temporel seulement (pas de transposition verticale, E-19),
+sélection pas-à-pas plutôt que par glisser-rectangle.
+
 ## Priorités à la reprise
 
 Plan P0 clos avec ce cinquième chantier — les cinq recommandations
@@ -704,14 +769,15 @@ partagées par les deux audits externes et l'analyse GPT sont maintenant
 faites (identité de marque déjà en cours par ailleurs, Song Position,
 Undo/Redo, dépendances+CI, audit Save/Load, dix parcours pédagogiques).
 
-1. **Plan P1 clos** — les cinq items partagés par les deux audits externes
-   et l'analyse GPT sont maintenant faits : rapport de progression par
-   pad, conversion Projet → Exercice, édition de la vélocité d'un pas,
-   recherche/métadonnées dans « Ouvrir… », parcours 7/30 jours (chacun
-   partiel où documenté ci-dessus — voir aussi Q-12 et Q-13 pour ce qui
-   reste : gate/micro-timing/multi-sélection/nudge, tags/miniatures/
-   dépendances/unification avec les exercices Rhythm Hero et les clones
-   machine) ;
+1. **Plan P1 clos**, encore approfondi l'après-midi — rapport de
+   progression par pad, conversion Projet → Exercice, édition de la
+   vélocité (grille + piano-roll), recherche/métadonnées dans « Ouvrir… »
+   avec détection des dépendances manquantes, parcours 7/30 jours, gate/
+   durée + multi-sélection + nudge temporel (ci-dessus). Restent
+   explicitement, voir Q-12/Q-13 : micro-timing hors grille, transposition
+   verticale, sélection par glisser-rectangle, gate sur le piano-roll KEYS
+   et les sections commitées, tags/miniatures, unification avec les
+   exercices Rhythm Hero et les clones machine ;
 1bis. **Plan P2 en cours** — item 2 fait (préparation déterministe du
    WAV) et item 5 partiel (Time Machine : chronologie + comparaison,
    revérifié le même jour à la demande explicite de l'utilisateur, un
@@ -730,8 +796,13 @@ Undo/Redo, dépendances+CI, audit Save/Load, dix parcours pédagogiques).
    vérification du cinquième chantier P1 : vrai bug de conception
    (instruments partagés entre modèle et joueur), pas un flake, trié et
    corrigé le même jour (Q-17, ci-dessus) ;
-4. mode KEYS mélodique pour Rhythm Hero — idée notée le 11/08, toujours
-   remise à plus tard (voir mémoire `rhythm-hero-keys-mode-idea`) ;
+4. **ordre confirmé par l'utilisateur pour la suite** (question directe posée
+   quand les chantiers sûrs et bien cadrés ont été épuisés) : gate/multi-
+   sélection fait en premier (ci-dessus), puis bibliothèque unifiée avec
+   les exercices Rhythm Hero et les clones machine, puis mode KEYS
+   mélodique pour Rhythm Hero — ce dernier n'est donc plus « en attente
+   sans confirmation » (mémoire `rhythm-hero-keys-mode-idea` à mettre à
+   jour), il a une place explicite dans la suite ;
 5. **clos** — « NON CONNECTÉ » persistant signalé le 11/08 : vérifié avec la
    vraie machine branchée en USB le 12 août, cause confirmée (autorisation
    SysEx du navigateur, pas un bug de l'app) — ci-dessus.

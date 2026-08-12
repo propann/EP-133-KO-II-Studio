@@ -129,12 +129,15 @@ dépannage documentée.
 
 - Le JSON EP-133 doit encore être compilé et vérifié en `.ppak` sur une copie
   de projet de test.
-- Le mode KEYS écrit les hauteurs MIDI, mais la durée (gate) et les
-  articulations ne disposent pas encore de leurs éditeurs. L'édition de
-  vélocité (Maj+molette) couvre désormais la grille rythmique et le
-  piano-roll KEYS note à note (12 août — voir REGISTRE_IDEES.md E-16). Le
-  micro-timing (déplacement hors grille, au tick) et la multi-sélection
-  avec nudge restent à construire.
+- Le mode KEYS écrit les hauteurs MIDI ; les articulations ne disposent pas
+  encore de leur éditeur. L'édition de vélocité (Maj+molette) couvre la
+  grille rythmique et le piano-roll KEYS note à note (12 août — voir
+  REGISTRE_IDEES.md E-16). L'édition du gate/durée (Alt+molette, E-05), la
+  multi-sélection (Ctrl/Cmd+clic, E-15) et le nudge temporel (flèches
+  gauche/droite, E-18) couvrent la grille rythmique, le même jour. Restent :
+  micro-timing hors grille (au tick), transposition verticale (E-19),
+  sélection par glisser-rectangle, gate sur le piano-roll KEYS et les
+  sections commitées.
 - Les modes ONE, KEYS et LEGATO lus sur la machine ne sont pas tous modifiables
   et persistés de bout en bout.
 - Aucune écriture directe vers l'EP-133 n'existe encore (aucun protocole
