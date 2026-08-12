@@ -288,7 +288,13 @@ la machine sans toucher aux autres projets.
   le pad réellement joué ; noté comme limite connue, pas caché.
 - [ ] Historique local des scores et progression.
 - [ ] Conseils ciblés sur timing, main, doigt et pad.
-- [ ] Importer une composition du studio comme exercice du jeu.
+- [x] Envoyer une composition du Studio comme exercice du jeu (12 août, P1
+  — FICHIER › Envoyer le pattern vers Rhythm Hero). Réutilise
+  editorExercise()/saveEditorExercise déjà en place pour le SAVE du jeu,
+  pas un nouveau convertisseur : le pattern actif (groupe/numéro
+  sélectionnés) devient un exercice USER immédiatement jouable, sans
+  quitter le Studio. Limite assumée : un seul pattern à la fois (pas
+  encore toute une scène/Song), et pas de sélection de mesures.
 - [ ] Dupliquer un exercice officiel vers USER sans modifier l'original.
 
 ## Phase 7 — extension OP-1

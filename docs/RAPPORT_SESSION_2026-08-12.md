@@ -179,6 +179,30 @@ Revérifié avec le même scénario après correctif : total du rapport par
 pad et total agrégé du score strictement égaux (19 = 7+7+5). `npm run
 typecheck` + `npm run build` + `npm test` au vert.
 
+## Plan P1 — deuxième chantier : conversion Projet → Exercice
+
+Avant d'écrire du nouveau code, vérification que `editorExercise()` et
+`saveEditorExercise()` (déjà en place pour le SAVE du jeu) ne dépendent
+d'aucune notion de mode — juste d'`editorTargets`/`tempo`/
+`effectiveEditorBars`, déjà à jour quel que soit l'écran ouvert. Le
+convertisseur existait donc déjà ; seule l'action pour le déclencher
+depuis le Studio manquait. Ajouté : FICHIER › **Envoyer le pattern vers
+Rhythm Hero** — convertit le pattern actif (groupe/numéro sélectionnés) en
+exercice USER, immédiatement listé dans STYLE › EXERCICES USER du jeu,
+sans fermer le Studio (contrairement au SAVE côté jeu, qui referme
+l'éditeur).
+
+Vérifié par un vrai scénario Playwright de bout en bout, pas par
+supposition : pattern créé dans le Studio (une frappe KICK), projet
+renommé « TEST CONVERSION », envoyé via FICHIER, retour à l'accueil, jeu
+ouvert, exercice « TEST CONVERSION · A01 » retrouvé dans le sélecteur
+STYLE, sélectionné, partition affichée avec la frappe correspondante —
+aucune erreur console.
+
+Limite assumée, pas cachée : un seul pattern à la fois, pas encore toute
+une scène ou une sélection de mesures dans le Song — suffisant pour ce
+premier chantier, à étendre si le besoin se confirme.
+
 ## Méthode
 
 Chaque chantier a suivi le même principe : comprendre le code existant

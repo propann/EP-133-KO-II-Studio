@@ -57,6 +57,8 @@ interface EditorToolbarProps {
   onExport: () => void;
   onExportMidi: () => void;
   onExportJson: () => void;
+  /** Convertit le pattern actif (groupe/numéro sélectionnés) en exercice Rhythm Hero USER — P1, voir docs/ROADMAP.md. */
+  onSendToRhythmHero: () => void;
 }
 
 export function EditorToolbar(props: EditorToolbarProps) {
@@ -90,6 +92,7 @@ export function EditorToolbar(props: EditorToolbarProps) {
             <hr className="file-menu-divider" />
             <button className="file-row" onClick={() => { props.onExportMidi(); closeFileMenu(); }}>Exporter en MIDI (.mid)</button>
             <button className="file-row" onClick={() => { props.onExportJson(); closeFileMenu(); }}>Exporter en projet EP‑133 (.json)</button>
+            {props.mode === 'complete' && <><hr className="file-menu-divider" /><button className="file-row" onClick={() => { props.onSendToRhythmHero(); closeFileMenu(); }}>Envoyer le pattern vers Rhythm Hero</button></>}
           </div>
         </details>
         <button className="machine-project-load" onClick={() => setMachineProjectsWindow(true)} title="Parcourir les 9 projets de la machine">↓ PROJETS MACHINE · 9</button>
