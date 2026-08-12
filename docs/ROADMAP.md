@@ -41,6 +41,10 @@ Plan P1 clos le 12 août : dix parcours pédagogiques (5 styles écrits en
 plus), rapport de progression par pad, conversion Projet → Exercice, édition
 de la vélocité d'un pas (Maj+molette), recherche/métadonnées dans
 « Ouvrir… », et parcours 7/30 jours avec répétition sur MISS élevé.
+Plan P2 démarré le 12 août (item 2 seulement — analyse WAV déterministe) :
+les items 1/3/4/5 touchent à une écriture matérielle réelle et restent hors
+de portée du travail logiciel seul, consigne stricte de lecture seule sur
+la machine physique.
 
 Mise à jour du 11 août : fusion complète des deux branches de travail dans
 `main` (fiche personnage, bibliothèque perso intégrée à Sons & Transfert,
@@ -87,6 +91,9 @@ autorisation MIDI du navigateur.
   dédiés, difficulté qui augmente à chaque tour complet, répétition
   automatique du jour précédent si son taux de MISS dépasse 25 %, bouton
   COMMENCER qui charge directement le style/niveau du jour dans le jeu.
+- Fiche audio du WAV dans Sons & Transfert : poids, durée, fréquence
+  source, canaux, profondeur et écrêtage détecté, affichée à l'écoute
+  d'un son de la bibliothèque perso.
 
 ### Expérimental ou incomplet
 
@@ -253,6 +260,12 @@ de fichiers audio propriétaires au dépôt.
 ## Phase 4 — éditeur et préparateur de sons
 
 - [ ] Import WAV/AIFF, puis MP3/FLAC/OGG si le décodeur retenu le permet.
+- [x] Analyse déterministe du WAV (12 août, P2 — voir REGISTRE_IDEES.md
+  Q-15) : poids, durée, fréquence source (lue dans l'en-tête, jamais
+  rééchantillonnée par le navigateur), canaux, profondeur et détection
+  d'écrêtage, affichée à l'écoute d'un son de la bibliothèque perso dans
+  Sons & Transfert. Pas encore de forme d'onde ni de conversion — une
+  fiche de lecture avant tout traitement.
 - [ ] Forme d'onde, trim, normalisation, fondu et détection du silence.
 - [ ] Mono/stéréo, fréquence, hauteur racine, BPM, ONE/KEYS/LEGATO.
 - [ ] Conversion native cible PCM 16 bits à 46 875 Hz et dither TPDF lorsque

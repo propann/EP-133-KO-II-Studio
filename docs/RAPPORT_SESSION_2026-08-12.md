@@ -374,6 +374,57 @@ partagé jamais touché directement.
   bout en bout pour le cinquième chantier P1 (parcours), vraie séance
   jouée incluse, pas seulement une lecture du code produit.
 
+## Plan P2 — premier chantier : préparation déterministe du WAV
+
+Premier item du plan P2 (« construire la confiance de retour machine »,
+ANALYSE_GPT_EP133_KOII_STUDIO.md §8). **Cadrage important avant de
+commencer** : les items 1 (adaptateur `ep-series-sysex`), 3 (compiler un
+projet de test et differ), 4 (checkpoint/écriture sérialisée/re-scan) et 5
+(Time Machine avant restauration) touchent, directement ou à terme, à une
+écriture réelle sur l'EP-133 — hors de portée ici, la consigne de travail
+de ce projet reste strictement lecture seule sur la machine physique et
+ses fichiers. Seul l'item 2 (« préparer le WAV de façon déterministe et
+rapporter poids, durée, fréquence et saturation ») est purement logiciel,
+sans aucune interaction matérielle : c'est celui traité aujourd'hui. Les
+quatre autres restent documentés comme non commencés, pas silencieusement
+ignorés.
+
+Rien n'existait pour ça (Phase 4 « éditeur et préparateur de sons » de
+ROADMAP.md est entièrement à construire). Nouveau module pur
+`wavAnalysis.ts` : lit l'en-tête RIFF/fmt et les échantillons PCM à la
+main plutôt que de passer par `AudioContext.decodeAudioData()` —
+celui-ci rééchantillonne parfois à la fréquence native du contexte audio
+de lecture, ce qui aurait faussé la fréquence source rapportée (or c'est
+justement ce qu'on veut vérifier avant transfert). Couvre PCM entier
+8/16/24/32 bits et IEEE float 32 bits ; tout le reste (compressé, en-tête
+corrompu, profondeur non supportée) rend `null` plutôt que de lever une
+exception. Calcule en un seul passage sur les octets, sans matérialiser de
+tableau de flottants intermédiaire : poids (octets du fichier), durée,
+fréquence, nombre de canaux, profondeur, niveau crête normalisé 0–1, et
+écrêtage détecté sur le code numérique exact (pas un seuil approximatif
+proche de 1.0).
+
+Intégré à Sons & Transfert : la fiche audio (poids/durée/fréquence/bits,
+alerte ÉCRÊTAGE en rouge si détecté) s'affiche pour un fichier de la
+bibliothèque perso à la première écoute — pas un balayage à l'avance de
+tout le dossier, certaines bibliothèques comptent des milliers de
+fichiers. Réutilise la même lecture de fichier que l'aperçu audio déjà en
+place (`entry.handle.getFile()`), pas un second accès disque. Format non
+WAV (mp3, flac…) : message honnête plutôt qu'un plantage ou un silence
+trompeur.
+
+Vérifié : nouveau `tools/check-wav-analysis.mjs` (construit de vrais
+tampons WAV synthétiques en mémoire — 16/8/24 bits entiers, float 32 bits,
+mono/stéréo, cas d'écrêtage aux deux extrêmes, en-têtes invalides) ajouté
+à `npm test` ; scénario Playwright réel avec un faux `showDirectoryPicker`
+(deux vrais WAV construits en mémoire, un écrêté et un propre, plus un
+faux mp3) : fiche audio du fichier écrêté confirmée exacte
+(« 9 KO · 0.10 S · 44100 HZ · 16 BITS · ÉCRÊTAGE (2) »), fichier propre
+sans mention d'écrêtage, mp3 affiché avec le message de repli — aucune
+erreur console liée au code ajouté (la seule erreur observée vient de la
+lecture audio du faux mp3 non décodable, un artefact du test, pas du code
+de préparation).
+
 ## Priorités à la reprise
 
 Plan P0 clos avec ce cinquième chantier — les cinq recommandations
@@ -389,6 +440,12 @@ Undo/Redo, dépendances+CI, audit Save/Load, dix parcours pédagogiques).
    reste : gate/micro-timing/multi-sélection/nudge, tags/miniatures/
    dépendances/unification avec les exercices Rhythm Hero et les clones
    machine) ;
+1bis. **Plan P2 en cours** — item 2 fait (préparation déterministe du
+   WAV, ci-dessus) ; les items 1, 3, 4 et 5 touchent à une écriture
+   matérielle réelle et restent hors de portée ici (consigne stricte de
+   lecture seule sur la machine physique) — nécessiteront soit une
+   validation par l'utilisateur avec du vrai matériel en main, soit une
+   décision explicite de portée avant d'être repris ;
 2. « pad confondu » du rapport par pad, volontairement pas couvert
    aujourd'hui — comparer chaque MISS à ce qui était attendu sur un autre
    pad au même instant, pas juste le pad réellement joué ;

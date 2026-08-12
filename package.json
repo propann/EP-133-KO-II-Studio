@@ -7,10 +7,11 @@
     "dev": "vite",
     "typecheck": "tsc -b",
     "build": "tsc -b && vite build",
-    "test": "npm run test:engine && npm run test:transport && npm run test:exports",
+    "test": "npm run test:engine && npm run test:transport && npm run test:exports && npm run test:wav",
     "test:exports": "node --experimental-strip-types tools/check-project-exports.mjs",
     "test:transport": "node --experimental-strip-types tools/check-transport.mjs",
     "test:engine": "node --experimental-strip-types tools/check-engine.mjs",
+    "test:wav": "node --experimental-strip-types tools/check-wav-analysis.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

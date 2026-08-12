@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { analyzeWavBuffer, type WavAnalysisReport } from '../core/audio/wavAnalysis';
 import type { EditorGroup, EditorPadMode } from '../core/project/exporters';
 import type { DeviceInventory, DeviceSoundIndex } from '../core/project/device';
 import { loadDeviceProfile } from '../core/project/deviceProfile';
@@ -93,6 +94,10 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, liveMidi, pad
   const [persoLoading, setPersoLoading] = useState(false);
   const [persoQuery, setPersoQuery] = useState('');
   const [playingName, setPlayingName] = useState<string | null>(null);
+  // Fiche audio (plan P2, préparation déterministe du WAV) : calculée à la lecture d'un fichier,
+  // pas en avance sur toute la liste — certaines bibliothèques comptent des milliers de fichiers.
+  // 'unsupported' = analysé mais pas un WAV PCM/float exploitable (mp3, en-tête inconnu…).
+  const [audioReports, setAudioReports] = useState<Record<string, WavAnalysisReport | 'unsupported'>>({});
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const objectUrlRef = useRef('');
   const draggingLocalRef = useRef<StagedLocalFile | null>(null);
@@ -161,6 +166,13 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, liveMidi, pad
     objectUrlRef.current = url;
     if (audioRef.current) { audioRef.current.src = url; void audioRef.current.play(); }
     setPlayingName(entry.name);
+    // Fiche audio calculée une seule fois par fichier, à la première écoute — même File, pas de
+    // second accès disque : createObjectURL() ci-dessus ne consomme pas le contenu.
+    if (!(entry.name in audioReports)) {
+      const bytes = await file.arrayBuffer();
+      const report = analyzeWavBuffer(bytes, file.size);
+      setAudioReports((current) => ({ ...current, [entry.name]: report ?? 'unsupported' }));
+    }
   };
 
   const requestDelete = (slot: number) => {
@@ -301,7 +313,12 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, liveMidi, pad
                     onDragStart={(event) => { draggingLocalRef.current = { fileName: entry.name, handle: entry.handle }; event.dataTransfer.effectAllowed = 'copy'; event.dataTransfer.setData('text/plain', entry.name); }}
                     onDragEnd={() => { draggingLocalRef.current = null; }}>
                   <button className="local-preview-btn" onClick={() => void previewPerso(entry)} aria-label={playingName === entry.name ? 'Pause' : 'Écouter'}>{playingName === entry.name ? '⏸' : '▶'}</button>
-                  <div><strong>{entry.name}</strong><small>GLISSER SUR UN PAD OU UN SLOT MACHINE</small></div>
+                  <div>
+                    <strong>{entry.name}</strong>
+                    {!(entry.name in audioReports) && <small>GLISSER SUR UN PAD OU UN SLOT MACHINE</small>}
+                    {audioReports[entry.name] === 'unsupported' && <small>FORMAT NON WAV · PAS DE FICHE AUDIO</small>}
+                    {audioReports[entry.name] && audioReports[entry.name] !== 'unsupported' && (() => { const report = audioReports[entry.name] as WavAnalysisReport; return <small className={`local-audio-report ${report.clipped ? 'clipped' : ''}`}>{(report.weightBytes / 1024).toFixed(0)} KO · {report.durationSeconds.toFixed(2)} S · {report.sampleRate} HZ · {report.bitDepth} BITS{report.clipped ? ` · ÉCRÊTAGE (${report.clippedSampleCount})` : ''}</small>; })()}
+                  </div>
                   <button className="local-assign-btn" onClick={() => stageLocalOnPad(activeGroup, selectedPad, { fileName: entry.name, handle: entry.handle })}>→ {activeGroup}{selectedPad}</button>
                 </article>)}
                 {!filteredPersoFiles.length && <p>Aucun son ici.</p>}

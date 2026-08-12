@@ -982,6 +982,8 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .sound-bank-results article .sound-delete { padding:6px 8px; border:1px solid var(--ko-black); background:#d8d4cc; color:#5c1912; font-size:6px; font-weight:900; cursor:pointer; }
 .sound-bank-results article .sound-delete:hover,.sound-bank-results article .sound-delete:focus-visible { color:#fff; background:#9d271c; }
 .sound-bank-results article.changed { background:#f3a13b; }
+.local-audio-report { font-variant-numeric:tabular-nums; }
+.local-audio-report.clipped { font-weight:bold; color:#9a3412; }
 .sound-bank-results article[draggable="true"] { cursor:grab; }
 .sound-bank-results article[draggable="true"]:active { cursor:grabbing; }
 .sound-machine-topline .sound-sync { background:#bbb7af; }
