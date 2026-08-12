@@ -422,7 +422,7 @@ export default function App() {
         await saveDirectoryHandle(SAMPLE_FOLDER_KEY, directory);
       }
       const deviceProfile = saveDeviceProfile(localStorage, { name: machine.name, capacityMb: machine.memory === '128' ? 128 : 64, sampleFolderName: directory.name, localSampleCount: machineSampleCount });
-      const manifest = createDeviceClone(localStorage, deviceProfile, deviceSoundIndex?.soundCount || 0, deviceSoundIndex?.usedBytes || 0, deviceInventory?.project || null);
+      const manifest = createDeviceClone(localStorage, deviceProfile, deviceSoundIndex?.soundCount || 0, deviceSoundIndex?.usedBytes || 0, deviceInventory?.project || null, 'scan');
       const path = await writeCloneManifest(directory, machine.name, manifest);
       setLastScanSave({ machineId: machine.id, path, at: new Date().toISOString() });
     } catch (error) {

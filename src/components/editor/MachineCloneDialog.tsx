@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { DeviceInventory, DeviceSoundIndex } from '../../core/project/device';
-import { createDeviceClone, loadDeviceProfile, saveDeviceProfile } from '../../core/project/deviceProfile';
+import { createDeviceClone, loadDeviceClone, loadDeviceProfile, saveDeviceProfile, type DeviceCloneManifest } from '../../core/project/deviceProfile';
 import { chooseLocalDirectory, writeCloneManifest, type LocalDirectoryHandle } from '../../core/storage/localFolders';
 
 interface MachineCloneDialogProps {
@@ -21,6 +21,9 @@ export function MachineCloneDialog({ inventory, soundIndex, onClose }: MachineCl
   const [bridgeRoot, setBridgeRoot] = useState('');
   const [cloneStatus, setCloneStatus] = useState<Record<string, unknown> | null>(null);
   const [cloneError, setCloneError] = useState('');
+  // Chronologie Time Machine (ROADMAP.md, plan P2 item 5) : la vraie liste des instantanés déjà
+  // pris, pas la mention statique « Prévu : … » qu'il y avait ici auparavant.
+  const [manifest, setManifest] = useState<DeviceCloneManifest | null>(() => loadDeviceClone(localStorage));
   useEffect(() => {
     fetch('/bridge/health', { cache: 'no-store' }).then((response) => response.ok ? response.json() : Promise.reject()).then((value: { root: string }) => setBridgeRoot(value.root)).catch(() => setBridgeRoot(''));
   }, []);
@@ -43,7 +46,8 @@ export function MachineCloneDialog({ inventory, soundIndex, onClose }: MachineCl
     setCloneError('');
     try {
       const profile = saveDeviceProfile(localStorage, { name, capacityMb, sampleFolderName: folderName, localSampleCount });
-      const manifest = createDeviceClone(localStorage, profile, soundIndex?.soundCount || 0, soundIndex?.usedBytes || 0, inventory?.project || null);
+      const nextManifest = createDeviceClone(localStorage, profile, soundIndex?.soundCount || 0, soundIndex?.usedBytes || 0, inventory?.project || null, 'clone');
+      setManifest(nextManifest);
       if (bridgeRoot) {
         const response = await fetch('/bridge/clone/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, capacityMb }) });
         if (!response.ok) {
@@ -55,7 +59,7 @@ export function MachineCloneDialog({ inventory, soundIndex, onClose }: MachineCl
         setCreated(true);
         return;
       }
-      setWrittenPath(await writeCloneManifest(directory as LocalDirectoryHandle, name, manifest));
+      setWrittenPath(await writeCloneManifest(directory as LocalDirectoryHandle, name, nextManifest));
       setCreated(true);
     } catch (error) {
       setCloneError(error instanceof Error ? error.message : 'Le clonage a échoué de façon inattendue.');
@@ -71,7 +75,16 @@ export function MachineCloneDialog({ inventory, soundIndex, onClose }: MachineCl
     <p><b>PRÉVOIR 20 À 30 MINUTES POUR LE PREMIER CLONE COMPLET.</b> Ensuite, le dossier existant est comparé et seuls les changements détectés sont recopiés. Cette opération n'écrit rien sur l'EP‑133.</p>
     <div className="clone-form"><label>NOM DE LA MACHINE<input value={name} maxLength={32} onChange={(event) => setName(event.target.value.toUpperCase())} /></label><label>VERSION MÉMOIRE<select value={capacityMb} onChange={(event) => setCapacityMb(Number(event.target.value) as 64 | 128)}><option value={64}>64 MO</option><option value={128}>128 MO</option></select></label><label className="clone-folder">DOSSIER PARENT<button disabled={Boolean(bridgeRoot)} onClick={() => void chooseFolder()}>{bridgeRoot || folderName || 'CHOISIR SUR LE DISQUE DUR'}</button><span>{bridgeRoot || folderName || '…'} / clone / {name || 'NOM-MACHINE'}</span></label></div>
     <div className="clone-scope"><article><b>{soundIndex?.soundCount || 0}</b><span>SLOTS INDEXÉS</span></article><article><b>{((soundIndex?.usedBytes || 0) / 1e6).toFixed(2)} MO</b><span>MÉMOIRE OCCUPÉE</span></article><article><b>{inventory ? `P${String(inventory.project).padStart(2, '0')}` : '—'}</b><span>PROJET SCANNÉ</span></article></div>
-    <div className="clone-status"><b>INSTANTANÉ INITIAL</b><span>Inventaire et sauvegarde projet prêts.</span><b>PROGRESSION</b><span>9 projets, puis 527 samples · durée mesurée lors du premier clone complet.</span><b>AUDIO</b><span>Copie complète à lancer par le pont local dans le dossier choisi.</span><b>TIME MACHINE</b><span>Prévu : instantanés datés, différences, retour arrière et restauration.</span></div>
+    <div className="clone-status"><b>INSTANTANÉ INITIAL</b><span>Inventaire et sauvegarde projet prêts.</span><b>PROGRESSION</b><span>9 projets, puis 527 samples · durée mesurée lors du premier clone complet.</span><b>AUDIO</b><span>Copie complète à lancer par le pont local dans le dossier choisi.</span><b>TIME MACHINE</b><span>{manifest ? `${manifest.history.length} instantané${manifest.history.length > 1 ? 's' : ''} enregistré${manifest.history.length > 1 ? 's' : ''} — chronologie ci-dessous.` : 'Aucun instantané pour l’instant — apparaît après un SCAN (fiche personnage) ou un CLONE.'}</span></div>
+    {manifest && manifest.history.length > 0 && <div className="clone-history">
+      <h3>CHRONOLOGIE · {manifest.history.length} INSTANTANÉ{manifest.history.length > 1 ? 'S' : ''}</h3>
+      <ul>{[...manifest.history].reverse().map((entry, index) => <li key={`${entry.createdAt}-${index}`}>
+        <b className={`clone-history-kind ${entry.kind}`}>{entry.kind === 'clone' ? 'CLONE' : 'SCAN'}</b>
+        <span>{new Date(entry.createdAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+        <small>{entry.label}</small>
+      </li>)}</ul>
+      <p className="clone-history-note">Chronologie et comparaison locales seulement — pas de retour arrière ni de restauration matérielle : ça nécessiterait un checkpoint et une écriture confirmée sur l’EP‑133, non disponibles ici.</p>
+    </div>}
     {cloneStatus && <div className="clone-progress"><div><span style={{ width: `${percent}%` }} /></div><b>{String(progress?.phase || 'DÉMARRAGE').toUpperCase()} · {progress?.current || 0}/{progress?.total || 0} · {percent}%</b><small>ÉCOULÉ {Math.round(progress?.elapsedSeconds || 0)} S · RESTANT ≈ {Math.round(progress?.estimatedRemainingSeconds || 0)} S</small>{finished && <strong>{statusManifest?.status === 'complete' ? 'SYNCHRONISATION TERMINÉE' : 'SYNCHRONISATION PARTIELLE'} · {changed} CHANGEMENT(S) · {statusManifest.summary?.soundsUnchanged || 0} SONS INCHANGÉS · {statusManifest.summary?.soundsDeleted || 0} SLOT(S) ABSENT(S) · {statusManifest.summary?.errorCount || 0} ERREUR(S)</strong>}</div>}
     {cloneError && <p className="clone-error">{cloneError}</p>}
     {created && !cloneStatus && <p className="clone-created">MANIFESTE ÉCRIT SUR LE PC : {writtenPath} · AUCUNE ÉCRITURE MACHINE</p>}

@@ -41,10 +41,11 @@ Plan P1 clos le 12 août : dix parcours pédagogiques (5 styles écrits en
 plus), rapport de progression par pad, conversion Projet → Exercice, édition
 de la vélocité d'un pas (Maj+molette), recherche/métadonnées dans
 « Ouvrir… », et parcours 7/30 jours avec répétition sur MISS élevé.
-Plan P2 démarré le 12 août (item 2 seulement — analyse WAV déterministe) :
-les items 1/3/4/5 touchent à une écriture matérielle réelle et restent hors
-de portée du travail logiciel seul, consigne stricte de lecture seule sur
-la machine physique.
+Plan P2 en cours le 12 août : item 2 fait (analyse WAV déterministe), item 5
+partiel (Time Machine — chronologie et comparaison, pas encore de
+restauration). Les items 1, 3, 4 et le reste de l'item 5 touchent à une
+écriture matérielle réelle et restent hors de portée du travail logiciel
+seul, consigne stricte de lecture seule sur la machine physique.
 
 Mise à jour du 11 août : fusion complète des deux branches de travail dans
 `main` (fiche personnage, bibliothèque perso intégrée à Sons & Transfert,
@@ -94,6 +95,9 @@ autorisation MIDI du navigateur.
 - Fiche audio du WAV dans Sons & Transfert : poids, durée, fréquence
   source, canaux, profondeur et écrêtage détecté, affichée à l'écoute
   d'un son de la bibliothèque perso.
+- Chronologie Time Machine dans le dialogue CLONER : chaque SCAN/CLONE
+  ajoute un instantané daté avec comparaison au précédent (sons, mémoire,
+  projet scanné) — pas encore de restauration.
 
 ### Expérimental ou incomplet
 
@@ -219,7 +223,12 @@ composition identique sans machine connectée ; échanger ses notes en MIDI.
 - [x] Préparer visuellement les réaffectations son → pad et leur diff mémoire.
 - [ ] Synchroniser les affectations après checkpoint, compilation et relecture.
 - [x] Créer un manifeste local avec un premier instantané daté.
-- [ ] Time Machine : chronologie, comparaison et restauration locale.
+- [x] Time Machine : chronologie et comparaison (partiel, 12 août — voir
+  REGISTRE_IDEES.md Q-16/F-16) : chaque SCAN/CLONE ajoute désormais un
+  point daté à `history` avec le delta depuis le précédent (sons/Mo/
+  projet), affiché dans le dialogue CLONER. Restauration locale d'un
+  projet/sample isolé pas encore commencée — nécessiterait un stockage
+  versionné réel des PCM sur disque, pas seulement des métadonnées.
 - [ ] Time Machine : patch de restauration matérielle avec checkpoint.
 
 ### Banque ordinateur

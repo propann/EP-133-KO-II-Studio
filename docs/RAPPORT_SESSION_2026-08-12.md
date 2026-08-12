@@ -372,7 +372,13 @@ partagé jamais touché directement.
   insensibilité à la casse vérifiée ;
 - tests engine (`tools/check-engine.mjs`) + scénario Playwright réel de
   bout en bout pour le cinquième chantier P1 (parcours), vraie séance
-  jouée incluse, pas seulement une lecture du code produit.
+  jouée incluse, pas seulement une lecture du code produit ;
+- `tools/check-wav-analysis.mjs` + scénario Playwright réel pour le
+  premier chantier P2 (préparation WAV) ;
+- `tools/check-project-exports.mjs` étendu + scénario Playwright réel
+  pour le deuxième chantier P2 (Time Machine), mock de storage devenu
+  réellement multi-clé au passage — l'ancien mock masquait ce genre de
+  bug par construction.
 
 ## Plan P2 — premier chantier : préparation déterministe du WAV
 
@@ -425,6 +431,51 @@ erreur console liée au code ajouté (la seule erreur observée vient de la
 lecture audio du faux mp3 non décodable, un artefact du test, pas du code
 de préparation).
 
+## Plan P2 — deuxième chantier : Time Machine locale (chronologie et comparaison)
+
+Item 5 du plan P2. Même cadrage que le premier chantier : « retour arrière
+et restauration matérielle » touche à une écriture réelle sur l'EP-133,
+hors de portée ici. Le dialogue CLONER affichait déjà, en dur, une ligne
+« TIME MACHINE · Prévu : instantanés datés, différences, retour arrière et
+restauration. » — un vrai marqueur de fonctionnalité annoncée mais jamais
+construite, trouvé en lisant le composant avant d'écrire quoi que ce soit
+(consigne « audit avant code »).
+
+**Vrai bug trouvé et corrigé, pas juste une fonctionnalité manquante** :
+`DeviceCloneManifest.history` existait déjà dans le modèle, avec un
+commentaire disant explicitement « pour préparer la future Time Machine
+incrémentale » — mais `createDeviceClone()` réécrivait le manifeste à
+chaque appel avec un tableau `history` d'une seule entrée
+(« INSTANTANÉ INITIAL »), sans jamais relire ni conserver ce qui existait
+avant. Chaque SCAN ou CLONE effaçait silencieusement la chronologie de
+tous les précédents. `loadDeviceClone()` (nouvelle fonction) n'existait
+même pas — rien ne relisait jamais ce manifeste.
+
+Corrigé : `createDeviceClone()` relit le manifeste précédent, calcule un
+delta (`describeCloneDelta()` : sons ajoutés/retirés, mémoire en Mo,
+changement de projet scanné) et ajoute un point daté à la chronologie
+existante plutôt que de l'écraser, bornée à 50 points. `kind: 'scan' |
+'clone'` distingue désormais les deux origines (avant, indiscernables).
+Le dialogue CLONER remplace la ligne statique par la vraie liste,
+triée du plus récent au plus ancien.
+
+Vérifié : `tools/check-project-exports.mjs` étendu (le mock de storage a
+dû devenir réellement multi-clé — l'ancien mock à valeur unique
+masquait ce genre de bug par construction) — deux puis trois appels
+successifs, chronologie qui grandit (1 → 2 → 3), delta exact vérifié
+caractère pour caractère (« CLONE · +13 sons · +1.79 Mo · projet 1 → 2 »),
+relecture depuis le stockage confirmée séparément de la valeur de retour.
+Scénario Playwright réel de bout en bout : trois clics SCAN dans la fiche
+personnage (le tout premier échoue dans ce harnais de test précis — un
+faux `FileSystemDirectoryHandle` n'est pas sérialisable par IndexedDB,
+contrainte du test, pas de l'app, un vrai navigateur ne bloquerait pas
+là), les deux suivants réussissent et la chronologie affichée dans
+CLONER passe bien de 1 à 2 entrées ; un clic CLONE (repli disque, pas de
+pont local dans ce test) ajoute une 3ᵉ entrée étiquetée CLONE — aucune
+erreur console liée au code ajouté (les deux erreurs 502 observées
+viennent du polling `/bridge/health`, déjà géré avec un `.catch()`
+existant, sans lien avec ce chantier).
+
 ## Priorités à la reprise
 
 Plan P0 clos avec ce cinquième chantier — les cinq recommandations
@@ -441,11 +492,14 @@ Undo/Redo, dépendances+CI, audit Save/Load, dix parcours pédagogiques).
    dépendances/unification avec les exercices Rhythm Hero et les clones
    machine) ;
 1bis. **Plan P2 en cours** — item 2 fait (préparation déterministe du
-   WAV, ci-dessus) ; les items 1, 3, 4 et 5 touchent à une écriture
-   matérielle réelle et restent hors de portée ici (consigne stricte de
-   lecture seule sur la machine physique) — nécessiteront soit une
-   validation par l'utilisateur avec du vrai matériel en main, soit une
-   décision explicite de portée avant d'être repris ;
+   WAV) et item 5 partiel (Time Machine : chronologie + comparaison,
+   ci-dessus) ; restent l'item 1 (adaptateur ep-series-sysex), l'item 3
+   (compiler/differ un projet de test), l'item 4 (checkpoint/écriture
+   sérialisée) et la restauration de l'item 5 — tous touchent à une
+   écriture matérielle réelle et restent hors de portée ici (consigne
+   stricte de lecture seule sur la machine physique) — nécessiteront
+   soit une validation par l'utilisateur avec du vrai matériel en main,
+   soit une décision explicite de portée avant d'être repris ;
 2. « pad confondu » du rapport par pad, volontairement pas couvert
    aujourd'hui — comparer chaque MISS à ce qui était attendu sur un autre
    pad au même instant, pas juste le pad réellement joué ;

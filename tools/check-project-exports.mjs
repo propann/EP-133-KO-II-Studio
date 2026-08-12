@@ -4,7 +4,7 @@ import { createEp133ProjectDocument, createMidiFile } from '../src/core/project/
 import { decodeEp133ProjectTar, inspectEp133Archive, readEp133ProjectDocument, readMidiFile } from '../src/core/project/importers.ts';
 import { exerciseTargetsToNotes, normalizeSequencerNote, notesToExerciseTargets } from '../src/core/project/model.ts';
 import { deleteStudioProject, duplicateStudioProject, loadStudioLibrary, renameStudioProject, storeStudioProject, studioStateFromDocument } from '../src/core/project/studioLibrary.ts';
-import { createDeviceClone, loadDeviceProfile, saveDeviceProfile } from '../src/core/project/deviceProfile.ts';
+import { createDeviceClone, loadDeviceClone, loadDeviceProfile, saveDeviceProfile } from '../src/core/project/deviceProfile.ts';
 import { zipSync, strToU8 } from 'fflate';
 
 const patterns = {
@@ -118,18 +118,27 @@ assert.deepEqual(notesToExerciseTargets(adaptedNotes), [{ id: 'jeu', beat: 2, pa
 assert.equal(normalizeSequencerNote({ id: 'fort', group: 'D', beat: 0, pad: 0, velocity: 999, duration: 0 }).velocity, 127);
 assert.equal(normalizeSequencerNote({ id: 'court', group: 'D', beat: 0, pad: 0, duration: 0 }).duration, 1 / 96);
 
-const memoryStorage = {
-  value: '',
-  getItem() { return this.value || null; },
-  setItem(_key, value) { this.value = value; },
-};
+const memoryStorage = (() => {
+  const store = new Map();
+  return { getItem: (key) => store.has(key) ? store.get(key) : null, setItem: (key, value) => store.set(key, value) };
+})();
 const savedProfile = saveDeviceProfile(memoryStorage, { name: 'STUDIO NOIR', capacityMb: 64, sampleFolderName: 'EP133 Samples', localSampleCount: 12 });
 assert.equal(savedProfile.name, 'STUDIO NOIR');
 assert.equal(loadDeviceProfile(memoryStorage).capacityMb, 64);
 const cloneManifest = createDeviceClone(memoryStorage, savedProfile, 527, 56210000, 1);
+assert.equal(cloneManifest.history.length, 1);
 assert.equal(cloneManifest.history[0].label, 'INSTANTANÉ INITIAL');
 assert.equal(cloneManifest.audioStatus, 'local-bridge-required');
-memoryStorage.value = '';
+// Time Machine (plan P2 item 5) : chaque appel doit AJOUTER un point à la chronologie,
+// pas l'écraser — c'était exactement le bug corrigé le 12 août.
+const secondClone = createDeviceClone(memoryStorage, savedProfile, 540, 58000000, 2, 'clone');
+assert.equal(secondClone.history.length, 2, 'le deuxième instantané doit s’ajouter à la chronologie, pas l’écraser');
+assert.equal(secondClone.history[0].label, 'INSTANTANÉ INITIAL', 'le premier point ne doit pas être perdu');
+assert.equal(secondClone.history[1].label, 'CLONE · +13 sons · +1.79 Mo · projet 1 → 2', 'comparaison exacte au point précédent');
+assert.equal(loadDeviceClone(memoryStorage).history.length, 2, 'relecture depuis le stockage, pas seulement la valeur de retour');
+const thirdClone = createDeviceClone(memoryStorage, savedProfile, 540, 58000000, 2, 'scan');
+assert.equal(thirdClone.history.length, 3);
+assert.equal(thirdClone.history[2].label, 'SCAN · Aucun changement détecté', 'mêmes valeurs que le point précédent -> aucun changement signalé, pas un delta à zéro affiché bêtement');
 const storedStudio = storeStudioProject(memoryStorage, [], project);
 assert.equal(loadStudioLibrary(memoryStorage).length, 1);
 const restoredStudio = studioStateFromDocument(storedStudio.library[0].document);
