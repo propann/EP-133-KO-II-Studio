@@ -287,6 +287,65 @@ patterns/date affichés, recherche « GROOVE » filtrée à 2 résultats,
 recherche vidée revenue à 3, recherche insensible à la casse (« gamma »
 minuscule) filtrée à 1 résultat — aucune erreur console.
 
+## Plan P1 — cinquième chantier : parcours 7 jours et 30 jours
+
+Dernier item du plan P1 (REGISTRE_IDEES.md Q-14). Rien n'existait pour
+savoir ce qui avait été joué un jour donné : `playerProfile.ts` ne garde
+qu'un **cumul** (total de sessions, PERFECT/GOOD/MISS depuis toujours),
+sans date ni style par séance — insuffisant pour un parcours.
+
+Nouveau module pur `practicePlan.ts` : un journal daté
+(`PracticeLogEntry {date, styleId, difficulty, perfect, good, miss}`,
+`localStorage`, borné à 200 entrées) et `buildPracticePlan(log, styleIds,
+days, todayISO)` qui construit un parcours de `days` jours à partir de
+l'historique réel. Règle de rotation : les dix styles écrits à la main
+(`DEDICATED_STYLE_IDS`, pas les 29 styles encore procéduraux ni les
+exercices USER), un cran de difficulté en plus à chaque tour complet.
+Règle de répétition : si le taux de MISS de la veille dépasse 25 % — même
+seuil que `adviseTempo` dans `report.ts`, repris tel quel plutôt que
+d'inventer un second seuil arbitraire — le jour suivant répète le même
+style au même niveau au lieu d'avancer dans la rotation.
+
+Point important documenté dans le code et ici : ce n'est **pas** un
+calendrier figé à l'avance. Les jours déjà joués (`done`) reflètent
+l'historique réel ; les jours futurs (`upcoming`) sont une prévision qui
+suppose une progression normale et se recalcule à chaque consultation —
+elle change si un jour intermédiaire déclenche une répétition entretemps.
+
+Intégration : `stopGameTransport` (App.tsx) ajoute une entrée au journal
+seulement pour une vraie séance jouée sur un style dédié (score non vide,
+`DEDICATED_STYLE_IDS.includes(styleId)` — pas les styles procéduraux, pas
+les exercices USER, qui ne font pas partie de cette rotation). Nouvelle
+section « PARCOURS » dans la fiche personnage (bascule 7/30 jours, une
+carte par jour avec style, niveau, date, résultat si déjà joué) ; un
+bouton « COMMENCER » sur le jour du jour charge directement le style/
+niveau recommandé dans le jeu (`onStartPracticeDay` réutilise
+`changeStyle` déjà en place, pas un nouveau sélecteur).
+
+Vérifié par un vrai scénario Playwright de bout en bout : parcours 7 puis
+30 jours confirmés à 7 et 30 cartes, clic sur COMMENCER du jour 1 vérifié
+chargeant bien le style « boom » dans le sélecteur du jeu, vraie séance
+jouée (▶ JOUER, compte à rebours, 20 frappes réelles sur 3 pads), retour à
+la fiche personnage : jour 1 passé en « done » avec le résultat exact
+affiché (ex. 2P·0G·17M), jour 2 basculé en répétition du même style/
+niveau avec l'étiquette RÉPÉTITION affichée — comportement attendu vu le
+taux de MISS élevé de la séance de test.
+
+Fonctionnalité couverte par les tests engine (`tools/check-engine.mjs`) :
+rotation simple, avance de difficulté sur un tour complet, non-répétition
+sur séance propre, répétition sur séance ratée, non-propagation de la
+répétition à un jour non joué, styles dédiés absents (tableau vide, pas
+d'exception).
+
+**Constat annexe, hors scope de ce chantier, pas caché** : le scénario
+Playwright de vérification a fait apparaître à deux reprises (avec et sans
+clic STOP manuel) une erreur console Tone.js « The time must be greater
+than or equal to the last scheduled time » lors de frappes rapprochées
+pendant une séance jouée. Reproduite sans aucune ligne du diff de ce
+chantier impliquée (aucun code audio touché) — signalée pour triage futur,
+pas corrigée ici pour ne pas mélanger un correctif audio non vérifié avec
+ce chantier.
+
 ## Méthode
 
 Chaque chantier a suivi le même principe : comprendre le code existant
@@ -310,7 +369,10 @@ partagé jamais touché directement.
   avant d'être considéré comme preuve valable ;
 - scénario Playwright réel pour le quatrième chantier P1 (bibliothèque) :
   trois projets réellement enregistrés, recherche filtrée puis vidée,
-  insensibilité à la casse vérifiée.
+  insensibilité à la casse vérifiée ;
+- tests engine (`tools/check-engine.mjs`) + scénario Playwright réel de
+  bout en bout pour le cinquième chantier P1 (parcours), vraie séance
+  jouée incluse, pas seulement une lecture du code produit.
 
 ## Priorités à la reprise
 
@@ -319,19 +381,23 @@ partagées par les deux audits externes et l'analyse GPT sont maintenant
 faites (identité de marque déjà en cours par ailleurs, Song Position,
 Undo/Redo, dépendances+CI, audit Save/Load, dix parcours pédagogiques).
 
-1. P1 en cours — les cinq items du plan sont maintenant tous entamés :
-   rapport de progression par pad, conversion Projet → Exercice, édition
-   de la vélocité d'un pas et recherche/métadonnées dans « Ouvrir… » faits
-   (ci-dessus, chacun partiel où documenté) ; reste entièrement à faire :
-   les parcours 7 jours et 30 jours avec répétition des difficultés ;
-   restent aussi les parties non couvertes de Q-12 (gate/micro-
-   timing/multi-sélection/nudge) et Q-13 (tags, miniatures, dépendances,
-   unification avec les exercices Rhythm Hero et les clones machine) ;
+1. **Plan P1 clos** — les cinq items partagés par les deux audits externes
+   et l'analyse GPT sont maintenant faits : rapport de progression par
+   pad, conversion Projet → Exercice, édition de la vélocité d'un pas,
+   recherche/métadonnées dans « Ouvrir… », parcours 7/30 jours (chacun
+   partiel où documenté ci-dessus — voir aussi Q-12 et Q-13 pour ce qui
+   reste : gate/micro-timing/multi-sélection/nudge, tags/miniatures/
+   dépendances/unification avec les exercices Rhythm Hero et les clones
+   machine) ;
 2. « pad confondu » du rapport par pad, volontairement pas couvert
    aujourd'hui — comparer chaque MISS à ce qui était attendu sur un autre
    pad au même instant, pas juste le pad réellement joué ;
-3. mode KEYS mélodique pour Rhythm Hero — idée notée le 11/08, toujours
+3. erreur console Tone.js « The time must be greater than or equal to the
+   last scheduled time » repérée incidemment pendant la vérification du
+   cinquième chantier P1 (frappes rapprochées en séance jouée) — à trier,
+   sans lien avec le code ajouté aujourd'hui ;
+4. mode KEYS mélodique pour Rhythm Hero — idée notée le 11/08, toujours
    remise à plus tard (voir mémoire `rhythm-hero-keys-mode-idea`) ;
-4. vérifier côté utilisateur si les autorisations MIDI du navigateur
+5. vérifier côté utilisateur si les autorisations MIDI du navigateur
    expliquent le « NON CONNECTÉ » persistant signalé le 11/08 — toujours
    sans confirmation de l'utilisateur.

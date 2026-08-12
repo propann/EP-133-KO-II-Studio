@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { classifyHit, emptyScore, scoreHit } from '../src/core/engine/scoring.ts';
 import { barsAfterStepEdit, measureFromGlobalStep, usedBars } from '../src/core/project/editor.ts';
 import { adviseTempo, buildPadReport } from '../src/core/engine/report.ts';
+import { buildPracticePlan } from '../src/core/engine/practicePlan.ts';
 
 assert.equal(classifyHit(0, 35, 90), 'PERFECT');
 assert.equal(classifyHit(-35, 35, 90), 'PERFECT');
@@ -70,5 +71,32 @@ assert.equal(adviseTempo({ perfect: 0, good: 0, miss: 0 }).direction, 'garder', 
 assert.equal(adviseTempo({ perfect: 2, good: 3, miss: 5 }).direction, 'reduire', '50% de MISS doit inviter à ralentir');
 assert.equal(adviseTempo({ perfect: 18, good: 1, miss: 0 }).direction, 'augmenter', '95% PERFECT doit inviter à accélérer');
 assert.equal(adviseTempo({ perfect: 8, good: 8, miss: 4 }).direction, 'garder', 'ni trop propre ni trop fautif -> pas de conseil forcé');
+
+// Parcours 7/30 jours (rotation de styles + répétition sur MISS > 25%).
+const styles = ['a', 'b', 'c'];
+const today = '2026-08-12';
+
+assert.deepEqual(buildPracticePlan([], [], 7, today), [], 'aucun style dédié -> aucun parcours, pas une exception');
+
+const emptyLogPlan = buildPracticePlan([], styles, 4, today);
+assert.deepEqual(emptyLogPlan.map((day) => day.status), ['today', 'upcoming', 'upcoming', 'upcoming']);
+assert.deepEqual(emptyLogPlan.map((day) => day.styleId), ['a', 'b', 'c', 'a'], 'rotation simple sur les styles dédiés, aucune séance jouée');
+assert.deepEqual(emptyLogPlan.map((day) => day.difficulty), [1, 1, 1, 2], 'un tour complet de la rotation augmente la difficulté');
+assert.equal(emptyLogPlan[3].date, '2026-08-15');
+
+const cleanSession = [{ date: today, styleId: 'a', difficulty: 1, perfect: 9, good: 1, miss: 0 }];
+const cleanPlan = buildPracticePlan(cleanSession, styles, 3, today);
+assert.equal(cleanPlan[0].status, 'done');
+assert.equal(cleanPlan[0].repeat, false);
+assert.deepEqual(cleanPlan[0].result, { perfect: 9, good: 1, miss: 0 });
+assert.deepEqual(cleanPlan.slice(1).map((day) => day.styleId), ['b', 'c'], 'une séance propre avance la rotation sans répéter');
+
+const missedSession = [{ date: today, styleId: 'a', difficulty: 1, perfect: 1, good: 1, miss: 8 }];
+const repeatPlan = buildPracticePlan(missedSession, styles, 4, today);
+assert.equal(repeatPlan[1].repeat, true, '80% de MISS la veille doit déclencher une répétition');
+assert.equal(repeatPlan[1].styleId, 'a');
+assert.equal(repeatPlan[1].difficulty, 1, 'répète au même niveau, ne réduit pas la difficulté');
+assert.equal(repeatPlan[2].repeat, false, 'le jour non joué qui suit une répétition ne propage pas de répétition supplémentaire');
+assert.deepEqual(repeatPlan.slice(2).map((day) => day.styleId), ['b', 'c'], 'la rotation reprend là où elle s’était arrêtée après la répétition');
 
 console.log('Score et extension automatique des partitions : OK');

@@ -1025,8 +1025,8 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .profile-avatar-grid button { display:grid; place-items:center; width:52px; height:52px; padding:4px; border:2px solid var(--ko-black); border-radius:var(--radius-sm); background:#fff; cursor:pointer; transition:transform .1s ease,box-shadow .1s ease; }
 .profile-avatar-grid button:hover { transform:translateY(-2px); }
 .profile-avatar-grid button.active { background:var(--ko-amber); box-shadow:0 0 0 3px var(--ko-orange); }
-.profile-gear,.profile-library,.profile-stats { margin:20px 0; padding:16px 18px; border:2px solid var(--ko-black); border-radius:var(--radius); background:#f3f1ec; box-shadow:5px 5px 0 var(--ko-black); }
-.profile-gear h2,.profile-library h2,.profile-stats h2 { margin:0 0 14px; font-size:14px; letter-spacing:.04em; }
+.profile-gear,.profile-library,.profile-stats,.profile-practice { margin:20px 0; padding:16px 18px; border:2px solid var(--ko-black); border-radius:var(--radius); background:#f3f1ec; box-shadow:5px 5px 0 var(--ko-black); }
+.profile-gear h2,.profile-library h2,.profile-stats h2,.profile-practice h2 { margin:0 0 14px; font-size:14px; letter-spacing:.04em; }
 /* Une machine déclarée = une carte : nom/mémoire, statut de connexion (la
    seule machine réellement détectable en MIDI à un instant donné), scan et
    dossier de travail se lancent d'ici — plus besoin de rouvrir le Studio. */
@@ -1062,6 +1062,19 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .profile-stat.perfect b { color:var(--ko-orange); }
 .profile-stat.good b { color:#9a6500; }
 .profile-stat.miss b { color:#c62818; }
+.practice-plan-switch { display:flex; gap:5px; margin:12px 0; }
+.practice-plan-switch button { height:34px; padding:0 14px; border:2px solid var(--ko-black); border-radius:9px; background:#e2dfd8; font-weight:900; font-size:9px; box-shadow:2px 2px 0 var(--ko-black); }
+.practice-plan-switch button.active { background:var(--ko-orange); color:#fff; transform:translate(2px,2px); box-shadow:none; }
+.practice-plan-days { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:8px; }
+.practice-day { display:flex; flex-direction:column; gap:4px; padding:9px 10px; border:2px solid var(--ko-black); border-radius:var(--radius-sm); background:#e9e6df; }
+.practice-day-number { font-size:8px; font-weight:bold; color:#7a756c; }
+.practice-day b { font-size:10px; }
+.practice-day small { font-size:7px; color:#6e6960; }
+.practice-day button { align-self:flex-start; height:26px; margin-top:2px; padding:0 9px; border:2px solid var(--ko-black); border-radius:7px; background:#f3f1ec; font-size:7px; font-weight:bold; }
+.practice-day.today { background:var(--ko-amber); box-shadow:3px 3px 0 var(--ko-black); }
+.practice-day.today button { background:var(--ko-orange); color:#fff; }
+.practice-day.done { background:#dedcd6; }
+.practice-day.done .practice-day-result { font-weight:bold; color:#4a4740; }
 .profile-reset { margin-top:16px; padding:9px 14px; border:2px solid var(--ko-black); border-radius:var(--radius-sm); background:#e5e2db; font-size:9px; font-weight:bold; letter-spacing:.05em; cursor:pointer; }
 .profile-reset:hover:not(:disabled) { background:#e2a08c; }
 .profile-reset:disabled { opacity:.4; cursor:not-allowed; }

@@ -8,7 +8,8 @@ import { AudioEngine, type PadSoundSettings } from './core/audio/AudioEngine';
 import { MachineSampleBank } from './core/audio/MachineSampleBank';
 import { emptyScore, scoreHit } from './core/engine/scoring';
 import type { Exercise, Grade, Score } from './core/engine/types';
-import { createSixBarExercise, STYLES } from './core/engine/patterns';
+import { createSixBarExercise, DEDICATED_STYLE_IDS, STYLES } from './core/engine/patterns';
+import { appendPracticeLogEntry, buildPracticePlan, loadPracticeLog, type PracticeLogEntry } from './core/engine/practicePlan';
 import {
   createEp133ProjectDocument,
   createMidiFile,
@@ -91,6 +92,7 @@ export default function App() {
   const [language, setLanguage] = useState<AppLanguage>(loadAppLanguage);
   const [workspaceView, setWorkspaceView] = useState<'home' | 'game' | 'sounds' | 'docs' | 'machine-test' | 'profile'>('home');
   const [playerProfile, setPlayerProfile] = useState<PlayerProfile>(() => loadPlayerProfile(localStorage));
+  const [practiceLog, setPracticeLog] = useState<PracticeLogEntry[]>(() => loadPracticeLog(localStorage));
   const [styleId, setStyleId] = useState('boom');
   const [difficulty, setDifficulty] = useState(1);
   const [tempo, setTempo] = useState<number>(STYLES[0].bpm);
@@ -304,7 +306,21 @@ export default function App() {
       if (next !== profile) savePlayerProfile(localStorage, next);
       return next;
     });
-  }, [clearGameTimers]);
+    // Journal daté pour le parcours 7/30 jours — seulement les styles de la
+    // rotation dédiée (voir practicePlan.ts), pas les styles procéduraux ni
+    // les exercices USER, qui ne font pas partie du parcours affiché.
+    const finalScore = scoreRef.current;
+    if (DEDICATED_STYLE_IDS.includes(styleId) && finalScore.perfect + finalScore.good + finalScore.miss > 0) {
+      setPracticeLog((log) => appendPracticeLogEntry(localStorage, log, {
+        date: new Date().toISOString().slice(0, 10),
+        styleId,
+        difficulty,
+        perfect: finalScore.perfect,
+        good: finalScore.good,
+        miss: finalScore.miss,
+      }));
+    }
+  }, [clearGameTimers, styleId, difficulty]);
 
   const stopEditorTransport = useCallback((resetPlayhead = true) => {
     editorRun.current += 1;
@@ -512,6 +528,21 @@ export default function App() {
     setStyleId(nextStyle);
     const userExercise = userExercises.find((item) => `user:${item.id}` === nextStyle);
     setTempo(userExercise?.bpm || STYLES.find((item) => item.id === nextStyle)?.bpm || 100);
+  };
+
+  const practicePlans = useMemo(() => {
+    const todayIso = new Date().toISOString().slice(0, 10);
+    return {
+      sevenDay: buildPracticePlan(practiceLog, DEDICATED_STYLE_IDS, 7, todayIso),
+      thirtyDay: buildPracticePlan(practiceLog, DEDICATED_STYLE_IDS, 30, todayIso),
+    };
+  }, [practiceLog]);
+
+  /** Depuis la fiche personnage : charge le style/niveau recommandé du jour dans le jeu et y bascule directement. */
+  const startPracticeDay = (dayStyleId: string, dayDifficulty: number) => {
+    changeStyle(dayStyleId);
+    setDifficulty(dayDifficulty);
+    setWorkspaceView('game');
   };
 
   const openEditor = () => {
@@ -1357,6 +1388,9 @@ export default function App() {
         onOpenLocalLibraryFolder={() => void openLocalLibraryFolder()}
         onReconnectLocalLibraryFolder={() => void reconnectLocalLibraryFolder()}
         onResetStats={() => updateProfile((profile) => ({ ...profile, stats: emptyPlayerStats() }))}
+        practicePlans={practicePlans}
+        styles={STYLES}
+        onStartPracticeDay={startPracticeDay}
       />
       {machineCloneOpen && <MachineCloneDialog inventory={deviceInventory} soundIndex={deviceSoundIndex} onClose={() => setMachineCloneOpen(false)} />}
     </>;

@@ -37,9 +37,10 @@ CI qualité, et l'audit du cycle Save→quitter→rouvrir a trouvé un vrai bug
 (voir [VALIDATION_SAVE_LOAD_STUDIO.md](VALIDATION_SAVE_LOAD_STUDIO.md)) :
 une frappe ONE simple redevenait une note MIDI fixe après un aller-retour
 Sauvegarder→Ouvrir — corrigé et couvert par un test de non-régression.
-Puis plan P1 en cours : dix parcours pédagogiques (5 styles écrits en plus),
-rapport de progression par pad, conversion Projet → Exercice, édition de la
-vélocité d'un pas (Maj+molette), et recherche/métadonnées dans « Ouvrir… ».
+Plan P1 clos le 12 août : dix parcours pédagogiques (5 styles écrits en
+plus), rapport de progression par pad, conversion Projet → Exercice, édition
+de la vélocité d'un pas (Maj+molette), recherche/métadonnées dans
+« Ouvrir… », et parcours 7/30 jours avec répétition sur MISS élevé.
 
 Mise à jour du 11 août : fusion complète des deux branches de travail dans
 `main` (fiche personnage, bibliothèque perso intégrée à Sons & Transfert,
@@ -82,6 +83,10 @@ autorisation MIDI du navigateur.
 - « Ouvrir… » du Studio : recherche par titre et métadonnées (BPM, nombre
   de patterns, date) sur les projets personnels, triés du plus récent au
   plus ancien.
+- Parcours 7/30 jours dans la fiche personnage : rotation des dix styles
+  dédiés, difficulté qui augmente à chaque tour complet, répétition
+  automatique du jour précédent si son taux de MISS dépasse 25 %, bouton
+  COMMENCER qui charge directement le style/niveau du jour dans le jeu.
 
 ### Expérimental ou incomplet
 
@@ -299,8 +304,16 @@ la machine sans toucher aux autres projets.
   volontairement pas encore couvert — nécessiterait de comparer chaque
   MISS à ce qui était attendu sur un AUTRE pad au même instant, pas juste
   le pad réellement joué ; noté comme limite connue, pas caché.
-- [ ] Historique local des scores et progression.
+- [x] Historique local des scores et progression (partiel, 12 août) : un
+  journal daté par séance (`practicePlan.ts`, `PracticeLogEntry`) existe
+  désormais pour les dix styles dédiés, support du parcours 7/30 jours —
+  pas encore une vue « historique » dédiée et navigable en soi, seulement
+  exploitée par le parcours.
 - [ ] Conseils ciblés sur timing, main, doigt et pad.
+- [x] Parcours 7 jours et 30 jours avec répétition des difficultés (12
+  août, P1 — voir REGISTRE_IDEES.md Q-14) : rotation des dix styles
+  dédiés, répétition automatique si MISS > 25 % la veille, section
+  PARCOURS dans la fiche personnage.
 - [x] Envoyer une composition du Studio comme exercice du jeu (12 août, P1
   — FICHIER › Envoyer le pattern vers Rhythm Hero). Réutilise
   editorExercise()/saveEditorExercise déjà en place pour le SAVE du jeu,

@@ -1,4 +1,7 @@
+import { useState } from 'react';
 import { AVATAR_PRESETS, Avatar } from '../components/shared/Avatar';
+import type { StyleOption } from '../core/engine/patterns';
+import type { PracticeDay } from '../core/engine/practicePlan';
 import type { DeviceInventory, DeviceSoundIndex } from '../core/project/device';
 import type { PlayerMachine, PlayerProfile } from '../core/project/playerProfile';
 
@@ -32,6 +35,9 @@ interface PlayerProfilePageProps {
   onOpenLocalLibraryFolder: () => void;
   onReconnectLocalLibraryFolder: () => void;
   onResetStats: () => void;
+  practicePlans: { sevenDay: PracticeDay[]; thirtyDay: PracticeDay[] };
+  styles: StyleOption[];
+  onStartPracticeDay: (styleId: string, difficulty: number) => void;
 }
 
 const activeSpec = (avatarId: string) => AVATAR_PRESETS.find((spec) => spec.id === avatarId) || AVATAR_PRESETS[0];
@@ -53,10 +59,14 @@ const activeSpec = (avatarId: string) => AVATAR_PRESETS.find((spec) => spec.id =
  *   (`saveDeviceProfile` + `createDeviceClone` + `writeCloneManifest`),
  *   juste déclenché d'un clic ici plutôt que de rouvrir la fenêtre de clone.
  */
-export function PlayerProfilePage({ profile, machineConnected, midiStatus, midiInputNames, midiOutputNames, machineSampleCount, deviceInventory, deviceSoundIndex, onBack, onChange, onChangeMachine, onAddMachine, onRemoveMachine, onConnectMidi, onCloneMachine, onScanMachine, onViewScanReport, lastScanSave, scanSaveError, scanSaveMachineId, sampleFolderName, sampleFolderNeedsReconnect, onOpenSampleFolder, onReconnectSampleFolder, localLibraryFolderName, localLibraryNeedsReconnect, onOpenLocalLibraryFolder, onReconnectLocalLibraryFolder, onResetStats }: PlayerProfilePageProps) {
+export function PlayerProfilePage({ profile, machineConnected, midiStatus, midiInputNames, midiOutputNames, machineSampleCount, deviceInventory, deviceSoundIndex, onBack, onChange, onChangeMachine, onAddMachine, onRemoveMachine, onConnectMidi, onCloneMachine, onScanMachine, onViewScanReport, lastScanSave, scanSaveError, scanSaveMachineId, sampleFolderName, sampleFolderNeedsReconnect, onOpenSampleFolder, onReconnectSampleFolder, localLibraryFolderName, localLibraryNeedsReconnect, onOpenLocalLibraryFolder, onReconnectLocalLibraryFolder, onResetStats, practicePlans, styles, onStartPracticeDay }: PlayerProfilePageProps) {
   const { stats } = profile;
   const totalHits = stats.perfect + stats.good + stats.miss;
   const accuracy = totalHits > 0 ? Math.round(((stats.perfect + stats.good) / totalHits) * 100) : null;
+  const [practiceRange, setPracticeRange] = useState<'7' | '30'>('7');
+  const practiceDays = practiceRange === '7' ? practicePlans.sevenDay : practicePlans.thirtyDay;
+  const styleLabel = (id: string) => styles.find((style) => style.id === id)?.label || id;
+  const formatDayDate = (iso: string) => { const date = new Date(`${iso}T00:00:00`); return Number.isNaN(date.getTime()) ? iso : date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }); };
   return <main className="profile-page">
     <header className="module-header"><button onClick={onBack}>← ACCUEIL</button><div><small>ÉCOSYSTÈME STUDIO</small><h1>FICHE PERSONNAGE</h1></div><span className={profile.pseudo ? 'ready' : ''}>{profile.pseudo || 'SANS PSEUDO'}</span></header>
 
@@ -143,6 +153,19 @@ export function PlayerProfilePage({ profile, machineConnected, midiStatus, midiI
         <div className="profile-stat"><span>PRÉCISION</span><b>{accuracy === null ? '—' : `${accuracy}%`}</b></div>
       </div>
       <button className="profile-reset" disabled={totalHits === 0 && stats.sessionsPlayed === 0} onClick={() => { if (window.confirm('Remettre le bilan cumulé à zéro ? Le pseudo, l’avatar et les machines déclarées restent inchangés.')) onResetStats(); }}>RÉINITIALISER LE BILAN</button>
+    </section>
+
+    <section className="profile-practice">
+      <h2>PARCOURS</h2>
+      <p className="profile-gear-note">Rotation des dix styles écrits à la main, un cran de difficulté en plus à chaque tour complet. Répète automatiquement la veille si son taux de MISS dépasse 25&nbsp;%. Les jours à venir sont une prévision qui s’ajuste au fil des séances, pas un calendrier figé.</p>
+      <div className="practice-plan-switch"><button className={practiceRange === '7' ? 'active' : ''} onClick={() => setPracticeRange('7')}>7 JOURS</button><button className={practiceRange === '30' ? 'active' : ''} onClick={() => setPracticeRange('30')}>30 JOURS</button></div>
+      {practiceDays.length ? <div className="practice-plan-days">{practiceDays.map((day) => <article className={`practice-day ${day.status}`} key={day.date}>
+        <span className="practice-day-number">J{day.day}</span>
+        <b>{styleLabel(day.styleId)}</b>
+        <small>NIVEAU {day.difficulty} · {formatDayDate(day.date)}{day.repeat ? ' · RÉPÉTITION' : ''}</small>
+        {day.status === 'done' && day.result && <small className="practice-day-result">{day.result.perfect}P · {day.result.good}G · {day.result.miss}M</small>}
+        {day.status !== 'done' && <button onClick={() => onStartPracticeDay(day.styleId, day.difficulty)}>{day.status === 'today' ? 'COMMENCER' : 'DÉMARRER EN AVANCE'}</button>}
+      </article>)}</div> : <p className="profile-gear-note">Aucun style dédié disponible pour construire un parcours.</p>}
     </section>
   </main>;
 }

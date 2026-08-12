@@ -368,6 +368,9 @@ const DEDICATED_STYLES: Record<string, { title: string; targets: (difficulty: nu
   afro: { title: 'LATIN / AFROBEAT', targets: createAfroTargets },
 };
 
+/** Les dix styles à 5 niveaux écrits à la main, dans cet ordre — sert de rotation de référence au parcours 7/30 jours (`practicePlan.ts`), plutôt que les 39 styles dont 29 restent en génération procédurale provisoire. */
+export const DEDICATED_STYLE_IDS = Object.keys(DEDICATED_STYLES);
+
 /** Génération procédurale provisoire pour les styles qui n'ont pas encore leurs 5 niveaux écrits à la main (voir docs/ETAT_DU_PROJET.md). */
 function createGenericExercise(style: StyleOption, difficulty: number, tempo: number): Exercise {
   const targets: Exercise['targets'] = [];
