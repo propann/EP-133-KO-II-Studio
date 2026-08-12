@@ -611,6 +611,30 @@ l'utilisateur, pas à un problème de code. Procédure de dépannage écrite dan
 l'autorisation si refusée une première fois, vérifier
 `chrome://settings/content/midiDevices`).
 
+## Édition de vélocité étendue au piano-roll KEYS (Q-12/E-16)
+
+Limite notée le matin même (« couvre la grille rythmique seule ; le
+piano-roll KEYS n'a pas encore cette édition ») — comblée l'après-midi en
+réutilisant directement le mécanisme déjà construit et débogué pour
+`RhythmGrid.tsx` : écouteur `wheel` natif (`passive:false`) plutôt que
+`onWheel` React délégué, attributs `data-note`/`data-step` sur chaque
+bouton de note pour retrouver la cible sans dépendre du système
+d'événements synthétique. `PianoRoll.tsx` cherche une seule cible par
+cellule (pad+note+beat identifient une note de façon unique, contrairement
+à la grille où plusieurs pads partagent un même pas) — code plus simple
+que la grille, pas de section commitée à gérer côté piano-roll.
+
+Nouvelle fonction `adjustKeyVelocity` dans App.tsx (même clamp 1–127 que
+`adjustEditorVelocity`, ciblant `pad === editorSelectedPad && note === note
+&& beat === beat` plutôt que `pad === pad && beat === beat`).
+
+Vérifié par un vrai scénario Playwright : mode KEYS activé sur un pad
+depuis MODE DU PAD, piano-roll ouvert, note créée (vélocité 100 par
+défaut), Maj+molette (2 crans vers le haut) confirmée à 116/127 dans
+l'infobulle et l'opacité CSS, molette sans Maj confirmée sans effet —
+aucune erreur console, en réutilisant le même mécanisme déjà prouvé fiable
+sur la grille rythmique.
+
 ## Priorités à la reprise
 
 Plan P0 clos avec ce cinquième chantier — les cinq recommandations
