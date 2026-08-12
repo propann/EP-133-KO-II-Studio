@@ -30,6 +30,33 @@ Le panneau **Diagnostic MIDI en direct** doit afficher le nom de l'entrée, le
 canal, la note et la vélocité. Cette observation brute est affichée même si le
 pad n'est pas encore associé au jeu.
 
+## Dépannage : « NON CONNECTÉ » qui persiste
+
+Vérifié le 12 août avec la vraie machine branchée en USB (`lsusb` : Teenage
+Engineering EP-133, `amidi -l` : `EP-133 MIDI 1`) : la cause la plus probable
+n'est **pas** un bug de l'application. `requestMIDIAccess({ sysex: true })`
+demande deux niveaux d'autorisation Chrome distincts — accès MIDI simple et
+accès SysEx complet. Testé avec Playwright en accordant explicitement
+seulement `midi-sysex` : Chrome refuse quand même
+(`NotAllowedError: Permission to use Web MIDI API was not granted.`) tant que
+`midi` **et** `midi-sysex` ne sont pas accordés tous les deux. Une fois les
+deux accordés, la connexion réussit immédiatement : `EP-133 MIDI 1` apparaît
+en entrée et en sortie, le bouton passe à `MIDI CONNECTÉ ✓`.
+
+Si « NON CONNECTÉ » persiste malgré un clic sur **Connexion MIDI** et un clic
+« Autoriser » sur la demande du navigateur :
+
+1. Ouvrir l'icône de permissions dans la barre d'adresse Chrome (cadenas ou
+   icône dédiée à gauche de l'URL) et vérifier que **MIDI complet (SysEx)**
+   est bien sur *Autoriser*, pas seulement *MIDI*.
+2. Si le site avait été refusé par erreur une première fois, Chrome ne
+   redemande plus tout seul — il faut réinitialiser l'autorisation
+   explicitement (paramètres du site, ou icône de permission → réinitialiser)
+   puis recharger la page et recliquer sur **Connexion MIDI**.
+3. `chrome://settings/content/midiDevices` liste les sites autorisés/bloqués
+   pour Web MIDI SysEx — vérifier que l'origine utilisée (`localhost:...` ou
+   l'IP réseau) n'y est pas explicitement bloquée.
+
 ## Mapping automatique des 12 pads
 
 La grille de l'application reprend la disposition physique du EP-133 : quatre

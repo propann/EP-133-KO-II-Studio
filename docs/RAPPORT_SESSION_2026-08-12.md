@@ -574,6 +574,43 @@ tentative de synchronisation précise au temps musical infructueuse
 sur toute la durée du motif avec lecture du rapport en direct dès que le
 signal apparaît, plus fiable qu'un calage au milliseconde près.
 
+## Diagnostic clos : « NON CONNECTÉ » persistant (vraie machine branchée)
+
+L'utilisateur a branché le EP-133 réel en USB et proposé de vérifier avec du
+vrai matériel — première fois cette session que le port USB est disponible
+pour un test, plutôt qu'un contournement en lecture seule sur des fichiers
+clonés. Vérifié `lsusb` (Teenage Engineering EP-133, ID 2367:8020) et
+`amidi -l` (`EP-133 MIDI 1`) avant de commencer : la machine était bien vue
+par le système d'exploitation, pas seulement l'affirmation de l'utilisateur.
+
+**Strictement en lecture** : `useWebMidi.ts` relu avant tout script — la
+connexion (`connectWithInputScope`) n'appelle que `requestMIDIAccess` et
+l'ouverture des ports (`input.open()`/`output.open()`), aucun `output.send()`
+n'est déclenché par une simple connexion. Aucune frappe, aucun SysEx, aucune
+donnée envoyée à la machine dans ce chantier.
+
+Premier essai avec Playwright + `context.grantPermissions(['midi-sysex'])`
+seul : échec, `NotAllowedError: Permission to use Web MIDI API was not
+granted.` — reproduit en isolant l'appel `navigator.requestMIDIAccess()`
+directement dans la page pour retirer toute ambiguïté côté app. Avec les
+deux permissions accordées (`midi` **et** `midi-sysex`) et le navigateur
+lancé en mode visible (le mode headless ne suffisait pas dans ce cas) :
+connexion réussie immédiatement, `EP-133 MIDI 1` listé en entrée et en
+sortie, `sysexEnabled: true`. Rejoué ensuite via l'interface réelle de la
+page TEST MACHINE (pas seulement l'API brute) : le bouton passe à
+`MIDI CONNECTÉ ✓`, la ligne de statut affiche `Midi Through Port-0 +
+EP-133 MIDI 1`.
+
+**Conclusion** : « NON CONNECTÉ » persistant n'est pas un bug de
+l'application — Chrome distingue deux niveaux d'autorisation Web MIDI (accès
+simple et accès SysEx complet), et le symptôme correspond exactement à une
+autorisation SysEx refusée ou incomplète côté navigateur réel de
+l'utilisateur, pas à un problème de code. Procédure de dépannage écrite dans
+[CONNEXION_ET_CALIBRATION_MIDI.md](CONNEXION_ET_CALIBRATION_MIDI.md#dépannage--non-connecté-qui-persiste)
+(vérifier l'icône de permission dans la barre d'adresse, réinitialiser
+l'autorisation si refusée une première fois, vérifier
+`chrome://settings/content/midiDevices`).
+
 ## Priorités à la reprise
 
 Plan P0 clos avec ce cinquième chantier — les cinq recommandations
@@ -609,6 +646,6 @@ Undo/Redo, dépendances+CI, audit Save/Load, dix parcours pédagogiques).
    corrigé le même jour (Q-17, ci-dessus) ;
 4. mode KEYS mélodique pour Rhythm Hero — idée notée le 11/08, toujours
    remise à plus tard (voir mémoire `rhythm-hero-keys-mode-idea`) ;
-5. vérifier côté utilisateur si les autorisations MIDI du navigateur
-   expliquent le « NON CONNECTÉ » persistant signalé le 11/08 — toujours
-   sans confirmation de l'utilisateur.
+5. **clos** — « NON CONNECTÉ » persistant signalé le 11/08 : vérifié avec la
+   vraie machine branchée en USB le 12 août, cause confirmée (autorisation
+   SysEx du navigateur, pas un bug de l'app) — ci-dessus.

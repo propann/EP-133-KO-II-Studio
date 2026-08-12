@@ -74,10 +74,15 @@ l'autre) — voir le détail des idées nouvelles dans
 la synthèse complète dans
 [ANALYSE_GPT_EP133_KOII_STUDIO.md](ANALYSE_GPT_EP133_KOII_STUDIO.md) et le
 rapport de session dans
-[RAPPORT_SESSION_2026-08-11.md](RAPPORT_SESSION_2026-08-11.md). Le diagnostic
-Web MIDI reste ouvert côté utilisateur : le test direct fonctionne, mais
-« NON CONNECTÉ » persiste par moments — cause probable non confirmée,
-autorisation MIDI du navigateur.
+[RAPPORT_SESSION_2026-08-11.md](RAPPORT_SESSION_2026-08-11.md).
+
+**Diagnostic Web MIDI clos le 12 août** avec la vraie machine branchée (voir
+[CONNEXION_ET_CALIBRATION_MIDI.md](CONNEXION_ET_CALIBRATION_MIDI.md#dépannage--non-connecté-qui-persiste))
+: la connexion réussit et reste fiable dès que Chrome accorde les deux
+niveaux d'autorisation (`midi` et `midi-sysex` — un seul des deux ne suffit
+pas). Pas un bug de l'app ; « NON CONNECTÉ » persistant signale une
+autorisation SysEx refusée ou incomplète côté navigateur, procédure de
+dépannage documentée.
 
 ### Disponible
 
