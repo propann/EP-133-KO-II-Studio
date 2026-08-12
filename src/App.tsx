@@ -17,7 +17,7 @@ import {
   type EditorGroup,
   type EditorPadMode,
 } from './core/project/exporters';
-import type { DeviceInventory, DeviceSoundIndex } from './core/project/device';
+import { findMissingDependencies, type DeviceInventory, type DeviceSoundIndex, type MissingDependency } from './core/project/device';
 import {
   DEFAULT_NOTE_DURATION,
   DEFAULT_NOTE_VELOCITY,
@@ -139,6 +139,8 @@ export default function App() {
   const [keyEditorOpen, setKeyEditorOpen] = useState(false);
   const [deviceInventory, setDeviceInventory] = useState<DeviceInventory | null>(null);
   const [deviceSoundIndex, setDeviceSoundIndex] = useState<DeviceSoundIndex | null>(null);
+  /** Dépendances manquantes du dernier projet ouvert (plan P1, REGISTRE_IDEES.md Q-13) — vide si aucune machine scannée, jamais un blocage. */
+  const [missingDependencies, setMissingDependencies] = useState<MissingDependency[]>([]);
   const [editorLoop, setEditorLoop] = useState(false);
   const [editorExportFormat, setEditorExportFormat] = useState<'midi' | 'json'>('midi');
   const [studioLibrary, setStudioLibrary] = useState<StudioProjectRecord[]>(() => loadStudioLibrary(localStorage));
@@ -1045,6 +1047,7 @@ export default function App() {
     setKeyEditorOpen(false);
     setStudioView('pattern');
     setSelectedStudioProject('');
+    setMissingDependencies([]);
   };
 
   const saveStudioProject = () => {
@@ -1126,6 +1129,7 @@ export default function App() {
     // choisit ensuite « A01 · ÉDITER » pour entrer dans un pattern précis.
     setStudioView('arrangement');
     setKeyEditorOpen(false);
+    setMissingDependencies(findMissingDependencies(loaded.pads, deviceSoundIndex));
   };
 
   /** Ouvre directement le projet cliqué dans le menu FICHIER — un seul clic, pas de sélection préalable dans un menu séparé qui pouvait laisser croire qu'OUVRIR ne faisait rien. */
@@ -1411,6 +1415,11 @@ export default function App() {
     {phase === 'countin' && <div className="countdown" aria-live="assertive"><small>1 MESURE POUR SE PRÉPARER</small><b>{countdown}</b></div>}
     {editorOpen && <div className="editor-overlay"><section className="exercise-editor">
       <EditorToolbar mode={editorMode} name={editorName} group={editorGroup} playing={editorPlaying} loop={editorLoop} exportFormat={editorExportFormat} canSave={Boolean(editorName.trim() && (editorMode === 'complete' || editorTargets.length || EDITOR_GROUPS.some((group) => Object.values(editorPatternBank[group]).some((notes) => notes.length))))} midiConnected={midi.outputConnected} scannedProject={deviceInventory?.project} machineProjectAvailable={Boolean(machineProjectDocument)} machineSampleCount={machineSampleCount} demoProjects={STUDIO_DEMOS} localProjects={studioLibrary.map(summarizeStudioProject)} selectedLocalProject={selectedStudioProject} studioView={studioView} patternNumber={editorPatternNumbers[editorGroup]} patternLength={editorBars} groupPatternLengths={Object.fromEntries(EDITOR_GROUPS.map((group) => { const number = editorPatternNumbers[group]; const notes = group === editorGroup ? editorTargets : editorPatternBank[group][number] || []; return [group, editorPatternLengths[`${group}:${number}`] || usedBars(notes)]; })) as Record<EditorGroup, number>} activeSongPosition={Math.max(1, editorSong.findIndex((scene) => scene === editorActiveScene) + 1)} activeScene={editorActiveScene} onHome={goHome} onNameChange={setEditorName} onGroupChange={changeEditorGroup} onStudioViewChange={setStudioView} onPatternLengthChange={changePatternLength} onCommitScene={commitPatternsToScene} canUndo={editorCanUndo} canRedo={editorCanRedo} onUndo={editorUndo} onRedo={editorRedo} onConnectMidi={() => void connectMidi()} onNew={newStudioProject} onOpenProject={openStudioProject} onOpenDemo={(id) => void openStudioDemo(id)} onImportFiles={(files) => void importStudioProjectFiles(files)} onLoadMachineProject={loadMachineProject} onCloneMachine={() => setMachineCloneOpen(true)} onOpenSampleFolder={() => void openStudioSampleFolder()} onSave={saveEditor} onSaveAs={saveStudioProjectAs} onRename={renameSelectedStudioProject} onDuplicate={duplicateSelectedStudioProject} onDelete={deleteSelectedStudioProject} onPlayback={() => void toggleEditorPlayback()} onLoopChange={setEditorLoop} onExportFormatChange={setEditorExportFormat} onExport={exportEditor} onExportMidi={exportEditorMidi} onExportJson={exportEditorProjectJson} onSendToRhythmHero={sendPatternToRhythmHero} />
+      {missingDependencies.length > 0 && <p className="studio-missing-dependencies">
+        ⚠ {missingDependencies.length} PAD{missingDependencies.length > 1 ? 'S' : ''} SANS SON DANS LA BANQUE ACTUELLE ·{' '}
+        {missingDependencies.map((dep) => `${dep.group}${dep.pad} (slot ${dep.slot})`).join(', ')}
+        <button onClick={() => setMissingDependencies([])} aria-label="Masquer l'avertissement">✕</button>
+      </p>}
       {editorMode === 'complete' && studioView === 'arrangement' && <SongArranger scenes={editorScenes} song={editorSong} patternBank={currentPatternBank()} onAssignCell={assignSceneGroupPattern} onReorderSong={reorderEditorSong} onDuplicateSongPosition={duplicateSongPosition} onDeleteSongPosition={deleteSongPosition} onAuditionSongPosition={auditionSongPosition} onEditPattern={editArrangedPattern} />}
       {(editorMode !== 'complete' || studioView === 'pattern') && <>
         {editorMode === 'complete' && <PadStrip group={editorGroup} selectedPad={editorSelectedPad} livePad={editorMidiHit?.pad} liveGroup={editorMidiHit?.group} padModes={editorPadModes} padName={devicePadName} padSlot={(pad) => devicePadInfo(pad)?.slot} onSelect={(pad) => { setEditorSelectedPad(pad); setKeyEditorOpen((editorPadModes[`${editorGroup}:${pad}`] || 'ONE') === 'KEYS'); }} onPreview={(pad) => void previewEditorPad(editorGroup, pad)} onModeChange={(pad, mode) => { setEditorPadModes((current) => ({ ...current, [`${editorGroup}:${pad}`]: mode })); setKeyEditorOpen(mode === 'KEYS'); }} onOpenKeys={() => setKeyEditorOpen(true)} />}

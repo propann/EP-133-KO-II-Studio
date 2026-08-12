@@ -40,3 +40,28 @@ export interface DeviceSoundIndex {
   usedBytes: number;
   sounds: Array<{ slot: number; bytes: number; flags: number; fileName: string }>;
 }
+
+/** Un pad d'un projet ouvert qui attend un son (slot > 0) absent de la bibliothèque actuellement scannée. */
+export interface MissingDependency {
+  group: EditorGroup;
+  pad: number;
+  slot: number;
+}
+
+/**
+ * Détection des dépendances manquantes (plan P1, REGISTRE_IDEES.md Q-13 —
+ * « bibliothèque unifiée … et dépendances ») : à l'ouverture d'un projet, si
+ * une machine est scannée, prévenir plutôt que de laisser un pad rester
+ * silencieux sans explication à la lecture. Comparaison de métadonnées
+ * seulement (le slot existe-t-il dans l'index sonore courant) — pas une
+ * vérification que le SON RÉEL soit encore le même à ce numéro de slot,
+ * qu'on ne peut pas savoir sans comparer les hashes audio eux-mêmes.
+ */
+export function findMissingDependencies(
+  documentPads: Array<{ group: EditorGroup; pad: number; slot: number }>,
+  soundIndex: DeviceSoundIndex | null,
+): MissingDependency[] {
+  if (!soundIndex) return [];
+  const knownSlots = new Set(soundIndex.sounds.map((sound) => sound.slot));
+  return documentPads.filter((pad) => pad.slot > 0 && !knownSlots.has(pad.slot));
+}

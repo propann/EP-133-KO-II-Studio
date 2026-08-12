@@ -5,6 +5,7 @@ import { decodeEp133ProjectTar, inspectEp133Archive, readEp133ProjectDocument, r
 import { exerciseTargetsToNotes, normalizeSequencerNote, notesToExerciseTargets } from '../src/core/project/model.ts';
 import { deleteStudioProject, duplicateStudioProject, loadStudioLibrary, renameStudioProject, storeStudioProject, studioStateFromDocument } from '../src/core/project/studioLibrary.ts';
 import { createDeviceClone, describeCloneDelta, DEVICE_CLONE_KEY, loadDeviceClone, loadDeviceProfile, saveDeviceProfile } from '../src/core/project/deviceProfile.ts';
+import { findMissingDependencies } from '../src/core/project/device.ts';
 import { zipSync, strToU8 } from 'fflate';
 
 const patterns = {
@@ -168,6 +169,17 @@ assert.equal(restoredStudio.patternBank.A[1][0].duration, 0.5);
 assert.equal(restoredStudio.patternBank.A[1][0].note, undefined, 'round-trip via localStorage (le vrai chemin Sauvegarder → bibliothèque → Ouvrir) : toujours pas de note inventée');
 assert.equal(restoredStudio.patternBank.B[2][0].note, 48);
 assert.equal(restoredStudio.padModes['B:10'], 'KEYS');
+assert.deepEqual(restoredStudio.pads, [{ group: 'B', pad: 11, slot: 444 }], 'affectations son -> pad conservées pour la détection de dépendances, un round-trip localStorage complet, pas juste le document en mémoire');
+
+// Détection des dépendances manquantes (plan P1, REGISTRE_IDEES.md Q-13).
+assert.deepEqual(findMissingDependencies(restoredStudio.pads, null), [], 'aucune machine scannée -> jamais de faux avertissement');
+const soundIndexWithSlot = { readOnly: true, scannedAt: '', soundCount: 1, usedBytes: 0, sounds: [{ slot: 444, bytes: 0, flags: 0, fileName: 'x' }] };
+assert.deepEqual(findMissingDependencies(restoredStudio.pads, soundIndexWithSlot), [], 'le slot 444 existe dans la banque scannée -> pas de dépendance manquante');
+const soundIndexWithoutSlot = { readOnly: true, scannedAt: '', soundCount: 0, usedBytes: 0, sounds: [] };
+const missing = findMissingDependencies(restoredStudio.pads, soundIndexWithoutSlot);
+assert.equal(missing.length, 1);
+assert.deepEqual(missing[0], { group: 'B', pad: 11, slot: 444 });
+assert.deepEqual(findMissingDependencies([{ group: 'A', pad: 1, slot: 0 }], soundIndexWithoutSlot), [], 'slot 0 (aucun son affecté) ne doit jamais être signalé comme manquant');
 const renamedLibrary = renameStudioProject(memoryStorage, storedStudio.library, storedStudio.id, 'TEST RENOMMÉ');
 assert.equal(renamedLibrary[0].document.metadata.title, 'TEST RENOMMÉ');
 const duplicatedStudio = duplicateStudioProject(memoryStorage, renamedLibrary, storedStudio.id, 'TEST COPIE');

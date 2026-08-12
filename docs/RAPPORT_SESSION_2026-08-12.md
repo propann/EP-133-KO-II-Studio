@@ -666,6 +666,37 @@ pipeline de lecture réelle reste fonctionnel après toutes les
 modifications de code d'aujourd'hui — détail complet dans
 [FICHE_MACHINE_EP133.md](FICHE_MACHINE_EP133.md#inventaire-scanné).
 
+## Détection des dépendances manquantes (Q-13)
+
+Dernier morceau explicitement noté comme hors scope dans le commentaire de
+`summarizeStudioProject` : « détection des dépendances (samples
+manquants) … nécessiterait une comparaison contre la banque machine
+connectée, pas seulement une relecture du document local ».
+
+`createEp133ProjectDocument` écrit déjà `pads: deviceInventory?.pads || []`
+(affectations son → pad au moment de la sauvegarde) dans chaque document
+exporté, mais `studioStateFromDocument` jetait ce champ à la lecture — ne
+gardait que `playMode` pour reconstruire `padModes`. `StudioProjectState`
+porte désormais aussi `pads: Array<{group, pad, slot}>`, et une nouvelle
+fonction pure `findMissingDependencies` (`device.ts`) compare ces slots à
+`DeviceSoundIndex` (l'index sonore actuellement scanné) : à l'ouverture
+d'un projet, si un pad attend un son qui n'est plus dans la banque
+actuelle, un bandeau liste les pads concernés (masquable), plutôt que de
+laisser ce pad silencieux sans explication à la lecture.
+
+Vérifié à un niveau exceptionnel de réalisme pour ce chantier, grâce à la
+machine encore branchée : `tools/check-project-exports.mjs` étendu (round-
+trip localStorage complet jusqu'à `pads`, pas seulement le document en
+mémoire ; slot présent/absent/nul testés). Scénario Playwright réel :
+`/ep133-sound-index.json` intercepté pour servir une banque vidée (pas
+`deviceInventory`, qui reste le vrai scan chargé normalement), projet
+enregistré puis rouvert — bandeau affichant exactement
+**« 32 PADS SANS SON »**, avec les 32 vrais numéros de slots du projet 1
+réellement scanné sur la machine (324, 323, 332…, les mêmes déjà vérifiés
+dans le chantier précédent) — pas des données inventées pour le test.
+Masquage du bandeau confirmé, aucun avertissement avant enregistrement ni
+après « Nouveau », aucune erreur console.
+
 ## Priorités à la reprise
 
 Plan P0 clos avec ce cinquième chantier — les cinq recommandations

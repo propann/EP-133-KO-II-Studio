@@ -30,6 +30,8 @@ export interface StudioProjectState {
   patterns: ProjectPatterns;
   padModes: Record<string, EditorPadMode>;
   patternLengths: Record<string, number>;
+  /** Affectations son → pad enregistrées dans le document, pour la détection de dépendances manquantes (`device.ts`) — jamais utilisé pour la lecture elle-même, seulement pour prévenir. */
+  pads: Array<{ group: ProjectGroup; pad: number; slot: number }>;
 }
 
 /** Relit la bibliothèque locale ; filtre silencieusement toute entrée corrompue plutôt que d'échouer entièrement. */
@@ -99,12 +101,13 @@ export interface StudioProjectSummary {
 }
 
 /**
- * Bibliothèque unifiée V1 (REGISTRE_IDEES.md Q-12/E-16, item 5 du plan P1) :
- * recherche et métadonnées (BPM, patterns) pour « Ouvrir… ». Tags,
- * miniatures et détection des dépendances (samples manquants) restent hors
- * scope — nécessiteraient respectivement un vocabulaire de tags à inventer
- * et une comparaison contre la banque machine connectée, pas seulement une
- * relecture du document local.
+ * Bibliothèque unifiée V1 (REGISTRE_IDEES.md Q-13) : recherche et
+ * métadonnées (BPM, patterns) pour « Ouvrir… ». Détection des dépendances
+ * manquantes ajoutée le 12 août — voir `device.ts` (`findMissingDependencies`),
+ * appelée à l'ouverture d'un projet, pas ici (nécessite la banque machine
+ * connectée, pas seulement une relecture du document local). Tags et
+ * miniatures restent hors scope — nécessiteraient un vocabulaire de tags à
+ * inventer.
  */
 export function summarizeStudioProject(record: StudioProjectRecord): StudioProjectSummary {
   const metadata = record.document.metadata && typeof record.document.metadata === 'object' ? record.document.metadata as Record<string, unknown> : {};
@@ -176,12 +179,15 @@ export function studioStateFromDocument(document: Record<string, unknown>): Stud
   const currentScene = Number.isFinite(Number(document.currentScene)) ? Number(document.currentScene) : null;
 
   const padModes: Record<string, EditorPadMode> = {};
+  const pads: Array<{ group: ProjectGroup; pad: number; slot: number }> = [];
   if (Array.isArray(document.pads)) document.pads.forEach((candidate) => {
     if (!candidate || typeof candidate !== 'object') return;
     const pad = candidate as Record<string, unknown>;
     const group = String(pad.group); const number = Number(pad.pad); const playMode = Number(pad.playMode);
     if (!EDITOR_GROUPS.includes(group as keyof ProjectPatterns) || number < 1 || number > 12) return;
     padModes[`${group}:${number - 1}`] = playMode === 1 ? 'KEYS' : playMode === 2 ? 'LEGATO' : 'ONE';
+    const slot = Number(pad.slot);
+    if (Number.isFinite(slot) && slot > 0) pads.push({ group: group as ProjectGroup, pad: number, slot });
   });
   const metadata = document.metadata && typeof document.metadata === 'object' ? document.metadata as Record<string, unknown> : {};
   const settings = document.settings && typeof document.settings === 'object' ? document.settings as Record<string, unknown> : {};
@@ -196,5 +202,6 @@ export function studioStateFromDocument(document: Record<string, unknown>): Stud
     patterns: patternsForScene(patternBank, scenes, startingScene),
     padModes,
     patternLengths,
+    pads,
   };
 }

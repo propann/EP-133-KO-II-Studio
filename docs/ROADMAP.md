@@ -110,6 +110,10 @@ dépannage documentée.
 - « Ouvrir… » du Studio : recherche par titre et métadonnées (BPM, nombre
   de patterns, date) sur les projets personnels, triés du plus récent au
   plus ancien.
+- Détection des dépendances manquantes à l'ouverture d'un projet : si les
+  affectations son → pad enregistrées ne correspondent plus à la banque
+  actuellement scannée, un bandeau liste les pads concernés (testé avec
+  les 32 vrais pads de la machine réellement branchée le 12 août).
 - Parcours 7/30 jours dans la fiche personnage : rotation des dix styles
   dédiés, difficulté qui augmente à chaque tour complet, répétition
   automatique du jour précédent si son taux de MISS dépasse 25 %, bouton
