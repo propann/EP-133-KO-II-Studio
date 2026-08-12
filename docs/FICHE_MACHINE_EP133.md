@@ -84,6 +84,28 @@ dans `public/` :
 entre les deux scans, aucune écriture n'a eu lieu sur la machine dans
 l'intervalle, cohérent avec la discipline « lecture seule » du projet.
 
+**Troisième vérification, 12 août** — l'utilisateur a rebranché la machine
+et proposé un test avec du vrai matériel en fin de session, après une
+journée entière de modifications de code (Studio, Sons & Transfert,
+Time Machine, moteur audio…). Relancé les deux mêmes outils, sortie dans
+un dossier temporaire hors du dépôt (jamais directement dans `public/`, la
+procédure documentée plus bas) :
+
+| Champ | Valeur | Scanné le |
+|---|---|---|
+| Projet actif | P01 (32 pads utilisés) | 2026-08-12 12:39 UTC |
+| Sons indexés (bibliothèque globale) | 527 | 2026-08-12 12:39 UTC |
+| Mémoire occupée | 56 214 010 octets (56,21 Mo) | 2026-08-12 12:39 UTC |
+
+Comparaison programmatique champ par champ (pas seulement les totaux) avec
+`public/ep133-device.json`/`ep133-sound-index.json` : **aucun slot ajouté,
+supprimé ou modifié**, égalité stricte confirmée sur les 32 pads du projet
+1 et les 527 entrées de la bibliothèque globale. Confirme à la fois que la
+machine elle-même n'a pas changé et que le chemin de lecture réelle
+(scripts Python + protocole FILE) reste fonctionnel après toutes les
+modifications de code de cette session — pas seulement une conviction
+théorique que rien n'a régressé côté machine.
+
 ### Ce qu'un scan de projet révèle par pad (protocole FILE)
 
 Chaque pad scanné (`tools/scan_ep133_readonly.py`) expose ces champs —

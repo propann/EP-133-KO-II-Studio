@@ -635,6 +635,37 @@ l'infobulle et l'opacité CSS, molette sans Maj confirmée sans effet —
 aucune erreur console, en réutilisant le même mécanisme déjà prouvé fiable
 sur la grille rythmique.
 
+## Troisième vérification matérielle réelle (machine rebranchée, fin de session)
+
+L'utilisateur a rebranché la machine et proposé d'en profiter pendant
+qu'elle est disponible. Plutôt que de tester du nouveau code au hasard,
+choix d'exploiter cette fenêtre pour une vérification de non-régression à
+haute confiance : relancer les deux outils Python déjà documentés et
+validés les 9-11 août (`tools/scan_ep133_readonly.py`,
+`tools/scan_ep133_library_readonly.py`) sur la machine réelle, après une
+journée entière de modifications de code touchant le Studio, Sons &
+Transfert, la Time Machine et le moteur audio.
+
+Audit avant exécution, pas une confiance aveugle dans un script trouvé
+dans le dépôt : relu le code des deux scripts (aucun appel à une méthode
+d'écriture du protocole FILE, uniquement `read_project_archive`,
+`get_sample_metadata`, `list_sounds`) et du client `epsysex` sous-jacent
+(les méthodes d'écriture existent dans le paquet mais ne sont jamais
+appelées par ces deux scripts). Environnement virtuel déjà préparé le 11
+août (`/tmp/ep133-scan-venv`) retrouvé et réutilisé. Sortie systématiquement
+dirigée vers un dossier temporaire hors du dépôt (jamais directement dans
+`public/`, exactement la procédure déjà documentée dans
+`docs/FICHE_MACHINE_EP133.md`).
+
+Résultat : **527 sons, 56,21 Mo, projet 1 à 32 pads utilisés** — chiffres
+strictement identiques aux scans des 9 et 11 août. Comparaison
+programmatique champ par champ (pas seulement les totaux globaux) avec
+`public/ep133-device.json`/`ep133-sound-index.json` : aucun slot ajouté,
+supprimé ou modifié. Confirme que la machine n'a pas changé et que le
+pipeline de lecture réelle reste fonctionnel après toutes les
+modifications de code d'aujourd'hui — détail complet dans
+[FICHE_MACHINE_EP133.md](FICHE_MACHINE_EP133.md#inventaire-scanné).
+
 ## Priorités à la reprise
 
 Plan P0 clos avec ce cinquième chantier — les cinq recommandations
