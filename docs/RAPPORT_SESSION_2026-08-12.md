@@ -543,6 +543,37 @@ séparé : score et rapport par pad toujours corrects après le correctif
 (1 PERFECT, 11 MISS, rapport par pad et conseil de tempo affichés
 normalement pendant la session).
 
+## « Pad confondu » ajouté au rapport par pad (Q-07, limite comblée)
+
+Dernière limite explicitement notée dans le rapport par pad du matin :
+« comparer chaque MISS à ce qui était attendu sur un AUTRE pad au même
+instant, pas juste le pad réellement joué ». Comblée le même jour.
+
+`scoreHit` (scoring.ts) ne cherchait un candidat que parmi les cibles du
+MÊME pad que la frappe. Sur un MISS, une recherche supplémentaire compare
+maintenant aux cibles non jouées des AUTRES pads dans la fenêtre GOOD (la
+même tolérance que le jugement PERFECT/GOOD/MISS, pas un seuil inventé à
+part) ; la cible trouvée n'est jamais marquée jouée — elle reste
+disponible pour une vraie frappe au bon pad. `buildPadReport` agrège, par
+pad, le pad candidat le plus fréquent parmi ses MISS, signalé seulement à
+partir de 2 occurrences (`MIN_CONFUSION_COUNT`) pour ne pas remonter un
+hasard isolé comme un vrai signal. Affiché dans `PerformancePanel` :
+« ↷ SOUVENT CONFONDU AVEC {pad} (N×) » sous la ligne existante du pad.
+
+Vérifié : `tools/check-engine.mjs` étendu — détection d'une cible croisée
+à 10ms (dans la fenêtre), absence de détection à 200ms (hors fenêtre),
+cible jamais marquée jouée par erreur, agrégation par `buildPadReport`
+avec seuil de bruit vérifié dans les deux sens (2 occurrences signalées,
+1 seule ignorée). Scénario Playwright réel de bout en bout : session
+BOOM-BAP niveau 1 jouée (86 BPM), frappes répétées sur CLAP — pad sans
+aucune cible propre à ce niveau — pendant que KICK/SNARE/CLOSED HAT
+défilent à chaque temps ; rapport affichant en direct
+« ↷ SOUVENT CONFONDU AVEC SNARE (2×) », aucune erreur console. Première
+tentative de synchronisation précise au temps musical infructueuse
+(latence de clic Playwright variable) — remplacée par une frappe dense
+sur toute la durée du motif avec lecture du rapport en direct dès que le
+signal apparaît, plus fiable qu'un calage au milliseconde près.
+
 ## Priorités à la reprise
 
 Plan P0 clos avec ce cinquième chantier — les cinq recommandations
@@ -569,9 +600,8 @@ Undo/Redo, dépendances+CI, audit Save/Load, dix parcours pédagogiques).
    seule sur la machine physique) — nécessiteront soit une validation
    par l'utilisateur avec du vrai matériel en main, soit une décision
    explicite de portée avant d'être repris ;
-2. « pad confondu » du rapport par pad, volontairement pas couvert
-   aujourd'hui — comparer chaque MISS à ce qui était attendu sur un autre
-   pad au même instant, pas juste le pad réellement joué ;
+2. **corrigé** — « pad confondu » du rapport par pad, noté ce matin comme
+   volontairement pas couvert, comblé l'après-midi même (Q-07, ci-dessus) ;
 3. **corrigé** — erreur console Tone.js « The time must be greater than
    or equal to the last scheduled time », repérée incidemment pendant la
    vérification du cinquième chantier P1 : vrai bug de conception

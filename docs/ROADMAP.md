@@ -59,6 +59,10 @@ script isolé avant d'être committé :
   instruments Tone.js, provoquant une erreur de planification quand le
   joueur tapait pile au bon moment — pas un cas rare, c'est le but du jeu.
   Corrigé en séparant les deux en instruments indépendants.
+- **« Pad confondu » ajouté** au rapport par pad (REGISTRE_IDEES.md Q-07),
+  limite explicitement notée le 12 août au matin et comblée le même jour :
+  détecte les MISS proches dans le temps d'une cible non jouée sur un
+  autre pad, signale le pad le plus souvent visé par erreur.
 
 Mise à jour du 11 août : fusion complète des deux branches de travail dans
 `main` (fiche personnage, bibliothèque perso intégrée à Sons & Transfert,
@@ -341,9 +345,10 @@ la machine sans toucher aux autres projets.
   voir REGISTRE_IDEES.md Q-07) : pads triés du plus fauté au moins fauté,
   écart moyen signé (avance/retard) par pad, conseil de tempo simple
   (ralentir si trop de MISS, accélérer si très propre). « Pad confondu »
-  volontairement pas encore couvert — nécessiterait de comparer chaque
-  MISS à ce qui était attendu sur un AUTRE pad au même instant, pas juste
-  le pad réellement joué ; noté comme limite connue, pas caché.
+  fait plus tard le même jour : sur un MISS, `scoreHit` compare aux
+  cibles non jouées des AUTRES pads dans la fenêtre GOOD, `buildPadReport`
+  remonte le pad le plus souvent visé par erreur (à partir de 2
+  occurrences, sinon bruit) — affiché « ↷ SOUVENT CONFONDU AVEC … ».
 - [x] Historique local des scores et progression (partiel, 12 août) : un
   journal daté par séance (`practicePlan.ts`, `PracticeLogEntry`) existe
   désormais pour les dix styles dédiés, support du parcours 7/30 jours —

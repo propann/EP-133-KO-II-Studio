@@ -15,6 +15,8 @@ export interface PlayerNoteRecord {
   grade: Grade;
   /** Écart signé en millisecondes : négatif = frappe en avance, positif = en retard. Absent (Infinity/NaN) pour un MISS sans cible appariée. */
   deltaMs: number;
+  /** Sur un MISS seulement : pad qui avait une cible non jouée dans la fenêtre GOOD au même instant — voir `scoreHit`. `null`/absent sinon. */
+  confusedPad?: number | null;
 }
 
 export interface PadReportEntry {
@@ -25,7 +27,14 @@ export interface PadReportEntry {
   miss: number;
   /** Moyenne signée des écarts des frappes jugées (PERFECT/GOOD) ; `null` si aucune frappe jugeable. */
   averageDeltaMs: number | null;
+  /** Pad le plus souvent visé au même instant qu'un MISS sur ce pad — `null` si aucun signal net. */
+  confusedWithPad: number | null;
+  /** Nombre de MISS de ce pad attribués à `confusedWithPad`. */
+  confusedCount: number;
 }
+
+/** En dessous de ce nombre d'occurrences, un même pad candidat au hasard ne vaut pas la peine d'être signalé — bruit plutôt que vrai signal. */
+const MIN_CONFUSION_COUNT = 2;
 
 /**
  * Regroupe les frappes d'une session par pad, triées du pad le plus fautif
@@ -47,7 +56,25 @@ export function buildPadReport(notes: PlayerNoteRecord[]): PadReportEntry[] {
       const miss = list.filter((note) => note.grade === 'MISS').length;
       const judged = list.filter((note) => note.grade !== 'MISS' && Number.isFinite(note.deltaMs));
       const averageDeltaMs = judged.length ? judged.reduce((sum, note) => sum + note.deltaMs, 0) / judged.length : null;
-      return { pad, hits: list.length, perfect, good, miss, averageDeltaMs };
+
+      // « Pad confondu » : le pad candidat le plus fréquent parmi les MISS de ce pad,
+      // rapporté seulement s'il dépasse un seuil de bruit minimal.
+      const confusionCounts = new Map<number, number>();
+      list.forEach((note) => {
+        if (note.grade !== 'MISS' || note.confusedPad === undefined || note.confusedPad === null) return;
+        confusionCounts.set(note.confusedPad, (confusionCounts.get(note.confusedPad) || 0) + 1);
+      });
+      let confusedWithPad: number | null = null;
+      let confusedCount = 0;
+      confusionCounts.forEach((count, candidatePad) => {
+        if (count > confusedCount || (count === confusedCount && confusedWithPad !== null && candidatePad < confusedWithPad)) {
+          confusedCount = count;
+          confusedWithPad = candidatePad;
+        }
+      });
+      if (confusedCount < MIN_CONFUSION_COUNT) { confusedWithPad = null; confusedCount = 0; }
+
+      return { pad, hits: list.length, perfect, good, miss, averageDeltaMs, confusedWithPad, confusedCount };
     })
     .sort((a, b) => b.miss - a.miss || b.hits - a.hits || a.pad - b.pad);
 }

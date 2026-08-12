@@ -62,10 +62,12 @@ export function PerformancePanel({ transportActive, expectedPad, flashedPad, sco
         <ul className="performance-pad-report">
           {padReport.map((entry) => {
             const visual = EP133_PADS[entry.pad];
+            const confusedVisual = entry.confusedWithPad !== null ? EP133_PADS[entry.confusedWithPad] : null;
             return <li className={`cat-${visual.category}`} key={entry.pad}>
               <span className="performance-pad-name"><i className="pad-dot" />{visual.name}</span>
               <span className="performance-pad-counts">{entry.perfect}P · {entry.good}G · {entry.miss}M</span>
               <span className="performance-pad-delta">{formatDelta(entry.averageDeltaMs)}</span>
+              {confusedVisual && <span className="performance-pad-confusion">↷ SOUVENT CONFONDU AVEC {confusedVisual.name} ({entry.confusedCount}×)</span>}
             </li>;
           })}
         </ul>

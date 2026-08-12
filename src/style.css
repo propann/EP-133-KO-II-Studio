@@ -236,10 +236,11 @@ header { display:flex; justify-content:space-between; gap:30px; align-items:star
    s'annulent entre deux pads différents. */
 .performance-report-title { margin-top:2px; padding-top:6px; border-top:1px solid #d2cfc8; }
 .performance-pad-report { display:flex; flex-direction:column; gap:3px; margin:0; padding:0; list-style:none; max-height:120px; overflow-y:auto; }
-.performance-pad-report li { display:grid; grid-template-columns:1fr auto; grid-template-rows:auto auto; gap:0 6px; padding:3px 5px; border-radius:4px; background:#e9e6df; }
+.performance-pad-report li { display:grid; grid-template-columns:1fr auto; grid-template-rows:auto auto auto; gap:0 6px; padding:3px 5px; border-radius:4px; background:#e9e6df; }
 .performance-pad-name { grid-column:1; display:flex; align-items:center; gap:5px; font-size:7.5px; font-weight:900; letter-spacing:.02em; }
 .performance-pad-counts { grid-column:2; grid-row:1; font-size:7px; font-variant-numeric:tabular-nums; color:#65625d; white-space:nowrap; }
 .performance-pad-delta { grid-column:1/-1; grid-row:2; font-size:7px; font-variant-numeric:tabular-nums; color:#65625d; padding-left:11px; }
+.performance-pad-confusion { grid-column:1/-1; grid-row:3; padding-left:11px; font-size:7px; font-weight:bold; color:#9a3412; }
 .performance-tempo-advice { display:flex; flex-direction:column; gap:1px; margin:2px 0 0; padding:5px 6px; border-radius:4px; font-size:8px; font-weight:900; }
 .performance-tempo-advice.reduire { background:#f2c6bd; color:#8a2818; }
 .performance-tempo-advice.augmenter { background:#c9e6cf; color:#1a5c2c; }

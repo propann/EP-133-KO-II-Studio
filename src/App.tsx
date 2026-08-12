@@ -79,6 +79,8 @@ interface PlayerNote {
   grade: Grade;
   /** Écart signé en ms — alimente le rapport par pad (report.ts), pas seulement l'écart agrégé de Score. */
   deltaMs: number;
+  /** « Pad confondu » (12 août) : sur un MISS, pad qui avait une cible non jouée au même instant — voir scoring.ts. */
+  confusedPad?: number | null;
 }
 
 const USER_EXERCISES_KEY = 'ep133-rhythm-hero:user-exercises:v1';
@@ -261,7 +263,7 @@ export default function App() {
     scoreRef.current = result.score;
     setScore(result.score);
     setLast({ grade: result.grade, deltaMs: result.deltaMs });
-    setPlayerNotes((notes) => [...notes, { id: performance.now(), beat, pad: hit.pad, grade: result.grade, deltaMs: result.deltaMs }]);
+    setPlayerNotes((notes) => [...notes, { id: performance.now(), beat, pad: hit.pad, grade: result.grade, deltaMs: result.deltaMs, confusedPad: result.confusedPad }]);
     setFlashedPad({ pad: hit.pad, grade: result.grade });
   }, [activeExercise, editorMode, editorOpen, running]);
 

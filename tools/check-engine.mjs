@@ -34,6 +34,26 @@ assert.equal(miss.grade, 'MISS');
 assert.equal(miss.score.combo, 0);
 assert.equal(miss.score.maxCombo, 2);
 assert.equal(miss.score.hits, 2, 'un MISS ne doit pas compter comme frappe précise');
+assert.equal(miss.confusedPad, null, 'aucune cible non jouée à proximité -> pas de confusion signalée');
+
+// « Pad confondu » (12 août, REGISTRE_IDEES.md Q-07 partie non couverte au 12 août) :
+// une cible non jouée sur un AUTRE pad à proximité doit être signalée sur un MISS.
+const confusionExercise = {
+  id: 'confusion', title: 'CONFUSION', description: '', bpm: 120, bars: 1,
+  grading: { perfectMs: 35, goodMs: 90 },
+  targets: [{ id: 'ride-target', beat: 1, pad: 5 }],
+};
+const confusionTargets = confusionExercise.targets.map((target) => ({ ...target }));
+// Frappe sur le pad 0 (KICK), à 10ms de la cible RIDE (pad 5) -> dans la fenêtre GOOD.
+const confused = scoreHit(confusionExercise, { pad: 0, velocity: 100, timestamp: 0 }, 1.02, confusionTargets, emptyScore());
+assert.equal(confused.grade, 'MISS', 'aucune cible sur le pad 0 lui-même -> MISS');
+assert.equal(confused.confusedPad, 5, 'une cible RIDE non jouée à 10ms doit être détectée comme confusion');
+assert.equal(confusionTargets[0].hit, undefined, 'la cible confondue ne doit jamais être marquée jouée — elle reste disponible pour une vraie frappe');
+
+// Hors fenêtre GOOD (200ms) : pas de confusion signalée, juste un MISS sec.
+const tooFar = scoreHit(confusionExercise, { pad: 0, velocity: 100, timestamp: 0 }, 1.4, confusionTargets, emptyScore());
+assert.equal(tooFar.grade, 'MISS');
+assert.equal(tooFar.confusedPad, null, 'cible hors fenêtre GOOD -> pas de confusion');
 
 assert.equal(measureFromGlobalStep(0), 0);
 assert.equal(measureFromGlobalStep(15), 0);
@@ -49,9 +69,9 @@ assert.equal(usedBars([{ beat: 4 }]), 2);
 const sessionNotes = [
   { pad: 0, grade: 'PERFECT', deltaMs: 5 },
   { pad: 0, grade: 'GOOD', deltaMs: -60 },
-  { pad: 0, grade: 'MISS', deltaMs: Infinity },
-  { pad: 2, grade: 'MISS', deltaMs: Infinity },
-  { pad: 2, grade: 'MISS', deltaMs: Infinity },
+  { pad: 0, grade: 'MISS', deltaMs: Infinity, confusedPad: 5 },
+  { pad: 2, grade: 'MISS', deltaMs: Infinity, confusedPad: 5 },
+  { pad: 2, grade: 'MISS', deltaMs: Infinity, confusedPad: 5 },
   { pad: 4, grade: 'PERFECT', deltaMs: -10 },
 ];
 const padReport = buildPadReport(sessionNotes);
@@ -59,12 +79,18 @@ assert.equal(padReport.length, 3, 'un pad jamais joué ne doit pas apparaître')
 assert.equal(padReport[0].pad, 2, 'le pad le plus fautif (2 MISS) doit passer en premier');
 assert.equal(padReport[0].miss, 2);
 assert.equal(padReport[0].averageDeltaMs, null, 'aucune frappe jugeable pour un pad tout en MISS');
+assert.equal(padReport[0].confusedWithPad, 5, 'les deux MISS du pad 2 pointent vers le pad 5 -> signalé');
+assert.equal(padReport[0].confusedCount, 2);
 const padZero = padReport.find((entry) => entry.pad === 0);
 assert.equal(padZero.hits, 3);
 assert.equal(padZero.perfect, 1);
 assert.equal(padZero.good, 1);
 assert.equal(padZero.miss, 1);
 assert.equal(Math.round(padZero.averageDeltaMs), -27, 'moyenne signée des seules frappes jugées (5 et -60), pas du MISS');
+assert.equal(padZero.confusedWithPad, null, 'un seul MISS confondu -> sous le seuil de bruit, pas signalé');
+assert.equal(padZero.confusedCount, 0);
+const padFour = padReport.find((entry) => entry.pad === 4);
+assert.equal(padFour.confusedWithPad, null, 'aucun MISS sur ce pad -> pas de confusion possible');
 assert.deepEqual(buildPadReport([]), [], 'aucune frappe -> aucune ligne, jamais une exception');
 
 assert.equal(adviseTempo({ perfect: 0, good: 0, miss: 0 }).direction, 'garder', 'pas assez de données -> pas de conseil');
