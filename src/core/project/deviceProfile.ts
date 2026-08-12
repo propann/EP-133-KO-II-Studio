@@ -77,14 +77,25 @@ export function loadDeviceClone(storage: Pick<Storage, 'getItem'>): DeviceCloneM
  * modifiés/supprimés) que le pont local calcule pendant un clone complet
  * n'est pour l'instant affiché que le temps du dialogue, pas encore
  * persisté ici — suite possible, pas faite aujourd'hui.
+ *
+ * `previous` peut venir d'un manifeste écrit AVANT ce correctif (12 août) —
+ * `history` existait déjà mais ses entrées n'avaient alors que
+ * `{ createdAt, label }`, sans `soundCount`/`usedBytes`. Chaque champ est
+ * donc comparé seulement s'il est un nombre fini chez `previous`, sinon
+ * silencieusement omis — jamais un fragment « NaN son » affiché au premier
+ * instantané suivant la mise à jour.
  */
 export function describeCloneDelta(previous: CloneHistoryEntry | null, next: { soundCount: number; usedBytes: number; scannedProject: number | null }): string {
   if (!previous) return 'Premier instantané';
   const parts: string[] = [];
-  const soundDelta = next.soundCount - previous.soundCount;
-  if (soundDelta !== 0) parts.push(`${soundDelta > 0 ? '+' : ''}${soundDelta} son${Math.abs(soundDelta) > 1 ? 's' : ''}`);
-  const mbDelta = (next.usedBytes - previous.usedBytes) / 1e6;
-  if (Math.abs(mbDelta) >= 0.01) parts.push(`${mbDelta > 0 ? '+' : ''}${mbDelta.toFixed(2)} Mo`);
+  if (Number.isFinite(previous.soundCount)) {
+    const soundDelta = next.soundCount - previous.soundCount;
+    if (soundDelta !== 0) parts.push(`${soundDelta > 0 ? '+' : ''}${soundDelta} son${Math.abs(soundDelta) > 1 ? 's' : ''}`);
+  }
+  if (Number.isFinite(previous.usedBytes)) {
+    const mbDelta = (next.usedBytes - previous.usedBytes) / 1e6;
+    if (Math.abs(mbDelta) >= 0.01) parts.push(`${mbDelta > 0 ? '+' : ''}${mbDelta.toFixed(2)} Mo`);
+  }
   if (next.scannedProject !== previous.scannedProject) parts.push(`projet ${previous.scannedProject ?? '—'} → ${next.scannedProject ?? '—'}`);
   return parts.length ? parts.join(' · ') : 'Aucun changement détecté';
 }

@@ -31,21 +31,28 @@ pour ouvrir, écouter ou modifier un projet.
 
 ## État consolidé — 11-12 août 2026
 
-Mise à jour du 12 août : plan P0 terminé — Song Position qui suit la
-lecture, Annuler/Rétablir sur l'édition de pattern, dépendances pinnées,
-CI qualité, et l'audit du cycle Save→quitter→rouvrir a trouvé un vrai bug
-(voir [VALIDATION_SAVE_LOAD_STUDIO.md](VALIDATION_SAVE_LOAD_STUDIO.md)) :
-une frappe ONE simple redevenait une note MIDI fixe après un aller-retour
-Sauvegarder→Ouvrir — corrigé et couvert par un test de non-régression.
-Plan P1 clos le 12 août : dix parcours pédagogiques (5 styles écrits en
-plus), rapport de progression par pad, conversion Projet → Exercice, édition
-de la vélocité d'un pas (Maj+molette), recherche/métadonnées dans
-« Ouvrir… », et parcours 7/30 jours avec répétition sur MISS élevé.
-Plan P2 en cours le 12 août : item 2 fait (analyse WAV déterministe), item 5
-partiel (Time Machine — chronologie et comparaison, pas encore de
-restauration). Les items 1, 3, 4 et le reste de l'item 5 touchent à une
-écriture matérielle réelle et restent hors de portée du travail logiciel
-seul, consigne stricte de lecture seule sur la machine physique.
+Mise à jour du 12 août — trois plans avancés dans l'ordre, chacun vérifié
+par `npm run typecheck`/`build`/`test` et un vrai scénario Playwright ou
+script isolé avant d'être committé :
+
+- **Plan P0 clos** : Song Position qui suit la lecture, Annuler/Rétablir sur
+  l'édition de pattern, dépendances pinnées, CI qualité, et l'audit du
+  cycle Save→quitter→rouvrir a trouvé un vrai bug (voir
+  [VALIDATION_SAVE_LOAD_STUDIO.md](VALIDATION_SAVE_LOAD_STUDIO.md)) : une
+  frappe ONE simple redevenait une note MIDI fixe après un aller-retour
+  Sauvegarder→Ouvrir — corrigé et couvert par un test de non-régression.
+- **Plan P1 clos** : dix parcours pédagogiques (5 styles écrits en plus),
+  rapport de progression par pad, conversion Projet → Exercice, édition de
+  la vélocité d'un pas (Maj+molette), recherche/métadonnées dans
+  « Ouvrir… », et parcours 7/30 jours avec répétition sur MISS élevé.
+- **Plan P2 en cours** : item 2 fait (analyse WAV déterministe), item 5
+  partiel (Time Machine — chronologie et comparaison ; en le vérifiant, un
+  bug de migration a été trouvé et corrigé : un ancien manifeste sans les
+  nouveaux champs par entrée aurait affiché « NaN son » au premier point
+  suivant la mise à jour). Les items 1, 3, 4 et le reste de l'item 5
+  (restauration) touchent à une écriture matérielle réelle et restent hors
+  de portée du travail logiciel seul, consigne stricte de lecture seule sur
+  la machine physique.
 
 Mise à jour du 11 août : fusion complète des deux branches de travail dans
 `main` (fiche personnage, bibliothèque perso intégrée à Sons & Transfert,
@@ -226,9 +233,14 @@ composition identique sans machine connectée ; échanger ses notes en MIDI.
 - [x] Time Machine : chronologie et comparaison (partiel, 12 août — voir
   REGISTRE_IDEES.md Q-16/F-16) : chaque SCAN/CLONE ajoute désormais un
   point daté à `history` avec le delta depuis le précédent (sons/Mo/
-  projet), affiché dans le dialogue CLONER. Restauration locale d'un
-  projet/sample isolé pas encore commencée — nécessiterait un stockage
-  versionné réel des PCM sur disque, pas seulement des métadonnées.
+  projet), affiché dans le dialogue CLONER. Bug de migration trouvé et
+  corrigé le même jour en revérifiant ce chantier : un manifeste laissé
+  par le code d'avant ce correctif n'a que `{ createdAt, label }` par
+  entrée d'historique — sans le garde-fou ajouté (`Number.isFinite`), le
+  premier point suivant la mise à jour aurait affiché « NaN son ».
+  Restauration locale d'un projet/sample isolé pas encore commencée —
+  nécessiterait un stockage versionné réel des PCM sur disque, pas
+  seulement des métadonnées.
 - [ ] Time Machine : patch de restauration matérielle avec checkpoint.
 
 ### Banque ordinateur

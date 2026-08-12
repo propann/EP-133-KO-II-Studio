@@ -378,7 +378,10 @@ partagé jamais touché directement.
 - `tools/check-project-exports.mjs` étendu + scénario Playwright réel
   pour le deuxième chantier P2 (Time Machine), mock de storage devenu
   réellement multi-clé au passage — l'ancien mock masquait ce genre de
-  bug par construction.
+  bug par construction ;
+- test de migration dédié pour le bug « NaN son » trouvé en revérifiant
+  le chantier Time Machine le même jour (script isolé avant/après
+  correctif, puis assertion permanente dans `tools/check-project-exports.mjs`).
 
 ## Plan P2 — premier chantier : préparation déterministe du WAV
 
@@ -476,6 +479,30 @@ erreur console liée au code ajouté (les deux erreurs 502 observées
 viennent du polling `/bridge/health`, déjà géré avec un `.catch()`
 existant, sans lien avec ce chantier).
 
+### Revérification du même jour — deuxième bug de migration trouvé
+
+Sur demande explicite de repasser sur P2/Time Machine pour corriger ce qui
+pouvait l'être avant de continuer : relecture du code déjà committé plutôt
+qu'une simple relecture de la documentation. `describeCloneDelta()`
+compare `next.soundCount - previous.soundCount` sans vérifier que
+`previous` a bien ces champs — or n'importe quel manifeste écrit par le
+code **d'avant** ce correctif (donc par tout usage réel de SCAN/CLONE fait
+plus tôt dans ce projet, y compris pendant les vérifications de cette
+session) a une entrée d'historique au format `{ createdAt, label }`
+seulement. Reproduit avec un script isolé avant correction : le premier
+point ajouté après la mise à jour affichait littéralement
+« SCAN · NaN son · projet — → 1 ».
+
+Corrigé par un garde-fou `Number.isFinite()` par champ dans
+`describeCloneDelta` (le delta sons est omis si `previous.soundCount`
+n'est pas un nombre, idem pour la mémoire — la comparaison de projet
+scanné restait déjà sûre grâce au `??` existant). Test de migration
+dédié ajouté à `tools/check-project-exports.mjs` : un ancien manifeste
+construit à la main, un nouvel appel `createDeviceClone`, vérification
+explicite que l'étiquette ne contient jamais la chaîne `"NaN"`. Script de
+reproduction isolé (avant/après correctif) supprimé une fois la preuve
+obtenue — pas laissé traîner dans `tools/`.
+
 ## Priorités à la reprise
 
 Plan P0 clos avec ce cinquième chantier — les cinq recommandations
@@ -493,13 +520,15 @@ Undo/Redo, dépendances+CI, audit Save/Load, dix parcours pédagogiques).
    machine) ;
 1bis. **Plan P2 en cours** — item 2 fait (préparation déterministe du
    WAV) et item 5 partiel (Time Machine : chronologie + comparaison,
-   ci-dessus) ; restent l'item 1 (adaptateur ep-series-sysex), l'item 3
-   (compiler/differ un projet de test), l'item 4 (checkpoint/écriture
-   sérialisée) et la restauration de l'item 5 — tous touchent à une
-   écriture matérielle réelle et restent hors de portée ici (consigne
-   stricte de lecture seule sur la machine physique) — nécessiteront
-   soit une validation par l'utilisateur avec du vrai matériel en main,
-   soit une décision explicite de portée avant d'être repris ;
+   revérifié le même jour à la demande explicite de l'utilisateur, un
+   deuxième bug de migration trouvé et corrigé — ci-dessus) ; restent
+   l'item 1 (adaptateur ep-series-sysex), l'item 3 (compiler/differ un
+   projet de test), l'item 4 (checkpoint/écriture sérialisée) et la
+   restauration de l'item 5 — tous touchent à une écriture matérielle
+   réelle et restent hors de portée ici (consigne stricte de lecture
+   seule sur la machine physique) — nécessiteront soit une validation
+   par l'utilisateur avec du vrai matériel en main, soit une décision
+   explicite de portée avant d'être repris ;
 2. « pad confondu » du rapport par pad, volontairement pas couvert
    aujourd'hui — comparer chaque MISS à ce qui était attendu sur un autre
    pad au même instant, pas juste le pad réellement joué ;

@@ -81,15 +81,22 @@ Chaque synchronisation validée pourra créer un instantané immuable contenant
 le manifeste, les projets, l'index des sons, leurs hashes et les références aux
 fichiers audio privés. La future vue Time Machine devra permettre :
 
-- une chronologie nommée et datée ;
-- la comparaison de deux états ;
-- la restauration locale d'un projet ou d'un sample isolé ;
-- la préparation d'un patch de retour vers la machine ;
-- une restauration matérielle uniquement après checkpoint et confirmation ;
-- une rétention fondée sur les hashes plutôt que sur des copies audio inutiles.
+- [x] une chronologie nommée et datée (12 août — `deviceProfile.ts`,
+  `history` s'accumule réellement à chaque SCAN/CLONE, plus une seule
+  entrée figée) ;
+- [x] la comparaison de deux états (métadonnées seulement : sons, mémoire,
+  projet scanné — `describeCloneDelta`, affichée dans le dialogue CLONER) ;
+- [ ] la restauration locale d'un projet ou d'un sample isolé ;
+- [ ] la préparation d'un patch de retour vers la machine ;
+- [ ] une restauration matérielle uniquement après checkpoint et confirmation ;
+- [ ] une rétention fondée sur les hashes plutôt que sur des copies audio inutiles.
 
-Pour le moment, seul le premier point d'historique est créé. Aucun bouton de
-restauration trompeur n'est activé.
+Les deux premiers points existent depuis le 12 août (plan P2, item 5 —
+voir REGISTRE_IDEES.md Q-16/F-16) : chronologie et comparaison de
+métadonnées, pas encore de diff audio réel (celui que le pont local
+calcule pendant un clone complet reste affiché seulement le temps du
+dialogue, pas persisté dans l'historique). Aucun bouton de restauration —
+locale ou matérielle — n'est encore activé ; ni trompeur ni construit.
 
 ## Limite de l'application web
 

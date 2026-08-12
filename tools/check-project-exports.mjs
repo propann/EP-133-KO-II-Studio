@@ -4,7 +4,7 @@ import { createEp133ProjectDocument, createMidiFile } from '../src/core/project/
 import { decodeEp133ProjectTar, inspectEp133Archive, readEp133ProjectDocument, readMidiFile } from '../src/core/project/importers.ts';
 import { exerciseTargetsToNotes, normalizeSequencerNote, notesToExerciseTargets } from '../src/core/project/model.ts';
 import { deleteStudioProject, duplicateStudioProject, loadStudioLibrary, renameStudioProject, storeStudioProject, studioStateFromDocument } from '../src/core/project/studioLibrary.ts';
-import { createDeviceClone, loadDeviceClone, loadDeviceProfile, saveDeviceProfile } from '../src/core/project/deviceProfile.ts';
+import { createDeviceClone, describeCloneDelta, DEVICE_CLONE_KEY, loadDeviceClone, loadDeviceProfile, saveDeviceProfile } from '../src/core/project/deviceProfile.ts';
 import { zipSync, strToU8 } from 'fflate';
 
 const patterns = {
@@ -139,6 +139,25 @@ assert.equal(loadDeviceClone(memoryStorage).history.length, 2, 'relecture depuis
 const thirdClone = createDeviceClone(memoryStorage, savedProfile, 540, 58000000, 2, 'scan');
 assert.equal(thirdClone.history.length, 3);
 assert.equal(thirdClone.history[2].label, 'SCAN · Aucun changement détecté', 'mêmes valeurs que le point précédent -> aucun changement signalé, pas un delta à zéro affiché bêtement');
+
+// Migration : un manifeste laissé par le code D'AVANT ce correctif (12 août) n'a que
+// { createdAt, label } par entrée d'historique, sans soundCount/usedBytes — le premier
+// nouveau point après mise à jour ne doit jamais afficher "NaN son" ou "NaN Mo".
+assert.equal(describeCloneDelta({ createdAt: '2026-08-01T00:00:00.000Z', label: 'INSTANTANÉ INITIAL' }, { soundCount: 527, usedBytes: 56210000, scannedProject: 1 }), 'projet — → 1');
+const legacyStorage = (() => {
+  const store = new Map();
+  store.set(DEVICE_CLONE_KEY, JSON.stringify({
+    createdAt: '2026-08-01T00:00:00.000Z',
+    profile: savedProfile,
+    soundCount: 500, usedBytes: 50000000, scannedProject: 1, audioStatus: 'local-bridge-required',
+    history: [{ createdAt: '2026-08-01T00:00:00.000Z', label: 'INSTANTANÉ INITIAL' }],
+  }));
+  return { getItem: (key) => store.has(key) ? store.get(key) : null, setItem: (key, value) => store.set(key, value) };
+})();
+const migratedClone = createDeviceClone(legacyStorage, savedProfile, 527, 56210000, 1, 'scan');
+assert.equal(migratedClone.history.length, 2, 'le point historique existant doit être conservé, pas remplacé');
+assert.ok(!migratedClone.history[1].label.includes('NaN'), `pas de "NaN" dans l’étiquette migrée : ${migratedClone.history[1].label}`);
+
 const storedStudio = storeStudioProject(memoryStorage, [], project);
 assert.equal(loadStudioLibrary(memoryStorage).length, 1);
 const restoredStudio = studioStateFromDocument(storedStudio.library[0].document);
