@@ -88,6 +88,37 @@ export function deleteStudioProject(storage: Pick<Storage, 'setItem'>, library: 
   return writeStudioLibrary(storage, library.filter((record) => record.id !== id));
 }
 
+/** Fiche de recherche affichée dans « Ouvrir… » : le strict nécessaire pour trier/filtrer sans reparser le document ailleurs. */
+export interface StudioProjectSummary {
+  id: string;
+  title: string;
+  bpm: number;
+  /** Nombre de patterns non vides (au moins un événement) — mesure grossière de la taille du projet, pas les mesures réelles. */
+  patternCount: number;
+  updatedAt: string;
+}
+
+/**
+ * Bibliothèque unifiée V1 (REGISTRE_IDEES.md Q-12/E-16, item 5 du plan P1) :
+ * recherche et métadonnées (BPM, patterns) pour « Ouvrir… ». Tags,
+ * miniatures et détection des dépendances (samples manquants) restent hors
+ * scope — nécessiteraient respectivement un vocabulaire de tags à inventer
+ * et une comparaison contre la banque machine connectée, pas seulement une
+ * relecture du document local.
+ */
+export function summarizeStudioProject(record: StudioProjectRecord): StudioProjectSummary {
+  const metadata = record.document.metadata && typeof record.document.metadata === 'object' ? record.document.metadata as Record<string, unknown> : {};
+  const settings = record.document.settings && typeof record.document.settings === 'object' ? record.document.settings as Record<string, unknown> : {};
+  const patterns = Array.isArray(record.document.patterns) ? record.document.patterns as Array<{ events?: unknown[] }> : [];
+  return {
+    id: record.id,
+    title: String(metadata.title || 'PROJET SANS NOM'),
+    bpm: Math.max(20, Math.min(300, Number(settings.bpm) || 120)),
+    patternCount: patterns.filter((pattern) => Array.isArray(pattern.events) && pattern.events.length > 0).length,
+    updatedAt: record.updatedAt,
+  };
+}
+
 /**
  * Convertit un document `ep.project.v1` (local ou scanné sur la machine) vers
  * l'état interne du Studio. **Peut lever une exception** si le document est

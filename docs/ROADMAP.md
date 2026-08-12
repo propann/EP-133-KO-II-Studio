@@ -38,8 +38,8 @@ CI qualité, et l'audit du cycle Save→quitter→rouvrir a trouvé un vrai bug
 une frappe ONE simple redevenait une note MIDI fixe après un aller-retour
 Sauvegarder→Ouvrir — corrigé et couvert par un test de non-régression.
 Puis plan P1 en cours : dix parcours pédagogiques (5 styles écrits en plus),
-rapport de progression par pad, conversion Projet → Exercice, et édition de
-la vélocité d'un pas (Maj+molette).
+rapport de progression par pad, conversion Projet → Exercice, édition de la
+vélocité d'un pas (Maj+molette), et recherche/métadonnées dans « Ouvrir… ».
 
 Mise à jour du 11 août : fusion complète des deux branches de travail dans
 `main` (fiche personnage, bibliothèque perso intégrée à Sons & Transfert,
@@ -79,6 +79,9 @@ autorisation MIDI du navigateur.
 - Édition de la vélocité d'un pas (Maj+molette dans la grille rythmique,
   1–127, retour visuel par opacité et infobulle) — couverte par
   Annuler/Rétablir comme toute autre édition de pattern.
+- « Ouvrir… » du Studio : recherche par titre et métadonnées (BPM, nombre
+  de patterns, date) sur les projets personnels, triés du plus récent au
+  plus ancien.
 
 ### Expérimental ou incomplet
 

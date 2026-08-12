@@ -264,6 +264,29 @@ Limite assumée, pas cachée : seule la grille rythmique (pas le piano-roll
 KEYS note à note), et seule la vélocité (pas le gate/durée ni le
 micro-timing) — le reste de Q-12 reste à faire.
 
+## Plan P1 — quatrième chantier : bibliothèque unifiée (V1 : recherche et métadonnées)
+
+`summarizeStudioProject()` recherché dans l'audit (« bibliothèque avec BPM,
+durée, tags, miniature et recherche », REGISTRE_IDEES.md Q-13) : la liste
+« MES PROJETS » de FICHIER › Ouvrir… n'affichait qu'un titre, sans aucun
+moyen de retrouver un projet parmi plusieurs ni de savoir ce qu'il contient
+sans l'ouvrir. Portée retenue pour cette V1 : recherche par titre et trois
+métadonnées lisibles sans reparser le document ailleurs (BPM, nombre de
+patterns non vides, date de modification), triée du plus récent au plus
+ancien (`storeStudioProject`/`renameStudioProject` maintiennent déjà cet
+ordre côté stockage). Tags, miniatures et détection des dépendances de
+samples manquants restent hors scope — une vraie unification demanderait
+d'y inclure aussi les exercices Rhythm Hero (`userExercises`, un stockage
+séparé) et les clones machine (Fiche personnage), pas seulement les
+projets Studio.
+
+Vérifié par un vrai scénario Playwright : trois projets enregistrés sous
+des titres différents (ALPHA GROOVE, BETA GROOVE, GAMMA TRACK), liste
+« MES PROJETS » confirmée à 3 entrées avec BPM/nombre de
+patterns/date affichés, recherche « GROOVE » filtrée à 2 résultats,
+recherche vidée revenue à 3, recherche insensible à la casse (« gamma »
+minuscule) filtrée à 1 résultat — aucune erreur console.
+
 ## Méthode
 
 Chaque chantier a suivi le même principe : comprendre le code existant
@@ -284,7 +307,10 @@ partagé jamais touché directement.
 - script Node isolé, avant/après correctif, pour l'item 4 ;
 - scénarios Playwright réels pour le troisième chantier P1 (vélocité),
   dont un qui a lui-même révélé et fait corriger un bug d'écouteur passif
-  avant d'être considéré comme preuve valable.
+  avant d'être considéré comme preuve valable ;
+- scénario Playwright réel pour le quatrième chantier P1 (bibliothèque) :
+  trois projets réellement enregistrés, recherche filtrée puis vidée,
+  insensibilité à la casse vérifiée.
 
 ## Priorités à la reprise
 
@@ -293,10 +319,14 @@ partagées par les deux audits externes et l'analyse GPT sont maintenant
 faites (identité de marque déjà en cours par ailleurs, Song Position,
 Undo/Redo, dépendances+CI, audit Save/Load, dix parcours pédagogiques).
 
-1. P1 en cours : rapport de progression par pad, conversion Projet →
-   Exercice et édition de la vélocité d'un pas faits (ci-dessus) —
-   restent gate/micro-timing/multi-sélection/nudge (Q-12, partiel),
-   bibliothèque unifiée, parcours 7/30 jours ;
+1. P1 en cours — les cinq items du plan sont maintenant tous entamés :
+   rapport de progression par pad, conversion Projet → Exercice, édition
+   de la vélocité d'un pas et recherche/métadonnées dans « Ouvrir… » faits
+   (ci-dessus, chacun partiel où documenté) ; reste entièrement à faire :
+   les parcours 7 jours et 30 jours avec répétition des difficultés ;
+   restent aussi les parties non couvertes de Q-12 (gate/micro-
+   timing/multi-sélection/nudge) et Q-13 (tags, miniatures, dépendances,
+   unification avec les exercices Rhythm Hero et les clones machine) ;
 2. « pad confondu » du rapport par pad, volontairement pas couvert
    aujourd'hui — comparer chaque MISS à ce qui était attendu sur un autre
    pad au même instant, pas juste le pad réellement joué ;

@@ -399,6 +399,7 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .project-open-content { display:grid; grid-template-columns:1fr 1fr; gap:14px; min-height:0; padding:14px; overflow:auto; }
 .project-open-content h3 { margin:0 0 4px; font-size:11px; }
 .project-open-content p { min-height:30px; margin:0 0 10px; color:#68645d; font-size:8px; line-height:1.5; }
+.project-search { width:100%; height:31px; margin-bottom:8px; padding:5px 8px; border:2px solid var(--ko-black); border-radius:7px; background:#f5f2e9; font:inherit; }
 .project-open-list { display:flex; flex-direction:column; gap:7px; }
 .project-open-list button { display:grid; grid-template-columns:30px 1fr; align-items:center; min-height:50px; padding:7px 10px; border:2px solid var(--ko-black); border-radius:var(--radius-sm); background:#f3f1ec; box-shadow:2px 2px 0 var(--ko-black); text-align:left; }
 .project-open-list button:hover,.project-open-list button:focus-visible,.project-open-list button.active { background:var(--ko-amber); }

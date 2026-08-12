@@ -146,6 +146,7 @@ ce classement plutôt qu'un simple avis isolé.
 | Q-10 | Audit du cycle Save→quitter→rouvrir | RÉALISÉ | 12 août — un vrai bug trouvé et corrigé : `note ?? 60` à l'export corrompait tout pad-trigger en note MIDI fixe après un aller-retour Sauvegarder→Ouvrir ; voir VALIDATION_SAVE_LOAD_STUDIO.md |
 | Q-11 | Conversion Projet → Exercice (Studio → Rhythm Hero) | RÉALISÉ | 12 août — FICHIER › Envoyer le pattern vers Rhythm Hero, réutilise editorExercise()/saveEditorExercise déjà en place ; un seul pattern à la fois, pas encore toute une scène/Song ni de sélection de mesures |
 | Q-12 | Édition expressive : vélocité, gate, micro-timing, multi-sélection, nudge | RÉALISÉ (partiel) | 12 août — vélocité d'un pas éditable (Maj+molette, voir E-16) dans la grille rythmique uniquement ; gate/durée, micro-timing hors grille, multi-sélection et nudge restent à faire (piano-roll KEYS non couvert non plus) |
+| Q-13 | Bibliothèque unifiée : recherche, tags, miniatures, dépendances | RÉALISÉ (partiel) | 12 août — recherche par titre et métadonnées (BPM, nombre de patterns non vides, date) dans « Ouvrir… » (`summarizeStudioProject`), triée par date de modification ; ne couvre que les projets Studio (pas les exercices Rhythm Hero ni les clones machine), et tags/miniatures/détection des dépendances de samples restent à construire |
 
 ## Règle de suivi
 
