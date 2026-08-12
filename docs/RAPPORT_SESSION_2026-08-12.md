@@ -503,6 +503,46 @@ explicite que l'étiquette ne contient jamais la chaîne `"NaN"`. Script de
 reproduction isolé (avant/après correctif) supprimé une fois la preuve
 obtenue — pas laissé traîner dans `tools/`.
 
+## Bug audio réel corrigé : collision de planification Tone.js (Q-17)
+
+Signalé incidemment le même jour pendant la vérification du parcours 7/30
+jours (« The time must be greater than or equal to the last scheduled
+time »), trié maintenant plutôt que laissé de côté.
+
+**Audit avant code** : reproduit avec un script Playwright ciblé, plusieurs
+tentatives nécessaires (le bug est timing-sensible, pas déterministe à
+chaque essai) avant d'obtenir la stack trace complète :
+`MembraneSynth.triggerAttack` → `OmniOscillator.start` →
+`StateTimeline.setStateAtTime` → `StateTimeline.add` → `assert`. Cause
+racine : `AudioEngine` utilisait un seul jeu d'instruments Tone.js
+(`this.kick`, `this.clap`, …) partagé entre le modèle programmé
+(`Tone.Transport.schedule`, avec anticipation/lookahead) et les frappes
+live du joueur (`Tone.immediate()`, sans anticipation). Une frappe live
+pouvait arriver à un instant audio légèrement antérieur à une note du
+modèle déjà programmée en avance sur ce même instrument — la
+`StateTimeline` interne de Tone exige un ordre strictement croissant,
+peu importe la source. **Pas un cas rare** : le joueur qui tape la grosse
+caisse pile au bon moment est exactement le but du jeu, donc la collision
+peut survenir en jeu normal, pas seulement en cliquant vite n'importe
+comment.
+
+Corrigé en extrayant une classe `PadVoiceSet` (un jeu complet
+d'instruments par catégorie de pad) et en donnant à `AudioEngine` deux
+instances indépendantes — `modelVoices` et `playerVoices` — au lieu d'un
+seul jeu partagé. Chaque source a désormais sa propre timeline interne ;
+la collision est éliminée par construction, pas contournée par un
+try/catch qui aurait juste caché le symptôme.
+
+Vérifié : `npm run typecheck/build/test` au vert. Scénario Playwright
+reproducteur (frappes cycliques sur 3 pads pendant une séance jouée, même
+séquence qu'avant le correctif) : 1 reproduction sur les 3 premiers essais
+avant correctif, **0 erreur sur 12 exécutions** après (8 essais du
+scénario original + 4 essais d'un scénario de stress plus agressif, tous
+les 12 pads, sans délai entre les clics). Scénario de non-régression
+séparé : score et rapport par pad toujours corrects après le correctif
+(1 PERFECT, 11 MISS, rapport par pad et conseil de tempo affichés
+normalement pendant la session).
+
 ## Priorités à la reprise
 
 Plan P0 clos avec ce cinquième chantier — les cinq recommandations
@@ -532,10 +572,11 @@ Undo/Redo, dépendances+CI, audit Save/Load, dix parcours pédagogiques).
 2. « pad confondu » du rapport par pad, volontairement pas couvert
    aujourd'hui — comparer chaque MISS à ce qui était attendu sur un autre
    pad au même instant, pas juste le pad réellement joué ;
-3. erreur console Tone.js « The time must be greater than or equal to the
-   last scheduled time » repérée incidemment pendant la vérification du
-   cinquième chantier P1 (frappes rapprochées en séance jouée) — à trier,
-   sans lien avec le code ajouté aujourd'hui ;
+3. **corrigé** — erreur console Tone.js « The time must be greater than
+   or equal to the last scheduled time », repérée incidemment pendant la
+   vérification du cinquième chantier P1 : vrai bug de conception
+   (instruments partagés entre modèle et joueur), pas un flake, trié et
+   corrigé le même jour (Q-17, ci-dessus) ;
 4. mode KEYS mélodique pour Rhythm Hero — idée notée le 11/08, toujours
    remise à plus tard (voir mémoire `rhythm-hero-keys-mode-idea`) ;
 5. vérifier côté utilisateur si les autorisations MIDI du navigateur

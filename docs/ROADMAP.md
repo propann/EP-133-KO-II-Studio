@@ -53,6 +53,12 @@ script isolé avant d'être committé :
   (restauration) touchent à une écriture matérielle réelle et restent hors
   de portée du travail logiciel seul, consigne stricte de lecture seule sur
   la machine physique.
+- **Bug audio réel corrigé** (signalé incidemment pendant la vérification
+  du parcours 7/30 jours, trié le même jour — REGISTRE_IDEES.md Q-17) :
+  le modèle programmé et les frappes live du joueur partageaient les mêmes
+  instruments Tone.js, provoquant une erreur de planification quand le
+  joueur tapait pile au bon moment — pas un cas rare, c'est le but du jeu.
+  Corrigé en séparant les deux en instruments indépendants.
 
 Mise à jour du 11 août : fusion complète des deux branches de travail dans
 `main` (fiche personnage, bibliothèque perso intégrée à Sons & Transfert,

@@ -7,13 +7,27 @@ export interface PadSoundSettings {
   tune: number;
 }
 
-export class AudioEngine {
-  private metronomeId: number | null = null;
-  private scheduledNotes: number[] = [];
-  private metronomeBeat = 0;
-  private countInSeconds = 0;
-  private startToken = 0;
-  private click: Tone.Synth | null = null;
+/**
+ * Un jeu complet d'instruments de percussion (un par catégorie de pad). Deux
+ * instances coexistent dans `AudioEngine` — une pour le modèle programmé
+ * (`Tone.Transport.schedule`, avec anticipation/lookahead) et une pour les
+ * frappes live du joueur (`Tone.immediate()`, sans anticipation).
+ *
+ * Bug réel trouvé le 12 août, pas seulement supposé : avec un seul jeu
+ * partagé entre les deux sources, une frappe live pouvait arriver à un
+ * instant audio légèrement ANTÉRIEUR à une note du modèle déjà programmée
+ * en avance sur ce même instrument (`this.kick`, etc.) — la timeline
+ * interne de Tone (`StateTimeline`) exige un ordre strictement croissant,
+ * peu importe la source, d'où « The time must be greater than or equal to
+ * the last scheduled time » côté navigateur. Reproduit avec un vrai
+ * scénario Playwright (stack trace complète : `MembraneSynth.triggerAttack`
+ * → `OmniOscillator.start` → `StateTimeline.add`), pas supposé sur lecture
+ * de code — le joueur qui tape la grosse caisse pile au bon moment, c'est
+ * justement le but du jeu, donc la collision n'est pas un cas rare.
+ * Deux instruments distincts par catégorie de pad éliminent la collision
+ * par construction : chaque source a sa propre timeline interne.
+ */
+class PadVoiceSet {
   private drumBus: Tone.Channel | null = null;
   private distortion: Tone.Distortion | null = null;
   private compressor: Tone.Compressor | null = null;
@@ -27,19 +41,14 @@ export class AudioEngine {
   private shaker: Tone.NoiseSynth | null = null;
   private bass: Tone.MonoSynth | null = null;
   private fx: Tone.FMSynth | null = null;
-  private padSettings: PadSoundSettings[] = Array.from({ length: 12 }, () => ({ modelVolume: 65, playerVolume: 100, tune: 0 }));
 
-  get time() { return Math.max(0, Tone.Transport.seconds - this.countInSeconds); }
-  get running() { return Tone.Transport.state === 'started'; }
-
-  private prepareInstruments() {
+  prepare() {
     if (!this.drumBus) {
       this.drumBus = new Tone.Channel({ volume: 5 });
       this.distortion = new Tone.Distortion({ distortion: 0.18, oversample: '2x' });
       this.compressor = new Tone.Compressor({ threshold: -18, ratio: 5, attack: 0.003, release: 0.18 });
       this.drumBus.chain(this.distortion, this.compressor, Tone.Destination);
     }
-    this.click ??= new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.001, decay: 0.025, sustain: 0, release: 0.02 }, volume: -13 }).toDestination();
     this.kick ??= new Tone.MembraneSynth({ pitchDecay: 0.055, octaves: 7, envelope: { attack: 0.001, decay: 0.26, sustain: 0, release: 0.12 }, volume: -2 }).connect(this.drumBus);
     this.clap ??= new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.08, sustain: 0, release: 0.12 }, volume: -8 }).connect(this.drumBus);
     this.snare ??= new Tone.NoiseSynth({ noise: { type: 'pink' }, envelope: { attack: 0.001, decay: 0.16, sustain: 0, release: 0.06 }, volume: -5 }).connect(this.drumBus);
@@ -52,15 +61,7 @@ export class AudioEngine {
     this.fx ??= new Tone.FMSynth({ harmonicity: 2.5, modulationIndex: 12, envelope: { attack: 0.002, decay: 0.18, sustain: 0, release: 0.15 }, modulationEnvelope: { attack: 0.001, decay: 0.12, sustain: 0, release: 0.1 }, volume: -9 }).connect(this.drumBus);
   }
 
-  setPadSettings(pad: number, settings: PadSoundSettings) {
-    this.padSettings[pad] = { ...settings };
-  }
-
-  private triggerPad(pad: number, velocity: number, time: number, source: 'model' | 'player') {
-    const settings = this.padSettings[pad];
-    const level = source === 'model' ? settings.modelVolume : settings.playerVolume;
-    const strength = Math.max(0.02, Math.min(1.4, velocity / 127 * level / 100));
-    const transpose = settings.tune;
+  trigger(pad: number, time: number, strength: number, transpose: number) {
     if (pad === 0) this.kick?.triggerAttackRelease(Tone.Frequency('C1').transpose(transpose).toNote(), '8n', time, strength);
     else if (pad === 1) this.clap?.triggerAttackRelease('16n', time, strength);
     else if (pad === 2) this.snare?.triggerAttackRelease('16n', time, strength);
@@ -74,6 +75,68 @@ export class AudioEngine {
     } else if (pad === 9) this.shaker?.triggerAttackRelease('32n', time, strength * 0.8);
     else if (pad === 10) this.bass?.triggerAttackRelease(Tone.Frequency('C2').transpose(transpose).toNote(), '8n', time, strength);
     else if (pad === 11) this.fx?.triggerAttackRelease(Tone.Frequency('C5').transpose(transpose).toNote(), '8n', time, strength * 0.8);
+  }
+
+  dispose() {
+    this.kick?.dispose();
+    this.clap?.dispose();
+    this.snare?.dispose();
+    this.openHat?.dispose();
+    this.closedHat?.dispose();
+    this.ride?.dispose();
+    this.percs.forEach((instrument) => instrument.dispose());
+    this.shaker?.dispose();
+    this.bass?.dispose();
+    this.fx?.dispose();
+    this.distortion?.dispose();
+    this.compressor?.dispose();
+    this.drumBus?.dispose();
+    this.kick = null;
+    this.clap = null;
+    this.snare = null;
+    this.openHat = null;
+    this.closedHat = null;
+    this.ride = null;
+    this.percs = [];
+    this.shaker = null;
+    this.bass = null;
+    this.fx = null;
+    this.distortion = null;
+    this.compressor = null;
+    this.drumBus = null;
+  }
+}
+
+export class AudioEngine {
+  private metronomeId: number | null = null;
+  private scheduledNotes: number[] = [];
+  private metronomeBeat = 0;
+  private countInSeconds = 0;
+  private startToken = 0;
+  private click: Tone.Synth | null = null;
+  private modelVoices = new PadVoiceSet();
+  private playerVoices = new PadVoiceSet();
+  private padSettings: PadSoundSettings[] = Array.from({ length: 12 }, () => ({ modelVolume: 65, playerVolume: 100, tune: 0 }));
+
+  get time() { return Math.max(0, Tone.Transport.seconds - this.countInSeconds); }
+  get running() { return Tone.Transport.state === 'started'; }
+
+  private prepareInstruments() {
+    this.click ??= new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.001, decay: 0.025, sustain: 0, release: 0.02 }, volume: -13 }).toDestination();
+    this.modelVoices.prepare();
+    this.playerVoices.prepare();
+  }
+
+  setPadSettings(pad: number, settings: PadSoundSettings) {
+    this.padSettings[pad] = { ...settings };
+  }
+
+  private triggerPad(pad: number, velocity: number, time: number, source: 'model' | 'player') {
+    const settings = this.padSettings[pad];
+    const level = source === 'model' ? settings.modelVolume : settings.playerVolume;
+    const strength = Math.max(0.02, Math.min(1.4, velocity / 127 * level / 100));
+    const transpose = settings.tune;
+    (source === 'model' ? this.modelVoices : this.playerVoices).trigger(pad, time, strength, transpose);
   }
 
   async unlock() {
@@ -136,33 +199,9 @@ export class AudioEngine {
   dispose() {
     this.stop();
     this.click?.dispose();
-    this.kick?.dispose();
-    this.clap?.dispose();
-    this.snare?.dispose();
-    this.openHat?.dispose();
-    this.closedHat?.dispose();
-    this.ride?.dispose();
-    this.percs.forEach((instrument) => instrument.dispose());
-    this.shaker?.dispose();
-    this.bass?.dispose();
-    this.fx?.dispose();
-    this.distortion?.dispose();
-    this.compressor?.dispose();
-    this.drumBus?.dispose();
+    this.modelVoices.dispose();
+    this.playerVoices.dispose();
     this.click = null;
-    this.kick = null;
-    this.clap = null;
-    this.snare = null;
-    this.openHat = null;
-    this.closedHat = null;
-    this.ride = null;
-    this.percs = [];
-    this.shaker = null;
-    this.bass = null;
-    this.fx = null;
-    this.distortion = null;
-    this.compressor = null;
-    this.drumBus = null;
   }
 
   async loadBackingTrack(url: string) {
