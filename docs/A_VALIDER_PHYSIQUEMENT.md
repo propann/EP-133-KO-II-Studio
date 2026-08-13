@@ -99,21 +99,13 @@
   et confirmer qu'aucun bouton à traitement déjà personnalisé (pads du
   jeu, cartes de la page d'accueil, façade Test Machine) n'a perdu son
   animation spécifique au passage.
-- [ ] **SCAN/CLONE en conditions réelles, pont local relancé** (13 août) —
-  pont (`tools/local_clone_bridge.py`) relancé pour cette session avec
-  `--root /home/azoth/Musique/OP-133` (`/tmp/ep133-scan-venv` recréé, les
-  paquets `epsysex`/`mido`/`python-rtmidi` s'installent et s'importent
-  sans erreur, `python-rtmidi` détecte bien le port `EP-133` en USB) ;
-  `/bridge/health` répond à travers le proxy Vite. **Point d'attention** :
-  le dossier de travail choisi côté navigateur (bouton `DOSSIER DE
-  TRAVAIL` de la Fiche personnage, utilisé par SCAN et par CLONE quand le
-  pont est absent) est indépendant du `--root` du pont — s'ils pointent
-  vers deux dossiers différents, SCAN et CLONE écrivent à deux endroits
-  différents. À vérifier en choisissant `/home/azoth/Musique/OP-133` dans
-  le sélecteur natif du navigateur pour que tout reste au même endroit.
-  Le clonage complet (bouton `LANCER LE CLONE COMPLET`, ~20-30 min) n'a
-  pas été déclenché par l'agent — geste explicite volontairement laissé à
-  l'utilisateur, machine physique surveillée pendant l'opération.
+- [x] **SCAN/CLONE en conditions réelles** (13 août) — pont relancé,
+  clone complet lancé et mené à terme avec la vraie machine branchée
+  (527/527 sons, 9/9 projets, 0 erreur, 24 min 47 s), SCAN déclenché en
+  parallèle par l'utilisateur avec des chiffres identiques. Fusion de
+  dossier nécessaire (le clone avait démarré sous un nom différent du nom
+  déclaré) — détail complet et enseignement pour la prochaine fois dans
+  `docs/VALIDATION_CLONE_REEL.md` § « Re-test du 13 août 2026 ».
 - [ ] **Sauvegarde de la fiche personnage dans le dossier de travail**
   (13 août) — Fiche personnage → section « SAUVEGARDE DE LA FICHE » →
   bouton `SAUVEGARDER LA FICHE` : doit écrire `profile.json` à la racine
