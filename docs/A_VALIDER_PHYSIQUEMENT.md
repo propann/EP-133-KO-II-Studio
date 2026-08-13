@@ -226,6 +226,18 @@
   du Studio doit afficher le même badge vert que la page d'accueil/Test
   Machine/Fiche personnage une fois connecté, et un bouton `CONNECTER
   EP‑133` seulement si déconnecté (plus l'ancien bouton toujours visible).
+- [ ] **SCAN interroge maintenant la machine en direct** (13 août,
+  correctif) — première utilisation navigateur de la commande FILE LIST.
+  Fiche personnage → SCANNER, machine connectée en SysEx : le compteur de
+  sons doit refléter la réalité (528 au moment d'écrire ceci, pas les 527
+  figés du 9 août), et « PROJET SCANNÉ » doit afficher P09 (le projet
+  activé pendant les tests d'écriture précédents), pas P01. Vérifier aussi
+  le repli : sans SysEx actif, SCAN doit continuer à fonctionner comme
+  avant (dernier instantané connu), sans erreur visible.
+- [ ] **Upload d'un son de démo** (13 août) — vérifié par le script Python
+  (528 sons en direct, slot 58, taille exacte) mais jamais entendu à
+  l'oreille : sur la machine, projet P09 → groupe A → pad 2 doit jouer un
+  ton pur bref (~440 Hz, 0,3 s).
 - [ ] **Groupe A–D en surbrillance sur l'écran de la façade** (13 août,
   correctif) — appuyer sur un bouton physique A–D de l'EP-133 doit faire
   passer la bonne lettre en gras sur l'écran simulé de Test Machine

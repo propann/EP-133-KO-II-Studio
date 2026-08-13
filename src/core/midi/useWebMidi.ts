@@ -319,6 +319,48 @@ export function useWebMidi(
     return groupFid;
   }, [getFileMetadata, sendFileRequest]);
 
+  const SOUNDS_NODE_ID = 1000;
+  const PROJECTS_NODE_ID = 2000;
+
+  /** Liste en direct les sons occupés sur /sounds (commande LIST 0x04,
+   * paginée) — même protocole que `epsysex.FileClient.list_sounds()`
+   * (kmorrill/ep-series-sysex), reproduit ici pour que SCAN (Fiche
+   * personnage) reflète la machine réelle. Trouvé le 13 août : jusque-là
+   * SCAN republiait `public/ep133-sound-index.json`, un instantané figé
+   * au 9 août, sans jamais interroger la machine. */
+  const listMachineSounds = useCallback(async () => {
+    await sendFileRequest([0x01, 0x01, 0x00, 0x40, 0x00, 0x00]);
+    const sounds: Array<{ slot: number; bytes: number; flags: number; fileName: string }> = [];
+    let page = 0;
+    for (;;) {
+      const payload = await sendFileRequest([0x04, (page >> 8) & 0xff, page & 0xff, (SOUNDS_NODE_ID >> 8) & 0xff, SOUNDS_NODE_ID & 0xff]);
+      if (payload.length <= 2) break;
+      let offset = 2;
+      while (offset + 7 <= payload.length) {
+        const slot = (payload[offset] << 8) | payload[offset + 1];
+        const flags = payload[offset + 2];
+        const bytes = ((payload[offset + 3] << 24) | (payload[offset + 4] << 16) | (payload[offset + 5] << 8) | payload[offset + 6]) >>> 0;
+        let nameEnd = offset + 7;
+        while (nameEnd < payload.length && payload[nameEnd] !== 0) nameEnd += 1;
+        const fileName = new TextDecoder().decode(new Uint8Array(payload.slice(offset + 7, nameEnd)));
+        if (slot >= 1 && slot <= 999) sounds.push({ slot, bytes, flags, fileName });
+        offset = nameEnd + 1;
+      }
+      page += 1;
+    }
+    return sounds;
+  }, [sendFileRequest]);
+
+  /** Numéro du projet actif (1–99) déduit de la métadonnée `active` du
+   * dossier /projects — même lecture que `selectMachineGroup`, sans écrire. */
+  const getActiveProjectNumber = useCallback(async () => {
+    await sendFileRequest([0x01, 0x01, 0x00, 0x40, 0x00, 0x00]);
+    const meta = await getFileMetadata(PROJECTS_NODE_ID, 'active');
+    const fid = Number(meta.active);
+    if (!Number.isInteger(fid) || fid < 3000) throw new Error('Projet actif EP-133 introuvable');
+    return Math.round((fid - 3000) / 1000) + 1;
+  }, [getFileMetadata, sendFileRequest]);
+
   const stopOutput = useCallback(() => {
     accessRef.current?.outputs.forEach((output) => {
       if (!isEp133MidiPort(output.name)) return;
@@ -349,5 +391,5 @@ export function useWebMidi(
     if (accessRef.current) accessRef.current.onstatechange = null;
   }, [detachInputs, stopOutput]);
 
-  return { ...state, connect, connectMonitor, sendPad, sendNote, sendLearnedMessage, selectMachineGroup, stopOutput, startOutputTransport, sendClockWindow };
+  return { ...state, connect, connectMonitor, sendPad, sendNote, sendLearnedMessage, selectMachineGroup, listMachineSounds, getActiveProjectNumber, stopOutput, startOutputTransport, sendClockWindow };
 }

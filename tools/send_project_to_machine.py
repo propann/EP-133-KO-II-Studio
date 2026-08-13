@@ -26,18 +26,23 @@ cycle d'alimentation (documenté dans epsysex.devicelock lui-même).
 Usage :
     python3 tools/send_project_to_machine.py checkpoint --slot 9
     python3 tools/send_project_to_machine.py write --slot 9 --confirm
+    python3 tools/send_project_to_machine.py write-sound --slot 9 --confirm
     python3 tools/send_project_to_machine.py restore --slot 9 --from <chemin.tar>
 """
 from __future__ import annotations
 
 import argparse
+import math
+import struct
 import sys
+import wave
 from datetime import datetime, timezone
 from pathlib import Path
 
 try:
     from epsysex import FileClient, compile_project, identity_from_device
     from epsysex.tar import iter_members
+    from epsysex.dependencies import ensure_sound_dependencies
 except ImportError:
     print(
         "epsysex introuvable — active le venv du pont de clonage :\n"
@@ -83,6 +88,106 @@ def minimal_test_document(slot: int) -> dict:
             },
         ],
     }
+
+
+def synthesize_demo_wav(path: Path, seconds: float = 0.3, freq_hz: float = 440.0, rate: int = 44100) -> None:
+    """Aucun fichier audio de démo n'est fourni dans ce dépôt (pas de .wav
+    versionné) — génère un ton pur bref (fondu en enveloppe pour éviter les
+    clics), 16 bits mono, sans dépendance externe. `wav_to_pcm16` (epsysex)
+    le rééchantillonnera à 46875 Hz au moment de l'upload."""
+    frame_count = int(seconds * rate)
+    fade = max(1, int(0.01 * rate))  # 10 ms de fondu entrée/sortie
+    with wave.open(str(path), "wb") as handle:
+        handle.setnchannels(1)
+        handle.setsampwidth(2)
+        handle.setframerate(rate)
+        frames = bytearray()
+        for index in range(frame_count):
+            envelope = min(1.0, index / fade, (frame_count - index) / fade)
+            value = int(envelope * 0.6 * 32767 * math.sin(2 * math.pi * freq_hz * index / rate))
+            frames += struct.pack("<h", value)
+        handle.writeframes(bytes(frames))
+
+
+def cmd_write_sound(args: argparse.Namespace) -> None:
+    if not args.confirm:
+        print("Refus : ajoute --confirm pour écrire réellement sur la machine.", file=sys.stderr)
+        sys.exit(1)
+
+    root = Path(args.root)
+    checkpoints_dir = root / "checkpoints"
+    checkpoints_dir.mkdir(parents=True, exist_ok=True)
+
+    client = FileClient()
+
+    print("1) Liste des slots son occupés (list_sounds)…")
+    occupied = {int(node["id"]) for node in client.list_sounds()}
+    print(f"   -> {len(occupied)} slots occupés")
+    slot = args.sound_slot
+    if slot is None:
+        slot = next(candidate for candidate in range(1, 1000) if candidate not in occupied)
+    elif slot in occupied:
+        print(f"ERREUR : le slot son {slot} est déjà occupé — abandon, aucune écriture.", file=sys.stderr)
+        sys.exit(1)
+    print(f"   -> Slot son cible : {slot} (confirmé libre à l'instant)")
+
+    print(f"2) Lecture de l'état actuel du projet P{args.slot:02d} (checkpoint avant écriture)…")
+    current_bytes, _meta = client.read_project_archive(args.slot)
+    checkpoint_path = checkpoints_dir / f"P{args.slot:02d}-avant-son-{now_stamp()}.tar"
+    checkpoint_path.write_bytes(current_bytes)
+    print(f"   -> Checkpoint : {checkpoint_path}")
+
+    if args.wav:
+        wav_path = Path(args.wav)
+    else:
+        wav_path = checkpoints_dir / "demo-tone-440hz.wav"
+        print(f"3) Aucun --wav fourni : génération d'un ton de démo ({wav_path})…")
+        synthesize_demo_wav(wav_path)
+    print(f"   -> Son source : {wav_path} ({wav_path.stat().st_size} octets)")
+
+    doc = {
+        "schema": "ep.project.v1",
+        "product": "ep133",
+        "sounds": [{"slot": slot, "path": str(wav_path.resolve()), "name": "DEMO TONE"}],
+        "pads": [{"group": "A", "pad": 2, "slot": slot}],
+        "patterns": [
+            {
+                "id": "A01",
+                "bars": 1,
+                "events": [
+                    {"tick": 0, "pad": 2, "note": 60, "velocity": 100, "duration": 480},
+                ],
+            },
+        ],
+    }
+
+    print(f"4) Upload du son sur le slot {slot} (vérification octet à octet intégrée à ensure_sound_dependencies)…")
+    plan = ensure_sound_dependencies(client, doc, base_dir=".", upload_missing=True, verify=True)
+    print(f"   -> {plan}")
+
+    print("5) Compilation du pad/pattern (base = état actuel du projet)…")
+    compiled = compile_project(doc, base_archive=current_bytes)
+    print(f"   -> {len(compiled)} octets")
+
+    print(f"6) Écriture du projet P{args.slot:02d}…")
+    client.write_project_archive(args.slot, compiled)
+    written_bytes, _meta = client.read_project_archive(args.slot)
+    if written_bytes != compiled:
+        print(
+            "   -> ÉCHEC : relecture du projet différente de ce qui a été écrit.\n"
+            f"   Restaure avec : python3 tools/send_project_to_machine.py restore --slot {args.slot} --from {checkpoint_path}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    print("   -> Identique octet à octet.")
+
+    print("7) Activation (reload_project)…")
+    result = client.reload_project(args.slot)
+    print(f"   -> {result}")
+    print()
+    print(f"Succès. Son de démo uploadé sur le slot {slot}, assigné au pad A2 du projet P{args.slot:02d}.")
+    print(f"Checkpoint de restauration : {checkpoint_path}")
+    print("Le son du projet n'est pas encore prouvé écrit avant SCAN/écoute réelle — vérifier à l'oreille sur la machine.")
 
 
 def cmd_checkpoint(args: argparse.Namespace) -> None:
@@ -203,6 +308,13 @@ def main() -> None:
     write.add_argument("--slot", type=int, required=True)
     write.add_argument("--confirm", action="store_true", help="Confirme explicitement l'écriture réelle")
     write.set_defaults(func=cmd_write)
+
+    write_sound = sub.add_parser("write-sound", help="Upload d'un son de démo + assignation à un pad (nécessite --confirm)")
+    write_sound.add_argument("--slot", type=int, required=True, help="Numéro de projet (1-99)")
+    write_sound.add_argument("--sound-slot", type=int, default=None, help="Slot son cible (1-999) ; auto-détecté (premier libre) si omis")
+    write_sound.add_argument("--wav", default=None, help="Fichier WAV source ; sinon un ton de démo est généré")
+    write_sound.add_argument("--confirm", action="store_true", help="Confirme explicitement l'écriture réelle")
+    write_sound.set_defaults(func=cmd_write_sound)
 
     restore = sub.add_parser("restore", help="Restaure un checkpoint précédemment écrit")
     restore.add_argument("--slot", type=int, required=True)

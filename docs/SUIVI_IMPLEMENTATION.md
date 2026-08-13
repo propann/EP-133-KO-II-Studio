@@ -1489,6 +1489,60 @@ relecture octet à octet automatique intégrée au script, et confirmation
 humaine directe sur l'écran de la machine. Pas de suite `npm test`
 concernée (script Python autonome, hors du pipeline JS).
 
+## Phase 5 (suite) — upload d'un son réel, et le vrai bug trouvé derrière (13 août)
+
+Demande : « on teste avec un son de démo, vérifier, et on scan la machine
+pour voir si ça a marché ».
+
+**`tools/send_project_to_machine.py write-sound`** (nouvelle commande) :
+`synthesize_demo_wav()` génère un ton de test (440 Hz, 0,3 s, fondu en
+douceur, 16 bits mono — aucun fichier audio n'était versionné dans ce
+dépôt). `epsysex.dependencies.ensure_sound_dependencies()` détecte
+automatiquement un slot son libre (interrogé en direct via
+`list_sounds()`, jamais un slot occupé écrasé par erreur), upload le PCM
+rééchantillonné à 46 875 Hz, **vérifié octet à octet par la bibliothèque
+elle-même**. Le pad A2 du projet P09 est ensuite compilé pour référencer
+ce slot et écrit/relu/activé avec les mêmes garanties que la première
+écriture. Résultat réel : slot son 58 (libre parmi 527 occupés), 28 124
+octets uploadés, écriture du projet vérifiée identique, activation
+confirmée.
+
+**Le vrai bug trouvé** : l'utilisateur a cliqué SCANNER (Fiche personnage)
+pour vérifier — toujours 527 sons, « Aucun changement détecté ». Pas un
+échec de l'upload : `public/ep133-sound-index.json` (ce que SCAN
+republie) est un **fichier statique versionné, figé au 9 août**
+(`scannedAt: "2026-08-09T20:56:20"`) — `deviceSoundIndex`/`deviceInventory`
+sont chargés **une seule fois au démarrage** depuis ce fichier
+(`useEffect(() => { fetch('/ep133-sound-index.json')... }, [])`, App.tsx),
+jamais depuis une vraie requête à la machine connectée. SCAN ne faisait
+donc que republier un instantané figé avec un nouvel horodatage, quoi
+qu'il arrive sur la vraie machine. Confirmé indépendamment avec
+`epsysex.FileClient.list_sounds()` en direct : **528 sons réels sur la
+machine**, slot 58 présent, taille exacte (28124 octets) — l'upload avait
+bien fonctionné, c'est le bouton SCAN qui mentait par construction.
+
+**Correctif — SCAN interroge maintenant la machine en direct** :
+
+- `src/core/midi/useWebMidi.ts` : `listMachineSounds()` — implémente la
+  commande LIST FILE (`0x04`, paginée) en JavaScript, protocole identique
+  à `epsysex.FileClient.list_sounds()` (kmorrill/ep-series-sysex) relu
+  dans le code source Python pour reproduire l'octet exact. `getActiveProjectNumber()`
+  — même lecture que `selectMachineGroup` (métadonnée `active` du dossier
+  `/projects`, fid → numéro de projet), sans écrire.
+- `src/App.tsx`, `scanAndSaveMachine` : si le SysEx est actif, interroge
+  `listMachineSounds()`/`getActiveProjectNumber()` en direct et met à
+  jour `deviceSoundIndex` avec le résultat réel avant d'écrire le
+  manifeste ; sinon repli silencieux sur le dernier instantané connu
+  (comportement inchangé pour qui n'a pas de connexion SysEx active —
+  aucune régression).
+
+Vérifié : `npm run typecheck`, `npm test` (10 tests), `npm run build`,
+`npm run test:e2e` (2/2). **La lecture live elle-même (`listMachineSounds`/
+`getActiveProjectNumber`) n'a pas encore été cliquée dans un vrai
+navigateur** — c'est la toute première fois que ce chemin FILE existe
+côté navigateur, à tester en cliquant SCANNER avec la machine branchée.
+Ajouté à `docs/A_VALIDER_PHYSIQUEMENT.md`.
+
 ## Règle globale — tout bouton bouge au clic (13 août)
 
 Demande explicite après un test réel des boutons SCAN/CLONER : « il faut

@@ -453,8 +453,32 @@ export default function App() {
         setSampleFolderNeedsReconnect(false);
         await saveDirectoryHandle(SAMPLE_FOLDER_KEY, directory);
       }
+      // Lecture en direct si le SysEx est actif ; sinon repli sur le dernier
+      // instantané connu (deviceSoundIndex/deviceInventory), comme avant ce
+      // correctif. Trouvé le 13 août : SCAN republiait jusqu'ici
+      // public/ep133-sound-index.json (figé au 9 août) sans jamais
+      // interroger la machine — un vrai son uploadé pendant cette session
+      // n'apparaissait donc jamais dans le compte.
+      let soundCount = deviceSoundIndex?.soundCount || 0;
+      let usedBytes = deviceSoundIndex?.usedBytes || 0;
+      let scannedProject = deviceInventory?.project || null;
+      if (midi.sysexEnabled && midi.outputConnected) {
+        try {
+          const liveSounds = await midi.listMachineSounds();
+          soundCount = liveSounds.length;
+          usedBytes = liveSounds.reduce((total, sound) => total + sound.bytes, 0);
+          setDeviceSoundIndex({ readOnly: true, scannedAt: new Date().toISOString(), soundCount, usedBytes, sounds: liveSounds.map((sound) => ({ slot: sound.slot, bytes: sound.bytes, flags: sound.flags, fileName: sound.fileName })) });
+        } catch (error) {
+          console.warn('SCAN : lecture en direct des sons impossible, repli sur le dernier instantané connu.', error);
+        }
+        try {
+          scannedProject = await midi.getActiveProjectNumber();
+        } catch (error) {
+          console.warn('SCAN : lecture en direct du projet actif impossible, repli sur le dernier instantané connu.', error);
+        }
+      }
       const deviceProfile = saveDeviceProfile(localStorage, { name: machine.name, capacityMb: machine.memory === '128' ? 128 : 64, sampleFolderName: directory.name, localSampleCount: machineSampleCount });
-      const manifest = createDeviceClone(localStorage, deviceProfile, deviceSoundIndex?.soundCount || 0, deviceSoundIndex?.usedBytes || 0, deviceInventory?.project || null, 'scan');
+      const manifest = createDeviceClone(localStorage, deviceProfile, soundCount, usedBytes, scannedProject, 'scan');
       const path = await writeCloneManifest(directory, machine.name, manifest);
       setLastScanSave({ machineId: machine.id, path, at: new Date().toISOString() });
     } catch (error) {
