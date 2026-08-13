@@ -164,6 +164,20 @@
   — vérifier que le cadre vert `CONNECTÉ`/`MIDI + SYSEX` apparaît bien à
   la même place que l'ancien bouton, avec la même logique de couleur que
   la page d'accueil.
+- [ ] **Bouton CONNECTER restauré sur Test Machine** (13 août, correctif)
+  — sur un navigateur/profil n'ayant jamais autorisé le SysEx, vérifier
+  que le bouton `CONNECTER L'EP‑133` apparaît bien sous la pastille et que
+  le cliquer déclenche réellement l'invite du navigateur puis connecte.
+- [ ] **Contrôle qui « bouge » aussi quand la machine l'actionne**
+  (13 août, correctif) — en mode CONFIGURER, mapper un contrôle physique
+  (un knob ou un bouton non-A–D), repasser en mode test, actionner ce
+  même contrôle sur la machine : le bouton virtuel correspondant doit
+  visiblement s'enfoncer (~220 ms), pas seulement au clic souris. **Si ça
+  ne bouge toujours pas** : télécharger le journal de diagnostic après
+  deux pressions du même contrôle et comparer les deux hexadécimaux —
+  s'ils diffèrent (compteur/checksum variable dans le SysEx), le souci
+  n'est plus le timing mais la stabilité de la signature, pas encore
+  résolu.
 - [ ] **Groupe A–D en surbrillance sur l'écran de la façade** (13 août,
   correctif) — appuyer sur un bouton physique A–D de l'EP-133 doit faire
   passer la bonne lettre en gras sur l'écran simulé de Test Machine

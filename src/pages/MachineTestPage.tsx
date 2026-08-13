@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { MidiObservation } from '../core/midi/useWebMidi';
 import { MIDI_CONTROL_MAP_STORAGE_KEY, midiObservationSignature, loadControlAssignments, type ControlAssignment } from '../core/midi/controlMapping';
 import type { EditorGroup } from '../core/project/exporters.ts';
@@ -13,6 +13,13 @@ interface MachineTestPageProps {
    * façade, au lieu du « C » figé qu'il y avait avant. */
   machineGroup: EditorGroup;
   onBack: () => void;
+  /** Retente une connexion SysEx explicite (mode « surveiller tous les
+   * ports »). La connexion automatique au chargement échoue silencieusement
+   * si le navigateur exige un geste pour ce premier octroi — ce bouton
+   * reste donc affiché tant que sysexEnabled est faux, pour fournir ce
+   * geste. Retiré par erreur le 13 août (remplacé uniquement par la
+   * pastille passive), restauré le même jour après un test réel. */
+  onConnect: () => void;
   onSendLearned: (data: number[]) => boolean;
   onSelectMachineGroup: (groupIndex: number) => Promise<number>;
 }
@@ -58,11 +65,19 @@ function truncateHex(hex: string, max = 21) {
   return hex.length > max ? `${hex.slice(0, max)}…` : hex;
 }
 
-export function MachineTestPage({ connected, sysexEnabled, inputNames, observations, machineGroup, onBack, onSendLearned, onSelectMachineGroup }: MachineTestPageProps) {
+export function MachineTestPage({ connected, sysexEnabled, inputNames, observations, machineGroup, onBack, onConnect, onSendLearned, onSelectMachineGroup }: MachineTestPageProps) {
   const [selectedControl, setSelectedControl] = useState<string | null>(null);
   const [configureMode, setConfigureMode] = useState(false);
   const [sendNotice, setSendNotice] = useState('');
   const [assignments, setAssignments] = useState<Record<string, ControlAssignment>>(loadAssignments);
+  // Le bouton virtuel bouge très bien au clic (:active dure tant que la
+  // souris reste enfoncée), mais un vrai message reçu de la machine était
+  // instantané : dès qu'un AUTRE message arrivait derrière (fréquent en
+  // rafale), le contrôle repassait « inactif » avant d'avoir pu être vu.
+  // On mémorise donc chaque contrôle touché pendant une courte fenêtre,
+  // indépendamment des messages suivants, pour garantir un flash visible.
+  const [recentlyReceived, setRecentlyReceived] = useState<Set<string>>(new Set());
+  const receivedTimersRef = useRef<number[]>([]);
   const lastCapturedTimestamp = useRef<number | null>(null);
   const newest = observations[0];
   const newestSignature = newest ? midiObservationSignature(newest) : '';
@@ -95,10 +110,25 @@ export function MachineTestPage({ connected, sysexEnabled, inputNames, observati
     setSelectedControl(null);
   }, [newest?.timestamp]);
 
-  const activeControls = useMemo(() => {
-    if (!newestSignature) return new Set<string>();
-    return new Set(Object.entries(assignments).filter(([, value]) => value.signature === newestSignature).map(([key]) => key));
-  }, [assignments, newestSignature]);
+  useEffect(() => () => { receivedTimersRef.current.forEach((id) => window.clearTimeout(id)); }, []);
+
+  useEffect(() => {
+    if (!newestSignature) return;
+    const matches = Object.keys(assignments).filter((key) => assignments[key].signature === newestSignature);
+    if (!matches.length) return;
+    setRecentlyReceived((current) => new Set([...current, ...matches]));
+    // Chaque message programme sa propre extinction, sans dépendre du
+    // cleanup de l'effet suivant — sinon un deuxième contrôle touché juste
+    // après annulerait l'extinction du premier et le laisserait allumé
+    // indéfiniment.
+    receivedTimersRef.current.push(window.setTimeout(() => {
+      setRecentlyReceived((current) => {
+        const next = new Set(current);
+        matches.forEach((key) => next.delete(key));
+        return next;
+      });
+    }, 220));
+  }, [newest?.timestamp, assignments, newestSignature]);
 
   const machineButton = (section: string, label: string, className = '', secondary?: string) => {
     const id = controlId(section, label);
@@ -127,7 +157,7 @@ export function MachineTestPage({ connected, sysexEnabled, inputNames, observati
       else setSendNotice(`${label} utilise un SysEx observé : renvoi verrouillé jusqu’à validation.`);
     };
     return <button
-      className={`${className} ${selectedControl === id ? 'learning' : ''} ${activeControls.has(id) ? 'received' : ''} ${assignments[id] ? 'mapped' : ''}`}
+      className={`${className} ${selectedControl === id ? 'learning' : ''} ${recentlyReceived.has(id) ? 'received' : ''} ${assignments[id] ? 'mapped' : ''}`}
       onClick={() => void activate()}
       title={assignment?.signature || 'Contrôle non configuré'}
       key={id}
@@ -137,14 +167,17 @@ export function MachineTestPage({ connected, sysexEnabled, inputNames, observati
   return <main className="machine-test-page">
     <header className="machine-test-header">
       <button className="home-back" onClick={onBack}>← ACCUEIL</button>
-      <div><small>DIAGNOSTIC EN LECTURE SEULE</small><h1>TEST MACHINE</h1></div>
-      <div className={`home-machine-status ${connected ? 'online' : ''}`}><i className={connected ? 'online' : ''} /><span>{sysexEnabled ? 'MIDI + SYSEX' : connected ? 'CONNECTÉ' : 'EP‑133 PRÊT À CONNECTER'}</span></div>
+      <div className="machine-test-title"><small>DIAGNOSTIC EN LECTURE SEULE</small><h1>TEST MACHINE</h1></div>
+      <div className="machine-test-connect-block">
+        <div className={`home-machine-status ${connected ? 'online' : ''}`}><i className={connected ? 'online' : ''} /><span>{sysexEnabled ? 'MIDI + SYSEX' : connected ? 'CONNECTÉ' : 'EP‑133 PRÊT À CONNECTER'}</span></div>
+        {!sysexEnabled && <button className="machine-test-retry" onClick={onConnect}>{connected ? 'ACTIVER SYSEX' : 'CONNECTER L’EP‑133'}</button>}
+      </div>
     </header>
 
     <section className="machine-test-help">
-      <b>{selectedControl ? `APPUIE MAINTENANT SUR ${selectedControl.split(':')[1]} SUR LA MACHINE` : configureMode ? 'CLIQUE UN CONTRÔLE, PUIS ACTIONNE LE MÊME SUR L’EP-133' : 'MODE TEST · CLIQUE UN CONTRÔLE CONFIGURÉ POUR L’ENVOYER À LA MACHINE'}</b>
+      <b>{selectedControl ? `APPUIE MAINTENANT SUR ${selectedControl.split(':')[1]} SUR LA MACHINE` : configureMode ? 'CLIQUE UN CONTRÔLE, PUIS ACTIONNE LE MÊME SUR L’EP-133' : 'CLIQUE UN CONTRÔLE CONFIGURÉ POUR L’ENVOYER À LA MACHINE'}</b>
       <span>{connected ? inputNames.join(' + ') : 'Connexion nécessaire pour recevoir les contrôles.'}</span>
-      <div className="machine-test-mode"><button className={!configureMode ? 'active' : ''} onClick={() => { setConfigureMode(false); setSelectedControl(null); }}>TEST</button><button className={configureMode ? 'active' : ''} onClick={() => setConfigureMode(true)}>CONFIGURER</button></div>
+      <div className="machine-test-mode"><button className={configureMode ? 'active' : ''} onClick={() => { setConfigureMode((current) => !current); setSelectedControl(null); }}>{configureMode ? 'TERMINER LA CONFIGURATION' : 'CONFIGURER'}</button></div>
       {sendNotice && <small className="machine-test-notice">{sendNotice}</small>}
       <small className="machine-test-notice">CAPTURE LOCALE TEMPORAIRE ACTIVE · tmp/ep133-midi-capture.ndjson</small>
     </section>

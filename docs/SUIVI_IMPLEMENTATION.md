@@ -1258,3 +1258,54 @@ qu'il vienne d'un bouton physique A–D ou d'une sélection depuis le Studio.
 Vérifié : `npm run typecheck`, `npm test` (9 tests), `npm run build`,
 `npm run test:e2e` (2/2, Chromium réel). Non vérifié avec un vrai bouton
 physique A–D — ajouté à `docs/A_VALIDER_PHYSIQUEMENT.md`.
+
+## Correctifs — bouton CONNECTER restauré, mode TEST retiré, flash garanti au retour machine (13 août)
+
+Trois retours après un test réel avec la machine branchée.
+
+**Le bouton CONNECTER manquait sur Test Machine**
+
+- [x] Constat : la connexion SysEx automatique au chargement (commit
+  précédent) peut échouer silencieusement si le navigateur exige un geste
+  pour ce premier octroi — et la page Test Machine n'avait plus aucun
+  moyen de déclencher ce geste après le remplacement du bouton par la
+  simple pastille. Corrigé : la pastille reste affichée telle quelle une
+  fois connectée, mais un bouton `CONNECTER L'EP‑133` / `ACTIVER SYSEX`
+  réapparaît juste en dessous tant que `sysexEnabled` est faux — reprend
+  `midi.connectMonitor()` (mode « surveiller tous les ports »), retiré par
+  erreur au tour précédent.
+
+**Mode TEST retiré (déjà actif par défaut)**
+
+- [x] `configureMode` vaut `false` par défaut, ce qui EST déjà le mode
+  test — le bouton `TEST` ne faisait donc que revenir à l'état initial.
+  Confirmé par l'utilisateur (« ça marche en mode test, on enlève ce
+  bouton test, on fait marcher tout le temps ») : un seul bouton
+  `CONFIGURER` reste, qui bascule (entrer/sortir du mode configuration) au
+  lieu de deux boutons TEST/CONFIGURER séparés.
+
+**Un contrôle reçu de la machine ne « bougeait » pas comme au clic souris**
+
+- [x] Cause : le clic souris reste visuellement actif tant que le bouton
+  est maintenu (`:active` natif) ; un message MIDI réel, lui, ne l'était
+  QUE tant qu'il restait « le plus récent » — si la machine envoie
+  plusieurs messages en rafale pour une seule pression physique (ou si un
+  autre message arrive juste après), le contrôle repassait normal avant
+  d'être visible. Corrigé : chaque contrôle touché passe désormais dans un
+  `Set` `recentlyReceived` pendant une fenêtre fixe de 220 ms,
+  indépendamment des messages suivants (chaque message programme sa propre
+  extinction — pas de cleanup d'effet qui annulerait celle du précédent).
+  Remplace l'ancien `activeControls` (useMemo réactif à l'instant présent
+  uniquement, retiré).
+- [ ] **Reste un doute non résolu, volontairement pas deviné** : si le
+  SysEx émis par un contrôle physique (hors A–D, déjà validés) contient un
+  octet variable (compteur, checksum), sa signature ne correspondra
+  jamais deux fois de suite et ce correctif de timing ne suffira pas — il
+  faudrait alors comparer deux journaux de diagnostic téléchargés (deux
+  pressions du même contrôle) pour le confirmer ou l'infirmer. Pas fait
+  faute de matériel réel disponible ici.
+
+Vérifié : `npm run typecheck`, `npm test` (9 tests), `npm run build`,
+`npm run test:e2e` (2/2, Chromium réel). Rien de tout ça n'a été revu à
+l'œil avec la machine branchée après ce correctif précis — ajouté à
+`docs/A_VALIDER_PHYSIQUEMENT.md`.
