@@ -12,6 +12,7 @@
   --ko-black: #1A1A1A;
   --ko-amber: #FFB000;
   --ko-muted: #8E8D88;
+  --ko-green: #2FAE5B;
   --ko-grid:linear-gradient(rgba(26,26,26,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(26,26,26,.045) 1px,transparent 1px),var(--ko-beige);
   /* Repères de catégorie de pad pour Rhythm Hero — mêmes teintes que les
      pastilles .bank-* de Sons & Transfert, pour que jeu et banque de sons
@@ -682,8 +683,9 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .home-intro { display:flex; align-items:center; justify-content:space-between; gap:25px; padding:25px 0; }
 .home-intro p { margin:0; max-width:720px; color:var(--ko-black); font-size:clamp(14px,1.7vw,22px); font-weight:bold; line-height:1.35; }
 .home-machine-status { min-width:250px; display:grid; grid-template-columns:auto 1fr; gap:3px 8px; padding:10px 12px; border:2px solid var(--ko-black); border-radius:var(--radius); background:var(--ko-panel); box-shadow:4px 4px 0 var(--ko-black); }
+.home-machine-status.online { border-color:var(--ko-green); background:color-mix(in srgb, var(--ko-green) 16%, var(--ko-panel)); box-shadow:4px 4px 0 var(--ko-green); }
 .home-machine-status i { grid-row:1/3; align-self:center; width:13px; height:13px; border-radius:50%; background:var(--ko-muted); }
-.home-machine-status i.online { background:var(--ko-orange); box-shadow:0 0 12px var(--ko-orange); }
+.home-machine-status i.online { background:var(--ko-green); box-shadow:0 0 12px var(--ko-green); }
 .home-machine-status span { font-size:10px; font-weight:bold; }
 .home-machine-status small { font-size:7px; }
 .home-tools { flex:1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }

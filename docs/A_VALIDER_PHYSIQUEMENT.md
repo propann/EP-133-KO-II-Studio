@@ -86,6 +86,11 @@
   fichier → bouton `✂ AUTO-TRIM SILENCE` doit caler la région sur le
   signal réel ; la ligne `CRÊTE … · GAIN SUGGÉRÉ …` doit apparaître sous
   les boutons.
+- [ ] **Cadre de statut vert sur la page d'accueil** (13 août) — une fois
+  l'EP-133 connecté, le cadre `EP‑133 PRÊT À CONNECTER` doit passer en cadre
+  vert avec le texte `CONNECTÉ`, fond légèrement teinté (`color-mix`),
+  lisible sur le fond beige de la page ; le point lumineux passe aussi de
+  l'orange au vert. Jamais vu dans un vrai navigateur.
 - [ ] **PWA installable** : jamais testée dans un vrai navigateur — ni
   l'invite d'installation Chrome, ni l'icône sur l'écran d'accueil, ni le
   fonctionnement réellement hors ligne une fois installée (R-05).

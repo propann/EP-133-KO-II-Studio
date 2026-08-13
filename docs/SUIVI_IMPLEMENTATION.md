@@ -1031,3 +1031,36 @@ Non vérifié dans un vrai navigateur (nécessite l'EP-133 branché pour avoir
 des événements réels à exporter) — ajouté à
 `docs/A_VALIDER_PHYSIQUEMENT.md`. Statut mis à jour : `docs/REGISTRE_IDEES.md`
 R-20 (RÉALISÉ, vérification navigateur en attente).
+
+## Étape — cadre de statut connexion en vert sur la page d'accueil (13 août)
+
+Amont d'un chantier plus large (connexion automatique de la machine, demande
+en cours), l'utilisateur a d'abord demandé un scope plus court et précis :
+que le cadre de statut déjà présent sur la page d'accueil (`home-machine-status`,
+qui affichait déjà « EP‑133 PRÊT À CONNECTER » ou « EP‑133 CONNECTÉ » sans
+bouton) reflète visuellement l'état — cadre vert quand connecté, rien de plus.
+
+- [x] Nouveau jeton `--ko-green` dans `src/style.css` (`:root`), cohérent
+  avec les autres jetons de couleur déjà centralisés (`--ko-orange`, etc.).
+- [x] `.home-machine-status.online` : bordure verte, fond légèrement teinté
+  (`color-mix`), ombre portée verte au lieu de noire — appliqué sur le cadre
+  entier, pas seulement le point lumineux (`i.online`, aussi repassé au vert
+  au lieu de l'orange utilisé jusqu'ici).
+- [x] `src/pages/HomePage.tsx` : la classe `online` est désormais posée sur
+  le conteneur `home-machine-status` lui-même (`connected ? 'online' : ''`),
+  pas seulement sur le point. Libellé simplifié : « CONNECTÉ » au lieu de
+  « EP‑133 CONNECTÉ » (le nom de la machine est déjà dans l'en-tête au-dessus,
+  redondant dans le cadre de statut) — répercuté en FR/EN/ES.
+- [x] Aucun nouveau bouton, aucune suppression de bouton ailleurs pour
+  l'instant : la page d'accueil n'a jamais eu de bouton « CONNECTER » — elle
+  n'affichait qu'un statut passif, ce qui correspondait déjà à la demande
+  « on peut supprimer tout les bouton connecter [...] dès la page de
+  présentation ». Les boutons CONNECTER de Test Machine, Sons & Transfert,
+  Game Toolbar et Editor Toolbar restent inchangés — chantier séparé, pas
+  encore commencé.
+- [x] `npm run typecheck`, `npm test` (9 tests), `npm run build` (bundle
+  principal inchangé, ~689 Ko ; chunk `wavConvert` toujours isolé, ~2 Mo) —
+  tous au vert.
+
+Non vérifié dans un vrai navigateur (rendu du `color-mix`, contraste du vert
+sur fond beige) — ajouté à `docs/A_VALIDER_PHYSIQUEMENT.md`.
