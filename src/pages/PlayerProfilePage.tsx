@@ -35,6 +35,12 @@ interface PlayerProfilePageProps {
   onOpenLocalLibraryFolder: () => void;
   onReconnectLocalLibraryFolder: () => void;
   onResetStats: () => void;
+  /** Écriture/lecture de `profile.json` à la racine du dossier de travail
+   * (même dossier que SCAN/CLONE) — secours si `localStorage` est vidé. */
+  profileFileSave: { path: string; at: string } | null;
+  profileFileError: string | null;
+  onSaveProfileToFolder: () => void;
+  onRestoreProfileFromFolder: () => void;
   practicePlans: { sevenDay: PracticeDay[]; thirtyDay: PracticeDay[] };
   styles: StyleOption[];
   onStartPracticeDay: (styleId: string, difficulty: number) => void;
@@ -59,7 +65,7 @@ const activeSpec = (avatarId: string) => AVATAR_PRESETS.find((spec) => spec.id =
  *   (`saveDeviceProfile` + `createDeviceClone` + `writeCloneManifest`),
  *   juste déclenché d'un clic ici plutôt que de rouvrir la fenêtre de clone.
  */
-export function PlayerProfilePage({ profile, machineConnected, midiStatus, midiInputNames, midiOutputNames, machineSampleCount, deviceInventory, deviceSoundIndex, onBack, onChange, onChangeMachine, onAddMachine, onRemoveMachine, onConnectMidi, onCloneMachine, onScanMachine, onViewScanReport, lastScanSave, scanSaveError, scanSaveMachineId, sampleFolderName, sampleFolderNeedsReconnect, onOpenSampleFolder, onReconnectSampleFolder, localLibraryFolderName, localLibraryNeedsReconnect, onOpenLocalLibraryFolder, onReconnectLocalLibraryFolder, onResetStats, practicePlans, styles, onStartPracticeDay }: PlayerProfilePageProps) {
+export function PlayerProfilePage({ profile, machineConnected, midiStatus, midiInputNames, midiOutputNames, machineSampleCount, deviceInventory, deviceSoundIndex, onBack, onChange, onChangeMachine, onAddMachine, onRemoveMachine, onConnectMidi, onCloneMachine, onScanMachine, onViewScanReport, lastScanSave, scanSaveError, scanSaveMachineId, sampleFolderName, sampleFolderNeedsReconnect, onOpenSampleFolder, onReconnectSampleFolder, localLibraryFolderName, localLibraryNeedsReconnect, onOpenLocalLibraryFolder, onReconnectLocalLibraryFolder, onResetStats, profileFileSave, profileFileError, onSaveProfileToFolder, onRestoreProfileFromFolder, practicePlans, styles, onStartPracticeDay }: PlayerProfilePageProps) {
   const { stats } = profile;
   const totalHits = stats.perfect + stats.good + stats.miss;
   const accuracy = totalHits > 0 ? Math.round(((stats.perfect + stats.good) / totalHits) * 100) : null;
@@ -127,6 +133,17 @@ export function PlayerProfilePage({ profile, machineConnected, midiStatus, midiI
       </div>
       <button className="profile-add-machine" onClick={onAddMachine}>+ DÉCLARER UNE AUTRE MACHINE</button>
       <p className="profile-gear-note">Le dossier de travail est mémorisé sur cet ordinateur (IndexedDB) — plus besoin de le rechoisir à chaque visite, seulement de reconfirmer l’autorisation si le navigateur la redemande. Un support de type drive/cloud est envisagé plus tard.</p>
+    </section>
+
+    <section className="profile-backup">
+      <h2>SAUVEGARDE DE LA FICHE</h2>
+      <p className="profile-gear-note">Le pseudo, l’avatar, les machines déclarées et le bilan cumulé ne vivent aujourd’hui que dans ce navigateur. SAUVEGARDER écrit une copie (<code>profile.json</code>) à la racine du dossier de travail choisi ci-dessus — même dossier que SCAN/CLONE — pour t’en sortir si tu changes de navigateur ou si tu vides les données du site. Chaque modification est aussi copiée automatiquement dès que ce dossier est déjà autorisé en écriture.</p>
+      <div className="profile-machine-actions">
+        <button className="profile-connect" onClick={onSaveProfileToFolder}>SAUVEGARDER LA FICHE</button>
+        <button onClick={onRestoreProfileFromFolder}>RESTAURER DEPUIS LE DOSSIER</button>
+      </div>
+      {profileFileSave && <small className="profile-scan-feedback">✓ {new Date(profileFileSave.at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} · {profileFileSave.path}</small>}
+      {profileFileError && <small className="profile-folder-warning">{profileFileError}</small>}
     </section>
 
     <section className="profile-library">

@@ -46,7 +46,7 @@ import { DocumentationPage } from './pages/DocumentationPage';
 import { MachineTestPage } from './pages/MachineTestPage';
 import { groupForMappedObservation, loadControlAssignments } from './core/midi/controlMapping';
 import { PlayerProfilePage } from './pages/PlayerProfilePage';
-import { addSessionToProfile, emptyMachine, emptyPlayerStats, loadPlayerProfile, savePlayerProfile, type PlayerMachine, type PlayerProfile } from './core/project/playerProfile';
+import { addSessionToProfile, emptyMachine, emptyPlayerStats, loadPlayerProfile, normalizePlayerProfile, savePlayerProfile, type PlayerMachine, type PlayerProfile } from './core/project/playerProfile';
 import { ScoreView } from './components/game/ScoreView';
 import { PerformancePanel } from './components/game/PerformancePanel';
 import { PadSoundEditor } from './components/game/PadSoundEditor';
@@ -57,7 +57,7 @@ import { PadStrip } from './components/editor/PadStrip';
 import { EditorToolbar } from './components/editor/EditorToolbar';
 import { SongArranger } from './components/editor/SongArranger';
 import { MachineCloneDialog } from './components/editor/MachineCloneDialog';
-import { chooseLocalDirectory, collectLocalFiles, writeCloneManifest, type LocalDirectoryHandle } from './core/storage/localFolders';
+import { chooseLocalDirectory, collectLocalFiles, readPlayerProfileFile, writeCloneManifest, writePlayerProfile, type LocalDirectoryHandle } from './core/storage/localFolders';
 import { LOCAL_LIBRARY_FOLDER_KEY, SAMPLE_FOLDER_KEY, hasStoredPermission, loadDirectoryHandle, requestStoredPermission, saveDirectoryHandle } from './core/storage/directoryHandleStore';
 import { createDeviceClone, saveDeviceProfile } from './core/project/deviceProfile';
 import './style.css';
@@ -160,6 +160,14 @@ export default function App() {
   const [lastScanSave, setLastScanSave] = useState<{ machineId: string; path: string; at: string } | null>(null);
   const [scanSaveError, setScanSaveError] = useState<{ machineId: string; message: string } | null>(null);
   const [scanSaveMachineId, setScanSaveMachineId] = useState('');
+  // Fiche personnage écrite dans le dossier de travail (profile.json,
+  // racine — pas clone/<machine>/, un profil peut déclarer plusieurs
+  // machines) : même dossier que SCAN/CLONE, secours si localStorage est
+  // vidé. Écriture silencieuse à chaque changement quand la permission
+  // écriture est déjà acquise ; ces deux états ne suivent que l'action
+  // explicite (bouton SAUVEGARDER/RESTAURER de la Fiche personnage).
+  const [profileFileSave, setProfileFileSave] = useState<{ path: string; at: string } | null>(null);
+  const [profileFileError, setProfileFileError] = useState<string | null>(null);
   // Bibliothèque de sons personnelle (distincte du dossier de travail machine ci-dessus) —
   // les réglages de dossier se font depuis la Fiche personnage, la navigation/écoute depuis
   // SONS & TRANSFERT (SoundsPage), qui a donc besoin du handle lui-même, pas seulement du nom.
@@ -327,7 +335,7 @@ export default function App() {
     // aussi bien un STOP manuel qu'une fin de session normale.
     setPlayerProfile((profile) => {
       const next = addSessionToProfile(profile, scoreRef.current);
-      if (next !== profile) savePlayerProfile(localStorage, next);
+      if (next !== profile) { savePlayerProfile(localStorage, next); void mirrorProfileToFolder(next); }
       return next;
     });
     // Journal daté pour le parcours 7/30 jours — seulement les styles de la
@@ -455,6 +463,70 @@ export default function App() {
       setScanSaveError({ machineId: machine.id, message });
     } finally {
       setScanSaveMachineId('');
+    }
+  };
+
+  /** Miroir silencieux, best-effort : n'écrit que si la permission écriture
+   * est déjà acquise pour ce dossier (jamais de prompt hors d'un geste
+   * explicite) — sinon la fiche reste seulement en localStorage, comme
+   * avant ce chantier. Aucune erreur remontée à l'utilisateur ici, c'est le
+   * bouton SAUVEGARDER (saveProfileToFolder) qui donne un vrai retour. */
+  const mirrorProfileToFolder = async (next: PlayerProfile) => {
+    const directory = sampleDirectoryHandleRef.current;
+    if (!directory || !(await hasStoredPermission(directory, 'readwrite'))) return;
+    try { await writePlayerProfile(directory, next); } catch { /* miroir best-effort, la fiche reste en localStorage */ }
+  };
+
+  /** Écrit `profile.json` à la racine du dossier de travail — même dossier
+   * que SCAN/CLONE (`sampleDirectoryHandleRef`), ouvert en écriture si
+   * besoin. Geste explicite (bouton), donc peut réclamer la permission. */
+  const saveProfileToFolder = async () => {
+    setProfileFileError(null);
+    try {
+      let directory = sampleDirectoryHandleRef.current;
+      if (directory) {
+        if (!(await requestStoredPermission(directory, 'readwrite'))) { setProfileFileError('Autorisation d’écriture refusée pour le dossier de travail.'); return; }
+      } else {
+        directory = await chooseLocalDirectory('readwrite');
+        sampleDirectoryHandleRef.current = directory;
+        setSampleFolderName(directory.name);
+        setSampleFolderNeedsReconnect(false);
+        await saveDirectoryHandle(SAMPLE_FOLDER_KEY, directory);
+      }
+      const path = await writePlayerProfile(directory, playerProfile);
+      setProfileFileSave({ path, at: new Date().toISOString() });
+    } catch (error) {
+      const name = (error as { name?: string }).name;
+      setProfileFileError(name === 'AbortError' ? 'Sélection de dossier annulée — rien n’a été sauvegardé.' : error instanceof Error ? error.message : 'La sauvegarde de la fiche a échoué.');
+    }
+  };
+
+  /** Relit `profile.json` depuis le dossier de travail et remplace la fiche
+   * affichée après confirmation explicite — sert de restauration si
+   * localStorage a été vidé (nouveau navigateur, nettoyage du site). */
+  const restoreProfileFromFolder = async () => {
+    setProfileFileError(null);
+    try {
+      let directory = sampleDirectoryHandleRef.current;
+      if (directory) {
+        if (!(await requestStoredPermission(directory, 'read'))) { setProfileFileError('Autorisation de lecture refusée pour le dossier de travail.'); return; }
+      } else {
+        directory = await chooseLocalDirectory('read');
+        sampleDirectoryHandleRef.current = directory;
+        setSampleFolderName(directory.name);
+        setSampleFolderNeedsReconnect(false);
+        await saveDirectoryHandle(SAMPLE_FOLDER_KEY, directory);
+      }
+      const raw = await readPlayerProfileFile(directory);
+      if (!raw) { setProfileFileError(`Aucun profile.json trouvé dans ${directory.name}.`); return; }
+      if (!window.confirm('Remplacer la fiche actuelle (pseudo, machines, statistiques) par celle du dossier de travail ?')) return;
+      const restored = normalizePlayerProfile(raw);
+      setPlayerProfile(restored);
+      savePlayerProfile(localStorage, restored);
+      setProfileFileSave({ path: `${directory.name}/profile.json`, at: new Date().toISOString() });
+    } catch (error) {
+      const name = (error as { name?: string }).name;
+      setProfileFileError(name === 'AbortError' ? 'Sélection de dossier annulée.' : error instanceof Error ? error.message : 'La lecture de la fiche a échoué.');
     }
   };
 
@@ -1494,7 +1566,7 @@ export default function App() {
   if (workspaceView === 'docs') return <DocumentationPage onBack={goHome} />;
 
   if (workspaceView === 'profile') {
-    const updateProfile = (updater: (profile: PlayerProfile) => PlayerProfile) => setPlayerProfile((profile) => { const next = updater(profile); savePlayerProfile(localStorage, next); return next; });
+    const updateProfile = (updater: (profile: PlayerProfile) => PlayerProfile) => setPlayerProfile((profile) => { const next = updater(profile); savePlayerProfile(localStorage, next); void mirrorProfileToFolder(next); return next; });
     return <>
       <PlayerProfilePage
         profile={playerProfile}
@@ -1526,6 +1598,10 @@ export default function App() {
         onOpenLocalLibraryFolder={() => void openLocalLibraryFolder()}
         onReconnectLocalLibraryFolder={() => void reconnectLocalLibraryFolder()}
         onResetStats={() => updateProfile((profile) => ({ ...profile, stats: emptyPlayerStats() }))}
+        profileFileSave={profileFileSave}
+        profileFileError={profileFileError}
+        onSaveProfileToFolder={() => void saveProfileToFolder()}
+        onRestoreProfileFromFolder={() => void restoreProfileFromFolder()}
         practicePlans={practicePlans}
         styles={STYLES}
         onStartPracticeDay={startPracticeDay}

@@ -73,3 +73,29 @@ export async function writeCloneManifest(parent: LocalDirectoryHandle, machineNa
   await writable.close();
   return `${parent.name}/clone/${safeName(machineName)}/manifest.json`;
 }
+
+/**
+ * Écrit la fiche personnage (identité, machines déclarées, stats cumulées)
+ * à la racine du dossier de travail — pas dans `clone/<machine>/`, puisqu'un
+ * seul profil peut déclarer plusieurs machines. Même philosophie que
+ * `writeCloneManifest` : lisible par n'importe quel outil, jamais un
+ * stockage propriétaire du navigateur ; sert de secours si `localStorage`
+ * est vidé (nouveau navigateur, profil de test, nettoyage du site).
+ */
+export async function writePlayerProfile(parent: LocalDirectoryHandle, profile: object) {
+  const file = await parent.getFileHandle('profile.json', { create: true });
+  const writable = await file.createWritable();
+  await writable.write(`${JSON.stringify(profile, null, 2)}\n`);
+  await writable.close();
+  return `${parent.name}/profile.json`;
+}
+
+/** Relit `profile.json` à la racine du dossier de travail, s'il existe. `null` si absent ou illisible — jamais d'exception, l'appelant décide quoi en faire. */
+export async function readPlayerProfileFile(parent: LocalDirectoryHandle): Promise<unknown | null> {
+  try {
+    const file = await parent.getFileHandle('profile.json');
+    return JSON.parse(await (await file.getFile()).text());
+  } catch {
+    return null;
+  }
+}

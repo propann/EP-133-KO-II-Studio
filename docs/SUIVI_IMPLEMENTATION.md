@@ -1309,3 +1309,58 @@ Vérifié : `npm run typecheck`, `npm test` (9 tests), `npm run build`,
 `npm run test:e2e` (2/2, Chromium réel). Rien de tout ça n'a été revu à
 l'œil avec la machine branchée après ce correctif précis — ajouté à
 `docs/A_VALIDER_PHYSIQUEMENT.md`.
+
+## Étape — sauvegarde de la fiche personnage dans le dossier de travail (13 août)
+
+Demande : « il faut trouver un moyen de la sauvegarder quelque part pour
+qu'elle soit enregistrée [...] à partir de la sélection du dossier de
+travail [...] la fiche de personnage, les réglages machine si il y en a ».
+Investigation d'abord : les réglages machine (nom, capacité, historique de
+scan) étaient **déjà** écrits sur disque via `writeCloneManifest`
+(`clone/<machine>/manifest.json`, bouton SCANNER de la Fiche personnage,
+existant avant ce chantier) — seule la fiche elle-même (pseudo, avatar,
+machines déclarées, bilan cumulé) ne vivait que dans `localStorage`,
+jamais sur le dossier de travail.
+
+- [x] `src/core/storage/localFolders.ts` : `writePlayerProfile`/
+  `readPlayerProfileFile`, même philosophie que `writeCloneManifest` —
+  écrit/relit `profile.json` à la **racine** du dossier de travail (pas
+  dans `clone/<machine>/`, puisqu'un profil peut déclarer plusieurs
+  machines).
+- [x] `src/core/project/playerProfile.ts` : extrait `normalizePlayerProfile(raw)`
+  hors de `loadPlayerProfile` (même validation défensive, réutilisable
+  pour une valeur venant d'un fichier relu, pas seulement de
+  `localStorage`) — `loadPlayerProfile` devient un simple appelant.
+- [x] `App.tsx` : trois nouveaux mécanismes, réutilisant exactement le
+  dossier de travail déjà mémorisé (`sampleDirectoryHandleRef`, le même
+  que SCAN/CLONE) :
+  1. **Miroir silencieux** (`mirrorProfileToFolder`) : à chaque
+     modification de la fiche, best-effort, seulement si la permission
+     écriture est **déjà acquise** pour ce dossier (`hasStoredPermission`,
+     jamais de prompt hors d'un geste explicite) — sinon la fiche reste
+     seulement en `localStorage`, comme avant, aucune régression.
+  2. **`saveProfileToFolder`** (geste explicite, bouton) : ouvre le
+     dossier si besoin, réclame l'écriture, écrit `profile.json`,
+     retour visible (chemin + heure, ou message d'erreur) — même schéma
+     que `scanAndSaveMachine`.
+  3. **`restoreProfileFromFolder`** (geste explicite, bouton) : relit
+     `profile.json`, confirmation (`window.confirm`, même convention que
+     les suppressions ailleurs dans l'app) avant d'écraser la fiche
+     affichée, réécrit ensuite `localStorage` avec la version restaurée.
+- [x] `PlayerProfilePage.tsx` : nouvelle section « SAUVEGARDE DE LA FICHE »
+  avec les deux boutons et le retour visible, expliquant en clair que le
+  miroir automatique ne marche que si le dossier est déjà autorisé en
+  écriture.
+- [x] `tools/check-player-profile.mjs` (nouveau, `npm run test:profile`,
+  ajouté à `npm test` et à `tests/legacy-checks.test.ts`) : couvre
+  `normalizePlayerProfile` (entrée corrompue, ancien format `gear`,
+  round-trip fidèle, stats corrompues jamais un NaN affiché) et le
+  round-trip `loadPlayerProfile`/`savePlayerProfile` via un stockage en
+  mémoire.
+
+Vérifié : `npm run typecheck`, `npm test` (10 tests, dont le nouveau),
+`npm run build` (bundle principal +3 Ko, chunk `wavConvert` isolé
+inchangé), `npm run test:e2e` (2/2, Chromium réel). **Non vérifié dans un
+vrai navigateur** : l'écriture/lecture réelle de `profile.json` sur disque
+(File System Access API) n'a jamais été testée avec un vrai dossier —
+ajouté à `docs/A_VALIDER_PHYSIQUEMENT.md`.

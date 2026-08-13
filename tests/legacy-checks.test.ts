@@ -37,4 +37,8 @@ describe('scripts de vérification historiques (tools/check-*.mjs)', () => {
   it('cibles EP-133 et jauge de mémoire', async () => {
     await import('../tools/check-ep133-targets.mjs');
   });
+
+  it('fiche personnage : normalisation, ancien format, round-trip localStorage', async () => {
+    await import('../tools/check-player-profile.mjs');
+  });
 });

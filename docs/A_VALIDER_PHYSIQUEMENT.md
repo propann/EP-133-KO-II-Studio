@@ -91,6 +91,17 @@
   vert avec le texte `CONNECTÉ`, fond légèrement teinté (`color-mix`),
   lisible sur le fond beige de la page ; le point lumineux passe aussi de
   l'orange au vert. Jamais vu dans un vrai navigateur.
+- [ ] **Sauvegarde de la fiche personnage dans le dossier de travail**
+  (13 août) — Fiche personnage → section « SAUVEGARDE DE LA FICHE » →
+  bouton `SAUVEGARDER LA FICHE` : doit écrire `profile.json` à la racine
+  du dossier de travail (visible dans l'explorateur de fichiers, à côté
+  du sous-dossier `clone/`) ; modifier le pseudo ou l'avatar juste après
+  doit mettre à jour ce fichier automatiquement, sans nouveau clic ni
+  nouvelle invite de permission (miroir silencieux). Bouton `RESTAURER
+  DEPUIS LE DOSSIER` : après confirmation, doit remplacer pseudo/machines/
+  stats affichés par le contenu de `profile.json` — à tester en modifiant
+  le fichier à la main entre les deux clics pour confirmer que la lecture
+  est réelle, pas mémorisée en mémoire.
 - [ ] **PWA installable** : jamais testée dans un vrai navigateur — ni
   l'invite d'installation Chrome, ni l'icône sur l'écran d'accueil, ni le
   fonctionnement réellement hors ligne une fois installée (R-05).

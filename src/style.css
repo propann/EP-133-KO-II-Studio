@@ -1079,8 +1079,8 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .profile-avatar-grid button { display:grid; place-items:center; width:52px; height:52px; padding:4px; border:2px solid var(--ko-black); border-radius:var(--radius-sm); background:#fff; cursor:pointer; transition:transform .1s ease,box-shadow .1s ease; }
 .profile-avatar-grid button:hover { transform:translateY(-2px); }
 .profile-avatar-grid button.active { background:var(--ko-amber); box-shadow:0 0 0 3px var(--ko-orange); }
-.profile-gear,.profile-library,.profile-stats,.profile-practice { margin:20px 0; padding:16px 18px; border:2px solid var(--ko-black); border-radius:var(--radius); background:#f3f1ec; box-shadow:5px 5px 0 var(--ko-black); }
-.profile-gear h2,.profile-library h2,.profile-stats h2,.profile-practice h2 { margin:0 0 14px; font-size:14px; letter-spacing:.04em; }
+.profile-gear,.profile-backup,.profile-library,.profile-stats,.profile-practice { margin:20px 0; padding:16px 18px; border:2px solid var(--ko-black); border-radius:var(--radius); background:#f3f1ec; box-shadow:5px 5px 0 var(--ko-black); }
+.profile-gear h2,.profile-backup h2,.profile-library h2,.profile-stats h2,.profile-practice h2 { margin:0 0 14px; font-size:14px; letter-spacing:.04em; }
 /* Une machine déclarée = une carte : nom/mémoire, statut de connexion (la
    seule machine réellement détectable en MIDI à un instant donné), scan et
    dossier de travail se lancent d'ici — plus besoin de rouvrir le Studio. */

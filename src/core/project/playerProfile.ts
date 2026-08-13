@@ -54,31 +54,41 @@ function readMachine(value: unknown): PlayerMachine | null {
   };
 }
 
-/** Relit la fiche locale ; une entrée corrompue ou absente retombe sur un profil vide plutôt que d'échouer. Convertit aussi l'ancien format à une seule machine (`gear`) vers `machines`. */
+/**
+ * Valide/complète une valeur quelconque (JSON.parse d'un localStorage ou
+ * d'un fichier `profile.json` relu depuis le dossier de travail — même
+ * format, deux origines) en `PlayerProfile` sûr ; une entrée corrompue ou
+ * absente retombe sur un profil vide plutôt que d'échouer. Convertit aussi
+ * l'ancien format à une seule machine (`gear`) vers `machines`.
+ */
+export function normalizePlayerProfile(raw: unknown): PlayerProfile {
+  if (!raw || typeof raw !== 'object') return defaultPlayerProfile();
+  const value = raw as Partial<PlayerProfile> & { gear?: { model?: string; memory?: string } };
+  const stats = (value.stats && typeof value.stats === 'object' ? value.stats : {}) as Partial<PlayerStats>;
+  let machines = Array.isArray(value.machines) ? value.machines.map(readMachine).filter((m): m is PlayerMachine => m !== null) : [];
+  if (!machines.length && value.gear && typeof value.gear === 'object') {
+    // Ancien format (une seule machine sous `gear.model`/`gear.memory`).
+    machines = [{ id: randomMachineId(), name: typeof value.gear.model === 'string' && value.gear.model ? value.gear.model : 'EP-133 K.O. II', memory: value.gear.memory === '64' || value.gear.memory === '128' ? value.gear.memory : '' }];
+  }
+  if (!machines.length) machines = [emptyMachine()];
+  return {
+    pseudo: typeof value.pseudo === 'string' ? value.pseudo : '',
+    avatarId: typeof value.avatarId === 'string' ? value.avatarId : 'kick',
+    machines,
+    stats: {
+      sessionsPlayed: Number.isFinite(stats.sessionsPlayed) ? Number(stats.sessionsPlayed) : 0,
+      perfect: Number.isFinite(stats.perfect) ? Number(stats.perfect) : 0,
+      good: Number.isFinite(stats.good) ? Number(stats.good) : 0,
+      miss: Number.isFinite(stats.miss) ? Number(stats.miss) : 0,
+      bestCombo: Number.isFinite(stats.bestCombo) ? Number(stats.bestCombo) : 0,
+    },
+  };
+}
+
+/** Relit la fiche locale (localStorage) ; jamais d'exception, retombe sur `defaultPlayerProfile()`. */
 export function loadPlayerProfile(storage: Pick<Storage, 'getItem'>): PlayerProfile {
   try {
-    const raw: unknown = JSON.parse(storage.getItem(PLAYER_PROFILE_KEY) || 'null');
-    if (!raw || typeof raw !== 'object') return defaultPlayerProfile();
-    const value = raw as Partial<PlayerProfile> & { gear?: { model?: string; memory?: string } };
-    const stats = (value.stats && typeof value.stats === 'object' ? value.stats : {}) as Partial<PlayerStats>;
-    let machines = Array.isArray(value.machines) ? value.machines.map(readMachine).filter((m): m is PlayerMachine => m !== null) : [];
-    if (!machines.length && value.gear && typeof value.gear === 'object') {
-      // Ancien format (une seule machine sous `gear.model`/`gear.memory`).
-      machines = [{ id: randomMachineId(), name: typeof value.gear.model === 'string' && value.gear.model ? value.gear.model : 'EP-133 K.O. II', memory: value.gear.memory === '64' || value.gear.memory === '128' ? value.gear.memory : '' }];
-    }
-    if (!machines.length) machines = [emptyMachine()];
-    return {
-      pseudo: typeof value.pseudo === 'string' ? value.pseudo : '',
-      avatarId: typeof value.avatarId === 'string' ? value.avatarId : 'kick',
-      machines,
-      stats: {
-        sessionsPlayed: Number.isFinite(stats.sessionsPlayed) ? Number(stats.sessionsPlayed) : 0,
-        perfect: Number.isFinite(stats.perfect) ? Number(stats.perfect) : 0,
-        good: Number.isFinite(stats.good) ? Number(stats.good) : 0,
-        miss: Number.isFinite(stats.miss) ? Number(stats.miss) : 0,
-        bestCombo: Number.isFinite(stats.bestCombo) ? Number(stats.bestCombo) : 0,
-      },
-    };
+    return normalizePlayerProfile(JSON.parse(storage.getItem(PLAYER_PROFILE_KEY) || 'null'));
   } catch {
     return defaultPlayerProfile();
   }
