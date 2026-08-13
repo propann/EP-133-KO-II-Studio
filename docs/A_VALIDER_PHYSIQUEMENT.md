@@ -256,19 +256,33 @@
   l'import machine → bibliothèque (glisser P01 vers la colonne droite)
   apparaît bien ensuite dans « Ouvrir… » du Studio avec le bon contenu —
   seule la direction logiciel → machine a été testée jusqu'ici.
-- [ ] **SYNCHRONISER pour de vrai, deuxième essai après correctif**
-  (13 août) — premier essai réel : échec systématique avant même
-  d'atteindre l'écriture (`onGetActiveProject` en timeout MIDI côté
-  navigateur, machine diagnostiquée saine en Python en parallèle). Corrigé
-  en retirant cette dépendance : SYNCHRONISER utilise maintenant un
-  **sélecteur de projet explicite** (nouveau `<select>` dans l'en-tête
-  GROUPES & PADS, par défaut le dernier projet scanné). À revérifier :
-  le sélecteur liste bien les 9 projets (présent/vide), le `window.confirm`
-  annonce le bon projet choisi et le bon décompte, glisser un son perso
-  sur un pad puis confirmer rend le son audible sur la machine, une
-  réaffectation pure (son déjà sur la machine déplacé vers un autre pad,
-  sans nouveau fichier) fonctionne aussi. Une fois confirmé, cocher la
-  case correspondante dans `docs/ROADMAP.md` Phase 4.
+- [ ] **SYNCHRONISER — campagne de test complète, pas encore faite**
+  (13 août). Statut réel à ce jour, pour ne pas se mentir : trois
+  correctifs successifs le même jour (timeout MIDI → sélecteur de projet
+  explicite ; sélecteur qui ne rafraîchissait pas la grille ; grille qui
+  ne se resynchronisait pas après une écriture réussie), chacun vérifié
+  seulement par un test ponctuel très ciblé (souvent un seul pad, sur
+  P02/P09). **L'utilisateur n'est pas certain que ça marche de façon
+  fiable** et a explicitement demandé une campagne de test plus complète
+  avant de considérer ce bouton acquis — pas juste « ça a marché une
+  fois ». Reste à vérifier posément, en une seule session dédiée :
+  - le sélecteur liste bien les 9 projets (présent/vide) et le
+    `window.confirm` annonce le bon projet + le bon décompte ;
+  - glisser un son perso sur un pad, confirmer, et l'entendre
+    effectivement sur la machine (pas seulement voir le message de
+    succès) ;
+  - une réaffectation pure (son déjà sur la machine déplacé vers un
+    autre pad, sans nouveau fichier) — jamais testée avec succès
+    confirmé jusqu'ici ;
+  - plusieurs pads changés en une seule fois (plusieurs
+    réaffectations/imports dans le même clic SYNCHRONISER, pas testé) ;
+  - un échec partiel (un upload rate parmi plusieurs) affiche bien le
+    bon message et n'efface pas les affectations en attente ;
+  - la grille reflète bien chaque changement immédiatement après, sur
+    plusieurs projets différents à la suite, pas seulement le tout
+    premier essai.
+  Une fois cette campagne faite et concluante, cocher la case
+  correspondante dans `docs/ROADMAP.md` Phase 4.
 - [ ] **Affichage live MIDI limité au groupe actif** (13 août, correctif)
   — jouer un pad du groupe actuellement affiché doit le surligner
   brièvement sans rien changer d'autre ; jouer un pad d'un **autre**
@@ -301,18 +315,9 @@
 
 - [x] **GROUPES & PADS suit le projet sélectionné, pas seulement le
   dernier scan** (13 août, correctif) — confirmé par l'utilisateur :
-  « le sélecteur de projets marche parfaitement ».
-- [ ] **La grille se resynchronise après une écriture SYNCHRONISER
-  réussie** (13 août, correctif du même jour) — premier test réel (écrit
-  sur P02, « 1 PAD(S) ÉCRIT(S) » affiché) a montré que la grille restait
-  figée sur l'état d'avant écriture malgré le succès annoncé ; corrigé en
-  forçant une relecture (`/bridge/projects/read`) juste après chaque
-  écriture réussie, plus systématiquement à chaque sélection de projet
-  (retiré le raccourci qui faisait confiance à `inventory.pads` quand le
-  projet visé égalait le dernier scan). À revérifier : écrire une
-  réaffectation ou un son sur un pad, confirmer, et voir la grille
-  refléter IMMÉDIATEMENT le nouveau slot sur ce pad sans avoir à changer
-  de sélecteur ni relancer un SCAN.
+  « le sélecteur de projets marche parfaitement ». Le correctif suivant,
+  « la grille se resynchronise après une écriture réussie », est intégré
+  à la campagne de test SYNCHRONISER ci-dessus plutôt que listé à part.
 
 ## Règle de suivi
 
