@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { analyzeWavBuffer, type WavAnalysisReport } from '../core/audio/wavAnalysis';
 import { WaveformTrim, type WaveformTrimSelection, type SoundPrepMetadata } from '../components/shared/WaveformTrim';
 import { ProjectTransfer } from '../components/shared/ProjectTransfer';
+import { decodeEp133ProjectTar, type Ep133PadRecord } from '../core/project/importers';
 import type { EditorGroup, EditorPadMode } from '../core/project/exporters';
 import type { DeviceInventory, DeviceSoundIndex } from '../core/project/device';
 import { loadDeviceProfile } from '../core/project/deviceProfile';
@@ -106,6 +107,17 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
    * (`inventory.project`) — « ce qu'on a scanné avant ». */
   const [machineProjects, setMachineProjects] = useState<Array<{ slot: number; present: boolean }>>([]);
   const [targetProject, setTargetProject] = useState<number | null>(null);
+  /** Chaque projet a son propre jeu de 48 pads (12 × 4 groupes) — remonté
+   * par l'utilisateur : changer le sélecteur de projet ne mettait pas à
+   * jour l'affichage GROUPES & PADS, resté figé sur `inventory` (le
+   * dernier scan complet, un seul projet). Relu en direct via
+   * `/bridge/projects/read` + le décodeur déjà existant
+   * (`decodeEp133ProjectTar`) à chaque changement de `targetProject`.
+   * `null` tant que la lecture n'a pas abouti (ou pour le projet déjà
+   * couvert par `inventory`) — le rendu retombe alors sur `inventory.pads`
+   * (voir `displayPads`) ; un tableau vide `[]` une fois chargé reste
+   * distinct de `null` et signifie bien « ce projet n'a aucun pad ». */
+  const [targetProjectPads, setTargetProjectPads] = useState<Ep133PadRecord[] | null>(null);
   const [activeBank, setActiveBank] = useState<(typeof SOUND_BANKS)[number]['id']>('all');
   const [query, setQuery] = useState('');
   const [previewMissSlot, setPreviewMissSlot] = useState<number | null>(null);
@@ -141,9 +153,14 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
   const objectUrlRef = useRef('');
   const draggingLocalRef = useRef<StagedLocalFile | null>(null);
 
+  /** Source réelle des pads affichés : ceux du projet sélectionné une fois
+   * relus (`targetProjectPads`, même un tableau vide = projet sans pads),
+   * sinon ceux du dernier scan complet tant que la lecture n'a pas abouti
+   * ou que le pont est injoignable. */
+  const displayPads = targetProjectPads !== null ? targetProjectPads : (inventory?.pads || []);
   const padsByNumber = useMemo(() => new Map(
-    (inventory?.pads || []).filter((pad) => pad.group === activeGroup).map((pad) => [pad.pad, pad]),
-  ), [activeGroup, inventory]);
+    displayPads.filter((pad) => pad.group === activeGroup).map((pad) => [pad.pad, pad]),
+  ), [activeGroup, displayPads]);
   const currentPad = padsByNumber.get(selectedPad);
   const namesBySlot = useMemo(() => new Map(Object.entries(inventory?.sounds || {}).map(([slot, sound]) => [Number(slot), sound.name])), [inventory]);
   const selectedBank = SOUND_BANKS.find((bank) => bank.id === activeBank) || SOUND_BANKS[0];
@@ -169,6 +186,30 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
   // Valeur par défaut du sélecteur = dernier projet scanné, jamais une
   // détection live (voir commentaire sur targetProject plus haut).
   useEffect(() => { if (targetProject === null && inventory?.project) setTargetProject(inventory.project); }, [inventory?.project, targetProject]);
+
+  /** Relit les 48 pads réels du projet sélectionné (13 août, bug remonté :
+   * changer le sélecteur ne changeait pas l'affichage — chaque projet a
+   * son propre jeu de pads). Même route/décodeur que ProjectTransfer pour
+   * la lecture machine → logiciel. Si le projet affiché est déjà celui du
+   * dernier scan complet (`inventory.project`), inutile de relire : on
+   * garde `inventory.pads`, plus riche (nom des sons associés, etc.) —
+   * `targetProjectPads` ne sert que pour un AUTRE projet que celui scanné. */
+  useEffect(() => {
+    if (targetProject === null || targetProject === inventory?.project) { setTargetProjectPads(null); return; }
+    let cancelled = false;
+    fetch(`/bridge/projects/read?slot=${targetProject}`, { cache: 'no-store' })
+      .then((response) => response.ok ? response.json() as Promise<{ tarBase64: string }> : Promise.reject())
+      .then((body) => {
+        if (cancelled) return;
+        const binary = atob(body.tarBase64);
+        const bytes = new Uint8Array(binary.length);
+        for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+        const archive = decodeEp133ProjectTar(bytes, `projects/P${String(targetProject).padStart(2, '0')}.tar`);
+        setTargetProjectPads(archive.pads);
+      })
+      .catch(() => { if (!cancelled) setTargetProjectPads(null); });
+    return () => { cancelled = true; };
+  }, [targetProject, inventory?.project]);
 
   /** Ne réagit qu'aux frappes du groupe actuellement affiché — avant, une
    * frappe sur un autre groupe faisait sauter l'onglet actif en plus de
@@ -257,7 +298,7 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
     window.setTimeout(() => setPreviewMissSlot((current) => current === slot ? null : current), 2600);
   };
   const stageSound = (group: EditorGroup, internalPad: number, slot: number) => {
-    const original = inventory?.pads.find((pad) => pad.group === group && pad.pad === internalPad)?.slot;
+    const original = displayPads.find((pad) => pad.group === group && pad.pad === internalPad)?.slot;
     const key = `${group}:${internalPad - 1}`;
     setStagedAssignments((current) => {
       if (original === slot) { const next = { ...current }; delete next[key]; return next; }
@@ -384,10 +425,13 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
                 {!machineProjects.length && targetProject && <option value={targetProject}>P{String(targetProject).padStart(2, '0')}</option>}
                 {machineProjects.map((entry) => <option key={entry.slot} value={entry.slot}>P{String(entry.slot).padStart(2, '0')}{entry.present ? '' : ' · VIDE'}</option>)}
               </select>
+              {targetProject !== null && targetProject !== inventory?.project
+                ? <small className="sound-target-project-status">{targetProjectPads === null ? 'LECTURE DES PADS…' : `${targetProjectPads.length} PAD(S) LU(S)`}</small>
+                : null}
             </label>
             <button className={`sound-keys-toggle ${selectedMode === 'KEYS' ? 'active' : ''}`} onClick={() => onPadModeChange(activeGroup, selectedPad - 1, selectedMode === 'KEYS' ? 'ONE' : 'KEYS')}><b>KEYS</b><small>{activeGroup} · {EP133_PADS[selectedPad - 1].key}</small></button>
           </header>
-          <div className="sound-pad-machine"><nav className="sound-group-tabs" aria-label="Groupes EP-133">{GROUPS.map((group) => <button key={group} className={activeGroup === group ? 'active' : ''} aria-pressed={activeGroup === group} onClick={() => { setActiveGroup(group); setSelectedPad(1); onMachineGroupChange(group); }}><b>{group}</b><small>{inventory?.pads.filter((pad) => pad.group === group).length || 0}/12</small></button>)}</nav>
+          <div className="sound-pad-machine"><nav className="sound-group-tabs" aria-label="Groupes EP-133">{GROUPS.map((group) => <button key={group} className={activeGroup === group ? 'active' : ''} aria-pressed={activeGroup === group} onClick={() => { setActiveGroup(group); setSelectedPad(1); onMachineGroupChange(group); }}><b>{group}</b><small>{displayPads.filter((pad) => pad.group === group).length}/12</small></button>)}</nav>
           <div className="sound-pad-grid">{INTERNAL_PAD_ORDER.map((padNumber) => { const pad = padsByNumber.get(padNumber); const padKey = `${activeGroup}:${padNumber - 1}`; const localFile = stagedLocalPads[padKey]; const stagedSlot = stagedAssignments[padKey]; const slot = stagedSlot ?? pad?.slot; const sound = slot ? inventory?.sounds[String(slot)] : undefined; const bank = slot ? bankForSlot(slot) : null; const visual = EP133_PADS[padNumber - 1]; const changed = stagedSlot !== undefined || Boolean(localFile); return <button key={padNumber} className={`${selectedPad === padNumber ? 'selected' : ''} ${livePad === padNumber ? 'live' : ''} ${changed ? 'changed' : ''} bank-${bank?.id || 'empty'}`} aria-pressed={selectedPad === padNumber}
             onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = 'copy'; }}
             onDrop={(event) => {

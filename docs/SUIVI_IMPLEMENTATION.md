@@ -1786,3 +1786,49 @@ Vérifié : `npm run build` (CSS compile sans erreur), `npm test` (10
 tests), `npm run test:e2e` (2/2, Chromium réel) — aucun de ces trois ne
 peut confirmer le rendu visuel réel. **Non vérifié à l'œil** — ajouté à
 `docs/A_VALIDER_PHYSIQUEMENT.md`.
+
+## GROUPES & PADS ne suivait pas le sélecteur de projet (13 août, même jour)
+
+Remonté juste après avoir livré le sélecteur `targetProject` : « le
+problème c'est que quand je change le projet ça change pas la page du
+pad — en fait chaque [projet] a son set de 12 sons sur 4 banques ABCD ».
+Exact : le sélecteur changeait bien `targetProject`, mais l'affichage
+(`padsByNumber`, comptage par groupe, pastille « changé », recherche du
+slot d'origine dans `stageSound`) restait branché sur `inventory.pads` —
+figé sur le projet du dernier SCAN complet, jamais mis à jour quand on
+choisit un AUTRE projet dans le menu. Chaque projet EP-133 a son propre
+jeu de 48 pads (12 × 4 groupes A–D) ; rien dans le code précédent
+n'allait relire ce jeu-là pour un projet non scanné.
+
+- [x] `SoundsPage.tsx` : nouvel état `targetProjectPads`
+  (`Ep133PadRecord[] | null`) et un `useEffect` déclenché sur
+  `[targetProject, inventory?.project]` :
+  - si `targetProject` correspond déjà au projet du dernier scan complet
+    (`inventory.project`), rien à relire — `targetProjectPads` reste
+    `null` et l'affichage garde `inventory.pads` (plus riche, contient
+    déjà les noms de sons associés) ;
+  - sinon, `GET /bridge/projects/read?slot=<targetProject>` (même route
+    que `ProjectTransfer`), décodage `tarBase64` → `Uint8Array` →
+    `decodeEp133ProjectTar` (déjà existant, réutilisé tel quel, aucune
+    nouvelle route de pont nécessaire) → `archive.pads` stocké tel quel.
+  - `null` (pas encore relu / pont injoignable) est distingué d'un
+    tableau vide `[]` (projet réellement relu et sans aucun pad assigné)
+    pour ne jamais confondre les deux cas.
+- [x] Nouveau `displayPads = targetProjectPads ?? inventory?.pads ?? []`,
+  substitué aux 4 endroits qui lisaient directement `inventory?.pads` :
+  `padsByNumber` (grille), comptage par onglet de groupe (`X/12`),
+  recherche du slot d'origine dans `stageSound` (nécessaire pour que
+  SYNCHRONISER sache si une réaffectation change vraiment quelque chose
+  sur CE projet précis), et l'attribut `changed` du pad. Les noms de sons
+  (`inventory?.sounds[...]`) restent inchangés — la banque de sons est
+  globale à la machine, pas propre à un projet, contrairement aux pads.
+- [x] Petit indicateur textuel sous le sélecteur (`LECTURE DES PADS…` puis
+  `N PAD(S) LU(S)`), visible seulement quand le projet choisi diffère du
+  dernier scan — évite qu'un changement de sélecteur paraisse silencieux
+  pendant l'aller-retour réseau vers le pont.
+
+Vérifié : `npm run typecheck`, `npm test` (10 tests), `npm run build`,
+`npm run test:e2e` (2/2). **Pas encore reclique en vrai dans le
+navigateur** (changer le sélecteur de projet et vérifier que la grille
+affiche bien les pads du BON projet, avec un projet réellement différent
+du dernier scanné) — ajouté à `docs/A_VALIDER_PHYSIQUEMENT.md`.

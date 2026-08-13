@@ -299,6 +299,17 @@
   seuls, cellules de grille à bordure partielle) — à relire à l'œil pour
   confirmer qu'aucun angle ne reste incohérent avec le reste de l'interface.
 
+- [ ] **GROUPES & PADS suit le projet sélectionné, pas seulement le
+  dernier scan** (13 août, correctif) — dans Sons & Transfert, choisir
+  dans le sélecteur un projet **différent** du dernier scanné doit
+  afficher les 48 pads réels de CE projet (relecture via
+  `/bridge/projects/read`, indicateur « LECTURE DES PADS… » puis
+  « N PAD(S) LU(S) » sous le sélecteur) — pas ceux du projet
+  précédemment scanné. Revenir au projet du dernier scan doit réafficher
+  instantanément (pas de relecture réseau nécessaire dans ce cas précis).
+  Vérifier aussi que le comptage par onglet de groupe (A/B/C/D, « X/12 »)
+  change bien avec le projet sélectionné.
+
 ## Règle de suivi
 
 Chaque case cochée ici doit pointer vers un vrai rapport si le résultat est
