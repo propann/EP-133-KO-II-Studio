@@ -23,7 +23,10 @@ interface PlayerProfilePageProps {
   onCloneMachine: () => void;
   onScanMachine: (id: string) => void;
   onViewScanReport: () => void;
-  lastScanSave: { machineId: string; path: string; at: string } | null;
+  /** `liveOutcome` rend visible si SCAN a vraiment interrogé la machine ou
+   * s'est replié sur le dernier instantané connu (et pourquoi) — sans ça,
+   * les deux cas sont indiscernables à l'écran. */
+  lastScanSave: { machineId: string; path: string; at: string; liveOutcome: 'live' | 'no-sysex' | 'sounds-failed' | 'project-failed' } | null;
   scanSaveError: { machineId: string; message: string } | null;
   scanSaveMachineId: string;
   sampleFolderName: string;
@@ -108,6 +111,12 @@ export function PlayerProfilePage({ profile, machineConnected, midiStatus, midiI
             {/* Retour d'info du dernier SCAN, juste à côté du statut de connexion — toujours quelque chose de visible, jamais un clic silencieux. */}
             {scanSaveMachineId === machine.id && <small className="profile-scan-pending">⋯ SAUVEGARDE EN COURS</small>}
             {scanSaveMachineId !== machine.id && lastScanSave?.machineId === machine.id && <small className="profile-scan-feedback">✓ SAUVEGARDÉ {new Date(lastScanSave.at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} · {lastScanSave.path}</small>}
+            {scanSaveMachineId !== machine.id && lastScanSave?.machineId === machine.id && <small className={lastScanSave.liveOutcome === 'live' ? 'profile-scan-feedback' : 'profile-folder-warning'}>
+              {lastScanSave.liveOutcome === 'live' && '✓ Lecture en direct de la machine'}
+              {lastScanSave.liveOutcome === 'no-sysex' && '⚠ SysEx non actif — repli sur le dernier instantané connu, pas une vraie lecture'}
+              {lastScanSave.liveOutcome === 'sounds-failed' && '⚠ Lecture en direct des sons échouée — repli sur le dernier instantané connu'}
+              {lastScanSave.liveOutcome === 'project-failed' && '⚠ Sons lus en direct, mais projet actif non lu — repli sur le dernier projet connu'}
+            </small>}
             {scanSaveMachineId !== machine.id && scanSaveError?.machineId === machine.id && <small className="profile-folder-warning">{scanSaveError.message}</small>}
           </div>
           {(deviceInventory || deviceSoundIndex) && <div className="profile-machine-scan-summary">

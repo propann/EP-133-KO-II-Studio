@@ -157,7 +157,7 @@ export default function App() {
   const [sampleFolderName, setSampleFolderName] = useState('');
   const [sampleFolderNeedsReconnect, setSampleFolderNeedsReconnect] = useState(false);
   const sampleDirectoryHandleRef = useRef<LocalDirectoryHandle | null>(null);
-  const [lastScanSave, setLastScanSave] = useState<{ machineId: string; path: string; at: string } | null>(null);
+  const [lastScanSave, setLastScanSave] = useState<{ machineId: string; path: string; at: string; liveOutcome: 'live' | 'no-sysex' | 'sounds-failed' | 'project-failed' } | null>(null);
   const [scanSaveError, setScanSaveError] = useState<{ machineId: string; message: string } | null>(null);
   const [scanSaveMachineId, setScanSaveMachineId] = useState('');
   // Fiche personnage écrite dans le dossier de travail (profile.json,
@@ -462,6 +462,10 @@ export default function App() {
       let soundCount = deviceSoundIndex?.soundCount || 0;
       let usedBytes = deviceSoundIndex?.usedBytes || 0;
       let scannedProject = deviceInventory?.project || null;
+      // Traçabilité visible plutôt qu'un repli silencieux : sans ça, un SCAN
+      // qui retombe sur l'instantané figé a l'air identique à un SCAN qui a
+      // vraiment interrogé la machine — indiscernable pour l'utilisateur.
+      let liveOutcome: 'live' | 'no-sysex' | 'sounds-failed' | 'project-failed' = midi.sysexEnabled && midi.outputConnected ? 'live' : 'no-sysex';
       if (midi.sysexEnabled && midi.outputConnected) {
         try {
           const liveSounds = await midi.listMachineSounds();
@@ -469,18 +473,20 @@ export default function App() {
           usedBytes = liveSounds.reduce((total, sound) => total + sound.bytes, 0);
           setDeviceSoundIndex({ readOnly: true, scannedAt: new Date().toISOString(), soundCount, usedBytes, sounds: liveSounds.map((sound) => ({ slot: sound.slot, bytes: sound.bytes, flags: sound.flags, fileName: sound.fileName })) });
         } catch (error) {
+          liveOutcome = 'sounds-failed';
           console.warn('SCAN : lecture en direct des sons impossible, repli sur le dernier instantané connu.', error);
         }
         try {
           scannedProject = await midi.getActiveProjectNumber();
         } catch (error) {
+          if (liveOutcome === 'live') liveOutcome = 'project-failed';
           console.warn('SCAN : lecture en direct du projet actif impossible, repli sur le dernier instantané connu.', error);
         }
       }
       const deviceProfile = saveDeviceProfile(localStorage, { name: machine.name, capacityMb: machine.memory === '128' ? 128 : 64, sampleFolderName: directory.name, localSampleCount: machineSampleCount });
       const manifest = createDeviceClone(localStorage, deviceProfile, soundCount, usedBytes, scannedProject, 'scan');
       const path = await writeCloneManifest(directory, machine.name, manifest);
-      setLastScanSave({ machineId: machine.id, path, at: new Date().toISOString() });
+      setLastScanSave({ machineId: machine.id, path, at: new Date().toISOString(), liveOutcome });
     } catch (error) {
       const name = (error as { name?: string }).name;
       const message = name === 'AbortError' ? 'Sélection de dossier annulée — rien n’a été sauvegardé.' : error instanceof Error ? error.message : 'La sauvegarde de l’état des lieux a échoué.';
