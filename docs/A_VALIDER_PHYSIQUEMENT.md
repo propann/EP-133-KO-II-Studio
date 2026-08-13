@@ -256,6 +256,17 @@
   l'import machine → bibliothèque (glisser P01 vers la colonne droite)
   apparaît bien ensuite dans « Ouvrir… » du Studio avec le bon contenu —
   seule la direction logiciel → machine a été testée jusqu'ici.
+- [ ] **SYNCHRONISER pour de vrai** (13 août) — jamais cliqué dans le
+  navigateur, seulement la route `/bridge/sounds/upload` testée via
+  `curl`. Avant le tout premier essai : confirmer que le projet actif de
+  la machine est toujours P09 (c'était le cas juste avant ce chantier).
+  À vérifier : glisser un son perso sur un pad, cliquer SYNCHRONISER, le
+  `window.confirm` doit annoncer le bon projet cible (P09) et le bon
+  décompte ; après confirmation, le son doit être audible sur ce pad sur
+  la machine ; vérifier aussi qu'une réaffectation pure (son déjà sur la
+  machine déplacé vers un autre pad, sans nouveau fichier) fonctionne
+  sans rien uploader. Une fois confirmé, cocher la case correspondante
+  dans `docs/ROADMAP.md` Phase 4.
 - [ ] **Repliement GROUPES & PADS / transfert de projets** (13 août) —
   ajusté juste après le premier test (cartes machine en orange, flèches
   de repliement partageant l'emplacement avec le transfert de projets) —

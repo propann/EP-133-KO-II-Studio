@@ -24,6 +24,14 @@ Il expose ces opérations :
   (`checkpoint_project`/`write_project_verified`, importées, pas dupliquées)
   — testée à la main avant d'être exposée en HTTP (copie P01→P09 confirmée
   par l'utilisateur sur la machine).
+- `POST /sounds/upload` (13 août, pour SYNCHRONISER — Sons & Transfert) :
+  corps `{slot?, wavBase64, name?}` — décode le WAV, l'écrit dans un
+  fichier temporaire (`checkpoints/tmp-uploads/`, supprimé aussitôt —
+  `wav_to_pcm16` d'`epsysex` attend un chemin, pas un buffer), slot libre
+  auto-détecté si omis, upload PCM 46 875 Hz, relecture octet à octet
+  avant de répondre. Testée directement (curl, puis via le proxy Vite) :
+  slot libre correctement détecté (59, après 58 déjà occupé par un test
+  précédent), 529 sons confirmés en direct sur la machine après coup.
 
 Le chemin cible n'est jamais fourni par une requête web. Il est imposé au
 démarrage du pont, ce qui empêche une page de demander une écriture ailleurs.

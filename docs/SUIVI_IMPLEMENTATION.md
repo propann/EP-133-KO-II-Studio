@@ -1652,6 +1652,47 @@ en réel (voir ci-dessus) via `curl`, à travers le proxy Vite
 direct au pont. **L'interface de glisser-déposer elle-même n'a jamais été
 cliquée dans un vrai navigateur** — ajouté à `docs/A_VALIDER_PHYSIQUEMENT.md`.
 
+## SYNCHRONISER reconstruit pour de vrai (13 août)
+
+« On reprend du début et on fait propre » — confirmé : reconstruire le
+bouton SYNCHRONISER de Sons & Transfert, qui n'a jamais fait qu'un stub
+(copie de fichiers vers un dossier local `a-importer/`, alerte « écriture
+machine encore verrouillée » pour les réaffectations pures). Passé par le
+mode Plan, avec une clarification de sécurité obtenue avant d'écrire une
+ligne de code : SYNCHRONISER écrit dans le **projet actuellement actif**
+sur la machine (pas un slot de test) — l'utilisateur a confirmé que le
+projet actif était déjà P09 avant le premier essai.
+
+- [x] `tools/local_clone_bridge.py`, nouvelle route `POST /sounds/upload` :
+  `{slot?, wavBase64, name?}` — slot libre auto-détecté si omis (même
+  logique que `write-sound`), upload via un fichier temporaire (`wav_to_pcm16`
+  attend un chemin), relecture octet à octet avant de répondre. **Testée en
+  réel** : slot 59 auto-détecté (58 déjà occupé), 529 sons confirmés en
+  direct sur la machine après l'upload.
+- [x] `SoundsPage.tsx`, `requestSync` entièrement réécrit : lit le projet
+  actif via `onGetActiveProject` (`midi.getActiveProjectNumber()`, déjà
+  construit pour le SCAN en direct — aucune nouvelle plomberie MIDI côté
+  navigateur), un seul `window.confirm` récapitulant sons à envoyer et
+  réaffectations de pad sur le projet actif avant tout envoi, upload
+  séquentiel de chaque son perso (`stagedLocalPads`/`stagedImports`) via
+  `/bridge/sounds/upload`, puis un seul `/bridge/projects/write` avec tous
+  les pads (nouveaux + réaffectations pures `stagedAssignments`) —
+  checkpoint/compilation patch/écriture/relecture/activation déjà gérés
+  par cette route existante. Résultat détaillé par étape affiché,
+  réinitialise l'état préparé seulement si tout a réussi.
+- [x] `requestDelete` (suppression d'un son) reste **volontairement
+  verrouillée** — irréversible, pas demandée cette session, message mis à
+  jour pour ne plus dire « en attente d'un mécanisme qui n'existe pas »
+  (il existe maintenant, pour l'écriture) mais « verrouillée à part,
+  mérite sa propre étude ».
+
+Vérifié : `npm run typecheck`, `npm test` (10 tests), `npm run build`,
+`npm run test:e2e` (2/2). Route de pont testée en réel (curl direct + à
+travers le proxy Vite). **Le bouton SYNCHRONISER lui-même — le vrai clic
+dans le navigateur — n'a pas encore été testé** — ajouté à
+`docs/A_VALIDER_PHYSIQUEMENT.md`, pas encore coché dans
+`docs/ROADMAP.md` Phase 4 tant que ce n'est pas confirmé en vrai.
+
 ### Confirmé par l'utilisateur en conditions réelles + ajustements (13 août, même jour)
 
 Premier test réel du glisser-déposer : **succès** (« ça fait bien réagir la

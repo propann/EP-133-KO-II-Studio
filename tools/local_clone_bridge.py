@@ -27,8 +27,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 # requis pour /clone/*) — pas de repli silencieux si absent, une erreur
 # claire au démarrage vaut mieux qu'une route /projects/* qui échoue plus
 # tard sans explication.
-from send_project_to_machine import checkpoint_project, write_project_verified  # noqa: E402
+from send_project_to_machine import checkpoint_project, now_stamp, write_project_verified  # noqa: E402
 from epsysex import FileClient, compile_project  # noqa: E402
+from epsysex.dependencies import wav_to_pcm16  # noqa: E402
 from epsysex.fileclient import project_fid  # noqa: E402
 
 
@@ -111,6 +112,37 @@ def read_project(slot: int) -> dict:
     return {"slot": slot, "meta": meta, "tarBase64": base64.b64encode(tar_bytes).decode("ascii")}
 
 
+def upload_sound_from_wav(root: Path, slot: int | None, wav_bytes: bytes, name: str | None) -> dict:
+    """Upload un WAV sur un slot son réel — même fonction que
+    `send_project_to_machine.py write-sound` (slot libre auto-détecté si
+    omis, rééchantillonnage 46 875 Hz, relecture octet à octet), exposée
+    ici en HTTP pour SYNCHRONISER (Sons & Transfert). `wav_to_pcm16`
+    attend un chemin de fichier, pas un buffer mémoire — passe par un
+    fichier temporaire supprimé aussitôt après."""
+    client = FileClient()
+    occupied = {int(node["id"]) for node in client.list_sounds()}
+    was_occupied = False
+    if slot is None:
+        slot = next(candidate for candidate in range(1, 1000) if candidate not in occupied)
+    else:
+        was_occupied = slot in occupied
+
+    tmp_dir = root / "checkpoints" / "tmp-uploads"
+    tmp_dir.mkdir(parents=True, exist_ok=True)
+    tmp_path = tmp_dir / f"upload-{now_stamp()}.wav"
+    tmp_path.write_bytes(wav_bytes)
+    try:
+        pcm, stream = wav_to_pcm16(tmp_path)
+    finally:
+        tmp_path.unlink(missing_ok=True)
+
+    client.upload_sound(slot, pcm, name=name, samplerate=stream["samplerate"], channels=stream["channels"], sample_format=stream["format"])
+    readback, _meta = client.read_sound(slot)
+    if readback != pcm:
+        raise RuntimeError("relecture du son différente de ce qui a été envoyé")
+    return {"slot": slot, "bytes": len(pcm), "wasOccupied": was_occupied}
+
+
 def write_project(root: Path, slot: int, document: dict) -> dict:
     """Même séquence que `send_project_to_machine.py write` (checkpoint,
     compile_project avec base réelle, écriture, relecture octet à octet,
@@ -172,6 +204,23 @@ def handler_factory(state: CloneState):
                     self.send_json(202 if result["started"] else 409, result)
                 except (ValueError, json.JSONDecodeError) as error:
                     self.send_json(400, {"error": str(error)})
+            elif path == "/sounds/upload":
+                try:
+                    length = int(self.headers.get("Content-Length", "0"))
+                    value = json.loads(self.rfile.read(length) or b"{}")
+                    wav_b64 = value.get("wavBase64")
+                    if not wav_b64: raise ValueError("wavBase64 manquant")
+                    wav_bytes = base64.b64decode(wav_b64, validate=True)
+                    raw_slot = value.get("slot")
+                    slot = int(raw_slot) if raw_slot is not None else None
+                    if slot is not None and not (1 <= slot <= 999): raise ValueError("slot invalide")
+                    name = value.get("name")
+                    result = upload_sound_from_wav(state.root, slot, wav_bytes, name)
+                    self.send_json(200, result)
+                except (ValueError, TypeError, json.JSONDecodeError) as error:
+                    self.send_json(400, {"error": str(error)})
+                except Exception as error:  # noqa: BLE001 — jamais planter le serveur sur une erreur MIDI
+                    self.send_json(502, {"error": str(error)})
             elif path == "/projects/write":
                 try:
                     length = int(self.headers.get("Content-Length", "0"))

@@ -8,7 +8,6 @@ import { loadDeviceProfile } from '../core/project/deviceProfile';
 import { EP133_PADS } from '../core/project/pads';
 import { officialGroupIndexFromNote, officialInternalPadFromNote } from '../core/midi/useWebMidi';
 import type { LocalDirectoryHandle } from '../core/storage/localFolders';
-import { SAMPLE_FOLDER_KEY, loadDirectoryHandle, requestStoredPermission } from '../core/storage/directoryHandleStore';
 
 interface FileEntryHandle { getFile(): Promise<File>; }
 type LocalEntry =
@@ -40,6 +39,9 @@ interface SoundsPageProps {
   localProjects: ReadonlyArray<{ id: string; title: string }>;
   onGetProjectDocument: (origin: 'demo' | 'local', id: string) => Promise<Record<string, unknown> | null>;
   onImportMachineProject: (document: Record<string, unknown>, suggestedTitle: string) => void;
+  /** Numéro du projet réellement actif sur la machine — SYNCHRONISER écrit
+   * dedans, jamais un slot arbitraire. Lève si le SysEx n'est pas actif. */
+  onGetActiveProject: () => Promise<number>;
 }
 
 const GROUPS: EditorGroup[] = ['A', 'B', 'C', 'D'];
@@ -59,7 +61,18 @@ const SOUND_BANKS = [
 ] as const;
 
 const AUDIO_PATTERN = /\.(wav|wave|aif|aiff|mp3|flac|ogg|m4a)$/i;
-const safeFileName = (value: string) => value.trim().replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^[-.]+|[-.]+$/g, '') || 'son';
+
+/** Encode un fichier en base64 pour `/bridge/sounds/upload` — par blocs pour
+ * ne jamais dépasser la pile d'appel de `String.fromCharCode` sur un gros WAV. */
+async function fileToBase64(file: File): Promise<string> {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  let binary = '';
+  const chunkSize = 0x8000;
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+  }
+  return btoa(binary);
+}
 
 async function readLocalEntries(dir: LocalDirectoryHandle): Promise<LocalEntry[]> {
   const entries: LocalEntry[] = [];
@@ -74,7 +87,7 @@ async function readLocalEntries(dir: LocalDirectoryHandle): Promise<LocalEntry[]
 const bankForSlot = (slot: number) => SOUND_BANKS.slice(1).find((bank) => slot >= bank.from && slot <= bank.to) || SOUND_BANKS[10];
 const playModeName = (mode?: number) => mode === 1 ? 'KEYS' : mode === 2 ? 'LEGATO' : 'ONE';
 
-export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup, onMachineGroupChange, liveMidi, padModes, onBack, onConnectMidi, onPadModeChange, onPadPreview, onPreviewSound, localLibraryHandle, localLibraryFolderName, localLibraryNeedsReconnect, onReconnectLocalLibrary, demoProjects, localProjects, onGetProjectDocument, onImportMachineProject }: SoundsPageProps) {
+export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup, onMachineGroupChange, liveMidi, padModes, onBack, onConnectMidi, onPadModeChange, onPadPreview, onPreviewSound, localLibraryHandle, localLibraryFolderName, localLibraryNeedsReconnect, onReconnectLocalLibrary, demoProjects, localProjects, onGetProjectDocument, onImportMachineProject, onGetActiveProject }: SoundsPageProps) {
   // Nom/mémoire/statut affichés en tête de page — réglés depuis la Fiche personnage
   // (plus de formulaire « PROFIL DE LA MACHINE » ici, retiré pour épurer la page).
   const existingProfile = loadDeviceProfile(localStorage);
@@ -206,8 +219,13 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
     void ensureAudioReport(entry.name, file);
   };
 
+  /** Verrouillée volontairement (13 août) : SYNCHRONISER écrit désormais
+   * réellement (upload de son + réaffectation de pad, checkpoint et
+   * relecture octet à octet inclus), mais une suppression est
+   * irréversible — pas demandée cette session, mérite sa propre prudence
+   * dédiée avant d'être débloquée à son tour. */
   const requestDelete = (slot: number) => {
-    window.alert(`SUPPRESSION DU SLOT ${String(slot).padStart(3, '0')} VERROUILLÉE\n\nLa sauvegarde du son, le checkpoint et la relecture de contrôle doivent être disponibles avant toute suppression sur l’EP-133.`);
+    window.alert(`SUPPRESSION DU SLOT ${String(slot).padStart(3, '0')} VERROUILLÉE\n\nIrréversible : cette action reste verrouillée volontairement en attendant sa propre étude de sécurité, séparée de l’écriture (déjà réelle depuis SYNCHRONISER).`);
   };
   /** Pas de repli synthétisé possible pour un slot arbitraire (contrairement à un pad) — si rien
    * n'a vraiment joué (dossier de travail non chargé), le dire plutôt qu'un clic silencieux. */
@@ -237,42 +255,92 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
   };
 
   /**
-   * SYNCHRONISER : pour les sons venus de la bibliothèque perso (pads ou slots visés), copie
-   * réellement les fichiers dans le DOSSIER DE TRAVAIL déjà connecté (Fiche personnage), sous
-   * `a-importer/` — une vraie préparation sur disque. Pour les réaffectations purement machine
-   * (slot → pad, sans fichier perso), reste un plan verrouillé : aucun protocole d'écriture SysEx
-   * n'existe dans ce projet, l'app ne doit jamais prétendre écrire sur l'EP-133 pour de vrai.
+   * SYNCHRONISER, reconstruit le 13 août (« on reprend du début et on fait
+   * propre ») : écrit réellement sur la machine, dans le projet
+   * ACTUELLEMENT ACTIF (`onGetActiveProject`, jamais un slot arbitraire).
+   * Réutilise ce qui vient d'être validé en conditions réelles cette
+   * session : `/bridge/sounds/upload` (checkpoint implicite via la
+   * vérification octet à octet côté pont) pour chaque son perso, puis un
+   * seul `/bridge/projects/write` (checkpoint + compilation patch +
+   * écriture + relecture octet à octet + activation) pour les pads.
+   * Séquentiel, jamais en parallèle — une seule session FILE à la fois.
+   * SUPPRIMER un son reste volontairement verrouillé (voir requestDelete) :
+   * irréversible, pas demandé cette fois, mérite sa propre prudence dédiée.
    */
   const requestSync = async () => {
     if (!changeCount || syncing) return;
-    const localItems: Array<[string, StagedLocalFile]> = [
-      ...Object.entries(stagedLocalPads).map(([key, file]) => [`pad-${key}`, file] as [string, StagedLocalFile]),
-      ...Object.entries(stagedImports).map(([slot, file]) => [`slot-${slot}`, file] as [string, StagedLocalFile]),
-    ];
-    const deviceOnlyCount = Object.keys(stagedAssignments).length;
-    if (!localItems.length) {
-      const accepted = window.confirm(`PRÉPARER LA SYNCHRONISATION DE ${deviceOnlyCount} PAD(S) ?\n\nLes affectations locales resteront en orange. Aucune écriture ne sera envoyée sans checkpoint et relecture de contrôle.`);
-      if (accepted) window.alert('PLAN DE SYNCHRONISATION PRÊT\n\nÉcriture machine encore verrouillée : compilation du projet, checkpoint et relecture binaire à valider.');
+
+    let activeProject: number;
+    try {
+      activeProject = await onGetActiveProject();
+    } catch (error) {
+      setImportFeedback({ status: 'error', message: `PROJET ACTIF INTROUVABLE — ${error instanceof Error ? error.message : 'connecte le SysEx.'}` });
       return;
     }
+
+    const localPadEntries = Object.entries(stagedLocalPads);
+    const importEntries = Object.entries(stagedImports);
+    const assignmentEntries = Object.entries(stagedAssignments);
+    const uploadCount = localPadEntries.length + importEntries.length;
+    const overwriteCount = importEntries.filter(([slot]) => soundIndex?.sounds.some((sound) => sound.slot === Number(slot))).length;
+    const summaryLines = [
+      uploadCount ? `${uploadCount} SON(S) À ENVOYER${overwriteCount ? ` (dont ${overwriteCount} remplace(nt) un slot déjà occupé)` : ''}` : null,
+      assignmentEntries.length ? `${assignmentEntries.length} RÉAFFECTATION(S) DE PAD` : null,
+    ].filter(Boolean).join('\n');
+    if (!window.confirm(`ÉCRIRE RÉELLEMENT SUR LA MACHINE — PROJET P${String(activeProject).padStart(2, '0')} ?\n\n${summaryLines}\n\nUn checkpoint est écrit automatiquement avant, restaurable manuellement si besoin.`)) return;
+
     setSyncing(true);
     setImportFeedback(null);
-    try {
-      const working = await loadDirectoryHandle(SAMPLE_FOLDER_KEY);
-      if (!working) { setImportFeedback({ status: 'error', message: 'AUCUN DOSSIER DE TRAVAIL — connecte-le depuis la FICHE PERSONNAGE.' }); return; }
-      if (!await requestStoredPermission(working, 'readwrite')) { setImportFeedback({ status: 'error', message: 'AUTORISATION D’ÉCRITURE REFUSÉE SUR LE DOSSIER DE TRAVAIL.' }); return; }
-      const target = await working.getDirectoryHandle('a-importer', { create: true });
-      for (const [tag, item] of localItems) {
-        const file = await item.handle.getFile();
-        const destName = `${tag}_${safeFileName(item.fileName)}`;
-        const fileHandle = await target.getFileHandle(destName, { create: true });
-        const writable = await fileHandle.createWritable();
-        await writable.write(file);
-        await writable.close();
+    const pads: Array<{ group: EditorGroup; pad: number; slot: number }> = [];
+    const errors: string[] = [];
+
+    for (const [key, file] of localPadEntries) {
+      const [group, padIndexRaw] = key.split(':') as [EditorGroup, string];
+      const padNumber = Number(padIndexRaw) + 1;
+      try {
+        const wavFile = await file.handle.getFile();
+        const wavBase64 = await fileToBase64(wavFile);
+        const response = await fetch('/bridge/sounds/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ wavBase64, name: file.fileName.replace(AUDIO_PATTERN, '').slice(0, 20) }) });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(body.error || `Échec (${response.status}).`);
+        pads.push({ group, pad: padNumber, slot: body.slot });
+      } catch (error) {
+        errors.push(`${group}${padNumber} (${file.fileName}) : ${error instanceof Error ? error.message : 'échec.'}`);
       }
-      setImportFeedback({ status: 'done', message: `${localItems.length} SON(S) PERSO COPIÉ(S) DANS ${working.name}/a-importer${deviceOnlyCount ? ` · ${deviceOnlyCount} RÉAFFECTATION(S) MACHINE ENCORE VERROUILLÉE(S)` : ''}` });
+    }
+
+    for (const [slotRaw, file] of importEntries) {
+      const slot = Number(slotRaw);
+      try {
+        const wavFile = await file.handle.getFile();
+        const wavBase64 = await fileToBase64(wavFile);
+        const response = await fetch('/bridge/sounds/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slot, wavBase64, name: file.fileName.replace(AUDIO_PATTERN, '').slice(0, 20) }) });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(body.error || `Échec (${response.status}).`);
+      } catch (error) {
+        errors.push(`SLOT ${String(slot).padStart(3, '0')} (${file.fileName}) : ${error instanceof Error ? error.message : 'échec.'}`);
+      }
+    }
+
+    for (const [key, slot] of assignmentEntries) {
+      const [group, padIndexRaw] = key.split(':') as [EditorGroup, string];
+      pads.push({ group, pad: Number(padIndexRaw) + 1, slot });
+    }
+
+    if (!pads.length) {
+      setSyncing(false);
+      setImportFeedback(errors.length ? { status: 'error', message: errors.join(' · ') } : { status: 'done', message: 'AUCUNE RÉAFFECTATION DE PAD À ÉCRIRE.' });
+      return;
+    }
+
+    try {
+      const response = await fetch('/bridge/projects/write', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slot: activeProject, document: { schema: 'ep.project.v1', product: 'ep133', pads } }) });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error || `Échec (${response.status}).`);
+      setImportFeedback({ status: errors.length ? 'error' : 'done', message: `${pads.length} PAD(S) ÉCRIT(S) SUR P${String(activeProject).padStart(2, '0')} · CHECKPOINT ${body.checkpoint}${errors.length ? ` · ÉCHECS : ${errors.join(' · ')}` : ''}` });
+      if (!errors.length) { setStagedAssignments({}); setStagedLocalPads({}); setStagedImports({}); }
     } catch (error) {
-      setImportFeedback({ status: 'error', message: (error as Error)?.message || 'Échec de la copie.' });
+      setImportFeedback({ status: 'error', message: `ÉCRITURE DU PROJET ÉCHOUÉE : ${error instanceof Error ? error.message : 'erreur inconnue.'}${errors.length ? ` · SONS EN ÉCHEC : ${errors.join(' · ')}` : ''}` });
     } finally {
       setSyncing(false);
     }
