@@ -99,6 +99,8 @@
   gros module (~2 Mo) sans bloquer l'interface, la conversion respecte la
   sélection de trim en cours (pas tout le fichier), et le résultat sonne
   correctement rééchantillonné (pas de distorsion/aliasing perceptible).
+  Ajouté depuis : chaque bouton LO/MID/HI affiche un poids estimé en Ko —
+  vérifier qu'il varie bien en direct pendant qu'on ajuste la sélection.
 
 ## Règle de suivi
 

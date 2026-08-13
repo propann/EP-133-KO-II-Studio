@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 import RegionsPlugin, { type Region } from 'wavesurfer.js/plugins/regions';
 import { computeWaveformPeaks, detectSilenceTrim, suggestNormalizationGainDb, type WavAnalysisReport } from '../../core/audio/wavAnalysis';
-import type { Ep133TargetRate } from '../../core/audio/wavConvert';
+// Module léger, sans dépendance WASM (contrairement à wavConvert.ts) — sûr à
+// importer statiquement ici pour afficher un poids en direct. La conversion
+// réelle reste chargée à la demande, voir `runConversion` plus bas.
+import { EP133_TARGET_SAMPLE_RATES, estimateEp133ConversionBytes, type Ep133TargetRate } from '../../core/audio/ep133Targets';
 
 const EP133_TARGET_LABELS: Record<Ep133TargetRate, string> = { LO: 'LO · 26 250 HZ', MID: 'MID · 32 000 HZ', HI: 'HI · 46 875 HZ' };
 
@@ -45,6 +48,9 @@ export function WaveformTrim({ file, initialTrim, onTrimChange, report }: Wavefo
   // Suggestion seulement (A-08) : calculée au chargement, appliquée à la
   // région uniquement si l'utilisateur clique AUTO-TRIM — jamais toute seule.
   const [silenceSuggestion, setSilenceSuggestion] = useState<{ startSeconds: number; endSeconds: number } | null>(null);
+  // Reflet React de la région wavesurfer (regionRef), pour recalculer le
+  // poids estimé à chaque glisser — regionRef seul ne déclenche pas de rendu.
+  const [currentTrim, setCurrentTrim] = useState<{ startSeconds: number; endSeconds: number } | null>(null);
   // Conversion EP-133 (R-07) : module ~2 Mo (WASM libsamplerate embarqué en
   // base64) chargé à la demande au premier clic, jamais au chargement de la
   // page — voir la fonction `runConversion` plus bas.
@@ -52,12 +58,20 @@ export function WaveformTrim({ file, initialTrim, onTrimChange, report }: Wavefo
   const [convertError, setConvertError] = useState<string | null>(null);
   const [convertedPreview, setConvertedPreview] = useState<{ target: Ep133TargetRate; url: string; sampleRate: number; durationSeconds: number } | null>(null);
 
+  // Remonte une sélection au parent (sauvegarde) et au composant lui-même
+  // (recalcul immédiat du poids estimé affiché sur les boutons LO/MID/HI).
+  const reportTrim = (selection: { startSeconds: number; endSeconds: number }) => {
+    setCurrentTrim(selection);
+    onTrimChange(selection);
+  };
+
   useEffect(() => {
     if (!containerRef.current) return;
     let cancelled = false;
     setStatus('loading');
     setPlaying(false);
     setSilenceSuggestion(null);
+    setCurrentTrim(null);
     setConvertedPreview(null);
     setConvertError(null);
 
@@ -99,10 +113,10 @@ export function WaveformTrim({ file, initialTrim, onTrimChange, report }: Wavefo
         resize: true,
       });
       regionRef.current = region;
-      onTrimChange({ startSeconds: region.start, endSeconds: region.end });
+      reportTrim({ startSeconds: region.start, endSeconds: region.end });
     })();
 
-    const handleRegionUpdated = (region: Region) => onTrimChange({ startSeconds: region.start, endSeconds: region.end });
+    const handleRegionUpdated = (region: Region) => reportTrim({ startSeconds: region.start, endSeconds: region.end });
     regions.on('region-updated', handleRegionUpdated);
     wavesurfer.on('play', () => setPlaying(true));
     wavesurfer.on('pause', () => setPlaying(false));
@@ -130,7 +144,7 @@ export function WaveformTrim({ file, initialTrim, onTrimChange, report }: Wavefo
     const region = regionRef.current;
     if (!region || !silenceSuggestion) return;
     region.setOptions({ start: silenceSuggestion.startSeconds, end: silenceSuggestion.endSeconds });
-    onTrimChange(silenceSuggestion);
+    reportTrim(silenceSuggestion);
   };
 
   // Révoque l'URL de la pré-écoute convertie précédente, à chaque remplacement et au démontage.
@@ -143,7 +157,7 @@ export function WaveformTrim({ file, initialTrim, onTrimChange, report }: Wavefo
     setConverting(target);
     setConvertError(null);
     try {
-      const { convertWavForEp133, EP133_TARGET_SAMPLE_RATES } = await import('../../core/audio/wavConvert');
+      const { convertWavForEp133 } = await import('../../core/audio/wavConvert');
       const result = await convertWavForEp133(bytes, EP133_TARGET_SAMPLE_RATES[target], undefined, { startSeconds: region.start, endSeconds: region.end });
       if (!result) { setConvertError('CONVERSION IMPOSSIBLE (FORMAT NON PRIS EN CHARGE OU SÉLECTION VIDE)'); return; }
       const url = URL.createObjectURL(new Blob([result.bytes], { type: 'audio/wav' }));
@@ -158,6 +172,10 @@ export function WaveformTrim({ file, initialTrim, onTrimChange, report }: Wavefo
   const peakLevel = report && report !== 'unsupported' ? report.peakLevel : null;
   const peakDb = peakLevel && peakLevel > 0 ? 20 * Math.log10(peakLevel) : null;
   const suggestedGainDb = peakLevel !== null ? suggestNormalizationGainDb(peakLevel) : null;
+  // Même règle de repli que `convertWavForEp133` (targetChannels non fourni) —
+  // l'estimation doit correspondre à ce que la conversion produira par défaut.
+  const outChannels: 1 | 2 = report && report !== 'unsupported' && report.channels >= 2 ? 2 : 1;
+  const trimDurationSeconds = currentTrim ? Math.max(0, currentTrim.endSeconds - currentTrim.startSeconds) : 0;
 
   return <div className="waveform-trim">
     <div className="waveform-trim-canvas" ref={containerRef} />
@@ -172,9 +190,13 @@ export function WaveformTrim({ file, initialTrim, onTrimChange, report }: Wavefo
       <div className="waveform-trim-convert">
         <small>CONVERSION EP-133 (SÉLECTION UNIQUEMENT)</small>
         <div className="waveform-trim-convert-buttons">
-          {(Object.keys(EP133_TARGET_LABELS) as Ep133TargetRate[]).map((target) => <button key={target} disabled={Boolean(converting)} onClick={() => void runConversion(target)}>
-            {converting === target ? 'CONVERSION…' : EP133_TARGET_LABELS[target]}
-          </button>)}
+          {(Object.keys(EP133_TARGET_LABELS) as Ep133TargetRate[]).map((target) => {
+            const estimatedBytes = estimateEp133ConversionBytes(trimDurationSeconds, outChannels, EP133_TARGET_SAMPLE_RATES[target]);
+            return <button key={target} disabled={Boolean(converting)} onClick={() => void runConversion(target)}>
+              <b>{converting === target ? 'CONVERSION…' : EP133_TARGET_LABELS[target]}</b>
+              <small>{(estimatedBytes / 1024).toFixed(1)} KO ESTIMÉS</small>
+            </button>;
+          })}
         </div>
         {convertError && <small className="waveform-trim-status">{convertError}</small>}
         {convertedPreview && <div className="waveform-trim-preview">

@@ -407,7 +407,15 @@ de fichiers audio propriétaires au dépôt.
   conversion (~2 Mo, WASM) chargé à la demande au premier clic
   (`import()` dynamique), pas au chargement de la page — bundle principal
   inchangé (+3 Ko), chunk séparé confirmé au build.
-- [ ] Estimation exacte du poids et jauge de mémoire avant transfert.
+- [x] **Estimation exacte du poids avant transfert** (13 août) : chaque
+  bouton LO/MID/HI de `WaveformTrim` affiche le poids exact du WAV que
+  produirait la conversion (`estimateEp133ConversionBytes`,
+  `src/core/audio/ep133Targets.ts`), recalculé en direct pendant l'ajustement
+  du trim — sans lancer de resampling réel, juste de l'arithmétique, vérifiée
+  égale à un vrai résultat de conversion par un test dédié.
+- [ ] Jauge de mémoire avant transfert (comparaison avec la capacité et
+  l'occupation déjà connues de la machine, `SoundsPage`) — pas encore fait,
+  ce poids n'est pour l'instant affiché que dans l'absolu.
 - [ ] Choix prioritaire d'un slot libre.
 - [ ] Paquet de sons préparé, manifeste et contrôles d'intégrité.
 - [ ] Analyse des doublons et sons orphelins en mode proposition uniquement.

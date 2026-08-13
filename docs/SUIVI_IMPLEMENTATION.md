@@ -825,3 +825,39 @@ Statuts mis à jour : `docs/REGISTRE_IDEES.md` A-03 (CORRIGÉ → RÉALISÉ
 partiel), A-04 (RETENU → RÉALISÉ), A-05 (RETENU → RÉALISÉ partiel), R-07
 (RETENU → RÉALISÉ partiel) ; `docs/ROADMAP.md` Phase 4 ;
 `docs/ETAT_DU_PROJET.md` ; `docs/A_VALIDER_PHYSIQUEMENT.md`.
+
+## Étape — poids estimé sur les boutons LO/MID/HI (13 août, suite, via plan validé)
+
+Dernier item ouvert de la Phase 4 côté « avant transfert » : « estimation
+exacte du poids ». La fonction existait déjà (`estimateEp133ConversionBytes`,
+commit précédent) mais n'était pas encore affichée dans l'interface.
+
+Passé par le mode Plan à la demande explicite de l'utilisateur (contrainte
+architecturale à respecter : ne pas casser le chargement différé du module
+de conversion vérifié au commit précédent).
+
+- [x] `src/core/audio/ep133Targets.ts` créé : `EP133_TARGET_SAMPLE_RATES`,
+  `Ep133TargetRate` et `estimateEp133ConversionBytes` déplacées hors de
+  `wavConvert.ts`, qui les réexporte pour compatibilité
+  (`tools/check-wav-convert.mjs` inchangé). Aucune dépendance WASM dans ce
+  nouveau fichier — c'est tout l'intérêt : `WaveformTrim.tsx` peut
+  l'importer statiquement sans risquer de tirer les ~2 Mo de
+  `libsamplerate-js` dans le bundle principal.
+- [x] `WaveformTrim` : état `currentTrim` (reflet React de la région
+  wavesurfer, mise à jour centralisée dans une fonction `reportTrim`
+  partagée par les trois points d'entrée déjà existants — création de
+  région, glisser, AUTO-TRIM SILENCE) pour que le poids affiché se
+  recalcule en direct pendant l'ajustement de la sélection, pas seulement
+  au chargement. Chaque bouton LO/MID/HI affiche désormais son poids estimé
+  en Ko, sur une seconde ligne.
+- [x] **Vérification du point critique du plan** : `npm run build` confirme
+  que `wavConvert-*.js` reste un chunk séparé (~2 Mo) et que le bundle
+  principal ne bouge quasiment pas (686,10 Ko → 686,40 Ko, +0,3 Ko) — la
+  séparation architecturale a réellement tenu, pas seulement en intention.
+- [x] `npm run typecheck`, `npm run test:convert` (l'égalité estimation/réel
+  déjà testée reste vraie après le déplacement), `npm test` (8 tests),
+  `npm run test:e2e` (2/2) — tous au vert.
+
+Non vérifié à l'œil : ajouté à la même entrée que la conversion dans
+`docs/A_VALIDER_PHYSIQUEMENT.md` plutôt qu'une ligne séparée, puisque c'est
+littéralement le même panneau à regarder.

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { convertWavForEp133, EP133_TARGET_SAMPLE_RATES } from '../src/core/audio/wavConvert.ts';
+import { convertWavForEp133, EP133_TARGET_SAMPLE_RATES, estimateEp133ConversionBytes } from '../src/core/audio/wavConvert.ts';
 import { analyzeWavBuffer } from '../src/core/audio/wavAnalysis.ts';
 
 /** WAV PCM 16 bits minimal, même forme que le générateur de tools/check-wav-analysis.mjs. */
@@ -83,5 +83,15 @@ assert.ok(trimmedReport.peakLevel > 0.5, 'la portion convertie contient bien le 
 
 const emptyTrim = await convertWavForEp133(trimSource, 5000, 1, { startSeconds: 0.05, endSeconds: 0.05 });
 assert.equal(emptyTrim, null, 'sélection vide (start === end) -> rien à convertir, jamais un WAV de longueur 0');
+
+// 6) estimateEp133ConversionBytes : doit prédire EXACTEMENT le poids que produit une vraie
+// conversion, pas une approximation — sinon l'affichage "avant transfert" mentirait.
+const estimateSource = buildWav({ sampleRate: 48000, channels: 2, frames: sineFrames(48000, 0.1, 300, 15000).flatMap((v) => [v, v]) });
+for (const [label, targetRate] of Object.entries(EP133_TARGET_SAMPLE_RATES)) {
+  const estimated = estimateEp133ConversionBytes(0.1, 2, targetRate);
+  const real = await convertWavForEp133(estimateSource, targetRate, 2);
+  assert.ok(real, `conversion réelle attendue pour ${label}`);
+  assert.equal(estimated, real.bytes.byteLength, `estimation ${label} (${estimated} o) doit égaler le poids réel (${real.bytes.byteLength} o)`);
+}
 
 console.log('Conversion EP-133 (resampling libsamplerate-js, dither TPDF, downmix) : OK');

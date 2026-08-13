@@ -22,9 +22,11 @@ import { parseWavFormat, readSignedSample, type ParsedWavFormat } from './wavAna
 
 const { create, ConverterType } = libsamplerate;
 
-/** Cibles EP-133 exposées par le firmware 2.5 (REGISTRE_IDEES.md R-03). */
-export const EP133_TARGET_SAMPLE_RATES = { LO: 26250, MID: 32000, HI: 46875 } as const;
-export type Ep133TargetRate = keyof typeof EP133_TARGET_SAMPLE_RATES;
+// Réexportées pour compatibilité (tools/check-wav-convert.mjs) — la
+// définition vit dans ep133Targets.ts, un module sans dépendance WASM, pour
+// que WaveformTrim.tsx puisse les importer statiquement sans tirer les
+// ~2 Mo de libsamplerate dans le bundle principal.
+export { EP133_TARGET_SAMPLE_RATES, estimateEp133ConversionBytes, type Ep133TargetRate } from './ep133Targets.ts';
 
 export interface WavConversionResult {
   bytes: ArrayBuffer;
@@ -139,7 +141,12 @@ export async function convertWavForEp133(sourceBytes: ArrayBuffer, targetSampleR
   if (targetSampleRate !== format.sampleRate) {
     const converter = await create(outChannels, format.sampleRate, targetSampleRate, { converterType: ConverterType.SRC_SINC_BEST_QUALITY });
     try {
-      resampled = converter.full(remixed);
+      // `simple()`, pas `full()` : on convertit un fichier complet en un seul
+      // appel, jamais un flux par morceaux — `full()` est prévue pour ce
+      // deuxième cas (WebRTC/websocket) et ne renvoyait pas le bon nombre de
+      // trames ici, trouvé en écrivant le test de l'estimation de poids
+      // (143 trames manquantes sur 2625 attendues).
+      resampled = converter.simple(remixed);
     } finally {
       converter.destroy();
     }
