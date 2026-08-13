@@ -15,6 +15,34 @@ interface MachineTestPageProps {
 
 function loadAssignments(): Record<string, ControlAssignment> { return loadControlAssignments(localStorage); }
 
+/**
+ * Session de diagnostic téléchargeable (REGISTRE_IDEES.md R-20, idée reprise
+ * de `etude/codex/05_PISTES_PRIORITAIRES.md` § P0 après vérification :
+ * « exporter une session de diagnostic anonymisée : port, firmware déclaré,
+ * direction, hexadécimal, résultat »). Purement client, aucune écriture
+ * disque ni réseau — contrairement à la capture temporaire dev-only
+ * (`/__midi-capture`, vite.config.ts), ceci fonctionne aussi en production
+ * et donne un fichier que l'utilisateur choisit explicitement de partager.
+ */
+function downloadDiagnosticLog(context: { connected: boolean; sysexEnabled: boolean; inputNames: string[]; observations: MidiObservation[] }) {
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    userAgent: navigator.userAgent,
+    connected: context.connected,
+    sysexEnabled: context.sysexEnabled,
+    inputNames: context.inputNames,
+    observationCount: context.observations.length,
+    observations: context.observations,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `ep133-diagnostic-${payload.exportedAt.replace(/[:.]/g, '-')}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 function controlId(section: string, label: string) {
   return `${section}:${label}`;
 }
@@ -150,6 +178,8 @@ export function MachineTestPage({ connected, sysexEnabled, inputNames, observati
 
       <aside className="midi-event-monitor">
         <header><div><small>TRACES REÇUES</small><h2>JOURNAL MIDI</h2></div><b>{observations.length}</b></header>
+        <button className="midi-event-export" disabled={!observations.length} onClick={() => downloadDiagnosticLog({ connected, sysexEnabled, inputNames, observations })}>⬇ TÉLÉCHARGER LE JOURNAL DE DIAGNOSTIC</button>
+        {Boolean(observations.length) && <small className="machine-test-notice">Relis le fichier avant de le partager — il inclut les noms des ports MIDI détectés.</small>}
         <div className="midi-event-list">
           {observations.length ? observations.map((message, index) => <article className={index === 0 ? 'latest' : ''} key={`${message.timestamp}-${index}`}>
             <span>{message.kind.toUpperCase()}</span>

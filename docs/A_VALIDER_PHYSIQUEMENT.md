@@ -64,6 +64,12 @@
 - [ ] **Lecture de l'identité/SKU** (F-02) : confirmer que `meta.json`
   d'une base réelle suffit, ne pas dépendre uniquement de l'Identity Reply
   MIDI générique.
+- [ ] **Journal de diagnostic téléchargeable** (13 août, R-20, idée reprise
+  de `etude/codex/`) — Test Machine → connecter l'EP-133 → actionner
+  quelques contrôles physiques → bouton `⬇ TÉLÉCHARGER LE JOURNAL DE
+  DIAGNOSTIC` en haut du panneau JOURNAL MIDI → vérifier que le fichier
+  `.json` téléchargé contient bien les événements attendus (hex, horodatage,
+  port) et s'ouvre proprement dans un éditeur de texte.
 
 ## 2. Nécessite un geste navigateur réel (pas la machine, mais pas automatisable ici)
 

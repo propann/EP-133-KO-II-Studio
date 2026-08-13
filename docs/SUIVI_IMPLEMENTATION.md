@@ -1001,3 +1001,33 @@ dans son dossier »).
 
 Aucun changement de code cette étape : synthèse et vérification de
 recherche uniquement, pas de nouvelle fonctionnalité.
+
+## Étape — journal de diagnostic téléchargeable (13 août, suite, via plan validé)
+
+Suite directe de l'analyse ci-dessus : « on regarde ce qu'il y a de bon qui
+pourrait nous faire gagner du temps ». Un item concret est ressorti de
+`etude/codex/05_PISTES_PRIORITAIRES.md` § P0 (« exporter une session de
+diagnostic anonymisée »), passé par le mode Plan avant implémentation.
+
+- [x] `downloadDiagnosticLog` (`MachineTestPage.tsx`) : JSON client
+  uniquement (`exportedAt`, `userAgent`, `connected`, `sysexEnabled`,
+  `inputNames`, `observationCount`, `observations`), déclenché par
+  `Blob` + `<a download>` temporaire, aucune écriture disque ni requête
+  réseau. Zéro nouvelle plomberie : toutes les données étaient déjà des
+  props de cette page.
+- [x] **Distinction explicite documentée** avec la capture dev-only
+  existante (`/__midi-capture`, `vite.config.ts`, écrit sur le disque du
+  serveur, marquée temporaire dans son propre code) : le nouveau bouton
+  fonctionne aussi en production et produit un fichier que l'utilisateur
+  choisit explicitement de partager, sans rien changer à l'ancien
+  mécanisme.
+- [x] Bouton désactivé si `observations` est vide, rappel visible
+  « Relis le fichier avant de le partager — il inclut les noms des ports
+  MIDI détectés. ».
+- [x] `npm run typecheck`, `npm test` (9 tests), `npm run build` — tous au
+  vert.
+
+Non vérifié dans un vrai navigateur (nécessite l'EP-133 branché pour avoir
+des événements réels à exporter) — ajouté à
+`docs/A_VALIDER_PHYSIQUEMENT.md`. Statut mis à jour : `docs/REGISTRE_IDEES.md`
+R-20 (RÉALISÉ, vérification navigateur en attente).

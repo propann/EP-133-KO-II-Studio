@@ -788,6 +788,10 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .midi-event-monitor h2 { margin:2px 0 0; font-size:22px; }
 .midi-event-monitor small { font-size:7px; }
 .midi-event-monitor > header > b { margin-left:auto; color:var(--ko-orange); font-size:30px; }
+.midi-event-export { margin:10px 14px 0; padding:8px 10px; border:1px solid #eeeae1; border-radius:4px; background:transparent; color:#eeeae1; font-size:8px; font-weight:900; cursor:pointer; }
+.midi-event-export:hover { background:var(--ko-orange); border-color:var(--ko-orange); color:#181817; }
+.midi-event-export:disabled { opacity:.4; cursor:default; }
+.midi-event-monitor > .machine-test-notice { margin:6px 14px 0; color:#aaa7a0; }
 .midi-event-list { flex:1; max-height:570px; overflow:auto; padding:10px; }
 .midi-event-list > p { color:#aaa7a0; font-size:10px; line-height:1.5; }
 .midi-event-list article { display:grid; grid-template-columns:70px 1fr; gap:4px 8px; padding:9px 7px; border-bottom:1px solid #55524d; }
