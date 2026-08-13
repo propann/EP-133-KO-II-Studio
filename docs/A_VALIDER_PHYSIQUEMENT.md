@@ -250,16 +250,16 @@
   plusieurs membres qu'un vrai projet contient toujours (réglages, FX,
   enveloppe) — à comparer précisément avec les membres présents dans P01
   avant de retenter.
-- [ ] **Glisser-déposer de projets (Sons & Transfert)** (13 août) —
-  jamais cliqué dans un vrai navigateur, seulement les routes du pont
-  testées via `curl`. À vérifier : les 9 cartes machine apparaissent, une
-  carte démo/locale glissée sur une carte machine prépare bien un
-  transfert (visible dans « TRANSFERTS EN ATTENTE », rien écrit avant
-  clic sur CONFIRMER), le `window.confirm` liste bien les bons
-  emplacements, et — **utiliser un slot de test, jamais un slot réel** —
-  confirmer un transfert vers P09 fonctionne et sonne comme attendu ;
-  glisser une carte machine (P01) vers la bibliothèque importe bien le
-  projet, visible ensuite dans « Ouvrir… » du Studio avec le bon contenu.
+- [x] **Glisser-déposer de projets (Sons & Transfert)** (13 août) —
+  testé en vrai par l'utilisateur, transfert confirmé (« ça fait bien
+  réagir la machine »). Reste à vérifier à l'occasion, pas bloquant :
+  l'import machine → bibliothèque (glisser P01 vers la colonne droite)
+  apparaît bien ensuite dans « Ouvrir… » du Studio avec le bon contenu —
+  seule la direction logiciel → machine a été testée jusqu'ici.
+- [ ] **Repliement GROUPES & PADS / transfert de projets** (13 août) —
+  ajusté juste après le premier test (cartes machine en orange, flèches
+  de repliement partageant l'emplacement avec le transfert de projets) —
+  pas encore revu à l'œil après ce changement précis.
 - [ ] **Groupe A–D en surbrillance sur l'écran de la façade** (13 août,
   correctif) — appuyer sur un bouton physique A–D de l'EP-133 doit faire
   passer la bonne lettre en gras sur l'écran simulé de Test Machine

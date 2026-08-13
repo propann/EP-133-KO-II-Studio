@@ -902,7 +902,16 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .sound-memory i span { display:block; height:100%; background:var(--ko-orange); }
 .sound-machine-workspace { display:grid; grid-template-columns:1fr 1fr; min-height:610px; }
 .sound-pad-panel,.sound-bank-panel { min-width:0; padding:15px; }
-.sound-pad-panel { grid-column:1/-1; border-right:0; border-bottom:3px solid var(--ko-black); background:#bcb9b2; }
+.sound-pad-panel { position:relative; grid-column:1/-1; border-right:0; border-bottom:3px solid var(--ko-black); background:#bcb9b2; }
+/* Le cadre GROUPES & PADS et le transfert de projets partagent cet
+   emplacement (13 août) : replié via ces flèches, le transfert de projets
+   apparaît à la même place plutôt que dans une section séparée en bas de
+   page. */
+.sound-pad-panel-collapsed { position:relative; grid-column:1/-1; padding:0 44px; }
+.panel-collapse-arrow { position:absolute; top:50%; z-index:5; width:32px; height:32px; margin-top:-16px; border:2px solid var(--ko-black); border-radius:50%; background:#f3f1ec; font-size:16px; font-weight:900; line-height:1; cursor:pointer; opacity:.45; transition:opacity .15s ease,background .15s ease,color .15s ease; }
+.panel-collapse-arrow.left { left:6px; }
+.panel-collapse-arrow.right { right:6px; }
+.panel-collapse-arrow:hover { opacity:1; background:var(--ko-orange); color:#fff; }
 .sound-pad-panel .sound-pad-machine { max-width:700px; margin:0 auto; }
 .local-library-panel { border-left:3px solid var(--ko-black); }
 .sound-bank-panel { background:#cfccc5; }
@@ -1164,6 +1173,9 @@ button:active { transform:translate(2px,2px); box-shadow:none; }
 .project-transfer-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; min-height:60px; padding:8px; border:2px dashed #c8c4bb; border-radius:var(--radius-sm); }
 .project-transfer-card { position:relative; display:grid; gap:3px; padding:9px 16px; border:2px solid var(--ko-black); border-radius:var(--radius-sm); background:#d9d7d1; text-align:left; cursor:grab; box-shadow:2px 2px 0 #99958c; }
 .project-transfer-card.machine-side { background:#f3e2c5; }
+.project-transfer-card.machine-side.present { background:var(--ko-orange); color:#fff; box-shadow:2px 2px 0 #a02f00; }
+.project-transfer-card.machine-side.present small { color:#ffe4d6; }
+.project-transfer-card.machine-side.present .project-transfer-arrow { color:#fff; }
 .project-transfer-card.empty { cursor:default; opacity:.5; }
 .project-transfer-card:active { cursor:grabbing; }
 .project-transfer-card b { font-size:9px; line-height:1.3; }

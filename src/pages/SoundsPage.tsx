@@ -83,6 +83,10 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
   const [profileSaved] = useState(Boolean(existingProfile));
   const [activeGroup, setActiveGroup] = useState<EditorGroup>('A');
   const [selectedPad, setSelectedPad] = useState(1);
+  /** Le cadre GROUPES & PADS et le transfert de projets partagent le même
+   * emplacement (13 août, demande explicite) — replié via les flèches sur
+   * les bords, plutôt qu'une nouvelle section tout en bas de la page. */
+  const [padPanelCollapsed, setPadPanelCollapsed] = useState(false);
   const [activeBank, setActiveBank] = useState<(typeof SOUND_BANKS)[number]['id']>('all');
   const [query, setQuery] = useState('');
   const [previewMissSlot, setPreviewMissSlot] = useState<number | null>(null);
@@ -281,7 +285,9 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
       <div className="sound-machine-topline"><div><small>MACHINE</small><strong>{profileSaved ? deviceName : 'PROFIL À ENREGISTRER'}</strong></div><div className="sound-memory"><span><b>{usedMb.toFixed(2)} MO</b> / {capacityMb} MO · THÉORIQUE <b>{usedMb.toFixed(2)} MO</b></span><i><span style={{ width: `${usedPercent}%` }} /></i><small>{changeCount ? `${changeCount} AFFECTATION(S) · +0 OCTET` : 'AUCUN CHANGEMENT PRÉPARÉ'}</small></div><button onClick={onConnectMidi}>{midiConnected ? 'EP-133 CONNECTÉ ✓' : 'CONNECTER EP-133'}</button><button className={`sound-sync ${changeCount ? 'active' : ''}`} disabled={!changeCount || syncing} onClick={() => void requestSync()}>{syncing ? 'ENVOI…' : `SYNCHRONISER · ${changeCount}`}</button></div>
       {importFeedback && <p className={`local-send-feedback ${importFeedback.status}`}>{importFeedback.message}</p>}
       <div className="sound-machine-workspace">
-        <section className="sound-pad-panel">
+        {!padPanelCollapsed ? <section className="sound-pad-panel">
+          <button className="panel-collapse-arrow left" onClick={() => setPadPanelCollapsed(true)} title="Replier · afficher le transfert de projets" aria-label="Replier les groupes et pads">‹</button>
+          <button className="panel-collapse-arrow right" onClick={() => setPadPanelCollapsed(true)} title="Replier · afficher le transfert de projets" aria-label="Replier les groupes et pads">›</button>
           <header><div><small>PROJET {inventory?.project || '—'}</small><h2>GROUPES & PADS</h2></div><button className={`sound-keys-toggle ${selectedMode === 'KEYS' ? 'active' : ''}`} onClick={() => onPadModeChange(activeGroup, selectedPad - 1, selectedMode === 'KEYS' ? 'ONE' : 'KEYS')}><b>KEYS</b><small>{activeGroup} · {EP133_PADS[selectedPad - 1].key}</small></button></header>
           <div className="sound-pad-machine"><nav className="sound-group-tabs" aria-label="Groupes EP-133">{GROUPS.map((group) => <button key={group} className={activeGroup === group ? 'active' : ''} aria-pressed={activeGroup === group} onClick={() => { setActiveGroup(group); setSelectedPad(1); onMachineGroupChange(group); }}><b>{group}</b><small>{inventory?.pads.filter((pad) => pad.group === group).length || 0}/12</small></button>)}</nav>
           <div className="sound-pad-grid">{INTERNAL_PAD_ORDER.map((padNumber) => { const pad = padsByNumber.get(padNumber); const padKey = `${activeGroup}:${padNumber - 1}`; const localFile = stagedLocalPads[padKey]; const stagedSlot = stagedAssignments[padKey]; const slot = stagedSlot ?? pad?.slot; const sound = slot ? inventory?.sounds[String(slot)] : undefined; const bank = slot ? bankForSlot(slot) : null; const visual = EP133_PADS[padNumber - 1]; const changed = stagedSlot !== undefined || Boolean(localFile); return <button key={padNumber} className={`${selectedPad === padNumber ? 'selected' : ''} ${livePad === padNumber ? 'live' : ''} ${changed ? 'changed' : ''} bank-${bank?.id || 'empty'}`} aria-pressed={selectedPad === padNumber}
@@ -300,7 +306,11 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
             <small>{localFile ? localFile.fileName.replace(AUDIO_PATTERN, '') : sound?.name || (slot ? bank?.label : 'VIDE')}</small>
             {changed && <em>MODIFIÉ</em>}
           </button>; })}</div></div>
-        </section>
+        </section> : <div className="sound-pad-panel-collapsed">
+          <button className="panel-collapse-arrow left" onClick={() => setPadPanelCollapsed(false)} title="Déplier · afficher les groupes et pads" aria-label="Déplier les groupes et pads">›</button>
+          <ProjectTransfer demoProjects={demoProjects} localProjects={localProjects} onGetProjectDocument={onGetProjectDocument} onImportMachineProject={onImportMachineProject} />
+          <button className="panel-collapse-arrow right" onClick={() => setPadPanelCollapsed(false)} title="Déplier · afficher les groupes et pads" aria-label="Déplier les groupes et pads">‹</button>
+        </div>}
 
         <section className="sound-bank-panel">
           <header><div><small>MÉMOIRE GLOBALE</small><h2>BANQUES DE SONS</h2></div><span>{filteredSounds.length} AFFICHÉS</span></header>
@@ -361,7 +371,5 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
         </section>
       </div>
     </section>
-
-    <ProjectTransfer demoProjects={demoProjects} localProjects={localProjects} onGetProjectDocument={onGetProjectDocument} onImportMachineProject={onImportMachineProject} />
   </main>;
 }

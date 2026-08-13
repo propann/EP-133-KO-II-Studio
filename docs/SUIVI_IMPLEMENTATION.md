@@ -1652,6 +1652,32 @@ en réel (voir ci-dessus) via `curl`, à travers le proxy Vite
 direct au pont. **L'interface de glisser-déposer elle-même n'a jamais été
 cliquée dans un vrai navigateur** — ajouté à `docs/A_VALIDER_PHYSIQUEMENT.md`.
 
+### Confirmé par l'utilisateur en conditions réelles + ajustements (13 août, même jour)
+
+Premier test réel du glisser-déposer : **succès** (« ça fait bien réagir la
+machine »), confirmant que toute la chaîne (drag → panneau d'attente →
+confirmation → `/bridge/projects/write` → checkpoint/compilation/écriture/
+relecture/activation) fonctionne de bout en bout depuis le navigateur.
+
+Deux ajustements demandés dans la foulée :
+
+- [x] **Cartes machine présentes en orange** — `ProjectTransfer.tsx` : classe
+  `present` (au lieu de la classe vide précédente) sur les cartes dont le
+  slot existe réellement, `style.css` : fond `var(--ko-orange)`, cohérent
+  avec la convention déjà utilisée ailleurs (actif = orange).
+- [x] **Le cadre GROUPES & PADS et le transfert de projets partagent le
+  même emplacement** — `SoundsPage.tsx` : nouvel état `padPanelCollapsed`,
+  flèches (`.panel-collapse-arrow`) sur les bords gauche/droit du cadre
+  pour le replier ; une fois replié, `<ProjectTransfer>` s'affiche au même
+  endroit (avant : une section séparée tout en bas de la page). Déplié par
+  défaut — comportement des groupes/pads inchangé pour qui ne touche pas
+  aux flèches.
+
+Vérifié : `npm run typecheck`, `npm test` (10 tests), `npm run build`,
+`npm run test:e2e` (2/2). Le repliement lui-même (flèches, transition
+visuelle) n'a pas encore été revu à l'œil — ajouté à
+`docs/A_VALIDER_PHYSIQUEMENT.md`.
+
 ## Règle globale — tout bouton bouge au clic (13 août)
 
 Demande explicite après un test réel des boutons SCAN/CLONER : « il faut

@@ -176,7 +176,7 @@ export function ProjectTransfer({ demoProjects, localProjects, onGetProjectDocum
         <div className="project-transfer-grid" onDragOver={(event) => event.preventDefault()} onDrop={onLibraryColumnDrop}>
           {machineProjects.map((entry) => <article
             key={entry.slot}
-            className={`project-transfer-card machine-side ${entry.present ? '' : 'empty'}`}
+            className={`project-transfer-card machine-side ${entry.present ? 'present' : 'empty'}`}
             draggable={entry.present}
             onDragStart={entry.present ? onCardDragStart({ origin: 'machine', id: String(entry.slot), title: `PROJET P${String(entry.slot).padStart(2, '0')}` }) : undefined}
             onDragOver={(event) => event.preventDefault()}
