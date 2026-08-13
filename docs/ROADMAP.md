@@ -384,12 +384,29 @@ de fichiers audio propriétaires au dépôt.
   y,yyS`) : aucun pipeline de conversion ne la consomme pour l'instant.
   Vérifié visuellement par l'utilisateur dans Chrome : forme d'onde,
   région glissable et lecture fonctionnent.
-- [ ] Normalisation, fondu et détection du silence.
-- [ ] Mono/stéréo, fréquence, hauteur racine, BPM, ONE/KEYS/LEGATO.
-- [ ] Conversion native cible PCM 16 bits à 46 875 Hz et dither TPDF lorsque
-  la réduction de profondeur le nécessite.
-- [ ] Pré-écoute avant/après conversion.
-- [ ] Conversion contrôlée vers le format accepté par l'EP-133.
+- [x] Détection du silence + gain de normalisation Peak suggéré (13 août,
+  voir REGISTRE_IDEES.md A-06/A-08) : bouton `AUTO-TRIM SILENCE` et ligne
+  `CRÊTE … · GAIN SUGGÉRÉ …` dans `WaveformTrim`. Le gain reste une
+  suggestion affichée, pas encore appliqué au signal.
+- [ ] Fondu (fade in/out) — pas commencé.
+- [x] **Conversion native vers la fréquence cible EP-133 avec dither TPDF**
+  (13 août, voir REGISTRE_IDEES.md A-03/A-04/R-07) :
+  `src/core/audio/wavConvert.ts`, resampling par `@alexanderolsen/libsamplerate-js`
+  (qualité maximale) plutôt qu'un ré-échantillonnage linéaire maison, encodage
+  PCM 16 bits avec dither TPDF systématique. Cible explicite LO/MID/HI
+  (26 250/32 000/46 875 Hz, firmware 2.5) — plus jamais une fréquence fixe
+  supposée. Mono/stéréo : repli par moyenne seulement, pas encore de choix
+  gauche/droite (A-05 partiel). Hauteur racine, BPM et mode ONE/KEYS/LEGATO
+  restent à faire.
+- [x] **Pré-écoute avant/après conversion** (13 août) : le bouton `▶ ÉCOUTER`
+  de `WaveformTrim` reste l'original, un second lecteur `<audio controls>`
+  apparaît une fois la conversion lancée pour comparer le résultat.
+- [x] **Conversion contrôlée vers le format accepté par l'EP-133** (13 août) :
+  trois boutons LO/MID/HI dans `WaveformTrim`, appliqués uniquement à la
+  sélection de trim en cours — jamais tout le fichier par défaut. Module de
+  conversion (~2 Mo, WASM) chargé à la demande au premier clic
+  (`import()` dynamique), pas au chargement de la page — bundle principal
+  inchangé (+3 Ko), chunk séparé confirmé au build.
 - [ ] Estimation exacte du poids et jauge de mémoire avant transfert.
 - [ ] Choix prioritaire d'un slot libre.
 - [ ] Paquet de sons préparé, manifeste et contrôles d'intégrité.

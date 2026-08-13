@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 import RegionsPlugin, { type Region } from 'wavesurfer.js/plugins/regions';
 import { computeWaveformPeaks, detectSilenceTrim, suggestNormalizationGainDb, type WavAnalysisReport } from '../../core/audio/wavAnalysis';
+import type { Ep133TargetRate } from '../../core/audio/wavConvert';
+
+const EP133_TARGET_LABELS: Record<Ep133TargetRate, string> = { LO: 'LO · 26 250 HZ', MID: 'MID · 32 000 HZ', HI: 'HI · 46 875 HZ' };
 
 export interface WaveformTrimSelection {
   startSeconds: number;
@@ -36,11 +39,18 @@ export function WaveformTrim({ file, initialTrim, onTrimChange, report }: Wavefo
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);
   const regionRef = useRef<Region | null>(null);
+  const bytesRef = useRef<ArrayBuffer | null>(null);
   const [playing, setPlaying] = useState(false);
   const [status, setStatus] = useState<'loading' | 'ready' | 'unsupported'>('loading');
   // Suggestion seulement (A-08) : calculée au chargement, appliquée à la
   // région uniquement si l'utilisateur clique AUTO-TRIM — jamais toute seule.
   const [silenceSuggestion, setSilenceSuggestion] = useState<{ startSeconds: number; endSeconds: number } | null>(null);
+  // Conversion EP-133 (R-07) : module ~2 Mo (WASM libsamplerate embarqué en
+  // base64) chargé à la demande au premier clic, jamais au chargement de la
+  // page — voir la fonction `runConversion` plus bas.
+  const [converting, setConverting] = useState<Ep133TargetRate | null>(null);
+  const [convertError, setConvertError] = useState<string | null>(null);
+  const [convertedPreview, setConvertedPreview] = useState<{ target: Ep133TargetRate; url: string; sampleRate: number; durationSeconds: number } | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -48,6 +58,8 @@ export function WaveformTrim({ file, initialTrim, onTrimChange, report }: Wavefo
     setStatus('loading');
     setPlaying(false);
     setSilenceSuggestion(null);
+    setConvertedPreview(null);
+    setConvertError(null);
 
     const regions = RegionsPlugin.create();
     const wavesurfer = WaveSurfer.create({
@@ -64,6 +76,7 @@ export function WaveformTrim({ file, initialTrim, onTrimChange, report }: Wavefo
     void (async () => {
       const bytes = await file.arrayBuffer();
       if (cancelled) return;
+      bytesRef.current = bytes;
       const peaks = computeWaveformPeaks(bytes, 1000);
       if (!peaks) { setStatus('unsupported'); return; }
       try {
@@ -120,6 +133,28 @@ export function WaveformTrim({ file, initialTrim, onTrimChange, report }: Wavefo
     onTrimChange(silenceSuggestion);
   };
 
+  // Révoque l'URL de la pré-écoute convertie précédente, à chaque remplacement et au démontage.
+  useEffect(() => () => { if (convertedPreview) URL.revokeObjectURL(convertedPreview.url); }, [convertedPreview]);
+
+  const runConversion = async (target: Ep133TargetRate) => {
+    const bytes = bytesRef.current;
+    const region = regionRef.current;
+    if (!bytes || !region || converting) return;
+    setConverting(target);
+    setConvertError(null);
+    try {
+      const { convertWavForEp133, EP133_TARGET_SAMPLE_RATES } = await import('../../core/audio/wavConvert');
+      const result = await convertWavForEp133(bytes, EP133_TARGET_SAMPLE_RATES[target], undefined, { startSeconds: region.start, endSeconds: region.end });
+      if (!result) { setConvertError('CONVERSION IMPOSSIBLE (FORMAT NON PRIS EN CHARGE OU SÉLECTION VIDE)'); return; }
+      const url = URL.createObjectURL(new Blob([result.bytes], { type: 'audio/wav' }));
+      setConvertedPreview({ target, url, sampleRate: result.sampleRate, durationSeconds: result.durationSeconds });
+    } catch (error) {
+      setConvertError((error as Error)?.message || 'ÉCHEC DE LA CONVERSION');
+    } finally {
+      setConverting(null);
+    }
+  };
+
   const peakLevel = report && report !== 'unsupported' ? report.peakLevel : null;
   const peakDb = peakLevel && peakLevel > 0 ? 20 * Math.log10(peakLevel) : null;
   const suggestedGainDb = peakLevel !== null ? suggestNormalizationGainDb(peakLevel) : null;
@@ -134,6 +169,19 @@ export function WaveformTrim({ file, initialTrim, onTrimChange, report }: Wavefo
         ✂ AUTO-TRIM SILENCE
       </button>
       {peakDb !== null && suggestedGainDb !== null && <small className="waveform-trim-gain">CRÊTE {peakDb.toFixed(1)} DBFS · GAIN SUGGÉRÉ {suggestedGainDb >= 0 ? '+' : ''}{suggestedGainDb.toFixed(1)} DB (CIBLE -1 DBFS)</small>}
+      <div className="waveform-trim-convert">
+        <small>CONVERSION EP-133 (SÉLECTION UNIQUEMENT)</small>
+        <div className="waveform-trim-convert-buttons">
+          {(Object.keys(EP133_TARGET_LABELS) as Ep133TargetRate[]).map((target) => <button key={target} disabled={Boolean(converting)} onClick={() => void runConversion(target)}>
+            {converting === target ? 'CONVERSION…' : EP133_TARGET_LABELS[target]}
+          </button>)}
+        </div>
+        {convertError && <small className="waveform-trim-status">{convertError}</small>}
+        {convertedPreview && <div className="waveform-trim-preview">
+          <small>APERÇU {EP133_TARGET_LABELS[convertedPreview.target]} · {convertedPreview.durationSeconds.toFixed(2)} S</small>
+          <audio controls src={convertedPreview.url} />
+        </div>}
+      </div>
     </div>}
   </div>;
 }

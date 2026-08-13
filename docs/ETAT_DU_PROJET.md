@@ -57,12 +57,17 @@ machine elle-même (aucun protocole d'écriture SysEx n'est activé).
 - **Time Machine** : chronologie et comparaison des clones successifs, oui ;
   restauration (locale ou matérielle), pas commencée.
 - **Piano-roll KEYS** : hauteurs éditables, articulations pas encore.
-- **Préparateur audio** (Phase 4) : l'analyse WAV déterministe existe, et
-  depuis ce soir une première forme d'onde avec trim non destructif
-  (`WaveformTrim`, bibliothèque perso de Sons & Transfert), vérifiée dans
-  Chrome — affiche une sélection, ne l'exploite encore nulle part.
-  Normalisation, fondu, détection du silence et conversion vers la
-  fréquence cible restent à faire.
+- **Préparateur audio** (Phase 4) : analyse WAV déterministe, forme d'onde
+  et trim non destructif (`WaveformTrim`, vérifié dans Chrome), auto-trim
+  par détection de silence, gain de normalisation Peak suggéré, et
+  désormais une vraie **conversion vers la fréquence cible EP-133**
+  (LO/MID/HI selon le firmware 2.5, resampling `libsamplerate-js`, dither
+  TPDF, pré-écoute avant/après) — appliquée à la sélection de trim, jamais
+  au fichier entier. Le module de conversion (~2 Mo, WASM) ne charge qu'au
+  premier clic. **Rien depuis l'auto-trim n'a encore été revu à l'œil ou à
+  l'oreille** — voir `docs/A_VALIDER_PHYSIQUEMENT.md`. Fondu, hauteur
+  racine/BPM/ONE-KEYS-LEGATO, estimation mémoire et écriture de slot
+  restent à faire.
 - **`App.tsx`** : la vue est découpée (pages + composants, ~1 720 lignes
   sorties), l'état ne l'est presque pas encore (~1 550 lignes, 60 `useState`
   restants). Un premier domaine — la langue — est sorti vers un magasin

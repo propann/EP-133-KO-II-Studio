@@ -1,0 +1,151 @@
+/**
+ * Conversion contrôlée vers le format accepté par l'EP-133 (Roadmap Phase 4,
+ * REGISTRE_IDEES.md A-03/A-04/A-05, R-07). Le firmware 2.5 propose trois
+ * taux — LO 26 250 Hz, MID 32 000 Hz, HI 46 875 Hz — voir
+ * `etude/05_FIRMWARE_2.5_IMPACT.md` ; ce module ne suppose donc jamais une
+ * cible fixe, elle est toujours un paramètre explicite.
+ *
+ * Extrait les échantillons réels avec `parseWavFormat`/`readSignedSample`
+ * (`wavAnalysis.ts`) — jamais `AudioContext.decodeAudioData()`, même
+ * précaution que le reste du module WAV. Le resampling lui-même délègue à
+ * `@alexanderolsen/libsamplerate-js` (port WebAssembly de la référence
+ * `libsamplerate`) plutôt qu'un ré-échantillonnage linéaire maison : voir
+ * `etude/02_BIBLIOTHEQUES_TECHNIQUES.md` pour le choix.
+ */
+
+// Import par défaut + déstructuration plutôt que des exports nommés : le
+// paquet est un module CommonJS dont Node (contrairement à Vite/esbuild) ne
+// détecte pas fiablement les exports nommés à l'exécution directe (utilisé
+// par tools/check-wav-convert.mjs, en dehors du bundler applicatif).
+import libsamplerate from '@alexanderolsen/libsamplerate-js';
+import { parseWavFormat, readSignedSample, type ParsedWavFormat } from './wavAnalysis.ts';
+
+const { create, ConverterType } = libsamplerate;
+
+/** Cibles EP-133 exposées par le firmware 2.5 (REGISTRE_IDEES.md R-03). */
+export const EP133_TARGET_SAMPLE_RATES = { LO: 26250, MID: 32000, HI: 46875 } as const;
+export type Ep133TargetRate = keyof typeof EP133_TARGET_SAMPLE_RATES;
+
+export interface WavConversionResult {
+  bytes: ArrayBuffer;
+  sampleRate: number;
+  channels: number;
+  bitDepth: 16;
+  durationSeconds: number;
+}
+
+/** Trames interleaved en Float32 [-1, 1], valeurs réelles (pas seulement leur
+ * magnitude) — c'est ce que `libsamplerate-js` attend en entrée. */
+function extractInterleavedFloat32(format: ParsedWavFormat): Float32Array {
+  const out = new Float32Array(format.frameCount * format.channels);
+  let index = 0;
+  for (let frame = 0; frame < format.frameCount; frame += 1) {
+    const frameStart = format.dataStart + frame * format.bytesPerFrame;
+    for (let channel = 0; channel < format.channels; channel += 1) {
+      out[index] = Math.max(-1, Math.min(1, readSignedSample(format, frameStart + channel * format.bytesPerSample)));
+      index += 1;
+    }
+  }
+  return out;
+}
+
+/** Découpe des trames interleaved à un intervalle de trames [start, end) —
+ * utilisé pour appliquer une sélection de trim (`WaveformTrim`) avant
+ * resampling plutôt que de convertir tout le fichier source. */
+function cropInterleaved(interleaved: Float32Array, channels: number, startFrame: number, endFrame: number): Float32Array {
+  const safeStart = Math.max(0, Math.min(startFrame, endFrame));
+  const safeEnd = Math.max(safeStart, endFrame);
+  return interleaved.slice(safeStart * channels, safeEnd * channels);
+}
+
+/**
+ * Repli mono/stéréo (REGISTRE_IDEES.md A-05, partiel — pas encore de choix
+ * gauche/droite explicite, seulement moyenne pour le downmix). `fromChannels`
+ * === `toChannels` renvoie l'entrée telle quelle, sans copie.
+ */
+function remixChannels(interleaved: Float32Array, fromChannels: number, toChannels: number): Float32Array {
+  if (fromChannels === toChannels) return interleaved;
+  const frameCount = interleaved.length / fromChannels;
+  const out = new Float32Array(frameCount * toChannels);
+  for (let frame = 0; frame < frameCount; frame += 1) {
+    if (toChannels === 1) {
+      let sum = 0;
+      for (let channel = 0; channel < fromChannels; channel += 1) sum += interleaved[frame * fromChannels + channel];
+      out[frame] = sum / fromChannels;
+    } else {
+      const value = interleaved[frame * fromChannels];
+      for (let channel = 0; channel < toChannels; channel += 1) out[frame * toChannels + channel] = value;
+    }
+  }
+  return out;
+}
+
+/**
+ * Encode des trames Float32 interleaved en WAV PCM 16 bits, avec dither TPDF
+ * (REGISTRE_IDEES.md A-04) — bruit triangulaire d'environ 1 LSB avant
+ * l'arrondi, pour ne jamais tronquer sèchement vers l'entier le plus proche.
+ */
+function encodeWavPcm16(samples: Float32Array, channels: number, sampleRate: number): ArrayBuffer {
+  const dataLength = samples.length * 2;
+  const buffer = new ArrayBuffer(44 + dataLength);
+  const view = new DataView(buffer);
+  const writeString = (offset: number, text: string) => { for (let index = 0; index < text.length; index += 1) view.setUint8(offset + index, text.charCodeAt(index)); };
+  writeString(0, 'RIFF');
+  view.setUint32(4, 36 + dataLength, true);
+  writeString(8, 'WAVE');
+  writeString(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true); // PCM entier
+  view.setUint16(22, channels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * channels * 2, true);
+  view.setUint16(32, channels * 2, true);
+  view.setUint16(34, 16, true);
+  writeString(36, 'data');
+  view.setUint32(40, dataLength, true);
+  for (let index = 0; index < samples.length; index += 1) {
+    const dither = (Math.random() - Math.random()) / 32768; // TPDF : somme de deux uniformes indépendantes
+    const quantized = Math.round((samples[index] + dither) * 32767);
+    view.setInt16(44 + index * 2, Math.max(-32768, Math.min(32767, quantized)), true);
+  }
+  return buffer;
+}
+
+/**
+ * Conversion complète : extraction, repli de canaux éventuel, resampling
+ * `libsamplerate-js` (qualité maximale, `SRC_SINC_BEST_QUALITY`) puis
+ * encodage PCM 16 bits ditheré. `null` si la source n'est pas un WAV
+ * PCM/float exploitable — jamais d'exception. N'écrit jamais sur disque et
+ * ne touche à aucun fichier machine : produit seulement un nouveau tampon en
+ * mémoire, à consommer par l'appelant (pré-écoute, futur export).
+ */
+export async function convertWavForEp133(sourceBytes: ArrayBuffer, targetSampleRate: number, targetChannels?: 1 | 2, trim?: { startSeconds: number; endSeconds: number }): Promise<WavConversionResult | null> {
+  const format = parseWavFormat(sourceBytes);
+  if (!format || !format.frameCount) return null;
+
+  let extracted = extractInterleavedFloat32(format);
+  if (trim) {
+    const startFrame = Math.round(trim.startSeconds * format.sampleRate);
+    const endFrame = Math.round(trim.endSeconds * format.sampleRate);
+    extracted = cropInterleaved(extracted, format.channels, startFrame, endFrame);
+    if (!extracted.length) return null; // sélection vide (start >= end) : rien à convertir
+  }
+
+  const outChannels = targetChannels ?? (format.channels >= 2 ? 2 : 1);
+  const remixed = remixChannels(extracted, format.channels, outChannels);
+
+  let resampled = remixed;
+  let outSampleRate = format.sampleRate;
+  if (targetSampleRate !== format.sampleRate) {
+    const converter = await create(outChannels, format.sampleRate, targetSampleRate, { converterType: ConverterType.SRC_SINC_BEST_QUALITY });
+    try {
+      resampled = converter.full(remixed);
+    } finally {
+      converter.destroy();
+    }
+    outSampleRate = targetSampleRate;
+  }
+
+  const bytes = encodeWavPcm16(resampled, outChannels, outSampleRate);
+  return { bytes, sampleRate: outSampleRate, channels: outChannels, bitDepth: 16, durationSeconds: resampled.length / outChannels / outSampleRate };
+}

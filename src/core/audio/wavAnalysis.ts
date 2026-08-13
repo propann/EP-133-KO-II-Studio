@@ -76,7 +76,7 @@ function scanSamples(view: DataView, dataStart: number, dataLength: number, bitD
   return { peakLevel: Math.min(1, peak), clipped: clippedCount > 0, clippedSampleCount: clippedCount };
 }
 
-interface ParsedWavFormat {
+export interface ParsedWavFormat {
   view: DataView;
   channels: number;
   sampleRate: number;
@@ -90,13 +90,15 @@ interface ParsedWavFormat {
 }
 
 /**
- * En-tête + trames décrites une seule fois, partagé par `computeWaveformPeaks`
- * et `detectSilenceTrim` (ajoutés après coup) — `analyzeWavBuffer` garde
- * volontairement son propre chemin de lecture séparé, déjà testé, pour ne
- * jamais risquer de régression dessus en le faisant dépendre de ce code plus
- * récent.
+ * En-tête + trames décrites une seule fois, partagé par `computeWaveformPeaks`,
+ * `detectSilenceTrim` et `wavConvert.ts` (ajoutés après coup) —
+ * `analyzeWavBuffer` garde volontairement son propre chemin de lecture séparé,
+ * déjà testé, pour ne jamais risquer de régression dessus en le faisant
+ * dépendre de ce code plus récent. Exportée pour que `wavConvert.ts`
+ * (extraction des échantillons pour le resampling) n'ait pas à reparser
+ * l'en-tête une quatrième fois.
  */
-function parseWavFormat(bytes: ArrayBuffer): ParsedWavFormat | null {
+export function parseWavFormat(bytes: ArrayBuffer): ParsedWavFormat | null {
   if (bytes.byteLength < 44) return null;
   const view = new DataView(bytes);
   const riff = String.fromCharCode(view.getUint8(0), view.getUint8(1), view.getUint8(2), view.getUint8(3));
@@ -125,22 +127,31 @@ function parseWavFormat(bytes: ArrayBuffer): ParsedWavFormat | null {
   return { view, channels, sampleRate, bitDepth, isFloat: audioFormat === 3, bytesPerSample, bytesPerFrame, dataStart: dataChunk.start, frameCount, maxCode };
 }
 
+/**
+ * Valeur signée normalisée (-1..1, pas seulement sa magnitude) d'un seul
+ * canal à un octet donné — le bloc de décodage bit-depth partagé par
+ * `frameMagnitude` (crête) et `wavConvert.ts` (extraction réelle pour le
+ * resampling), pour ne l'écrire qu'une fois.
+ */
+export function readSignedSample(format: ParsedWavFormat, byteOffset: number): number {
+  if (format.isFloat) return format.view.getFloat32(byteOffset, true);
+  if (format.bitDepth === 8) return (format.view.getUint8(byteOffset) - 128) / 128;
+  if (format.bitDepth === 16) return format.view.getInt16(byteOffset, true) / (format.maxCode + 1);
+  if (format.bitDepth === 24) {
+    const b0 = format.view.getUint8(byteOffset); const b1 = format.view.getUint8(byteOffset + 1); const b2 = format.view.getUint8(byteOffset + 2);
+    let raw = b0 | (b1 << 8) | (b2 << 16);
+    if (raw & 0x800000) raw -= 0x1000000; // complément à deux sur 24 bits
+    return raw / (format.maxCode + 1);
+  }
+  return format.view.getInt32(byteOffset, true) / (format.maxCode + 1);
+}
+
 /** Crête normalisée 0–1, tous canaux confondus, d'une seule trame. */
 function frameMagnitude(format: ParsedWavFormat, frameIndex: number): number {
   let peak = 0;
   const frameStart = format.dataStart + frameIndex * format.bytesPerFrame;
   for (let channel = 0; channel < format.channels; channel += 1) {
-    const byteOffset = frameStart + channel * format.bytesPerSample;
-    let magnitude: number;
-    if (format.isFloat) magnitude = Math.abs(format.view.getFloat32(byteOffset, true));
-    else if (format.bitDepth === 8) magnitude = Math.abs(format.view.getUint8(byteOffset) - 128) / 128;
-    else if (format.bitDepth === 16) magnitude = Math.abs(format.view.getInt16(byteOffset, true)) / (format.maxCode + 1);
-    else if (format.bitDepth === 24) {
-      const b0 = format.view.getUint8(byteOffset); const b1 = format.view.getUint8(byteOffset + 1); const b2 = format.view.getUint8(byteOffset + 2);
-      let raw = b0 | (b1 << 8) | (b2 << 16);
-      if (raw & 0x800000) raw -= 0x1000000; // complément à deux sur 24 bits
-      magnitude = Math.abs(raw) / (format.maxCode + 1);
-    } else magnitude = Math.abs(format.view.getInt32(byteOffset, true)) / (format.maxCode + 1);
+    const magnitude = Math.abs(readSignedSample(format, frameStart + channel * format.bytesPerSample));
     if (magnitude > peak) peak = magnitude;
   }
   return Math.min(1, peak);

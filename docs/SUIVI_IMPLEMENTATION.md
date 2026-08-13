@@ -760,3 +760,68 @@ glisser de région et lecture fonctionnent tous.
 Statuts mis à jour : `docs/REGISTRE_IDEES.md` A-09 (RÉALISÉ partiel,
 vérifié), A-10 (précisé), R-06 (RÉALISÉ, vérifié) ; `docs/ROADMAP.md`
 Phase 4 ; `docs/ETAT_DU_PROJET.md`.
+
+## Étape — auto-trim silence, gain de normalisation, liste de suivi physique (13 août, suite)
+
+Rattrapage : cette étape (commit `6e526a3`) n'avait pas reçu d'entrée dans ce
+journal au moment du commit — corrigé ici a posteriori, conformément à la
+règle de livraison du haut de ce document.
+
+- [x] `detectSilenceTrim` et `suggestNormalizationGainDb` ajoutées à
+  `wavAnalysis.ts` (A-08/A-06/A-07), testées dans `tools/check-wav-analysis.mjs`.
+  Refactor : `parseWavFormat` factorisée et partagée avec
+  `computeWaveformPeaks`, `analyzeWavBuffer` laissée intacte pour zéro
+  risque de régression — revérifié immédiatement après (`npm run test:wav`
+  au vert avant de continuer).
+- [x] Bouton `AUTO-TRIM SILENCE` et ligne `CRÊTE … · GAIN SUGGÉRÉ …` ajoutés
+  à `WaveformTrim`.
+- [x] `docs/A_VALIDER_PHYSIQUEMENT.md` créé à la demande de l'utilisateur :
+  liste vivante de tout ce qui exige l'EP-133 branché ou un vrai geste
+  navigateur, référencée depuis `README.md` et `PROJECT_CONTEXT.md`.
+- [x] `npm run typecheck`, `npm test`, `npm run build` vérifiés.
+- **Non vérifié à l'œil** par l'utilisateur au moment du commit — consigné
+  dans `docs/A_VALIDER_PHYSIQUEMENT.md` plutôt que testé immédiatement, sur
+  décision explicite de l'utilisateur (« on concentre les tests physiques
+  pour plus tard »).
+
+## Étape — conversion EP-133 : resampling, dither, trim appliqué (13 août, suite)
+
+Suite logique de R-07 (étude du 13 août) : `@alexanderolsen/libsamplerate-js`
+intégré pour de vrai plutôt que resté à l'état de recommandation.
+
+- [x] `src/core/audio/wavConvert.ts` : extraction Float32 interleaved
+  (`readSignedSample`, nouvelle fonction partagée exportée de
+  `wavAnalysis.ts`), repli mono/stéréo par moyenne, resampling
+  `SRC_SINC_BEST_QUALITY`, encodage PCM 16 bits avec dither TPDF
+  systématique, découpe optionnelle par sélection de trim avant conversion.
+- [x] `tools/check-wav-convert.mjs` : 5 scénarios exécutant le **vrai WASM
+  en Node** (pas un mock) — resampling réel 44,1 kHz → HI, identité sans
+  resampling, downmix stéréo→mono, entrée invalide, trim appliqué avant
+  conversion. Deux vrais problèmes trouvés et corrigés en écrivant ces
+  tests : import ESM cassé (`Named export 'ConverterType' not found` — le
+  paquet est CommonJS, Node ne détecte pas ses exports nommés à
+  l'exécution directe contrairement à Vite/esbuild ; corrigé par un import
+  par défaut déstructuré) et une résolution de module relative sans
+  extension `.ts` (fonctionne sous Vite, pas sous `node
+  --experimental-strip-types` direct).
+- [x] `WaveformTrim` : section « CONVERSION EP-133 » avec boutons
+  `LO`/`MID`/`HI`, second lecteur `<audio controls>` pour la pré-écoute du
+  résultat. Le module de conversion est chargé par `import()` dynamique au
+  premier clic, pas au chargement de la page.
+- [x] Vérifié au build : le module de conversion (~2 Mo, WASM embarqué en
+  base64) forme bien un chunk séparé (`wavConvert-*.js`) ; le bundle
+  principal ne grossit que de ~3 Ko. Confirme que le chargement différé
+  fonctionne réellement, pas seulement en intention.
+- [x] `npm run typecheck`, `npm test` (4 scripts dont le nouveau
+  `test:convert` + vitest, 8 tests), `npm run test:e2e` (2/2, inchangé) et
+  `npm run build` — tous au vert.
+- **Non vérifié à l'oreille** : la qualité perçue du resampling et le bon
+  fonctionnement de bout en bout dans un vrai navigateur restent à
+  confirmer par l'utilisateur — ajouté à
+  `docs/A_VALIDER_PHYSIQUEMENT.md` plutôt que testé immédiatement, sur la
+  même décision explicite (tests physiques groupés pour plus tard).
+
+Statuts mis à jour : `docs/REGISTRE_IDEES.md` A-03 (CORRIGÉ → RÉALISÉ
+partiel), A-04 (RETENU → RÉALISÉ), A-05 (RETENU → RÉALISÉ partiel), R-07
+(RETENU → RÉALISÉ partiel) ; `docs/ROADMAP.md` Phase 4 ;
+`docs/ETAT_DU_PROJET.md` ; `docs/A_VALIDER_PHYSIQUEMENT.md`.

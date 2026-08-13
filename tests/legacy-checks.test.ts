@@ -10,8 +10,8 @@ import { describe, it } from 'vitest';
  * vitest transforme le TypeScript via esbuild plutôt que
  * `--experimental-strip-types`).
  *
- * Ces quatre scripts restent la source de vérité ; voir
- * `docs/REGISTRE_IDEES.md` R-04 et `etude/02_BIBLIOTHEQUES_TECHNIQUES.md`.
+ * Ces scripts restent la source de vérité ; voir `docs/REGISTRE_IDEES.md`
+ * R-04 et `etude/02_BIBLIOTHEQUES_TECHNIQUES.md`.
  */
 describe('scripts de vérification historiques (tools/check-*.mjs)', () => {
   it('moteur de jeu, score et extension de grille', async () => {
@@ -28,5 +28,9 @@ describe('scripts de vérification historiques (tools/check-*.mjs)', () => {
 
   it('analyse WAV déterministe', async () => {
     await import('../tools/check-wav-analysis.mjs');
+  });
+
+  it('conversion EP-133 (resampling, dither, downmix)', async () => {
+    await import('../tools/check-wav-convert.mjs');
   });
 });

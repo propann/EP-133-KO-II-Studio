@@ -88,6 +88,17 @@
 - [ ] **Portage du moteur de clone en TypeScript** (R-09, pas commencé) :
   une fois écrit, vérifier manuellement l'écriture de fichiers volumineux
   avec reprise, sans le pont Python.
+- [ ] **Conversion EP-133 (resampling + dither + trim)** — ajoutée le 13 août
+  après l'auto-trim/gain, elle aussi non revue. Chemin : même panneau
+  `WaveformTrim` → section « CONVERSION EP-133 (SÉLECTION UNIQUEMENT) » en
+  bas → boutons `LO`/`MID`/`HI` → un second lecteur audio doit apparaître
+  avec le résultat converti, à comparer à l'oreille avec l'original (bouton
+  `▶ ÉCOUTER` plus haut). Vérifié uniquement par des tests Node (WASM réel,
+  métadonnées et enveloppe de signal correctes) — jamais écouté par une
+  oreille humaine. Vérifier en particulier : le premier clic charge bien un
+  gros module (~2 Mo) sans bloquer l'interface, la conversion respecte la
+  sélection de trim en cours (pas tout le fichier), et le résultat sonne
+  correctement rééchantillonné (pas de distorsion/aliasing perceptible).
 
 ## Règle de suivi
 
