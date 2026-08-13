@@ -1,231 +1,132 @@
 # État du projet
 
-> Rapport de clôture de la session du 10 août 2026 :
-> [RAPPORT_SESSION_2026-08-10.md](RAPPORT_SESSION_2026-08-10.md).
+> Mise à jour consolidée : **13 août 2026**. Remplace la version précédente
+> (datée du 9 août), restée figée pendant que le projet avançait — ce
+> document racontait plus l'état de la première semaine que celui
+> d'aujourd'hui. Les rapports de session détaillés restent dans
+> `RAPPORT_SESSION_2026-08-10.md`, `-11.md` et `-12.md` ; le journal pas à
+> pas dans `SUIVI_IMPLEMENTATION.md` ; la feuille de route complète dans
+> `ROADMAP.md` ; le registre de toutes les idées (retenues, écartées,
+> reportées) dans `REGISTRE_IDEES.md`.
 
-> Mise à jour consolidée : 9 août 2026. La source principale est désormais
-> l'application React/TypeScript. Le player HTML reste une référence historique.
+## En une phrase
 
-> Traductions : la matrice à jour et l'ordre de travail sont tenus dans
-> [SUIVI_TRADUCTIONS.md](SUIVI_TRADUCTIONS.md).
+Le Studio ouvre, lit, édite et rejoue de vrais projets EP-133 hors ligne,
+clone la machine sans risque (lecture seule), et sait maintenant parler à
+l'EP-133 en MIDI temps réel — mais ne sait **encore rien écrire** sur la
+machine elle-même (aucun protocole d'écriture SysEx n'est activé).
 
-## Socle validé
+## Ce qui marche aujourd'hui, validé sur machine réelle
 
-- Player autonome, sans dépendance JavaScript externe
-- Interface inspirée du EP-133 K.O. II, pads et doigtés visibles
-- 39 exercices classés sur 5 niveaux
-- Tempo de 10 % à 150 %, sons de repère et VU-mètre
-- Partition modèle multi-mesures, avec une grille de 16 pas par mesure et le
-  numéro du pad dans chaque frappe attendue
-- Parcours de 1 à 4 mesures ; les mesures 2 à 4 apportent des variations
-- Partition joueur complète sur 1 à 4 mesures ; les frappes restent visibles
-  dans leur mesure jusqu'à la fin de la session
-- Lancement local préparé pour Windows et Raspberry Pi
+- **MIDI temps réel** : détection automatique de l'EP-133 (filtré pour
+  ignorer `Midi Through`), frappes de pads 36–83 → grille A–D, boutons
+  physiques A–D détectés par SysEx propriétaire, PANIC sur 16 canaux. Le
+  diagnostic « NON CONNECTÉ persistant » est clos : c'est une question
+  d'autorisation Chrome (`midi` + `midi-sysex`), pas un bug de l'app.
+- **Lecture de projets réels** : `.pak/.ppak` (ZIP + TAR) décodé en lecture
+  seule — 48 pads, patterns 96 PPQN, scènes, tempo, tout validé sur un vrai
+  projet. Le Studio ouvre directement le projet 1 réel de la machine.
+- **Clonage complet** : moteur Python (`tools/clone_ep133_readonly.py`) +
+  pont HTTP local, raccordé au bouton `CLONER LA MACHINE`. Un vrai clone
+  validé : 9 projets, 527 sons, 56,21 Mo, 536 hashes conformes. Synchronisation
+  incrémentale validée sur un second passage (30,7 s, zéro téléchargement).
+- **Studio d'édition** : 4 groupes A–D, 12 pads/groupe, piano-roll KEYS,
+  grille rythmique avec vélocité (Maj+molette), gate/durée (Alt+molette),
+  multi-sélection (Ctrl/Cmd+clic), nudge (flèches), Annuler/Rétablir sur le
+  pattern actif. Hiérarchie native complète : patterns 01–99, scènes
+  S.01–S.99, Song Positions L.01–L.99 (Song Arranger dédié).
+- **Save/Load** : cycle complet Nouveau/Sauvegarder/Ouvrir/Renommer/
+  Dupliquer/Archiver/Supprimer sur `ep.project.v1`, import/export MIDI,
+  import `.pak/.ppak` en lecture seule, 5 démos versionnées.
+- **Sons & Transfert** : bibliothèque perso + banque machine côte à côte,
+  glisser-déposer dans les deux sens, lecture PCM locale hors ligne, fiche
+  audio déterministe (poids/durée/fréquence/écrêtage lue dans l'en-tête RIFF,
+  jamais rééchantillonnée par le navigateur).
+- **Rhythm Hero** (module pédagogique inclus) : 39 styles, dont 10 avec leurs
+  5 niveaux écrits à la main (les 29 autres restent en génération
+  procédurale) ; rapport de progression par pad avec détection de
+  « pad confondu » ; parcours 7/30 jours avec répétition sur MISS élevé.
+- **FR/EN/ES** : accueil et centre documentaire traduits, choix mémorisé.
+  Les autres modules restent en français (suivi dans `SUIVI_TRADUCTIONS.md`).
 
-## Vérification du 9 août 2026
+## Ce qui est expérimental ou partiel
 
-| Contrôle | Résultat |
-|---|---|
-| Syntaxe JavaScript du player | OK |
-| Syntaxe JavaScript de la version autonome | OK |
-| Catalogue de 39 exercices | OK |
-| Sélecteur 1 à 4 mesures | OK |
-| Partition joueur / variations | OK |
-| Affichage simultané des mesures 1 à 4 | OK |
-| Conservation des frappes après changement de mesure | OK |
-| Scripts Windows et Pi | OK (validation de syntaxe) |
+- **Écriture matérielle : rien n'est activé.** Ni `.ppak`, ni sample, ni
+  affectation son→pad. `SYNCHRONISER` prépare un plan local, jamais un envoi
+  à la machine. C'est la limite structurante du produit aujourd'hui.
+- **Time Machine** : chronologie et comparaison des clones successifs, oui ;
+  restauration (locale ou matérielle), pas commencée.
+- **Piano-roll KEYS** : hauteurs éditables, articulations pas encore.
+- **Préparateur audio** (Phase 4) : seule l'analyse WAV déterministe existe.
+  Forme d'onde, trim, normalisation, conversion vers la fréquence cible —
+  rien de tout ça n'est codé.
+- **`App.tsx`** : la vue est découpée (pages + composants, ~1 720 lignes
+  sorties), l'état ne l'est presque pas encore (~1 550 lignes, 60 `useState`
+  restants). Un premier domaine — la langue — est sorti vers un magasin
+  `zustand` le 13 août, comme preuve de méthode plus que comme solution.
 
-## Partition multi-mesures
+## Écosystème externe et outillage (nouveau, 13 août)
 
-- Une mesure sélectionnée occupe toute la largeur utile.
-- Deux à quatre mesures sont affichées deux par ligne sur écran large et une
-  par ligne sur petit écran.
-- Chaque mesure modèle utilise sa variation réelle.
-- Le curseur orange se déplace uniquement dans la mesure active.
-- La partition joueur utilise le même découpage et conserve toutes les frappes.
-- Une nouvelle session vide les anciennes frappes ; la fin affiche `TERMINÉ`
-  sans effacer la session qui vient d'être jouée.
+Une étude dédiée (dossier [`etude/`](../etude/00_INDEX.md)) a cartographié
+les dépôts communautaires EP-133/EP-40/EP-1320 et les bibliothèques
+techniques réutilisables. Trois découvertes marquantes :
 
-## Parcours React par styles
+- `kmorrill/ep-series-sysex` (MIT) sait désormais **écrire** sur l'appareil
+  avec vérification octet par octet, validé sur firmware 2.5.1 — un socle
+  bien plus avancé que prévu pour la future Phase 5.
+- Le **firmware EP-133 2.5** (juin 2026) ajoute trois taux d'échantillonnage
+  (LO/MID/HI), ce qui corrige notre ancienne hypothèse d'une fréquence
+  native unique à 46 875 Hz.
+- Le pont Python local (`tools/local_clone_bridge.py`) pourrait devenir
+  inutile : ni le MIDI (déjà natif au navigateur) ni l'écriture disque (File
+  System Access API déjà utilisée) n'exigent vraiment Python — un portage
+  TypeScript reste à tenter.
 
-- Les 39 styles historiques restent présents dans le sélecteur.
-- Chaque style doit recevoir cinq partitions de difficulté croissante.
-- Premier groupe finalisé : Boom-Bap niveaux 1 à 5, six mesures par niveau.
-- Les niveaux Boom-Bap ont des patterns dédiés, des variations sur la cinquième
-  mesure et un fill final adapté au niveau sur la sixième.
-- Les autres styles restent jouables avec leur génération provisoire et seront
-  remplacés progressivement par blocs de cinq partitions validées.
+Outillage intégré et **vérifié par un vrai build/test**, pas seulement
+recommandé :
 
-## Prochaine brique : validation complète du vrai jeu
+- `vitest` enveloppe les 4 scripts historiques (`tools/check-*.mjs`) sans
+  dupliquer leur logique — tourne même sur un Node plus ancien que la
+  version 22 exigée par `--experimental-strip-types`.
+- `vite-plugin-pwa` : le Studio est maintenant installable hors ligne
+  (manifeste, service worker, icônes originales).
+- `zustand` : premier magasin d'état partagé (langue FR/EN/ES).
+- **Playwright** : premier vrai test E2E (`e2e/midi-connection.spec.ts`),
+  Web MIDI simulé pour vérifier l'interface de connexion sans machine ni
+  extension navigateur — câblé en CI après le build.
 
-1. Brancher le EP-133 par USB au PC Windows.
-2. Relever les notes, canaux et vélocités réellement envoyés par chaque pad.
-3. Connecter ces messages à la partition joueur.
-4. Mesurer avance/retard et erreurs de pad.
-5. Calculer score, combo et bilan d'exercice.
+Détail complet, licences et ce qui a été délibérément écarté (ex. OPFS pour
+le clone, casse une règle produit ; tout ce qui touche au DFU/firmware) dans
+`etude/04_RECOMMANDATIONS_INTEGRATION.md` et `REGISTRE_IDEES.md` (R-01 à
+R-16).
 
-## Limites actuelles assumées
+## Qualité et CI
 
-- Le player React reçoit le Web MIDI avec le mapping officiel validé. Le player
-  autonome historique enregistre encore uniquement les clics virtuels.
-- Le serveur Raspberry Pi est un serveur d'entraînement sur le réseau local. Il ne peut pas capturer tout seul le MIDI USB branché à un autre PC.
-- Le score doit encore recevoir une campagne complète de tests de latence et de
-  précision, même si le mapping physique est validé.
+- CI qualité sur chaque push/PR : typecheck, les 4 scripts historiques,
+  `vitest`, build, **et maintenant l'E2E Playwright** (`.github/workflows/ci.yml`).
+- Dépendances pinnées (`^`, plus de `latest`), lockfile vérifié avec `npm ci`.
+- Toujours aucun test d'intégration React au-delà de l'écran d'accueil — la
+  pyramide de tests a ses trois niveaux amorcés, pas encore généralisée.
 
-## Suite modulaire et studio
+## Priorités actuelles
 
-- L'accueil et le centre documentaire sont disponibles en français, anglais et
-  espagnol avec choix mémorisé. Les autres modules restent en français et sont
-  suivis explicitement dans `docs/SUIVI_TRADUCTIONS.md`.
+Dans l'ordre où `ROADMAP.md` et `PROJECT_CONTEXT.md` les posent aujourd'hui :
 
-- Page d'accueil avec trois modules : jeu, studio et sons/transfert.
-- Éditeur du jeu et studio complet séparés, chacun revenant à l'accueil.
-- Studio sur groupes A–D avec 12 pistes, mesures horizontales extensibles,
-  piano-roll KEYS, lecture, boucle, horloge et sortie MIDI vers l'EP-133.
-- Dans la vue Pattern du Studio, la longueur suit désormais le réglage natif
-  `LN.1` à `LN.99` de l'EP-133. Il remplace la « mesure de réserve » automatique
-  et reste enregistré séparément pour chaque groupe et numéro de pattern. La
-  grille continue marque chaque temps par une ligne verticale plus sombre.
-- Travail local non publié du 11 août : conservation du focus lors des
-  changements de longueur, menu `•••` copier/supprimer sur les blocs orange et
-  affichage des longueurs indépendantes sous A/B/C/D. Tests et build passent ;
-  validation visuelle requise avant commit.
-- Le Studio possède maintenant un vrai cycle local `NOUVEAU / SAVE / OUVRIR`
-  basé sur `ep.project.v1`. Il conserve les quatre groupes, le BPM, la hauteur,
-  la vélocité, la durée et les modes de pad sans fermer l'éditeur.
-- La sauvegarde des exercices USER reste séparée de celle des projets Studio.
-- Les commandes Studio sont regroupées dans le menu `FICHIER` : Nouveau,
-  Ouvrir, Enregistrer, Enregistrer sous, Renommer, Dupliquer, Supprimer et
-  Exporter. La suppression demande une confirmation explicite.
-- Le Studio affiche la première structure Song mode avec les repères natifs
-  `L.01`, `S.01` et `A01–D01`. La durée de la position reprend celle du pattern
-  le plus long. Les positions et scènes multiples restent à implémenter.
-- Le projet 1 réel de la machine peut être ouvert depuis `FICHIER`. Le bouton
-  charge l'instantané de `L.01/S.01` en lecture seule, sans écrire sur l'EP-133.
-- La page Sons & Transfert initialise maintenant un profil de machine nommé,
-  son modèle mémoire 64/128 Mo, son dossier privé de samples et un miroir global
-  des 527 slots occupés (56,21 Mo). Les fichiers audio sont maintenant copiés
-  dans le clone privé validé.
-- `FICHIER → CLONER LA MACHINE` ouvre une fenêtre de préparation et crée un
-  manifeste avec un instantané initial. La future Time Machine est documentée ;
-  comparaison et restauration ne sont pas encore actives.
-- Le moteur local de clone complet sait copier les neuf projets, tous les PCM,
-  leurs métadonnées et hashes dans un dossier explicite avec reprise. Son
-  lancement est raccordé à la fenêtre web par le pont local.
-- Le premier clone matériel complet est validé : 9 projets, 527 PCM, 527
-  métadonnées, 56 214 010 octets audio et aucune erreur. Durée mesurée :
-  25 min 20 s ; l'interface doit annoncer 20 à 30 minutes avant la première copie.
-- Contrôle ultérieur réussi : 536 hashes conformes, aucun fichier manquant et
-  527 métadonnées JSON valides. Voir `VALIDATION_CLONE_REEL.md`.
-- Le bouton du Studio est maintenant raccordé au moteur par un pont HTTP local
-  sur `127.0.0.1:8765`. La progression du manifeste est affichée chaque seconde.
-  Le second passage depuis l'interface est validé sur la machine réelle.
-- La synchronisation incrémentale archive le manifeste précédent, contrôle les
-  contenus locaux, relit les métadonnées et ne réécrit que les changements
-  détectables. Le second passage réel depuis le bouton est validé : 30,7 s,
-  9 projets et 527 sons inchangés, zéro téléchargement et zéro erreur.
-- Le menu FICHIER permet de choisir séparément la banque samples d'un clone.
-  Le Studio joue alors les PCM locaux quand la machine est absente et garde le
-  MIDI matériel prioritaire quand elle est connectée.
-- Cinq projets de démonstration (Groove, Lo-fi, Electro, Trap et Break) sont
-  livrés dans le menu `FICHIER → Ouvrir`. Ils couvrent chacun plusieurs
-  patterns, trois scènes et quatre Song Positions pour contrôler l'affichage
-  et le transport sans modifier la bibliothèque personnelle.
-- L'ouverture d'un projet Studio complet arrive sur `SONG`, afin de montrer
-  toutes ses Song Positions et scènes. La vue `PATTERNS` édite un pattern
-  explicitement choisi ; chaque pattern reste extensible sur plusieurs mesures.
-- La banque est maintenant ouverte directement sur le HDD : aucun sample n'est
-  envoyé au site. La fenêtre Clone écrit déjà son manifeste dans le dossier PC.
-- Export MIDI ou description `ep.project.v1` JSON.
-- Scan SysEx en lecture seule validé sur la machine : 527 sons, 56,21 Mo,
-  affectations de pads, noms, modes et notes racines.
-- Inventaire du projet 1 affiché dans la page Sons & Transfert.
-- Transfert sonore volontairement verrouillé jusqu'à la mise en place du calcul
-  mémoire, de la sauvegarde, de la confirmation et de la relecture.
+1. **Phase 5 — `.ppak`** : encore aucune case cochée, c'est le vrai verrou
+   avant toute écriture matérielle. Réévaluer `kmorrill/ep-series-sysex` en
+   premier plutôt que de repartir de zéro.
+2. **Phase 4 — préparateur audio** : forme d'onde, conversion, jauge mémoire.
+3. **Contenu pédagogique** : étendre les 5 niveaux aux 29 styles restants
+   (10/39 faits).
+4. **Suite du découpage d'état d'`App.tsx`**, un domaine à la fois.
+5. **Bibliothèque unifiée** exercices/projets, banques sonores complètes
+   (tags, favoris, kit de secours).
+6. **Archiver `Pad-Hero`** sur GitHub — action externe, toujours en attente
+   d'accord explicite.
 
-## Décision de consolidation
+## Ce qui ne changera pas
 
-Le développement fonctionnel est temporairement ralenti pour découper le gros
-composant d'interface, ajouter les tests, documenter les formats et construire
-une vraie gestion Save/Load. La feuille de route détaillée se trouve dans
-[`ROADMAP.md`](ROADMAP.md).
-
-## Solidification en cours
-
-- Étape 1.1 terminée : la génération MIDI et `ep.project.v1` est sortie de
-  `App.tsx` vers `src/core/project/exporters.ts`.
-- Une vérification automatisée couvre l'en-tête MIDI, le mapping d'un pad, une
-  hauteur KEYS, les quatre patterns et le mode de pad exporté.
-- Commande : `npm run test:exports`.
-- Décision prise : ne pas créer de format natif Rhythm Hero. Le menu Save/Load
-  utilisera `.pak/.ppak`, MIDI et le JSON technique `ep.project.v1`.
-- Prochaine étape : charger ces formats avant de construire le menu complet.
-- Transport solidifié : timers jeu/studio séparés, STOP centralisé, anciennes
-  sessions asynchrones invalidées et nettoyage complet au retour accueil.
-- Le PANIC MIDI couvre désormais les 16 canaux avec All Notes Off et All Sound
-  Off ; une disparition du port pendant l'arrêt est tolérée.
-- Vérification dédiée : `npm run test:transport`.
-- Premier découpage React terminé : `HomePage` et `SoundsPage` sont sorties de
-  `App.tsx`, et le contrat de l'inventaire machine est centralisé dans
-  `src/core/project/device.ts`.
-- Le jeu puis le studio seront extraits par composants visuels avant tout
-  déplacement supplémentaire de la logique de transport.
-- Le jeu est maintenant séparé en `GameToolbar`, `ScoreView`,
-  `PerformancePanel` et `PadSoundEditor`. Ces composants sont visuels et ne
-  deviennent pas propriétaires de l'horloge.
-- L'ordre physique des 12 pads est centralisé dans `core/project/pads.ts`.
-- Le studio est séparé en `EditorToolbar`, `PadStrip`, `RhythmGrid` et
-  `PianoRoll`. Les patterns et actions restent fournis par `App.tsx` afin de ne
-  pas dupliquer l'état.
-- Le découpage visuel prévu par l'étape 1.4 est terminé. La prochaine étape est
-  l'unification du modèle de données avant l'extraction d'un hook d'éditeur.
-- Le modèle `SequencerNote` est maintenant utilisé par le studio, l'import MIDI
-  et les deux exports. Groupe, hauteur, vélocité et durée ne sont plus ajoutés
-  artificiellement au dernier moment.
-- Les exercices existants restent compatibles grâce à un adaptateur avec
-  vélocité 100 et durée d'un seizième par défaut.
-- Le score et l'extension automatique disposent maintenant d'une vérification
-  dédiée avec `npm run test:engine`.
-- Les calculs de mesure ont été sortis des clics React vers
-  `src/core/project/editor.ts`, ce qui évite les divergences entre grille pads
-  et piano-roll.
-- L'accueil possède un quatrième module Documentation. Il indexe six guides du
-  projet, explique les conventions PRESS/HOLD/SLIDE avec des dessins HTML/CSS
-  originaux et renvoie vers le guide officiel.
-- Le manuel OS 2.0 local a servi à analyser la charte, mais n'est pas copié dans
-  le dépôt : sa section de propriété intellectuelle interdit la redistribution
-  de ses images et contenus protégés.
-- Le noyau sait désormais relire les MIDI formats 0/1 qu'il exporte, conserver
-  tempo, position, vélocité et durée, puis les répartir sur les groupes A–D.
-- Un inspecteur ouvre les conteneurs ZIP `.pak/.ppak`, valide `meta.json` et
-  inventorie les projets TAR et les WAV sans modifier l'archive.
-- La prochaine sous-étape est le décodage en lecture seule des pads, patterns et
-  scènes contenus dans un TAR de projet réel. **Étape terminée.**
-- Le lecteur TAR expose maintenant les pads 26/27 octets, les notes et
-  automations des patterns, les scènes, la liste song et le tempo, tout en
-  conservant les octets bruts.
-- Validation sur le projet 1 réel : 48 pads, 11 patterns, 125 notes, 3 scènes,
-  tempo 120 BPM et aucun avertissement. Aucun accès en écriture n'a été fait.
-
-## Étude technique externe analysée
-
-Le cahier des charges « compagnon ultime » a été conservé comme source d'idées,
-mais corrigé avant intégration à la feuille de route. Les faits désormais
-retenus sont notamment : 12 pads par groupe, patterns internes à 96 PPQN,
-horloge MIDI à 24 PPQN et WAV natifs observés à 46 875 Hz en PCM 16 bits.
-
-Les fonctions sûres et proches du produit — Save/Load `.pak/.ppak`, édition des
-événements, jauge mémoire et préparation audio — restent prioritaires. Les
-exports DAW, la déduplication, le Space-Saver et une éventuelle application
-Tauri sont reportés. Les plugins VST3/CLAP et le miroir LCD complet sortent du
-périmètre de la version 1.
-
-Voir [`ANALYSE_ETUDE_CAHIER_CHARGES.md`](ANALYSE_ETUDE_CAHIER_CHARGES.md) pour
-les corrections binaires, les licences et les critères de validation.
-
-La deuxième version de l'étude, enrichie des conventions de piano-roll et des
-raccourcis DAW, est également triée. Le fichier
-[`REGISTRE_IDEES.md`](REGISTRE_IDEES.md) conserve chaque proposition avec un
-identifiant, un statut et une condition. Les interactions cohérentes sont
-ajoutées à la phase d'édition avancée ; les conflits de gestes, fonctions non
-prouvées et chantiers hors version 1 restent visibles sans entrer dans le code.
+Lecture seule par défaut sur la machine, aucune écriture sans checkpoint et
+confirmation explicite, aucun sample propriétaire versionné, aucune fonction
+DFU/firmware dans l'interface. Ces règles n'ont pas bougé depuis le début du
+projet et ne sont pas remises en question par l'étude du 13 août.
