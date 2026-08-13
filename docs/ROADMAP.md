@@ -372,9 +372,19 @@ de fichiers audio propriétaires au dépôt.
   Q-15) : poids, durée, fréquence source (lue dans l'en-tête, jamais
   rééchantillonnée par le navigateur), canaux, profondeur et détection
   d'écrêtage, affichée à l'écoute d'un son de la bibliothèque perso dans
-  Sons & Transfert. Pas encore de forme d'onde ni de conversion — une
-  fiche de lecture avant tout traitement.
-- [ ] Forme d'onde, trim, normalisation, fondu et détection du silence.
+  Sons & Transfert.
+- [x] Forme d'onde et trim non destructif (13 août — voir
+  REGISTRE_IDEES.md A-09/A-10, R-06) : panneau `WaveformTrim`
+  (`src/components/shared/WaveformTrim.tsx`) dans la bibliothèque perso de
+  Sons & Transfert, région de sélection ajustable par glisser sur la forme
+  d'onde. Les crêtes affichées viennent de `computeWaveformPeaks`
+  (`src/core/audio/wavAnalysis.ts`, testé), lecture directe des octets PCM —
+  même précaution que l'analyse déterministe, jamais le décodeur intégré de
+  `wavesurfer.js`. La sélection ne fait encore que s'afficher (`TRIM x,xxS →
+  y,yyS`) : aucun pipeline de conversion ne la consomme pour l'instant.
+  Vérifié visuellement par l'utilisateur dans Chrome : forme d'onde,
+  région glissable et lecture fonctionnent.
+- [ ] Normalisation, fondu et détection du silence.
 - [ ] Mono/stéréo, fréquence, hauteur racine, BPM, ONE/KEYS/LEGATO.
 - [ ] Conversion native cible PCM 16 bits à 46 875 Hz et dither TPDF lorsque
   la réduction de profondeur le nécessite.

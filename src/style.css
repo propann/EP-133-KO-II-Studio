@@ -1022,6 +1022,16 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .local-preview-btn,.local-assign-btn { padding:6px 8px; border:1px solid var(--ko-black); background:#d8d4cc; font-size:6px; font-weight:900; cursor:pointer; }
 .local-preview-btn { border-radius:50%; width:26px; height:26px; padding:0; background:var(--ko-orange); color:#fff; font-size:10px; }
 .local-assign-btn:hover { color:#fff; background:var(--ko-orange); }
+
+/* Forme d'onde/trim (Phase 4, A-09/A-10) — même gabarit de bouton que les
+   autres actions de la bibliothèque perso, juste à côté. */
+.waveform-toggle-btn { border-radius:50%; width:26px; height:26px; padding:0; border:1px solid var(--ko-black); background:#d8d4cc; font-size:12px; font-weight:900; cursor:pointer; }
+.waveform-toggle-btn.active { color:#fff; background:var(--ko-black); }
+.waveform-trim-summary { color:var(--ko-orange); font-weight:900; }
+.waveform-trim { margin:2px 0 10px; padding:10px 12px; border:2px solid var(--ko-black); border-radius:var(--radius-sm); background:#fff; }
+.waveform-trim-canvas { width:100%; }
+.waveform-trim-status { margin:6px 0 0; font-size:8px; font-weight:700; color:#57544e; }
+.waveform-trim-play { margin-top:8px; padding:6px 12px; border:1px solid var(--ko-black); border-radius:999px; background:var(--ko-orange); color:#fff; font-size:8px; font-weight:900; cursor:pointer; }
 @media(max-width:720px) { .local-entries { grid-template-columns:1fr; } .local-browser-controls { flex-direction:column; align-items:stretch; } .local-search { width:100%; } }
 
 /* Fiche personnage — module de l'écosystème Studio (accessible depuis

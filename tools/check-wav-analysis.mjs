@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { analyzeWavBuffer } from '../src/core/audio/wavAnalysis.ts';
+import { analyzeWavBuffer, computeWaveformPeaks } from '../src/core/audio/wavAnalysis.ts';
 
 /** Construit un WAV PCM/float minimal valide à partir de trames déjà encodées en octets (LE), pour tester `analyzeWavBuffer` sans dépendre d'un vrai fichier. */
 function buildWav({ sampleRate, channels, bitDepth, audioFormat = 1, frames }) {
@@ -95,5 +95,30 @@ assert.equal(analyzeWavBuffer(notWav), null, 'en-tête RIFF absent');
 const badDepthWav = buildWav({ sampleRate: 44100, channels: 1, bitDepth: 16, frames: [0] });
 new DataView(badDepthWav).setUint16(34, 12, true); // profondeur non supportée (12 bits)
 assert.equal(analyzeWavBuffer(badDepthWav), null, 'profondeur de bits non supportée');
+
+// computeWaveformPeaks (Phase 4, forme d'onde/trim) : mêmes octets PCM que analyzeWavBuffer,
+// lus par un chemin séparé — pas de rééchantillonnage AudioContext, pas de régression partagée.
+const flat = buildWav({ sampleRate: 46875, channels: 1, bitDepth: 16, frames: [0, 0, 0, 0, 0, 0, 0, 0] });
+const flatPeaks = computeWaveformPeaks(flat, 1000);
+assert.ok(flatPeaks);
+assert.equal(flatPeaks.sampleRate, 46875);
+assert.equal(flatPeaks.channels, 1);
+assert.equal(flatPeaks.values.length, 8, 'jamais plus de points que de trames réelles');
+assert.ok(flatPeaks.values.every((value) => value === 0), 'silence total -> toutes les crêtes à 0');
+assert.equal(Math.round(flatPeaks.durationSeconds * 46875), 8);
+
+const loudFrame = buildWav({ sampleRate: 46875, channels: 1, bitDepth: 16, frames: [0, 0, -32768, 0, 0, 0, 0, 0] });
+const loudPeaks = computeWaveformPeaks(loudFrame, 8);
+assert.ok(loudPeaks);
+assert.equal(loudPeaks.values[2], 1, 'trame 3 (index 2, code extrême -32768) doit ressortir à la crête normalisée exacte de 1, isolée du reste');
+assert.ok(loudPeaks.values[0] === 0 && loudPeaks.values[1] === 0, 'les points sans signal restent à 0');
+
+const stereoPeaks = computeWaveformPeaks(stereoWav, 4);
+assert.ok(stereoPeaks);
+assert.equal(stereoPeaks.channels, 2);
+assert.equal(stereoPeaks.values.length, 4, 'réduit aux 4 trames stéréo, pas aux 8 échantillons entrelacés');
+
+assert.equal(computeWaveformPeaks(new ArrayBuffer(10)), null, 'tampon trop court');
+assert.equal(computeWaveformPeaks(notWav), null, 'en-tête RIFF absent');
 
 console.log('Analyse WAV déterministe (poids, durée, fréquence, écrêtage) : OK');

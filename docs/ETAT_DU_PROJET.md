@@ -57,9 +57,12 @@ machine elle-même (aucun protocole d'écriture SysEx n'est activé).
 - **Time Machine** : chronologie et comparaison des clones successifs, oui ;
   restauration (locale ou matérielle), pas commencée.
 - **Piano-roll KEYS** : hauteurs éditables, articulations pas encore.
-- **Préparateur audio** (Phase 4) : seule l'analyse WAV déterministe existe.
-  Forme d'onde, trim, normalisation, conversion vers la fréquence cible —
-  rien de tout ça n'est codé.
+- **Préparateur audio** (Phase 4) : l'analyse WAV déterministe existe, et
+  depuis ce soir une première forme d'onde avec trim non destructif
+  (`WaveformTrim`, bibliothèque perso de Sons & Transfert), vérifiée dans
+  Chrome — affiche une sélection, ne l'exploite encore nulle part.
+  Normalisation, fondu, détection du silence et conversion vers la
+  fréquence cible restent à faire.
 - **`App.tsx`** : la vue est découpée (pages + composants, ~1 720 lignes
   sorties), l'état ne l'est presque pas encore (~1 550 lignes, 60 `useState`
   restants). Un premier domaine — la langue — est sorti vers un magasin

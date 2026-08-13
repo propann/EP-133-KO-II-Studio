@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { analyzeWavBuffer, type WavAnalysisReport } from '../core/audio/wavAnalysis';
+import { WaveformTrim, type WaveformTrimSelection } from '../components/shared/WaveformTrim';
 import type { EditorGroup, EditorPadMode } from '../core/project/exporters';
 import type { DeviceInventory, DeviceSoundIndex } from '../core/project/device';
 import { loadDeviceProfile } from '../core/project/deviceProfile';
@@ -101,6 +102,11 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
   // pas en avance sur toute la liste — certaines bibliothèques comptent des milliers de fichiers.
   // 'unsupported' = analysé mais pas un WAV PCM/float exploitable (mp3, en-tête inconnu…).
   const [audioReports, setAudioReports] = useState<Record<string, WavAnalysisReport | 'unsupported'>>({});
+  // Forme d'onde/trim (Roadmap Phase 4, REGISTRE_IDEES.md A-09/A-10) : un seul
+  // panneau ouvert à la fois ; la sélection reste en mémoire par nom de fichier,
+  // jamais écrite sur le disque tant qu'aucun pipeline de conversion n'existe.
+  const [waveformTarget, setWaveformTarget] = useState<{ name: string; file: File } | null>(null);
+  const [trims, setTrims] = useState<Record<string, WaveformTrimSelection>>({});
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const objectUrlRef = useRef('');
   const draggingLocalRef = useRef<StagedLocalFile | null>(null);
@@ -176,6 +182,12 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
       const report = analyzeWavBuffer(bytes, file.size);
       setAudioReports((current) => ({ ...current, [entry.name]: report ?? 'unsupported' }));
     }
+  };
+
+  const toggleWaveform = async (entry: LocalEntry & { kind: 'file' }) => {
+    if (waveformTarget?.name === entry.name) { setWaveformTarget(null); return; }
+    const file = await entry.handle.getFile();
+    setWaveformTarget({ name: entry.name, file });
   };
 
   const requestDelete = (slot: number) => {
@@ -312,18 +324,23 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
               <label>RECHERCHER<input value={persoQuery} onChange={(event) => setPersoQuery(event.target.value)} placeholder="NOM DE FICHIER" /></label>
               {persoLoading && <p className="local-loading">Lecture…</p>}
               {!persoLoading && <div>
-                {filteredPersoFiles.map((entry) => <article key={entry.name} draggable
+                {filteredPersoFiles.map((entry) => <Fragment key={entry.name}>
+                  <article draggable
                     onDragStart={(event) => { draggingLocalRef.current = { fileName: entry.name, handle: entry.handle }; event.dataTransfer.effectAllowed = 'copy'; event.dataTransfer.setData('text/plain', entry.name); }}
                     onDragEnd={() => { draggingLocalRef.current = null; }}>
-                  <button className="local-preview-btn" onClick={() => void previewPerso(entry)} aria-label={playingName === entry.name ? 'Pause' : 'Écouter'}>{playingName === entry.name ? '⏸' : '▶'}</button>
-                  <div>
-                    <strong>{entry.name}</strong>
-                    {!(entry.name in audioReports) && <small>GLISSER SUR UN PAD OU UN SLOT MACHINE</small>}
-                    {audioReports[entry.name] === 'unsupported' && <small>FORMAT NON WAV · PAS DE FICHE AUDIO</small>}
-                    {audioReports[entry.name] && audioReports[entry.name] !== 'unsupported' && (() => { const report = audioReports[entry.name] as WavAnalysisReport; return <small className={`local-audio-report ${report.clipped ? 'clipped' : ''}`}>{(report.weightBytes / 1024).toFixed(0)} KO · {report.durationSeconds.toFixed(2)} S · {report.sampleRate} HZ · {report.bitDepth} BITS{report.clipped ? ` · ÉCRÊTAGE (${report.clippedSampleCount})` : ''}</small>; })()}
-                  </div>
-                  <button className="local-assign-btn" onClick={() => stageLocalOnPad(activeGroup, selectedPad, { fileName: entry.name, handle: entry.handle })}>→ {activeGroup}{selectedPad}</button>
-                </article>)}
+                    <button className="local-preview-btn" onClick={() => void previewPerso(entry)} aria-label={playingName === entry.name ? 'Pause' : 'Écouter'}>{playingName === entry.name ? '⏸' : '▶'}</button>
+                    <div>
+                      <strong>{entry.name}</strong>
+                      {!(entry.name in audioReports) && <small>GLISSER SUR UN PAD OU UN SLOT MACHINE</small>}
+                      {audioReports[entry.name] === 'unsupported' && <small>FORMAT NON WAV · PAS DE FICHE AUDIO</small>}
+                      {audioReports[entry.name] && audioReports[entry.name] !== 'unsupported' && (() => { const report = audioReports[entry.name] as WavAnalysisReport; return <small className={`local-audio-report ${report.clipped ? 'clipped' : ''}`}>{(report.weightBytes / 1024).toFixed(0)} KO · {report.durationSeconds.toFixed(2)} S · {report.sampleRate} HZ · {report.bitDepth} BITS{report.clipped ? ` · ÉCRÊTAGE (${report.clippedSampleCount})` : ''}</small>; })()}
+                      {trims[entry.name] && <small className="waveform-trim-summary">TRIM {trims[entry.name].startSeconds.toFixed(2)}S → {trims[entry.name].endSeconds.toFixed(2)}S</small>}
+                    </div>
+                    <button className={`waveform-toggle-btn ${waveformTarget?.name === entry.name ? 'active' : ''}`} onClick={() => void toggleWaveform(entry)} aria-label="Forme d'onde et trim" aria-pressed={waveformTarget?.name === entry.name}>〰</button>
+                    <button className="local-assign-btn" onClick={() => stageLocalOnPad(activeGroup, selectedPad, { fileName: entry.name, handle: entry.handle })}>→ {activeGroup}{selectedPad}</button>
+                  </article>
+                  {waveformTarget?.name === entry.name && <WaveformTrim file={waveformTarget.file} initialTrim={trims[entry.name]} onTrimChange={(selection) => setTrims((current) => ({ ...current, [entry.name]: selection }))} />}
+                </Fragment>)}
                 {!filteredPersoFiles.length && <p>Aucun son ici.</p>}
               </div>}
             </div>

@@ -718,3 +718,45 @@ dépendance morte).
 Statuts mis à jour : `docs/REGISTRE_IDEES.md` R-16 (RETENU → RÉALISÉ) et
 Q-03 (RETENU → RÉALISÉ partiel — la pyramide a ses trois niveaux amorcés,
 reste à élargir l'E2E au-delà de l'accueil).
+
+## Étape — première brique de la Phase 4 : forme d'onde + trim (13 août, suite)
+
+Sur choix explicite de l'utilisateur (Phase 5 bloquée ici faute d'archive
+`.ppak`/machine réelle — vérifié : aucun fichier `.ppak` nulle part sur
+cette machine, aucun dossier de clone existant), pivot vers la Phase 4
+(préparateur audio), première priorité réellement disponible dans ce
+bac à sable.
+
+- [x] `computeWaveformPeaks` ajoutée à `src/core/audio/wavAnalysis.ts` :
+  crêtes réduites par point, lues directement dans les octets PCM (même
+  précaution que `analyzeWavBuffer` — jamais `decodeAudioData()`), chemin
+  totalement séparé pour ne courir aucun risque de régression sur la
+  fonction déjà validée. Testée dans `tools/check-wav-analysis.mjs`
+  (silence total, crête isolée, réduction stéréo, entrées invalides) —
+  **un vrai bug d'assertion trouvé et corrigé en écrivant le test** : `1`
+  attendu pour un code 16 bits à `32767`, alors que la normalisation
+  correcte (cohérente avec `analyzeWavBuffer`) donne `32767/32768`, pas
+  exactement `1` — le test attendait un chiffre faux, pas le code.
+- [x] `wavesurfer.js` (`^7.12.11`) + son plugin `regions` intégrés.
+- [x] `src/components/shared/WaveformTrim.tsx` : composant réutilisable,
+  région de trim ajustable par glisser, lecture/pause, jamais d'écriture
+  disque — la sélection remonte au parent par callback uniquement.
+- [x] Branché dans `SoundsPage.tsx` (bibliothèque perso) : bouton `〰` par
+  fichier, un seul panneau ouvert à la fois, résumé `TRIM x,xxS → y,yyS`
+  affiché une fois une région choisie.
+- [x] `npm run typecheck`, `npm run build` (bundle +60 Ko), `npm test` et
+  `npm run test:e2e` — tous au vert après l'ajout.
+
+**Vérification visuelle** : le rendu réel dans un navigateur n'a pas pu être
+observé par l'agent lui-même (la bibliothèque perso dépend de la File
+System Access API, `showDirectoryPicker()`, qui exige un vrai geste
+utilisateur — pas de point d'injection simple équivalent au mock Web MIDI
+de R-16 pour l'automatiser en Playwright headless). Serveur de dev lancé
+(`npm run dev`, port 5174) et chemin de navigation donné à l'utilisateur
+(FICHE PERSONNAGE → connecter la bibliothèque → SONS & TRANSFERT →
+bouton `〰`). **Confirmé par l'utilisateur dans Chrome** : forme d'onde,
+glisser de région et lecture fonctionnent tous.
+
+Statuts mis à jour : `docs/REGISTRE_IDEES.md` A-09 (RÉALISÉ partiel,
+vérifié), A-10 (précisé), R-06 (RÉALISÉ, vérifié) ; `docs/ROADMAP.md`
+Phase 4 ; `docs/ETAT_DU_PROJET.md`.
