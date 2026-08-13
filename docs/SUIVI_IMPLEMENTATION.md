@@ -861,3 +861,35 @@ de conversion vérifié au commit précédent).
 Non vérifié à l'œil : ajouté à la même entrée que la conversion dans
 `docs/A_VALIDER_PHYSIQUEMENT.md` plutôt qu'une ligne séparée, puisque c'est
 littéralement le même panneau à regarder.
+
+## Étape — jauge de mémoire sur les boutons LO/MID/HI (13 août, suite)
+
+Dernier point choisi par l'utilisateur parmi plusieurs options proposées
+(fondu, styles pédagogiques, découpage d'`App.tsx`, ou jauge de mémoire) —
+naturel après le poids estimé du commit précédent.
+
+- [x] `estimateEp133MemoryFit` ajoutée à `ep133Targets.ts` : compare un
+  poids déjà estimé à l'espace restant (`capacityMb × 1e6 − usedBytes`),
+  avec les mêmes garde-fous `Number.isFinite`/valeurs négatives déjà
+  utilisés ailleurs sur ce type de calcul (référence explicite au bug
+  « NaN son » de Q-16 dans le commentaire — même famille de piège, pas
+  reproduit ici).
+- [x] `tools/check-ep133-targets.mjs` (nouveau script, sans dépendance WASM
+  — reste rapide) : marge large, pile à la limite (`<=`, pas `<`), un octet
+  de trop, capacité inconnue (machine jamais scannée), entrées négatives.
+- [x] `WaveformTrim` reçoit un nouveau prop optionnel `machineMemory`
+  (`{usedBytes, capacityMb} | null`) ; chaque bouton LO/MID/HI affiche
+  « TIENT · X MO RESTANTS » ou « NE TIENT PAS · DÉPASSE DE X KO » sous le
+  poids, uniquement si la machine a déjà été scannée — jamais un espace
+  supposé disponible sans donnée réelle. `SoundsPage` passe
+  `soundIndex.usedBytes`/`capacityMb`, déjà calculés en haut de la page
+  pour la barre de mémoire existante.
+- [x] Build revérifié : le point critique (chunk de conversion séparé,
+  bundle principal quasi stable) tient toujours après cet ajout.
+- [x] `npm run typecheck`, `npm test` (9 tests dont le nouveau
+  `test:targets`), `npm run test:e2e` (2/2), `npm run build` — tous au vert.
+
+Non vérifié à l'œil : ajouté à la même entrée de
+`docs/A_VALIDER_PHYSIQUEMENT.md` que la conversion, avec la précision de
+tester les deux cas (ça tient / ça ne tient pas), pas seulement le cas
+optimiste.

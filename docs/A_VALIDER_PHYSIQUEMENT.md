@@ -101,6 +101,10 @@
   correctement rééchantillonné (pas de distorsion/aliasing perceptible).
   Ajouté depuis : chaque bouton LO/MID/HI affiche un poids estimé en Ko —
   vérifier qu'il varie bien en direct pendant qu'on ajuste la sélection.
+  Ajouté depuis (2) : une machine déjà scannée fait apparaître « TIENT · X MO
+  RESTANTS » ou « NE TIENT PAS · DÉPASSE DE X KO » sous le poids — à vérifier
+  avec une vraie machine scannée, dans les deux cas (ça tient / ça ne tient
+  pas), pas seulement le cas où il y a de la place.
 
 ## Règle de suivi
 

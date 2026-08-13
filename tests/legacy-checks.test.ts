@@ -33,4 +33,8 @@ describe('scripts de vérification historiques (tools/check-*.mjs)', () => {
   it('conversion EP-133 (resampling, dither, downmix)', async () => {
     await import('../tools/check-wav-convert.mjs');
   });
+
+  it('cibles EP-133 et jauge de mémoire', async () => {
+    await import('../tools/check-ep133-targets.mjs');
+  });
 });

@@ -28,3 +28,26 @@ export function estimateEp133ConversionBytes(durationSeconds: number, channels: 
   const frameCount = Math.max(0, Math.round(durationSeconds * targetSampleRate));
   return 44 + frameCount * channels * 2;
 }
+
+export interface Ep133MemoryFit {
+  fits: boolean;
+  remainingBytes: number;
+}
+
+/**
+ * Compare un poids déjà estimé (`estimateEp133ConversionBytes`) à l'espace
+ * restant sur la machine, à partir de l'occupation et de la capacité déjà
+ * connues (dernier scan, `DeviceSoundIndex.usedBytes`, et le profil 64/128 Mo
+ * — voir `SoundsPage`). Mo au sens décimal (1 Mo = 1 000 000 octets), cohérent
+ * avec le reste du projet (ex. « 56,21 Mo » pour 527 sons). Ne suppose jamais
+ * que l'espace est suffisant : une entrée non finie ou négative retombe sur
+ * 0 plutôt qu'un calcul silencieusement erroné — même précaution que le bug
+ * « NaN son » déjà trouvé et corrigé sur un calcul d'occupation similaire
+ * (REGISTRE_IDEES.md Q-16).
+ */
+export function estimateEp133MemoryFit(estimatedBytes: number, usedBytes: number, capacityMb: number): Ep133MemoryFit {
+  const capacityBytes = Number.isFinite(capacityMb) && capacityMb > 0 ? capacityMb * 1e6 : 0;
+  const safeUsedBytes = Number.isFinite(usedBytes) && usedBytes > 0 ? usedBytes : 0;
+  const remainingBytes = Math.max(0, capacityBytes - safeUsedBytes);
+  return { fits: estimatedBytes <= remainingBytes, remainingBytes };
+}

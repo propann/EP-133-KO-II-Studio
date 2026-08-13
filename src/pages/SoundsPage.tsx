@@ -344,7 +344,7 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
                     <button className={`waveform-toggle-btn ${waveformTarget?.name === entry.name ? 'active' : ''}`} onClick={() => void toggleWaveform(entry)} aria-label="Forme d'onde et trim" aria-pressed={waveformTarget?.name === entry.name}>〰</button>
                     <button className="local-assign-btn" onClick={() => stageLocalOnPad(activeGroup, selectedPad, { fileName: entry.name, handle: entry.handle })}>→ {activeGroup}{selectedPad}</button>
                   </article>
-                  {waveformTarget?.name === entry.name && <WaveformTrim file={waveformTarget.file} initialTrim={trims[entry.name]} report={audioReports[entry.name]} onTrimChange={(selection) => setTrims((current) => ({ ...current, [entry.name]: selection }))} />}
+                  {waveformTarget?.name === entry.name && <WaveformTrim file={waveformTarget.file} initialTrim={trims[entry.name]} report={audioReports[entry.name]} machineMemory={soundIndex ? { usedBytes: soundIndex.usedBytes, capacityMb } : null} onTrimChange={(selection) => setTrims((current) => ({ ...current, [entry.name]: selection }))} />}
                 </Fragment>)}
                 {!filteredPersoFiles.length && <p>Aucun son ici.</p>}
               </div>}

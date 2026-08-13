@@ -5,7 +5,7 @@ import { computeWaveformPeaks, detectSilenceTrim, suggestNormalizationGainDb, ty
 // Module léger, sans dépendance WASM (contrairement à wavConvert.ts) — sûr à
 // importer statiquement ici pour afficher un poids en direct. La conversion
 // réelle reste chargée à la demande, voir `runConversion` plus bas.
-import { EP133_TARGET_SAMPLE_RATES, estimateEp133ConversionBytes, type Ep133TargetRate } from '../../core/audio/ep133Targets';
+import { EP133_TARGET_SAMPLE_RATES, estimateEp133ConversionBytes, estimateEp133MemoryFit, type Ep133TargetRate } from '../../core/audio/ep133Targets';
 
 const EP133_TARGET_LABELS: Record<Ep133TargetRate, string> = { LO: 'LO · 26 250 HZ', MID: 'MID · 32 000 HZ', HI: 'HI · 46 875 HZ' };
 
@@ -22,6 +22,11 @@ interface WaveformTrimProps {
   /** Fiche audio déjà calculée par le parent (même fichier) — réutilisée pour
    * le gain de normalisation suggéré, sans refaire une deuxième analyse. */
   report?: WavAnalysisReport | 'unsupported' | null;
+  /** Occupation et capacité de la machine, du dernier scan (`SoundsPage`) —
+   * pour comparer le poids estimé à l'espace restant. `null`/absent si la
+   * machine n'a jamais été scannée : pas de jauge affichée, seulement le
+   * poids dans l'absolu (jamais un espace disponible supposé). */
+  machineMemory?: { usedBytes: number; capacityMb: number } | null;
 }
 
 /**
@@ -38,7 +43,7 @@ interface WaveformTrimProps {
  * région ; la lecture audio passe par son propre élément `<audio>` interne,
  * indépendant de la fiche audio déterministe déjà affichée à côté.
  */
-export function WaveformTrim({ file, initialTrim, onTrimChange, report }: WaveformTrimProps) {
+export function WaveformTrim({ file, initialTrim, onTrimChange, report, machineMemory }: WaveformTrimProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);
   const regionRef = useRef<Region | null>(null);
@@ -192,9 +197,11 @@ export function WaveformTrim({ file, initialTrim, onTrimChange, report }: Wavefo
         <div className="waveform-trim-convert-buttons">
           {(Object.keys(EP133_TARGET_LABELS) as Ep133TargetRate[]).map((target) => {
             const estimatedBytes = estimateEp133ConversionBytes(trimDurationSeconds, outChannels, EP133_TARGET_SAMPLE_RATES[target]);
-            return <button key={target} disabled={Boolean(converting)} onClick={() => void runConversion(target)}>
+            const fit = machineMemory ? estimateEp133MemoryFit(estimatedBytes, machineMemory.usedBytes, machineMemory.capacityMb) : null;
+            return <button key={target} className={fit && !fit.fits ? 'waveform-trim-overflow' : ''} disabled={Boolean(converting)} onClick={() => void runConversion(target)}>
               <b>{converting === target ? 'CONVERSION…' : EP133_TARGET_LABELS[target]}</b>
               <small>{(estimatedBytes / 1024).toFixed(1)} KO ESTIMÉS</small>
+              {fit && <small className={fit.fits ? 'waveform-trim-fits' : 'waveform-trim-fits-not'}>{fit.fits ? `TIENT · ${(fit.remainingBytes / 1e6).toFixed(2)} MO RESTANTS` : `NE TIENT PAS · DÉPASSE DE ${((estimatedBytes - fit.remainingBytes) / 1024).toFixed(1)} KO`}</small>}
             </button>;
           })}
         </div>

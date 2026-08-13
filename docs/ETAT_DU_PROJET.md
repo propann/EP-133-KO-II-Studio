@@ -64,12 +64,12 @@ machine elle-même (aucun protocole d'écriture SysEx n'est activé).
   (LO/MID/HI selon le firmware 2.5, resampling `libsamplerate-js`, dither
   TPDF, pré-écoute avant/après) — appliquée à la sélection de trim, jamais
   au fichier entier, avec le **poids exact affiché en direct** sur chaque
-  bouton LO/MID/HI pendant l'ajustement du trim. Le module de conversion
-  (~2 Mo, WASM) ne charge qu'au premier clic. **Rien depuis l'auto-trim n'a
-  encore été revu à l'œil ou à l'oreille** — voir
-  `docs/A_VALIDER_PHYSIQUEMENT.md`. Fondu, hauteur racine/BPM/ONE-KEYS-LEGATO,
-  jauge de mémoire face à la capacité machine et écriture de slot restent
-  à faire.
+  bouton LO/MID/HI pendant l'ajustement du trim, comparé à l'occupation et
+  la capacité réelles de la machine si elle a déjà été scannée (« TIENT »
+  / « NE TIENT PAS »). Le module de conversion (~2 Mo, WASM) ne charge
+  qu'au premier clic. **Rien depuis l'auto-trim n'a encore été revu à
+  l'œil ou à l'oreille** — voir `docs/A_VALIDER_PHYSIQUEMENT.md`. Fondu,
+  hauteur racine/BPM/ONE-KEYS-LEGATO et écriture de slot restent à faire.
 - **`App.tsx`** : la vue est découpée (pages + composants, ~1 720 lignes
   sorties), l'état ne l'est presque pas encore (~1 550 lignes, 60 `useState`
   restants). Un premier domaine — la langue — est sorti vers un magasin

@@ -413,9 +413,13 @@ de fichiers audio propriétaires au dépôt.
   `src/core/audio/ep133Targets.ts`), recalculé en direct pendant l'ajustement
   du trim — sans lancer de resampling réel, juste de l'arithmétique, vérifiée
   égale à un vrai résultat de conversion par un test dédié.
-- [ ] Jauge de mémoire avant transfert (comparaison avec la capacité et
-  l'occupation déjà connues de la machine, `SoundsPage`) — pas encore fait,
-  ce poids n'est pour l'instant affiché que dans l'absolu.
+- [x] **Jauge de mémoire avant transfert** (13 août) : chaque bouton
+  LO/MID/HI compare son poids estimé à l'espace restant sur la machine
+  (`estimateEp133MemoryFit`, `capacityMb` + `soundIndex.usedBytes` déjà
+  connus dans `SoundsPage`) — « TIENT · X MO RESTANTS » ou « NE TIENT PAS ·
+  DÉPASSE DE X KO ». Ne s'affiche que si la machine a déjà été scannée une
+  fois ; sinon le poids reste affiché seul, jamais un espace supposé
+  disponible.
 - [ ] Choix prioritaire d'un slot libre.
 - [ ] Paquet de sons préparé, manifeste et contrôles d'intégrité.
 - [ ] Analyse des doublons et sons orphelins en mode proposition uniquement.
