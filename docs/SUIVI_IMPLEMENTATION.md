@@ -1423,6 +1423,72 @@ enregistrement de projet Studio après ce chantier devrait donc écrire son
 fichier miroir sans nouvelle invite. **Non vérifié à l'œil** — ajouté à
 `docs/A_VALIDER_PHYSIQUEMENT.md`.
 
+## Phase 5 — première écriture réelle sur la machine (13 août 2026)
+
+Demande directe : « il faut de quoi envoyer un fichier projet dans la
+machine et tester ». Phase 5 de `docs/ROADMAP.md`, entièrement non
+commencée jusqu'ici — écrire un projet est l'opération la plus sensible
+du dépôt entier (règle du projet : jamais écrire sans checkpoint /
+confirmation / relecture). Passé par le mode Plan, deux fois (contexte
+puis choix du slot de test avec l'utilisateur — P09, confirmé sacrifiable
+et vérifié réellement vide).
+
+**Découverte** : `kmorrill/ep-series-sysex` (`epsysex`, déjà installé dans
+`/tmp/ep133-scan-venv` pour le pont de clonage) est une bibliothèque
+mature (MIT) qui fait exactement ça, avec des garde-fous déjà construits :
+`compile_project(doc, base_archive=...)` (JSON → TAR, préserve tout ce qui
+n'est pas explicitement décrit quand une base est fournie — notre format
+`ep.project.v1` s'est révélé structurellement compatible sans adaptation),
+`FileClient.read_project_archive`/`write_project_archive`/`reload_project`
+(avec relecture de vérification à chaque écriture de métadonnée), un
+verrou inter-processus et un préflight anti-boucle-de-debug avant toute
+opération destructive.
+
+**Risque identifié et respecté** : la bibliothèque documente elle-même que
+deux sessions FILE simultanées (même deux lectures) peuvent faire entrer
+le firmware dans une boucle de debug nécessitant un cycle d'alimentation.
+Son verrou ne protège que contre d'autres process Python — l'utilisateur a
+été prévenu explicitement de ne rien déclencher côté navigateur pendant
+l'exécution du script.
+
+**`tools/send_project_to_machine.py`** (nouveau, script CLI autonome —
+pas de bouton web, geste humain explicite à chaque étape) : trois
+commandes, `checkpoint` (lecture seule), `write --confirm` (écriture
+réelle), `restore --from <checkpoint>` (jamais testée cette session).
+
+- [x] **Étape A (lecture seule)** : identité machine confirmée
+  (Teenage Engineering, family 32/member 1), lecture réelle du slot P09
+  (4096 octets), checkpoint écrit sur disque, compilation hors ligne d'un
+  document de test minimal (1 pad, 1 note) par-dessus le TAR réel lu.
+  Rapport : P09 ne contenait que le squelette de répertoires (`pads`,
+  `pads/a`-`d`, `patterns`), aucun membre de données — confirmé par
+  **deux lecteurs TAR indépendants** (`epsysex.tar.iter_members` et le
+  module `tarfile` standard de Python) avant de passer à l'écriture, à la
+  demande explicite de l'utilisateur (« vérifie le fichier avant »).
+- [x] **Étape B (écriture réelle)** : nouveau checkpoint pris juste avant
+  écriture, `write_project_archive` sur P09, relecture immédiate —
+  **identique octet à octet** à ce qui venait d'être écrit — puis
+  `reload_project` : `activeProjectFid: 11000` (= `3000 + (9-1)×1000`,
+  fid attendu pour P09), passage par P01 pour forcer un vrai rechargement
+  (la « danse d'activation » documentée par la bibliothèque). **Confirmé
+  visuellement par l'utilisateur directement sur la machine** — pas
+  seulement un succès rapporté par le logiciel.
+- [x] Checkpoints conservés : `/home/azoth/Musique/OP-133/checkpoints/`
+  (deux fichiers, avant compilation-test et juste avant l'écriture réelle).
+
+**Ce qui reste** (voir `docs/ROADMAP.md` Phase 5 et
+`docs/A_VALIDER_PHYSIQUEMENT.md`) : un vrai projet Studio complet plutôt
+qu'une note de test, scènes/Song/automation, le conteneur `.ppak`
+autonome, la commande `restore` jamais exercée en réel, et un chemin
+depuis l'app web plutôt qu'un script CLI manuel — délibérément pas
+construit cette session, le risque d'une action en un clic était jugé
+prématuré avant ce premier aller-retour réussi.
+
+Vérifié : exécution réelle des deux étapes contre la machine physique,
+relecture octet à octet automatique intégrée au script, et confirmation
+humaine directe sur l'écran de la machine. Pas de suite `npm test`
+concernée (script Python autonome, hors du pipeline JS).
+
 ## Règle globale — tout bouton bouge au clic (13 août)
 
 Demande explicite après un test réel des boutons SCAN/CLONER : « il faut

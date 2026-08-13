@@ -47,14 +47,22 @@
 - [ ] **Time Machine : restauration** (locale puis matérielle) — F-16/Q-16,
   jamais commencée. Nécessite un stockage versionné réel des PCM, pas
   seulement des métadonnées.
-- [ ] **Phase 5 entière** : compiler un `.ppak` avec `kmorrill/ep-series-sysex`,
-  charger une sauvegarde existante comme base, écrire dans un projet
-  brouillon, checkpoint, relecture binaire. Bloquée dans un bac à sable
-  sans machine ni archive réelle (constaté le 13 août) — nécessite un vrai
-  poste avec l'EP-133 branché et un `.ppak` de test.
+- [x] **Premier aller-retour d'écriture réel** (13 août) — débloqué : lu
+  P09 réel, checkpoint disque, compilé un pattern minimal par-dessus
+  (base réelle), écrit, relu octet à octet identique, activé sur le
+  firmware, **confirmé visuellement par l'utilisateur sur la machine**.
+  `tools/send_project_to_machine.py`, détail dans
+  `docs/SUIVI_IMPLEMENTATION.md`. Reste ouvert (Phase 5, `docs/ROADMAP.md`) :
+  - [ ] écrire un vrai projet Studio complet (pas seulement une note de test) ;
+  - [ ] scènes/Song mode/automation ;
+  - [ ] conteneur `.ppak` autonome (`build_ppak()`, pas encore branché) ;
+  - [ ] tester la commande `restore` en conditions réelles (jamais exercée,
+    seule `write` l'a été) ;
+  - [ ] un chemin depuis l'app web plutôt qu'un script CLI manuel.
 - [ ] **Synchroniser les affectations son→pad** après checkpoint,
-  compilation et relecture (Phase 3) — verrouillé tant que la Phase 5
-  n'a pas de compilateur validé.
+  compilation et relecture (Phase 3) — débloqué en principe (le
+  compilateur a maintenant une première écriture réelle validée), pas
+  encore fait.
 - [ ] **Conversion et écriture d'un slot** (fin de Phase 4) : estimation de
   poids, choix de slot libre, sauvegarde du slot remplacé, écriture
   sérialisée, lecture de vérification.

@@ -456,11 +456,20 @@ la cible occupée n'a pas été explicitement confirmée.
 > vérifiée sur firmware 2.5.1 — un socle nettement plus avancé que ce que
 > cette phase supposait à sa rédaction initiale.
 
-- [ ] Compiler le JSON avec `kmorrill/ep-series-sysex` (MIT).
-- [ ] Générer `.ppak` hors ligne avec rapport de validation.
-- [ ] Charger une sauvegarde existante comme base afin de préserver les champs
-  inconnus et réglages non édités.
-- [ ] Gérer patterns, scènes, song mode, vélocité, durée et automation.
+- [x] Compiler le JSON avec `kmorrill/ep-series-sysex` (MIT) — 13 août,
+  `tools/send_project_to_machine.py`, `compile_project()` réel, vérifié
+  écrit et relu sur le firmware (voir Validation ci-dessous).
+- [ ] Générer `.ppak` hors ligne avec rapport de validation (le script du
+  13 août écrit directement le TAR sur la machine via `FileClient`, pas
+  encore le conteneur `.ppak`/ZIP autonome — `build_ppak()` existe dans la
+  bibliothèque, pas encore branché).
+- [x] Charger une sauvegarde existante comme base afin de préserver les champs
+  inconnus et réglages non édités — 13 août, `compile_project(doc,
+  base_archive=<TAR relu en direct>)`, vérifié réel (P09 relu avant
+  compilation, membres non décrits préservés).
+- [ ] Gérer patterns, scènes, song mode, vélocité, durée et automation
+  (seul un pattern à un seul événement a été écrit pour l'instant — pas
+  scènes/Song/automation).
 - [ ] Ajouter l'historique Annuler/Rétablir avant les gestes destructifs.
 - [ ] Piano-roll : sélection multiple, déplacement, redimensionnement du gate,
   quantification et édition de vélocité.
@@ -469,11 +478,26 @@ la cible occupée n'a pas été explicitement confirmée.
 - [ ] Raccourcis limités à la grille ayant le focus : lecture, duplication,
   déplacement, transposition et résolution de grille.
 - [ ] Associer les dépendances sonores et détecter les slots absents.
-- [ ] Écrire uniquement dans un projet brouillon choisi par l'utilisateur.
-- [ ] Checkpoint avant écriture, relecture binaire et restauration possible.
+- [ ] Écrire uniquement dans un projet brouillon choisi par l'utilisateur
+  (fait manuellement le 13 août — slot P09 choisi explicitement par
+  l'utilisateur comme sacrifiable ; pas encore un choix guidé depuis
+  l'app web, script CLI seulement).
+- [x] Checkpoint avant écriture, relecture binaire et restauration
+  possible — 13 août, `tools/send_project_to_machine.py` : checkpoint
+  disque avant chaque écriture, comparaison octet à octet post-écriture
+  avant toute activation, commande `restore` dédiée (pas encore testée
+  en conditions réelles, seulement la voie `write` l'a été).
 
 **Validation :** projet de test exporté, chargé, joué et relu sur le firmware de
 la machine sans toucher aux autres projets.
+
+**Premier aller-retour réel réussi le 13 août 2026** (détail complet dans
+`docs/SUIVI_IMPLEMENTATION.md`) : un pattern minimal (1 pad, 1 note) écrit
+sur le slot P09 (vide, choisi par l'utilisateur), relu octet à octet
+identique, activé sur le firmware — **et confirmé visuellement par
+l'utilisateur directement sur la machine**. Reste : un vrai projet Studio
+complet (pas seulement une note de test), les scènes/Song, et le chemin
+`.ppak` autonome.
 
 ## Phase 6 — contenu pédagogique
 
