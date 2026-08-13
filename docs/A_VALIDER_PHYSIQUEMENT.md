@@ -239,10 +239,17 @@
   - [ ] Vérifier aussi le repli sans SysEx actif (doit fonctionner comme
     avant, dernier instantané connu, sans erreur visible) — pas encore
     testé séparément.
-- [ ] **Upload d'un son de démo** (13 août) — vérifié par le script Python
-  (528 sons en direct, slot 58, taille exacte) mais jamais entendu à
-  l'oreille : sur la machine, projet P09 → groupe A → pad 2 doit jouer un
-  ton pur bref (~440 Hz, 0,3 s).
+- [ ] **Upload d'un son de démo** (13 août) — écouté par l'utilisateur,
+  doute confirmé : ça n'a pas semblé marcher (pas le ton attendu sur
+  P09 → groupe A → pad 2). **Test de comparaison fait** : copier un vrai
+  projet (P01) tel quel vers P09 fonctionne parfaitement et sonne
+  identique à P01 (confirmé par l'utilisateur) — le mécanisme
+  d'écriture/lecture/activation n'est donc pas en cause. Piste ouverte,
+  pas encore résolue : le document JSON minimal compilé par
+  `compile_project()` pour le test du son manque probablement d'un ou
+  plusieurs membres qu'un vrai projet contient toujours (réglages, FX,
+  enveloppe) — à comparer précisément avec les membres présents dans P01
+  avant de retenter.
 - [ ] **Groupe A–D en surbrillance sur l'écran de la façade** (13 août,
   correctif) — appuyer sur un bouton physique A–D de l'EP-133 doit faire
   passer la bonne lettre en gras sur l'écran simulé de Test Machine

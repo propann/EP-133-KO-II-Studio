@@ -1566,6 +1566,36 @@ Vérifié : `npm run typecheck`, `npm test` (10 tests), `npm run build`,
 `npm run test:e2e` (2/2). Reconfirmation à l'écran (pas seulement dans le
 fichier) pas encore faite — ajouté à `docs/A_VALIDER_PHYSIQUEMENT.md`.
 
+### Test décisif — copier un vrai projet (P01 → P09) pour isoler le doute sur le son de démo
+
+L'utilisateur a eu un doute sur le son de démo (« je crois pas que le son
+ait marché, que le P9 ait marché ») et a proposé le bon test : copier un
+projet réel, fait sur la machine (P01), vers le slot de test (P09), pour
+savoir si le problème vient du **mécanisme d'écriture** ou du **contenu
+compilé** par `compile_project()` avec un document JSON minimal.
+
+- [x] `tools/send_project_to_machine.py copy-project --from-slot 1
+  --to-slot 9 --confirm` (nouvelle commande) : lit P01 tel quel (68 096
+  octets), checkpoint de P09 avant écriture, écrit les octets de P01 dans
+  P09 sans passer par `compile_project` du tout, relit — **identique octet
+  à octet à la source** — puis active.
+- [x] **Confirmé par l'utilisateur sur la machine** : P09 sonne et joue
+  maintenant exactement comme P01.
+
+**Conclusion** : le mécanisme d'écriture/lecture/activation est
+définitivement solide — une copie complète d'un vrai projet fonctionne
+sans réserve. Le doute sur le son de démo précédent (pad A2, slot son 58)
+pointe donc plutôt vers le **contenu compilé** par `compile_project(doc,
+base_archive=...)` avec un document JSON volontairement minimal — un
+projet réel comme P01 contient sans doute des membres (réglages,
+FX/sortie, enveloppe) qu'un document minimal ne décrit pas et que
+`compile_project` ne recrée pas automatiquement en mode patch. **Pas
+encore diagnostiqué plus précisément** — piste ouverte plutôt que
+supposition présentée comme confirmée.
+
+Vérifié : exécution réelle contre la machine, relecture octet à octet
+intégrée au script, et confirmation humaine directe sur la machine.
+
 ## Règle globale — tout bouton bouge au clic (13 août)
 
 Demande explicite après un test réel des boutons SCAN/CLONER : « il faut

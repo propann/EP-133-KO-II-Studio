@@ -190,6 +190,50 @@ def cmd_write_sound(args: argparse.Namespace) -> None:
     print("Le son du projet n'est pas encore prouvé écrit avant SCAN/écoute réelle — vérifier à l'oreille sur la machine.")
 
 
+def cmd_copy_project(args: argparse.Namespace) -> None:
+    """Copie un slot réel (déjà connu bon, fait sur la machine) vers un
+    autre slot — sert à isoler si un problème vient du chemin d'écriture
+    lui-même ou du contenu compilé par compile_project()."""
+    if not args.confirm:
+        print("Refus : ajoute --confirm pour écrire réellement sur la machine.", file=sys.stderr)
+        sys.exit(1)
+
+    root = Path(args.root)
+    checkpoints_dir = root / "checkpoints"
+    checkpoints_dir.mkdir(parents=True, exist_ok=True)
+
+    client = FileClient()
+
+    print(f"1) Lecture du slot source P{args.from_slot:02d}…")
+    source_bytes, source_meta = client.read_project_archive(args.from_slot)
+    print(f"   -> {len(source_bytes)} octets, meta={source_meta}")
+
+    print(f"2) Lecture de l'état actuel du slot cible P{args.to_slot:02d} (checkpoint avant écriture)…")
+    current_bytes, _meta = client.read_project_archive(args.to_slot)
+    checkpoint_path = checkpoints_dir / f"P{args.to_slot:02d}-avant-copie-{now_stamp()}.tar"
+    checkpoint_path.write_bytes(current_bytes)
+    print(f"   -> Checkpoint : {checkpoint_path}")
+
+    print(f"3) Écriture de P{args.from_slot:02d} tel quel dans P{args.to_slot:02d} (write_project_archive)…")
+    client.write_project_archive(args.to_slot, source_bytes)
+    written_bytes, _meta = client.read_project_archive(args.to_slot)
+    if written_bytes != source_bytes:
+        print(
+            "   -> ÉCHEC : la relecture ne correspond PAS à ce qui a été écrit.\n"
+            f"   Restaure avec : python3 tools/send_project_to_machine.py restore --slot {args.to_slot} --from {checkpoint_path}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    print("   -> Identique octet à octet à la source.")
+
+    print(f"4) Activation (reload_project) de P{args.to_slot:02d}…")
+    result = client.reload_project(args.to_slot)
+    print(f"   -> {result}")
+    print()
+    print(f"Succès. P{args.to_slot:02d} contient maintenant une copie exacte de P{args.from_slot:02d}.")
+    print(f"Checkpoint de restauration (ancien contenu de P{args.to_slot:02d}) : {checkpoint_path}")
+
+
 def cmd_checkpoint(args: argparse.Namespace) -> None:
     root = Path(args.root)
     checkpoints_dir = root / "checkpoints"
@@ -315,6 +359,12 @@ def main() -> None:
     write_sound.add_argument("--wav", default=None, help="Fichier WAV source ; sinon un ton de démo est généré")
     write_sound.add_argument("--confirm", action="store_true", help="Confirme explicitement l'écriture réelle")
     write_sound.set_defaults(func=cmd_write_sound)
+
+    copy_project = sub.add_parser("copy-project", help="Copie un slot connu bon vers un autre slot (nécessite --confirm)")
+    copy_project.add_argument("--from-slot", type=int, required=True, dest="from_slot")
+    copy_project.add_argument("--to-slot", type=int, required=True, dest="to_slot")
+    copy_project.add_argument("--confirm", action="store_true", help="Confirme explicitement l'écriture réelle")
+    copy_project.set_defaults(func=cmd_copy_project)
 
     restore = sub.add_parser("restore", help="Restaure un checkpoint précédemment écrit")
     restore.add_argument("--slot", type=int, required=True)
