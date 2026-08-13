@@ -57,7 +57,7 @@ import { PadStrip } from './components/editor/PadStrip';
 import { EditorToolbar } from './components/editor/EditorToolbar';
 import { SongArranger } from './components/editor/SongArranger';
 import { MachineCloneDialog } from './components/editor/MachineCloneDialog';
-import { chooseLocalDirectory, collectLocalFiles, readPlayerProfileFile, writeCloneManifest, writePlayerProfile, type LocalDirectoryHandle } from './core/storage/localFolders';
+import { chooseLocalDirectory, collectLocalFiles, listStudioProjectFileIds, readPlayerProfileFile, removeStudioProjectFile, writeCloneManifest, writePlayerProfile, writeStudioProjectFile, type LocalDirectoryHandle } from './core/storage/localFolders';
 import { LOCAL_LIBRARY_FOLDER_KEY, SAMPLE_FOLDER_KEY, hasStoredPermission, loadDirectoryHandle, requestStoredPermission, saveDirectoryHandle } from './core/storage/directoryHandleStore';
 import { createDeviceClone, saveDeviceProfile } from './core/project/deviceProfile';
 import './style.css';
@@ -475,6 +475,33 @@ export default function App() {
     const directory = sampleDirectoryHandleRef.current;
     if (!directory || !(await hasStoredPermission(directory, 'readwrite'))) return;
     try { await writePlayerProfile(directory, next); } catch { /* miroir best-effort, la fiche reste en localStorage */ }
+  };
+
+  /** Même principe que mirrorProfileToFolder, appliqué à toute la
+   * bibliothèque Studio : réconciliation complète à chaque appel — écrit un
+   * fichier par projet (actif ou archivé, un archivage n'efface rien),
+   * supprime tout fichier de studio/ dont l'id n'est plus dans la
+   * bibliothèque (projet renommé/dupliqué/supprimé). Best-effort et
+   * silencieux, comme le miroir de la fiche personnage : n'écrit que si la
+   * permission écriture est déjà acquise pour ce dossier. */
+  const mirrorStudioLibraryToFolder = async (library: StudioProjectRecord[]) => {
+    const directory = sampleDirectoryHandleRef.current;
+    if (!directory || !(await hasStoredPermission(directory, 'readwrite'))) return;
+    try {
+      const currentIds = new Set(library.map((record) => record.id));
+      const existingIds = await listStudioProjectFileIds(directory);
+      await Promise.all(library.map((record) => writeStudioProjectFile(directory, record.id, record.document)));
+      await Promise.all(existingIds.filter((id) => !currentIds.has(id)).map((id) => removeStudioProjectFile(directory, id)));
+    } catch { /* miroir best-effort, la bibliothèque reste en localStorage */ }
+  };
+
+  /** Seul point d'appel à setStudioLibrary — garantit que le miroir disque
+   * (ci-dessus) reste synchronisé avec chaque enregistrement/renommage/
+   * duplication/suppression/archivage/import, sans avoir à y penser à
+   * chaque appelant. */
+  const updateStudioLibrary = (next: StudioProjectRecord[]) => {
+    setStudioLibrary(next);
+    void mirrorStudioLibraryToFolder(next);
   };
 
   /** Écrit `profile.json` à la racine du dossier de travail — même dossier
@@ -1211,7 +1238,7 @@ export default function App() {
     setEditorPatternBank(patternBank);
     const document = createEp133ProjectDocument({ title: editorName, bpm: tempo, patternBank, scenes: editorScenes, song: editorSong, currentScene: editorActiveScene, pads: deviceInventory?.pads || [], padModes: editorPadModes, patternLengths:editorPatternLengths });
     const stored = storeStudioProject(localStorage, studioLibrary, document, selectedStudioProject);
-    setStudioLibrary(stored.library);
+    updateStudioLibrary(stored.library);
     setSelectedStudioProject(stored.id);
   };
 
@@ -1223,7 +1250,7 @@ export default function App() {
     const stored = storeStudioProject(localStorage, studioLibrary, document);
     setEditorName(title.trim().toUpperCase());
     setEditorPatternBank(patternBank);
-    setStudioLibrary(stored.library);
+    updateStudioLibrary(stored.library);
     setSelectedStudioProject(stored.id);
   };
 
@@ -1231,7 +1258,7 @@ export default function App() {
     if (!selectedStudioProject) return;
     const title = window.prompt('Nouveau nom du projet :', editorName);
     if (!title?.trim()) return;
-    setStudioLibrary(renameStudioProject(localStorage, studioLibrary, selectedStudioProject, title));
+    updateStudioLibrary(renameStudioProject(localStorage, studioLibrary, selectedStudioProject, title));
     setEditorName(title.trim().toUpperCase());
   };
 
@@ -1241,7 +1268,7 @@ export default function App() {
     if (!title?.trim()) return;
     const stored = duplicateStudioProject(localStorage, studioLibrary, selectedStudioProject, title);
     if (!stored) return;
-    setStudioLibrary(stored.library);
+    updateStudioLibrary(stored.library);
     setSelectedStudioProject(stored.id);
     setEditorName(title.trim().toUpperCase());
   };
@@ -1251,13 +1278,13 @@ export default function App() {
     const record = studioLibrary.find((project) => project.id === selectedStudioProject);
     const title = String((record?.document.metadata as { title?: string } | undefined)?.title || 'ce projet');
     if (!window.confirm(`Supprimer définitivement « ${title} » de la bibliothèque locale ?`)) return;
-    setStudioLibrary(deleteStudioProject(localStorage, studioLibrary, selectedStudioProject));
+    updateStudioLibrary(deleteStudioProject(localStorage, studioLibrary, selectedStudioProject));
     setSelectedStudioProject('');
   };
 
   const archiveSelectedStudioProject = () => {
     if (!selectedStudioProject) return;
-    setStudioLibrary(archiveStudioProject(localStorage, studioLibrary, selectedStudioProject));
+    updateStudioLibrary(archiveStudioProject(localStorage, studioLibrary, selectedStudioProject));
     setSelectedStudioProject('');
   };
 
@@ -1381,7 +1408,7 @@ export default function App() {
         errors.push(`${file.name} : ${error instanceof Error ? error.message : 'fichier illisible'}`);
       }
     }
-    setStudioLibrary(library);
+    updateStudioLibrary(library);
     if (errors.length) window.alert(`${imported} projet(s) importé(s).\n${errors.length} échec(s) :\n${errors.join('\n')}`);
   };
 

@@ -204,6 +204,20 @@
   s'ils diffèrent (compteur/checksum variable dans le SysEx), le souci
   n'est plus le timing mais la stabilité de la signature, pas encore
   résolu.
+- [ ] **Projets Studio miroités sur le disque** (13 août) — Studio →
+  Enregistrer (ou Enregistrer sous, Renommer, Dupliquer) un projet, puis
+  vérifier l'apparition de
+  `/home/azoth/Musique/OP-133/studio/<id>.ep.project.json` (le dossier de
+  travail est déjà autorisé en écriture dans cette session, aucune
+  nouvelle invite attendue). Supprimer ce projet depuis l'app, vérifier
+  la disparition du fichier. Réimporter ce fichier via le bouton
+  **Importer** pour confirmer le format round-trip. Vérifier aussi que
+  l'archivage d'un projet NE supprime PAS son fichier (contrairement à la
+  suppression définitive).
+- [ ] **Badge de connexion cohérent sur le Studio** (13 août) — l'en-tête
+  du Studio doit afficher le même badge vert que la page d'accueil/Test
+  Machine/Fiche personnage une fois connecté, et un bouton `CONNECTER
+  EP‑133` seulement si déconnecté (plus l'ancien bouton toujours visible).
 - [ ] **Groupe A–D en surbrillance sur l'écran de la façade** (13 août,
   correctif) — appuyer sur un bouton physique A–D de l'EP-133 doit faire
   passer la bonne lettre en gras sur l'écran simulé de Test Machine

@@ -10,6 +10,9 @@ export interface LocalDirectoryHandle {
   values(): AsyncIterableIterator<LocalFileHandle | LocalDirectoryHandle>;
   getDirectoryHandle(name: string, options?: { create?: boolean }): Promise<LocalDirectoryHandle>;
   getFileHandle(name: string, options?: { create?: boolean }): Promise<LocalFileHandle>;
+  /** Méthode native de FileSystemDirectoryHandle, absente jusqu'ici — nécessaire
+   * pour supprimer le fichier miroir d'un projet Studio supprimé de la bibliothèque. */
+  removeEntry(name: string, options?: { recursive?: boolean }): Promise<void>;
 }
 
 interface LocalFileHandle {
@@ -97,5 +100,49 @@ export async function readPlayerProfileFile(parent: LocalDirectoryHandle): Promi
     return JSON.parse(await (await file.getFile()).text());
   } catch {
     return null;
+  }
+}
+
+const STUDIO_PROJECT_EXT = '.ep.project.json';
+
+/**
+ * Écrit un projet Studio dans `<dossier de travail>/studio/<id>.ep.project.json`
+ * — exactement le document `ep.project.v1` déjà utilisé par l'export/import
+ * existant (`exportEditorProjectJson`/`importStudioProjectFiles`), donc le
+ * fichier écrit ici est directement réimportable tel quel via le bouton
+ * Importer si `localStorage` est un jour perdu — pas besoin d'une UI de
+ * restauration dédiée. Nommé par `id` (stable, garanti unique par
+ * `randomProjectId()`), pas par titre, pour ne jamais créer de collision ni
+ * de fichier orphelin après un renommage.
+ */
+export async function writeStudioProjectFile(parent: LocalDirectoryHandle, id: string, document: object) {
+  const studio = await parent.getDirectoryHandle('studio', { create: true });
+  const file = await studio.getFileHandle(`${id}${STUDIO_PROJECT_EXT}`, { create: true });
+  const writable = await file.createWritable();
+  await writable.write(`${JSON.stringify(document, null, 2)}\n`);
+  await writable.close();
+}
+
+/** Supprime le fichier miroir d'un projet Studio (id) s'il existe. Silencieux si déjà absent. */
+export async function removeStudioProjectFile(parent: LocalDirectoryHandle, id: string) {
+  try {
+    const studio = await parent.getDirectoryHandle('studio');
+    await studio.removeEntry(`${id}${STUDIO_PROJECT_EXT}`);
+  } catch {
+    // Déjà absent (dossier studio/ jamais créé, ou fichier déjà supprimé) : rien à faire.
+  }
+}
+
+/** Ids des projets Studio déjà miroités dans `<dossier de travail>/studio/` — sert à repérer les fichiers à supprimer lors de la réconciliation (projet supprimé de la bibliothèque depuis une autre session). */
+export async function listStudioProjectFileIds(parent: LocalDirectoryHandle): Promise<string[]> {
+  try {
+    const studio = await parent.getDirectoryHandle('studio');
+    const ids: string[] = [];
+    for await (const handle of studio.values()) {
+      if (!isDirectory(handle) && handle.name.endsWith(STUDIO_PROJECT_EXT)) ids.push(handle.name.slice(0, -STUDIO_PROJECT_EXT.length));
+    }
+    return ids;
+  } catch {
+    return [];
   }
 }

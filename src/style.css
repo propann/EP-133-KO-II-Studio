@@ -329,7 +329,11 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .editor-groups button small { font:900 6px monospace; }
 .editor-groups button.active { background:var(--ko-orange); transform:translate(2px,2px); box-shadow:none; }
 .editor-midi-out { min-width:112px; background:#d9d7d1!important; font-size:9px!important; font-weight:bold!important; }
-.editor-midi-out.active { background:var(--ko-orange)!important; }
+/* Badge passif une fois connecté — même motif que .home-machine-status/
+   .profile-machine-status (pastille verte), pas un bouton cliquable. */
+.editor-midi-status { display:flex; align-items:center; gap:7px; min-width:112px; height:38px; padding:0 12px; border:2px solid var(--ko-black); border-radius:var(--radius-sm); background:#d9d7d1; font-size:9px; font-weight:bold; }
+.editor-midi-status i { width:9px; height:9px; border-radius:50%; background:var(--ko-muted); }
+.editor-midi-status.online i { background:var(--ko-green); box-shadow:0 0 8px var(--ko-green); }
 .device-scan-state { padding:5px 7px; border:1px solid var(--ko-black); border-radius:var(--radius-xs); background:#d9d7d1; font-size:7px; font-weight:bold; white-space:nowrap; }
 .device-scan-state.active { background:var(--ko-amber); }
 .editor-commandbar { flex:0 0 auto; display:flex; align-items:center; gap:7px; padding:7px 2px 9px; border-bottom:2px solid var(--ko-black); overflow-x:auto; }

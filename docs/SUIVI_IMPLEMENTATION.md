@@ -1365,6 +1365,64 @@ vrai navigateur** : l'écriture/lecture réelle de `profile.json` sur disque
 (File System Access API) n'a jamais été testée avec un vrai dossier —
 ajouté à `docs/A_VALIDER_PHYSIQUEMENT.md`.
 
+## Étape — Studio : statut machine cohérent + projets sur le disque (13 août)
+
+Suite directe du re-test réel de SCAN/CLONE : « le studio là c'est le plus
+chaud [...] il faut vraiment qu'on soit raccord machine pareil on
+sauvegarde dans les dossiers de l'ordi ». Passé par le mode Plan (plan
+détaillé dans `/home/azoth/.claude/plans/velvety-swinging-frog.md`).
+
+**Statut de connexion cohérent (`EditorToolbar.tsx`)**
+
+- [x] Le bouton `editor-midi-out` toujours visible (juste un changement de
+  texte/couleur) est remplacé par le même motif que
+  `PlayerProfilePage`/`MachineTestPage` : badge passif vert
+  (`.editor-midi-status.online`) une fois connecté, bouton `CONNECTER
+  EP‑133` affiché seulement si déconnecté. `SoundsPage`/`GameToolbar`
+  gardent volontairement l'ancien bouton — hors scope, pas demandé.
+
+**Projets Studio miroités dans le dossier de travail**
+
+Jusqu'ici, `STUDIO_LIBRARY_KEY` ne vivait qu'en `localStorage` — aucun
+projet Studio n'avait jamais été écrit sur disque, contrairement à la
+fiche personnage.
+
+- [x] `src/core/storage/localFolders.ts` : `LocalDirectoryHandle` étendu
+  avec `removeEntry` (méthode native manquante jusqu'ici) ;
+  `writeStudioProjectFile`/`removeStudioProjectFile`/`listStudioProjectFileIds`
+  — un fichier par projet, `studio/<id>.ep.project.json`, nommé par `id`
+  (stable, jamais de collision ni de fichier orphelin après renommage).
+  Même document `ep.project.v1` que l'export/import existant : un fichier
+  miroité est directement réimportable via le bouton **Importer** déjà
+  présent, pas de nouvelle UI de restauration nécessaire.
+- [x] `App.tsx` : `mirrorStudioLibraryToFolder(library)` — réconciliation
+  complète à chaque appel (écrit/actualise tous les projets, actifs et
+  archivés ; supprime les fichiers dont l'id n'est plus dans la
+  bibliothèque), best-effort et silencieux comme le miroir de la fiche
+  personnage (n'écrit que si la permission écriture est déjà acquise,
+  jamais de prompt surprise). `updateStudioLibrary(next)` devient le seul
+  point d'appel à `setStudioLibrary` — remplace les 7 appels directs
+  existants (`saveStudioProject`, `saveStudioProjectAs`,
+  `renameSelectedStudioProject`, `duplicateSelectedStudioProject`,
+  `deleteSelectedStudioProject`, `archiveSelectedStudioProject`,
+  `importStudioProjectFiles`) sans changer leur logique.
+- [x] Aucun nouveau bouton : le miroir se déclenche automatiquement sur
+  Enregistrer/Enregistrer sous/Renommer/Dupliquer/Supprimer/Archiver/
+  Importer, dès que le dossier de travail est déjà autorisé en écriture.
+
+**Hors scope, assumé** : aucun test Node dédié à l'écriture/réconciliation
+disque (File System Access API non mockable côté Node sans nouvelle
+dépendance — même limite déjà acceptée pour `writeCloneManifest`/
+`writePlayerProfile`).
+
+Vérifié : `npm run typecheck`, `npm test` (10 tests), `npm run build`
+(bundle principal +1 Ko), `npm run test:e2e` (2/2, Chromium réel). Le
+dossier de travail réel de cette session (`/home/azoth/Musique/OP-133`)
+est déjà autorisé en écriture (clone de tout à l'heure) — le premier
+enregistrement de projet Studio après ce chantier devrait donc écrire son
+fichier miroir sans nouvelle invite. **Non vérifié à l'œil** — ajouté à
+`docs/A_VALIDER_PHYSIQUEMENT.md`.
+
 ## Règle globale — tout bouton bouge au clic (13 août)
 
 Demande explicite après un test réel des boutons SCAN/CLONER : « il faut
