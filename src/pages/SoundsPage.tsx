@@ -113,11 +113,23 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
    * dernier scan complet, un seul projet). Relu en direct via
    * `/bridge/projects/read` + le décodeur déjà existant
    * (`decodeEp133ProjectTar`) à chaque changement de `targetProject`.
-   * `null` tant que la lecture n'a pas abouti (ou pour le projet déjà
-   * couvert par `inventory`) — le rendu retombe alors sur `inventory.pads`
-   * (voir `displayPads`) ; un tableau vide `[]` une fois chargé reste
-   * distinct de `null` et signifie bien « ce projet n'a aucun pad ». */
+   * `null` tant que la lecture n'a pas abouti (ou si le pont est
+   * injoignable) — le rendu retombe alors sur `inventory.pads` (voir
+   * `displayPads`) ; un tableau vide `[]` une fois chargé reste distinct
+   * de `null` et signifie bien « ce projet n'a aucun pad ». */
   const [targetProjectPads, setTargetProjectPads] = useState<Ep133PadRecord[] | null>(null);
+  /** Distinct de `targetProjectPads === null` : vrai seulement pendant la
+   * requête en vol. Sans ça, un pont injoignable (dev sans machine réelle)
+   * affichait indéfiniment « LECTURE DES PADS… » — au lieu de se taire et
+   * de retomber silencieusement sur `inventory.pads` comme partout ailleurs
+   * dans cette page quand le pont n'est pas là. */
+  const [padsLoading, setPadsLoading] = useState(false);
+  /** Incrémenté après chaque écriture SYNCHRONISER réussie pour forcer une
+   * relecture du projet visé (13 août, bug remonté : l'écriture réussissait
+   * — message « N PAD(S) ÉCRIT(S) » affiché — mais la grille restait
+   * figée sur l'état d'AVANT l'écriture, car rien ne redemandait les
+   * données au pont une fois l'écriture terminée). */
+  const [padsReloadToken, setPadsReloadToken] = useState(0);
   const [activeBank, setActiveBank] = useState<(typeof SOUND_BANKS)[number]['id']>('all');
   const [query, setQuery] = useState('');
   const [previewMissSlot, setPreviewMissSlot] = useState<number | null>(null);
@@ -190,13 +202,18 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
   /** Relit les 48 pads réels du projet sélectionné (13 août, bug remonté :
    * changer le sélecteur ne changeait pas l'affichage — chaque projet a
    * son propre jeu de pads). Même route/décodeur que ProjectTransfer pour
-   * la lecture machine → logiciel. Si le projet affiché est déjà celui du
-   * dernier scan complet (`inventory.project`), inutile de relire : on
-   * garde `inventory.pads`, plus riche (nom des sons associés, etc.) —
-   * `targetProjectPads` ne sert que pour un AUTRE projet que celui scanné. */
+   * la lecture machine → logiciel. Relit systématiquement au pont plutôt
+   * que de faire confiance à `inventory.pads` dès que le projet visé
+   * correspond au dernier scan complet : après une écriture SYNCHRONISER
+   * réussie sur CE projet, `inventory` n'a plus été rescanné et devient
+   * lui-même périmé (deuxième bug remonté le même jour : message
+   * « N PAD(S) ÉCRIT(S) » affiché mais grille restée figée sur l'état
+   * d'avant écriture) — `padsReloadToken` force cette relecture après
+   * chaque écriture, même quand `targetProject` lui-même ne change pas. */
   useEffect(() => {
-    if (targetProject === null || targetProject === inventory?.project) { setTargetProjectPads(null); return; }
+    if (targetProject === null) { setTargetProjectPads(null); setPadsLoading(false); return; }
     let cancelled = false;
+    setPadsLoading(true);
     fetch(`/bridge/projects/read?slot=${targetProject}`, { cache: 'no-store' })
       .then((response) => response.ok ? response.json() as Promise<{ tarBase64: string }> : Promise.reject())
       .then((body) => {
@@ -207,9 +224,10 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
         const archive = decodeEp133ProjectTar(bytes, `projects/P${String(targetProject).padStart(2, '0')}.tar`);
         setTargetProjectPads(archive.pads);
       })
-      .catch(() => { if (!cancelled) setTargetProjectPads(null); });
+      .catch(() => { if (!cancelled) setTargetProjectPads(null); })
+      .finally(() => { if (!cancelled) setPadsLoading(false); });
     return () => { cancelled = true; };
-  }, [targetProject, inventory?.project]);
+  }, [targetProject, padsReloadToken]);
 
   /** Ne réagit qu'aux frappes du groupe actuellement affiché — avant, une
    * frappe sur un autre groupe faisait sauter l'onglet actif en plus de
@@ -401,6 +419,10 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
       if (!response.ok) throw new Error(body.error || `Échec (${response.status}).`);
       setImportFeedback({ status: errors.length ? 'error' : 'done', message: `${pads.length} PAD(S) ÉCRIT(S) SUR P${String(activeProject).padStart(2, '0')} · CHECKPOINT ${body.checkpoint}${errors.length ? ` · ÉCHECS : ${errors.join(' · ')}` : ''}` });
       if (!errors.length) { setStagedAssignments({}); setStagedLocalPads({}); setStagedImports({}); }
+      // Force la relecture du projet visé — sinon la grille reste figée sur
+      // l'état d'avant écriture malgré le message de succès (voir commentaire
+      // sur `padsReloadToken`).
+      setPadsReloadToken((token) => token + 1);
     } catch (error) {
       setImportFeedback({ status: 'error', message: `ÉCRITURE DU PROJET ÉCHOUÉE : ${error instanceof Error ? error.message : 'erreur inconnue.'}${errors.length ? ` · SONS EN ÉCHEC : ${errors.join(' · ')}` : ''}` });
     } finally {
@@ -425,8 +447,8 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
                 {!machineProjects.length && targetProject && <option value={targetProject}>P{String(targetProject).padStart(2, '0')}</option>}
                 {machineProjects.map((entry) => <option key={entry.slot} value={entry.slot}>P{String(entry.slot).padStart(2, '0')}{entry.present ? '' : ' · VIDE'}</option>)}
               </select>
-              {targetProject !== null && targetProject !== inventory?.project
-                ? <small className="sound-target-project-status">{targetProjectPads === null ? 'LECTURE DES PADS…' : `${targetProjectPads.length} PAD(S) LU(S)`}</small>
+              {targetProject !== null && (padsLoading || targetProjectPads !== null)
+                ? <small className="sound-target-project-status">{padsLoading ? 'LECTURE DES PADS…' : `${targetProjectPads!.length} PAD(S) LU(S)`}</small>
                 : null}
             </label>
             <button className={`sound-keys-toggle ${selectedMode === 'KEYS' ? 'active' : ''}`} onClick={() => onPadModeChange(activeGroup, selectedPad - 1, selectedMode === 'KEYS' ? 'ONE' : 'KEYS')}><b>KEYS</b><small>{activeGroup} · {EP133_PADS[selectedPad - 1].key}</small></button>

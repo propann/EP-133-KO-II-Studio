@@ -299,16 +299,20 @@
   seuls, cellules de grille à bordure partielle) — à relire à l'œil pour
   confirmer qu'aucun angle ne reste incohérent avec le reste de l'interface.
 
-- [ ] **GROUPES & PADS suit le projet sélectionné, pas seulement le
-  dernier scan** (13 août, correctif) — dans Sons & Transfert, choisir
-  dans le sélecteur un projet **différent** du dernier scanné doit
-  afficher les 48 pads réels de CE projet (relecture via
-  `/bridge/projects/read`, indicateur « LECTURE DES PADS… » puis
-  « N PAD(S) LU(S) » sous le sélecteur) — pas ceux du projet
-  précédemment scanné. Revenir au projet du dernier scan doit réafficher
-  instantanément (pas de relecture réseau nécessaire dans ce cas précis).
-  Vérifier aussi que le comptage par onglet de groupe (A/B/C/D, « X/12 »)
-  change bien avec le projet sélectionné.
+- [x] **GROUPES & PADS suit le projet sélectionné, pas seulement le
+  dernier scan** (13 août, correctif) — confirmé par l'utilisateur :
+  « le sélecteur de projets marche parfaitement ».
+- [ ] **La grille se resynchronise après une écriture SYNCHRONISER
+  réussie** (13 août, correctif du même jour) — premier test réel (écrit
+  sur P02, « 1 PAD(S) ÉCRIT(S) » affiché) a montré que la grille restait
+  figée sur l'état d'avant écriture malgré le succès annoncé ; corrigé en
+  forçant une relecture (`/bridge/projects/read`) juste après chaque
+  écriture réussie, plus systématiquement à chaque sélection de projet
+  (retiré le raccourci qui faisait confiance à `inventory.pads` quand le
+  projet visé égalait le dernier scan). À revérifier : écrire une
+  réaffectation ou un son sur un pad, confirmer, et voir la grille
+  refléter IMMÉDIATEMENT le nouveau slot sur ce pad sans avoir à changer
+  de sélecteur ni relancer un SCAN.
 
 ## Règle de suivi
 

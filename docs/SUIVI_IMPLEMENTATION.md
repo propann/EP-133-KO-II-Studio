@@ -1832,3 +1832,36 @@ Vérifié : `npm run typecheck`, `npm test` (10 tests), `npm run build`,
 navigateur** (changer le sélecteur de projet et vérifier que la grille
 affiche bien les pads du BON projet, avec un projet réellement différent
 du dernier scanné) — ajouté à `docs/A_VALIDER_PHYSIQUEMENT.md`.
+
+### La grille ne se resynchronisait pas après une écriture réussie (13 août, même jour, testé en vrai)
+
+Testé en vrai par l'utilisateur sur P02 : SYNCHRONISER a bien écrit (« 1
+PAD(S) ÉCRIT(S) SUR P02 · CHECKPOINT … » affiché, sélecteur de projet
+confirmé fonctionner parfaitement) — mais la grille GROUPES & PADS restait
+figée sur l'état d'AVANT l'écriture. Cause : `targetProjectPads` n'était
+relu que quand `targetProject` changeait (effet précédent) ; une écriture
+réussie sur le projet déjà affiché ne déclenchait aucune nouvelle lecture,
+et pire, quand le projet visé était le même que celui du dernier scan
+(`inventory.project`), l'effet sautait carrément la lecture bord (pour
+« économiser » un aller-retour) et retombait sur `inventory.pads` —
+devenu périmé par l'écriture elle-même, sans que rien ne le sache.
+
+- [x] `SoundsPage.tsx` : la condition « si `targetProject === inventory.project`,
+  ne pas relire » est supprimée — l'effet relit désormais systématiquement
+  au pont (`/bridge/projects/read`) dès qu'un projet est sélectionné, quel
+  qu'il soit. `inventory.pads` ne sert plus que de repli pendant le tout
+  premier chargement ou si le pont est injoignable.
+- [x] Nouvel état `padsReloadToken`, incrémenté à la fin d'un
+  `requestSync` réussi ; ajouté aux dépendances de l'effet de lecture pour
+  forcer une relecture immédiate du projet visé — sans attendre un
+  changement de sélecteur. La grille reflète donc l'état réel de la
+  machine juste après le message de succès, pas seulement après un
+  aller-retour sur le sélecteur.
+- [x] Nouvel état `padsLoading` séparé de `targetProjectPads === null` :
+  évite qu'un pont durablement injoignable (développement sans machine)
+  affiche indéfiniment « LECTURE DES PADS… » au lieu de se taire et de
+  retomber silencieusement sur `inventory.pads` comme le reste de la page.
+
+Vérifié : `npm run typecheck`, `npm test` (10 tests), `npm run build`,
+`npm run test:e2e` (2/2). Pas encore reclique en vrai après ce correctif —
+ajouté à `docs/A_VALIDER_PHYSIQUEMENT.md`.
