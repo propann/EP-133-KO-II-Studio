@@ -1234,3 +1234,27 @@ Vérifié : `npm run typecheck`, `npm test` (9 tests), `npm run build`,
 réel du tout premier octroi SysEx (avec ou sans invite navigateur, avec ou
 sans geste) n'a jamais été observé dans un vrai navigateur — ajouté à
 `docs/A_VALIDER_PHYSIQUEMENT.md`.
+
+## Correctif — l'écran affichait toujours « C » en surbrillance, jamais le vrai groupe (13 août)
+
+Remonté par l'utilisateur en testant en réel (« faut aligner A B C D sur
+l'écran aussi »). L'écran OLED simulé (`.display-groups`) affichait
+`A / B / C(gras) / D` en dur depuis le début — le groupe D en gras ne
+reflétait jamais réellement quel groupe A–D était actif sur la machine,
+qu'il vienne d'un bouton physique A–D ou d'une sélection depuis le Studio.
+
+- [x] `App.tsx` suit déjà `machineGroup` (mis à jour par la notification
+  SysEx des boutons physiques A–D, et par toute sélection depuis le
+  Studio/Sons & Transfert) — transmis en nouvelle prop à `MachineTestPage`.
+- [x] `MachineTestPage.tsx` : `.display-groups` met désormais en
+  surbrillance la lettre qui correspond réellement à `machineGroup`, au
+  lieu du « C » figé.
+- [x] Cliquer un bouton de groupe A–D **sur cette page** met aussi à jour
+  l'état partagé (`setMachineGroup`) après confirmation de la machine —
+  avant, ce clic passait par `midi.selectMachineGroup` directement, sans
+  jamais remonter vers l'état global ; les autres pages (Studio, Sons &
+  Transfert) ne voyaient donc jamais ce changement.
+
+Vérifié : `npm run typecheck`, `npm test` (9 tests), `npm run build`,
+`npm run test:e2e` (2/2, Chromium réel). Non vérifié avec un vrai bouton
+physique A–D — ajouté à `docs/A_VALIDER_PHYSIQUEMENT.md`.

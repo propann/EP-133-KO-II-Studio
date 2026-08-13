@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { MidiObservation } from '../core/midi/useWebMidi';
 import { MIDI_CONTROL_MAP_STORAGE_KEY, midiObservationSignature, loadControlAssignments, type ControlAssignment } from '../core/midi/controlMapping';
+import type { EditorGroup } from '../core/project/exporters.ts';
 
 interface MachineTestPageProps {
   connected: boolean;
   sysexEnabled: boolean;
   inputNames: string[];
   observations: MidiObservation[];
+  /** Groupe actif réel (physique A–D ou dernière sélection depuis le
+   * Studio/Sons & Transfert) — affiché en surbrillance sur l'écran de la
+   * façade, au lieu du « C » figé qu'il y avait avant. */
+  machineGroup: EditorGroup;
   onBack: () => void;
   onSendLearned: (data: number[]) => boolean;
   onSelectMachineGroup: (groupIndex: number) => Promise<number>;
@@ -53,7 +58,7 @@ function truncateHex(hex: string, max = 21) {
   return hex.length > max ? `${hex.slice(0, max)}…` : hex;
 }
 
-export function MachineTestPage({ connected, sysexEnabled, inputNames, observations, onBack, onSendLearned, onSelectMachineGroup }: MachineTestPageProps) {
+export function MachineTestPage({ connected, sysexEnabled, inputNames, observations, machineGroup, onBack, onSendLearned, onSelectMachineGroup }: MachineTestPageProps) {
   const [selectedControl, setSelectedControl] = useState<string | null>(null);
   const [configureMode, setConfigureMode] = useState(false);
   const [sendNotice, setSendNotice] = useState('');
@@ -149,7 +154,7 @@ export function MachineTestPage({ connected, sysexEnabled, inputNames, observati
         <div className="ep133-ports"><span>OUTPUT</span><span className="orange">INPUT</span><span>SYNC</span><span>MIDI</span><span>USB</span><span>POWER</span></div>
         <div className="ep133-brand-panel"><div><b>K.O. II</b><small>サンプラー</small><span>64 MB SAMPLER COMPOSER</span></div><i aria-hidden="true" /></div>
         <div className="ep133-display">
-          <div className="display-groups">A<br />B<br /><b>C</b><br />D</div>
+          <div className="display-groups">{(['A', 'B', 'C', 'D'] as const).map((label) => <span key={label}>{label === machineGroup ? <b>{label}</b> : label}</span>)}</div>
           <div className="ep133-display-journal" aria-label="Journal MIDI affiché sur l’écran de l’EP-133">
             {observations.length
               ? observations.slice(0, 3).map((message, index) => <p className={index === 0 ? 'latest' : ''} key={`${message.timestamp}-${index}`}><b>{message.kind.slice(0, 3).toUpperCase()}</b><code>{truncateHex(message.hex)}</code></p>)

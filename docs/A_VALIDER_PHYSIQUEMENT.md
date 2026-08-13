@@ -164,6 +164,12 @@
   — vérifier que le cadre vert `CONNECTÉ`/`MIDI + SYSEX` apparaît bien à
   la même place que l'ancien bouton, avec la même logique de couleur que
   la page d'accueil.
+- [ ] **Groupe A–D en surbrillance sur l'écran de la façade** (13 août,
+  correctif) — appuyer sur un bouton physique A–D de l'EP-133 doit faire
+  passer la bonne lettre en gras sur l'écran simulé de Test Machine
+  (jamais vérifié avec un vrai bouton) ; cliquer un bouton de groupe
+  A–D sur cette page doit aussi mettre à jour le groupe visible sur les
+  autres pages (Studio, Sons & Transfert) sans recharger.
 - [ ] **Statut de connexion identique sur toutes les pages** (13 août,
   correctif) — brancher/connecter l'EP-133 depuis une page, puis naviguer
   vers Accueil, Test Machine, Sons & Transfert, Fiche personnage, Studio
