@@ -8,7 +8,6 @@ interface MachineTestPageProps {
   inputNames: string[];
   observations: MidiObservation[];
   onBack: () => void;
-  onConnect: () => void;
   onSendLearned: (data: number[]) => boolean;
   onSelectMachineGroup: (groupIndex: number) => Promise<number>;
 }
@@ -54,7 +53,7 @@ function truncateHex(hex: string, max = 21) {
   return hex.length > max ? `${hex.slice(0, max)}…` : hex;
 }
 
-export function MachineTestPage({ connected, sysexEnabled, inputNames, observations, onBack, onConnect, onSendLearned, onSelectMachineGroup }: MachineTestPageProps) {
+export function MachineTestPage({ connected, sysexEnabled, inputNames, observations, onBack, onSendLearned, onSelectMachineGroup }: MachineTestPageProps) {
   const [selectedControl, setSelectedControl] = useState<string | null>(null);
   const [configureMode, setConfigureMode] = useState(false);
   const [sendNotice, setSendNotice] = useState('');
@@ -134,7 +133,7 @@ export function MachineTestPage({ connected, sysexEnabled, inputNames, observati
     <header className="machine-test-header">
       <button className="home-back" onClick={onBack}>← ACCUEIL</button>
       <div><small>DIAGNOSTIC EN LECTURE SEULE</small><h1>TEST MACHINE</h1></div>
-      <button className={sysexEnabled ? 'connected' : ''} onClick={onConnect}>{sysexEnabled ? 'MIDI + SYSEX ✓' : connected ? 'ACTIVER MIDI + SYSEX' : 'CONNECTER L’EP‑133'}</button>
+      <div className={`home-machine-status ${connected ? 'online' : ''}`}><i className={connected ? 'online' : ''} /><span>{sysexEnabled ? 'MIDI + SYSEX' : connected ? 'CONNECTÉ' : 'EP‑133 PRÊT À CONNECTER'}</span></div>
     </header>
 
     <section className="machine-test-help">
@@ -189,15 +188,14 @@ export function MachineTestPage({ connected, sysexEnabled, inputNames, observati
           <div className="play-control">{machineButton('function', 'PLAY', 'play-button')}</div>
         </div>
       </section>
-
-      <aside className="midi-event-monitor">
-        <header><div><small>TRACES REÇUES</small><h2>JOURNAL MIDI</h2></div><b>{observations.length}</b></header>
-        <p className="midi-event-hint">{observations.length ? 'Les derniers messages s’affichent en direct sur l’écran de l’EP‑133 ci-contre.' : 'Connecte la machine puis actionne un contrôle. Les messages apparaîtront sur l’écran de l’EP‑133, y compris le SysEx autorisé par le navigateur.'}</p>
-        <button className="midi-event-export" disabled={!observations.length} onClick={() => downloadDiagnosticLog({ connected, sysexEnabled, inputNames, observations })}>⬇ TÉLÉCHARGER LE JOURNAL DE DIAGNOSTIC</button>
-        {Boolean(observations.length) && <small className="machine-test-notice">Relis le fichier avant de le partager — il inclut les noms des ports MIDI détectés.</small>}
-      </aside>
     </div>
 
-    <footer className="machine-test-footer"><span>{Object.keys(assignments).length} CONTRÔLE(S) CARTOGRAPHIÉ(S)</span><button onClick={() => { localStorage.removeItem(MIDI_CONTROL_MAP_STORAGE_KEY); setAssignments({}); setSelectedControl(null); }}>EFFACER LA CARTOGRAPHIE</button></footer>
+    <footer className="machine-test-footer">
+      <span>{Object.keys(assignments).length} CONTRÔLE(S) CARTOGRAPHIÉ(S)</span>
+      <div className="machine-test-footer-actions">
+        <button disabled={!observations.length} title="Relis le fichier avant de le partager — il inclut les noms des ports MIDI détectés." onClick={() => downloadDiagnosticLog({ connected, sysexEnabled, inputNames, observations })}>⬇ JOURNAL DE DIAGNOSTIC · {observations.length}</button>
+        <button onClick={() => { localStorage.removeItem(MIDI_CONTROL_MAP_STORAGE_KEY); setAssignments({}); setSelectedControl(null); }}>EFFACER LA CARTOGRAPHIE</button>
+      </div>
+    </footer>
   </main>;
 }

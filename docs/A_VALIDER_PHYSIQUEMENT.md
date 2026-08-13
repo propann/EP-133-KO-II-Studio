@@ -146,6 +146,24 @@
   verte, le souci n'est plus le filtre par nom (corrigé) mais
   potentiellement `onstatechange` qui ne se déclenche pas sur ce
   navigateur/cette machine — à investiguer en conditions réelles.
+- [ ] **Connexion SysEx automatique dès l'ouverture** (13 août) — deux cas
+  à observer séparément dans un vrai navigateur : (1) après avoir déjà
+  autorisé le SysEx une première fois (via un bouton CONNECTER), recharger
+  la page ou revenir plus tard doit connecter la machine sans aucun clic ;
+  (2) sur un navigateur/profil n'ayant JAMAIS autorisé le SysEx pour ce
+  site, vérifier ce qui se passe réellement à l'ouverture (invite native
+  affichée sans clic ? rien ne se passe et il faut un bouton CONNECTER
+  ailleurs pour déclencher la demande ?) — comportement jamais observé,
+  seulement raisonné.
+- [ ] **Journal MIDI uniquement sur l'écran + bouton téléchargement dans
+  le pied de page** (13 août) — page Test Machine : plus de panneau
+  JOURNAL MIDI à droite ; le bouton `⬇ JOURNAL DE DIAGNOSTIC · N` doit
+  apparaître dans le pied de page, désactivé tant qu'aucun message n'est
+  reçu, actif et fonctionnel une fois des messages arrivés.
+- [ ] **Bouton d'en-tête Test Machine remplacé par la pastille** (13 août)
+  — vérifier que le cadre vert `CONNECTÉ`/`MIDI + SYSEX` apparaît bien à
+  la même place que l'ancien bouton, avec la même logique de couleur que
+  la page d'accueil.
 - [ ] **Statut de connexion identique sur toutes les pages** (13 août,
   correctif) — brancher/connecter l'EP-133 depuis une page, puis naviguer
   vers Accueil, Test Machine, Sons & Transfert, Fiche personnage, Studio

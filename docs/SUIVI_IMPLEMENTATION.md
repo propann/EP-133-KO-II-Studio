@@ -1176,3 +1176,61 @@ Vérifié : `npm run typecheck`, `npm test` (9 tests), `npm run build`,
 `npm run test:e2e` (2/2, Chromium réel) — tous au vert. Reste à confirmer
 en vrai navigateur, avec la machine branchée, que le statut est
 maintenant identique sur toutes les pages en même temps.
+
+## Étape — connexion SysEx automatique, journal MIDI retiré, bouton Test Machine remplacé par la pastille (13 août)
+
+Trois demandes liées reçues à la suite, en continuation directe des deux
+correctifs ci-dessus.
+
+**Connexion SysEx automatique dès l'ouverture**
+
+- [x] `useWebMidi.ts` : l'effet de détection automatique au montage
+  n'utilise plus une demande `{sysex:false}` séparée et bridée — il
+  appelle désormais directement `connectWithInputScope(false)`, exactement
+  le même chemin que le bouton CONNECTER manuel (entrées + sorties +
+  abonnement aux événements FILE). Si le navigateur a déjà autorisé le
+  SysEx pour ce site (visite précédente), la machine apparaît connectée
+  sans aucun clic. Si l'autorisation n'a jamais été accordée, la tentative
+  échoue silencieusement (ou déclenche l'invite native du navigateur selon
+  le moteur) et les boutons CONNECTER restants (Sons & Transfert, Studio,
+  Rhythm Hero) servent de repli pour le premier geste explicite.
+- [x] Garde-fou ajouté (`autoConnectAttemptedRef`) contre le double appel
+  à `requestMIDIAccess` que React StrictMode déclenche en développement
+  (deux invocations synchrones du même effet, avant que la première
+  résolution n'ait eu le temps de remplir `accessRef`).
+- [x] `npm run test:e2e` repasse par ce nouveau chemin sans modification
+  du mock (qui ignore déjà l'objet d'options `{sysex}`) — 2/2 toujours au
+  vert, y compris le scénario « EP-133 déjà autorisé ».
+
+**Journal MIDI retiré du panneau latéral (déjà sur l'écran de la façade)**
+
+- [x] `MachineTestPage.tsx` : l'`<aside className="midi-event-monitor">`
+  disparaît entièrement — le journal vit maintenant uniquement sur l'écran
+  OLED simulé (ajouté à l'étape précédente). Le bouton de téléchargement du
+  journal de diagnostic (R-20) est relocalisé dans le pied de page, à côté
+  d'EFFACER LA CARTOGRAPHIE, avec le compteur affiché dans son libellé et
+  le rappel « relis avant de partager » conservé en `title` (infobulle).
+  `.machine-test-layout` passe d'une grille à deux colonnes à une mise en
+  page centrée à une seule colonne (façade seule). CSS mort supprimé
+  (`.midi-event-monitor`, `.midi-event-hint`, `.midi-event-export` et
+  sous-règles).
+
+**Bouton « ACTIVER MIDI + SYSEX » remplacé par la pastille de la page d'accueil**
+
+- [x] Le bouton cliquable de l'en-tête Test Machine est remplacé par le
+  même composant de statut passif que la page d'accueil
+  (`.home-machine-status`/`.online`, réutilisé tel quel) — cadre vert +
+  « CONNECTÉ »/« MIDI + SYSEX » une fois connecté, plus de clic possible
+  sur cette page. Le prop `onConnect` (qui déclenchait
+  `midi.connectMonitor()`, le mode « surveiller tous les ports MIDI » y
+  compris non-EP133) est retiré de `MachineTestPageProps` et de son
+  câblage dans `App.tsx` — capacité de diagnostic annexe perdue de l'UI,
+  acceptée sciemment : la connexion automatique ci-dessus couvre le cas
+  normal, et les autres pages gardent un bouton CONNECTER classique pour
+  le premier geste explicite si besoin.
+
+Vérifié : `npm run typecheck`, `npm test` (9 tests), `npm run build`,
+`npm run test:e2e` (2/2, Chromium réel) — tous au vert. Le comportement
+réel du tout premier octroi SysEx (avec ou sans invite navigateur, avec ou
+sans geste) n'a jamais été observé dans un vrai navigateur — ajouté à
+`docs/A_VALIDER_PHYSIQUEMENT.md`.

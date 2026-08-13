@@ -88,6 +88,10 @@ export function useWebMidi(
     outputNames: [],
   });
   const accessRef = useRef<MIDIAccess | null>(null);
+  // Empêche un double appel à requestMIDIAccess en développement (React
+  // StrictMode invoque les effets deux fois de suite sur la même instance ;
+  // accessRef n'est encore rempli qu'après la résolution du premier appel).
+  const autoConnectAttemptedRef = useRef(false);
   const monitorAllInputsRef = useRef(false);
   const requestIdRef = useRef(0x300);
   const pendingFileRequestsRef = useRef(new Map<number, { resolve: (data: number[]) => void; reject: (error: Error) => void; timer: number }>());
@@ -226,25 +230,21 @@ export function useWebMidi(
   const connect = useCallback(() => connectWithInputScope(false), [connectWithInputScope]);
   const connectMonitor = useCallback(() => connectWithInputScope(true), [connectWithInputScope]);
 
-  /** Détection automatique des ports MIDI standard déjà autorisés par le
-   * navigateur. La demande SysEx complète reste déclenchée par le bouton
-   * CONNECTER, mais les pads sont détectés dès l'ouverture de l'application. */
+  /** Connexion automatique complète (SysEx inclus) dès l'ouverture de
+   * l'application, en réutilisant exactement le même chemin que le bouton
+   * CONNECTER manuel. Si le navigateur a déjà autorisé le SysEx pour ce
+   * site (visite précédente), il ne redemande rien et la machine apparaît
+   * connectée sans aucun clic. Si l'autorisation n'a jamais été accordée,
+   * cette tentative échoue silencieusement (ou déclenche l'invite native
+   * du navigateur selon le moteur) — le bouton CONNECTER de chaque page
+   * reste alors le repli pour le premier geste explicite. Non vérifié en
+   * conditions réelles pour un tout premier accès jamais autorisé — voir
+   * docs/A_VALIDER_PHYSIQUEMENT.md. */
   useEffect(() => {
-    if (!navigator.requestMIDIAccess) return;
-    let cancelled = false;
-    void navigator.requestMIDIAccess({ sysex: false }).then(async (access) => {
-      if (cancelled || accessRef.current) return;
-      accessRef.current = access;
-      await Promise.all([attachInputs(access, false, false), attachOutputs(access)]);
-      access.onstatechange = () => { void attachInputs(access, false, false); void attachOutputs(access); };
-      if ([...access.inputs.values()].some((input) => isEp133MidiPort(input.name))) {
-        setState((current) => ({ ...current, status: `MIDI standard détecté : ${[...access.inputs.values()].filter((input) => isEp133MidiPort(input.name)).map((input) => input.name || 'EP-133').join(' + ')}` }));
-      }
-    }).catch(() => {
-      // L'autorisation automatique peut être refusée : le bouton manuel reste disponible.
-    });
-    return () => { cancelled = true; };
-  }, [attachInputs, attachOutputs]);
+    if (!navigator.requestMIDIAccess || autoConnectAttemptedRef.current) return;
+    autoConnectAttemptedRef.current = true;
+    void connectWithInputScope(false);
+  }, [connectWithInputScope]);
 
   const sendPad = useCallback((pad: number, groupIndex: number, velocity = 100, timestamp = performance.now(), durationMs = 90) => {
     const note = PAD_MIDI_NOTES[pad] + groupIndex * 12;
