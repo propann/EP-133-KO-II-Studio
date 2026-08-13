@@ -539,6 +539,18 @@ Le futur outil OP-1 reprendra la page d'accueil et les briques génériques, mai
 gardera son protocole, ses moteurs et ses formats dans un module indépendant.
 Voir [VISION_OP1.md](VISION_OP1.md).
 
+## Phase 8 — service hébergé et payant (piste, non décidée)
+
+Demande explorée le 13 août : compte utilisateur sécurisé, abonnement
+PayPal (~2 €/mois), déployable via Coolify, pour accéder à une partie du
+Studio en ligne. **Périmètre volontairement non tranché** — le matériel
+reste local à l'ordinateur de chacun (Web MIDI, pont Python), donc
+« qu'est-ce qui est payant ? » dépend d'un choix produit encore ouvert.
+Voir [SERVICE_PAYANT.md](SERVICE_PAYANT.md) pour les options posées et les
+principes de sécurité (paiement, comptes) déjà actés indépendamment du
+choix final. Le Studio gratuit et local actuel n'est pas remis en cause
+par cette piste.
+
 ## Fonctions de DAW reportées
 
 Ces fonctions sont utiles, mais ne doivent pas retarder la solidité : console de
