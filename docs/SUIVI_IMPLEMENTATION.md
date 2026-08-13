@@ -1596,6 +1596,62 @@ supposition présentée comme confirmée.
 Vérifié : exécution réelle contre la machine, relecture octet à octet
 intégrée au script, et confirmation humaine directe sur la machine.
 
+## Sons & Transfert : glisser-déposer de projets machine ↔ logiciel (13 août)
+
+Demande avec un croquis d'interaction assez précis : deux colonnes (projets
+machine / démos + bibliothèque), glisser-déposer avec des flèches discrètes
+sur les bords des cartes, panneau de transferts en attente en dessous.
+Clarifié avant de planifier (mode Plan) : le glisser-déposer **prépare**
+le transfert, une confirmation explicite séparée écrit réellement — jamais
+au relâchement de la carte.
+
+**Deux lacunes comblées pour que ce soit possible** :
+1. Aucune liste live des projets machine n'existait — `machineProjectDocument`
+   (dialogue « PROJETS MACHINE » d'`EditorToolbar.tsx`) est un fichier
+   statique, un seul projet jamais « disponible ».
+2. L'écriture réelle (`compile_project` + `FileClient`) n'existe qu'en
+   Python — porter ce compilateur binaire en TypeScript aurait été un
+   chantier à part et un risque de divergence avec une implémentation déjà
+   validée à la main. Choix : étendre le pont local déjà en place plutôt
+   que réinventer.
+
+- [x] `tools/send_project_to_machine.py` refactorisé : `checkpoint_project`/
+  `write_project_verified` extraites en fonctions réutilisables (avant :
+  logique dupliquée dans `cmd_write`/`cmd_copy_project`/`cmd_restore`),
+  importées telles quelles par le pont plutôt que dupliquées.
+- [x] `tools/local_clone_bridge.py` : trois nouvelles routes,
+  `GET /projects/list`, `GET /projects/read?slot=N`, `POST /projects/write`
+  — détail dans `docs/PONT_LOCAL_CLONAGE.md`. **Testées en réel contre la
+  machine** : liste des 9 slots correcte, lecture de P01 identique aux
+  68 096 octets déjà connus, écriture d'un document de test sur P09 via
+  HTTP (checkpoint + relecture octet à octet + activation, même résultat
+  que le CLI).
+- [x] `src/components/shared/ProjectTransfer.tsx` (nouveau) : deux
+  colonnes glissables (`draggable`/`onDragStart`/`onDrop`), flèches
+  discrètes en CSS pur (pas de nouvelle logique JS, surbrillance au survol),
+  panneau « TRANSFERTS EN ATTENTE » avec confirmation explicite —
+  `window.confirm` listant les emplacements machine qui seront remplacés
+  avant tout envoi réel. Direction machine → logiciel réutilise
+  `decodeEp133ProjectTar`/`ep133ArchiveProjectToDocument` (`importers.ts`,
+  décodeur déjà existant pour `.pak`/`.ppak` — aucun nouveau parseur binaire).
+- [x] `SoundsPage.tsx`/`App.tsx` : nouvelles props (`demoProjects`,
+  `localProjects`, `onGetProjectDocument`, `onImportMachineProject`) —
+  l'import machine → bibliothèque locale passe par `storeStudioProject` +
+  `updateStudioLibrary`, donc déjà relié au miroir disque (chantier Studio
+  précédent).
+
+**Non fait volontairement cette session** : pas de bouton pour lancer un
+vrai transfert avec un vrai projet Studio complet (seulement testé avec un
+document minimal côté HTTP) — à faire lors du prochain test réel avec
+l'utilisateur.
+
+Vérifié : `npm run typecheck`, `npm test` (10 tests), `npm run build`
+(bundle principal +8 Ko), `npm run test:e2e` (2/2). Routes du pont testées
+en réel (voir ci-dessus) via `curl`, à travers le proxy Vite
+(`localhost:5174/bridge/projects/list`) — confirmé identique à un appel
+direct au pont. **L'interface de glisser-déposer elle-même n'a jamais été
+cliquée dans un vrai navigateur** — ajouté à `docs/A_VALIDER_PHYSIQUEMENT.md`.
+
 ## Règle globale — tout bouton bouge au clic (13 août)
 
 Demande explicite après un test réel des boutons SCAN/CLONER : « il faut

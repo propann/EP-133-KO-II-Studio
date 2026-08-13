@@ -58,6 +58,29 @@ def now_stamp() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 
+def checkpoint_project(client: "FileClient", slot: int, checkpoints_dir: Path, tag: str = "") -> tuple[bytes, Path]:
+    """Lit l'état actuel d'un slot et l'écrit tel quel dans checkpoints/
+    avant toute écriture — fonction réutilisée par toutes les commandes
+    d'écriture de ce script ET par le pont local (tools/local_clone_bridge.py,
+    routes /projects/*), pour ne jamais dupliquer cette étape critique."""
+    checkpoints_dir.mkdir(parents=True, exist_ok=True)
+    current_bytes, _meta = client.read_project_archive(slot)
+    suffix = f"-{tag}" if tag else ""
+    checkpoint_path = checkpoints_dir / f"P{slot:02d}-avant{suffix}-{now_stamp()}.tar"
+    checkpoint_path.write_bytes(current_bytes)
+    return current_bytes, checkpoint_path
+
+
+def write_project_verified(client: "FileClient", slot: int, tar_bytes: bytes) -> None:
+    """Écrit un slot puis relit immédiatement pour vérifier octet à octet
+    — lève RuntimeError si la relecture diverge, avant toute activation.
+    Même fonction réutilisée par le CLI et par le pont local."""
+    client.write_project_archive(slot, tar_bytes)
+    written_bytes, _meta = client.read_project_archive(slot)
+    if written_bytes != tar_bytes:
+        raise RuntimeError("relecture différente de ce qui a été écrit — abandon avant toute activation")
+
+
 def describe_archive(tar_bytes: bytes) -> dict[str, int]:
     """Nom -> taille pour chaque membre fichier (ignore les entrées répertoire, typeflag '5')."""
     members = {}
@@ -209,17 +232,15 @@ def cmd_copy_project(args: argparse.Namespace) -> None:
     print(f"   -> {len(source_bytes)} octets, meta={source_meta}")
 
     print(f"2) Lecture de l'état actuel du slot cible P{args.to_slot:02d} (checkpoint avant écriture)…")
-    current_bytes, _meta = client.read_project_archive(args.to_slot)
-    checkpoint_path = checkpoints_dir / f"P{args.to_slot:02d}-avant-copie-{now_stamp()}.tar"
-    checkpoint_path.write_bytes(current_bytes)
+    _current_bytes, checkpoint_path = checkpoint_project(client, args.to_slot, checkpoints_dir, tag="copie")
     print(f"   -> Checkpoint : {checkpoint_path}")
 
     print(f"3) Écriture de P{args.from_slot:02d} tel quel dans P{args.to_slot:02d} (write_project_archive)…")
-    client.write_project_archive(args.to_slot, source_bytes)
-    written_bytes, _meta = client.read_project_archive(args.to_slot)
-    if written_bytes != source_bytes:
+    try:
+        write_project_verified(client, args.to_slot, source_bytes)
+    except RuntimeError as error:
         print(
-            "   -> ÉCHEC : la relecture ne correspond PAS à ce qui a été écrit.\n"
+            f"   -> ÉCHEC : {error}\n"
             f"   Restaure avec : python3 tools/send_project_to_machine.py restore --slot {args.to_slot} --from {checkpoint_path}",
             file=sys.stderr,
         )
@@ -286,9 +307,7 @@ def cmd_write(args: argparse.Namespace) -> None:
 
     client = FileClient()
     print(f"1) Lecture de l'état actuel du slot P{args.slot:02d} (nouveau checkpoint avant écriture)…")
-    current_bytes, _meta = client.read_project_archive(args.slot)
-    checkpoint_path = checkpoints_dir / f"P{args.slot:02d}-avant-{now_stamp()}.tar"
-    checkpoint_path.write_bytes(current_bytes)
+    current_bytes, checkpoint_path = checkpoint_project(client, args.slot, checkpoints_dir)
     print(f"   -> Checkpoint : {checkpoint_path}")
 
     print("2) Compilation du document de test (base = état actuel du slot)…")
@@ -297,14 +316,12 @@ def cmd_write(args: argparse.Namespace) -> None:
     print(f"   -> {len(compiled)} octets")
 
     print(f"3) Écriture du slot P{args.slot:02d} (write_project_archive)…")
-    client.write_project_archive(args.slot, compiled)
-    print("   -> Écrit.")
-
     print("4) Relecture immédiate pour vérification octet à octet (avant toute activation)…")
-    written_bytes, _meta = client.read_project_archive(args.slot)
-    if written_bytes != compiled:
+    try:
+        write_project_verified(client, args.slot, compiled)
+    except RuntimeError as error:
         print(
-            "   -> ÉCHEC : la relecture ne correspond PAS à ce qui a été écrit.\n"
+            f"   -> ÉCHEC : {error}\n"
             f"   Restaure immédiatement avec :\n"
             f"   python3 tools/send_project_to_machine.py restore --slot {args.slot} --from {checkpoint_path}",
             file=sys.stderr,
@@ -328,10 +345,10 @@ def cmd_restore(args: argparse.Namespace) -> None:
 
     client = FileClient()
     print(f"Restauration du slot P{args.slot:02d} depuis {checkpoint_path} ({len(tar_bytes)} octets)…")
-    client.write_project_archive(args.slot, tar_bytes)
-    written_bytes, _meta = client.read_project_archive(args.slot)
-    if written_bytes != tar_bytes:
-        print("ÉCHEC : la relecture après restauration ne correspond pas au checkpoint.", file=sys.stderr)
+    try:
+        write_project_verified(client, args.slot, tar_bytes)
+    except RuntimeError as error:
+        print(f"ÉCHEC : {error}", file=sys.stderr)
         sys.exit(1)
     print("Écriture vérifiée octet à octet. Activation (reload_project)…")
     result = client.reload_project(args.slot)

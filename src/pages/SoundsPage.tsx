@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { analyzeWavBuffer, type WavAnalysisReport } from '../core/audio/wavAnalysis';
 import { WaveformTrim, type WaveformTrimSelection, type SoundPrepMetadata } from '../components/shared/WaveformTrim';
+import { ProjectTransfer } from '../components/shared/ProjectTransfer';
 import type { EditorGroup, EditorPadMode } from '../core/project/exporters';
 import type { DeviceInventory, DeviceSoundIndex } from '../core/project/device';
 import { loadDeviceProfile } from '../core/project/deviceProfile';
@@ -34,6 +35,11 @@ interface SoundsPageProps {
   localLibraryFolderName: string;
   localLibraryNeedsReconnect: boolean;
   onReconnectLocalLibrary: () => void;
+  /** Glisser-déposer de projets machine ↔ logiciel (13 août) — voir ProjectTransfer.tsx. */
+  demoProjects: ReadonlyArray<{ id: string; title: string }>;
+  localProjects: ReadonlyArray<{ id: string; title: string }>;
+  onGetProjectDocument: (origin: 'demo' | 'local', id: string) => Promise<Record<string, unknown> | null>;
+  onImportMachineProject: (document: Record<string, unknown>, suggestedTitle: string) => void;
 }
 
 const GROUPS: EditorGroup[] = ['A', 'B', 'C', 'D'];
@@ -68,7 +74,7 @@ async function readLocalEntries(dir: LocalDirectoryHandle): Promise<LocalEntry[]
 const bankForSlot = (slot: number) => SOUND_BANKS.slice(1).find((bank) => slot >= bank.from && slot <= bank.to) || SOUND_BANKS[10];
 const playModeName = (mode?: number) => mode === 1 ? 'KEYS' : mode === 2 ? 'LEGATO' : 'ONE';
 
-export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup, onMachineGroupChange, liveMidi, padModes, onBack, onConnectMidi, onPadModeChange, onPadPreview, onPreviewSound, localLibraryHandle, localLibraryFolderName, localLibraryNeedsReconnect, onReconnectLocalLibrary }: SoundsPageProps) {
+export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup, onMachineGroupChange, liveMidi, padModes, onBack, onConnectMidi, onPadModeChange, onPadPreview, onPreviewSound, localLibraryHandle, localLibraryFolderName, localLibraryNeedsReconnect, onReconnectLocalLibrary, demoProjects, localProjects, onGetProjectDocument, onImportMachineProject }: SoundsPageProps) {
   // Nom/mémoire/statut affichés en tête de page — réglés depuis la Fiche personnage
   // (plus de formulaire « PROFIL DE LA MACHINE » ici, retiré pour épurer la page).
   const existingProfile = loadDeviceProfile(localStorage);
@@ -355,5 +361,7 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
         </section>
       </div>
     </section>
+
+    <ProjectTransfer demoProjects={demoProjects} localProjects={localProjects} onGetProjectDocument={onGetProjectDocument} onImportMachineProject={onImportMachineProject} />
   </main>;
 }

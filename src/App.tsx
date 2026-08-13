@@ -1389,6 +1389,30 @@ export default function App() {
     }
   };
 
+  /** Résout un projet démo ou local en document complet — pour ProjectTransfer
+   * (Sons & Transfert), qui n'a que des résumés (id/titre) en props. Même
+   * fetch que openStudioDemo pour les démos, lecture directe de studioLibrary
+   * pour le local. */
+  const getProjectDocument = async (origin: 'demo' | 'local', id: string): Promise<Record<string, unknown> | null> => {
+    if (origin === 'demo') {
+      const demo = STUDIO_DEMOS.find((candidate) => candidate.id === id);
+      if (!demo) return null;
+      try {
+        const response = await fetch(`${import.meta.env.BASE_URL}demos/${demo.file}`, { cache: 'no-store' });
+        return response.ok ? await response.json() as Record<string, unknown> : null;
+      } catch { return null; }
+    }
+    return studioLibrary.find((candidate) => candidate.id === id)?.document || null;
+  };
+
+  /** Importe un projet lu en direct sur la machine (ProjectTransfer) dans la
+   * bibliothèque locale — même point d'écriture que tout le reste
+   * (storeStudioProject + updateStudioLibrary, donc déjà relié au miroir
+   * disque). Le document arrive déjà titré par ep133ArchiveProjectToDocument. */
+  const importMachineProjectToLibrary = (document: Record<string, unknown>, _suggestedTitle: string) => {
+    updateStudioLibrary(storeStudioProject(localStorage, studioLibrary, document).library);
+  };
+
   /**
    * Importe un ou plusieurs fichiers `.json` (le format produit par
    * « Exporter en projet EP-133 ») directement dans la bibliothèque locale,
@@ -1626,7 +1650,7 @@ export default function App() {
 
   if (workspaceView === 'machine-test') return <MachineTestPage connected={midiReady} sysexEnabled={midi.sysexEnabled} inputNames={midi.inputNames} observations={midiObservations} machineGroup={machineGroup} onBack={goHome} onConnect={() => void midi.connectMonitor()} onSendLearned={midi.sendLearnedMessage} onSelectMachineGroup={async (groupIndex) => { const fid = await midi.selectMachineGroup(groupIndex); setMachineGroup(EDITOR_GROUPS[groupIndex]); return fid; }} />;
 
-  if (workspaceView === 'sounds') return <SoundsPage inventory={deviceInventory} soundIndex={deviceSoundIndex} midiConnected={midiReady} machineGroup={machineGroup} onMachineGroupChange={(group) => void selectMachineGroupFromComputer(group)} liveMidi={lastMidi?.note !== undefined && lastMidi.velocity !== undefined ? { note: lastMidi.note, velocity: lastMidi.velocity, timestamp: lastMidi.timestamp } : null} padModes={editorPadModes} onBack={goHome} onConnectMidi={() => void connectMidi()} onPadModeChange={(group, pad, mode) => setEditorPadModes((current) => ({ ...current, [`${group}:${pad}`]: mode }))} onPadPreview={(group, pad, stagedSlot) => void previewSoundPagePad(group, pad, stagedSlot)} onPreviewSound={(slot) => previewBankSound(slot)} localLibraryHandle={localLibraryHandle} localLibraryFolderName={localLibraryFolderName} localLibraryNeedsReconnect={localLibraryNeedsReconnect} onReconnectLocalLibrary={() => void reconnectLocalLibraryFolder()} />;
+  if (workspaceView === 'sounds') return <SoundsPage inventory={deviceInventory} soundIndex={deviceSoundIndex} midiConnected={midiReady} machineGroup={machineGroup} onMachineGroupChange={(group) => void selectMachineGroupFromComputer(group)} liveMidi={lastMidi?.note !== undefined && lastMidi.velocity !== undefined ? { note: lastMidi.note, velocity: lastMidi.velocity, timestamp: lastMidi.timestamp } : null} padModes={editorPadModes} onBack={goHome} onConnectMidi={() => void connectMidi()} onPadModeChange={(group, pad, mode) => setEditorPadModes((current) => ({ ...current, [`${group}:${pad}`]: mode }))} onPadPreview={(group, pad, stagedSlot) => void previewSoundPagePad(group, pad, stagedSlot)} onPreviewSound={(slot) => previewBankSound(slot)} localLibraryHandle={localLibraryHandle} localLibraryFolderName={localLibraryFolderName} localLibraryNeedsReconnect={localLibraryNeedsReconnect} onReconnectLocalLibrary={() => void reconnectLocalLibraryFolder()} demoProjects={STUDIO_DEMOS} localProjects={studioLibrary.map(summarizeStudioProject)} onGetProjectDocument={getProjectDocument} onImportMachineProject={importMachineProjectToLibrary} />;
 
   if (workspaceView === 'docs') return <DocumentationPage onBack={goHome} />;
 
