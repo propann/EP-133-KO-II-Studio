@@ -146,6 +146,13 @@
   verte, le souci n'est plus le filtre par nom (corrigé) mais
   potentiellement `onstatechange` qui ne se déclenche pas sur ce
   navigateur/cette machine — à investiguer en conditions réelles.
+- [ ] **Statut de connexion identique sur toutes les pages** (13 août,
+  correctif) — brancher/connecter l'EP-133 depuis une page, puis naviguer
+  vers Accueil, Test Machine, Sons & Transfert, Fiche personnage, Studio
+  (bouton MIDI OUT) et Rhythm Hero (bouton MIDI compact) : le badge/bouton
+  doit afficher « connecté » partout en même temps, sans qu'aucune page ne
+  reste sur « CONNECTER ». Idem au débranchement (doit repasser
+  « déconnecté » partout).
 - [ ] **Passe d'arrondis généralisée** (13 août) — bordures droites
   remplacées par `border-radius` (jetons `--radius`/`--radius-sm`/
   `--radius-xs`) sur ~60 éléments dans tout le Studio (dialogues, boutons,

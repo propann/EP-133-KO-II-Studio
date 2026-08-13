@@ -1139,3 +1139,40 @@ Vérifié : `npm run typecheck`, `npm test` (9 tests), `npm run build`,
 débranchement physique réel (est-ce que `onstatechange` se déclenche bien
 sur ce navigateur/cette machine) reste à confirmer par l'utilisateur —
 ajouté à `docs/A_VALIDER_PHYSIQUEMENT.md`.
+
+## Correctif — statut de connexion incohérent d'une page à l'autre (13 août)
+
+Remonté par l'utilisateur juste après le correctif ci-dessus : « quand
+c'est connecté ici ça l'est pour toutes les pages, faut que ce soit
+verrouillé ». Vérification du code : chaque page piochait effectivement
+une valeur différente pour dire « la machine est connectée ».
+
+**Avant** : `HomePage` utilisait `midi.connected || midi.outputConnected`,
+`MachineTestPage` utilisait `midi.connected` seul (entrée), `SoundsPage`
+et `EditorToolbar` utilisaient `midi.outputConnected` seul (sortie),
+`GameToolbar` utilisait `midi.connected` seul, `PlayerProfilePage`
+utilisait de nouveau `midi.connected || midi.outputConnected` en double
+de la même expression. Cinq expressions différentes pour la même idée —
+si l'entrée et la sortie ne basculaient pas exactement au même instant
+(react à deux `setState` séparés dans `attachInputs`/`attachOutputs`),
+chaque page pouvait effectivement afficher un statut différent.
+
+- [x] `App.tsx` : une seule constante dérivée, `midiReady = midi.connected
+  || midi.outputConnected`, calculée une fois juste après
+  `useWebMidi(...)`. Les six props de statut (`HomePage.connected`,
+  `MachineTestPage.connected`, `SoundsPage.midiConnected`,
+  `PlayerProfilePage.machineConnected`, `GameToolbar.midiConnected`,
+  `EditorToolbar.midiConnected`) branchées dessus — vérifié au préalable
+  dans chaque composant que la prop ne sert qu'à l'affichage du bouton/
+  badge CONNECTER, jamais à une décision fonctionnelle d'envoi.
+- [x] **Volontairement laissé inchangé** : les six garde-fous fonctionnels
+  d'`App.tsx` qui décident si un envoi MIDI/SysEx réel doit partir
+  (`if (midi.outputConnected) …`) et le texte du pied de page Studio
+  (« SON EP‑133 · <noms> » / « EP‑133 NON CONNECTÉ ») restent sur
+  `midi.outputConnected` précisément — ce sont des faits techniques sur la
+  capacité d'envoi, pas un badge de statut générique.
+
+Vérifié : `npm run typecheck`, `npm test` (9 tests), `npm run build`,
+`npm run test:e2e` (2/2, Chromium réel) — tous au vert. Reste à confirmer
+en vrai navigateur, avec la machine branchée, que le statut est
+maintenant identique sur toutes les pages en même temps.
