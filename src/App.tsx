@@ -478,6 +478,14 @@ export default function App() {
         }
         try {
           scannedProject = await midi.getActiveProjectNumber();
+          // deviceSoundIndex (ci-dessus) pilote le compteur de sons affiché ;
+          // deviceInventory pilote le « PROJET Pxx » affiché — deux états
+          // séparés, oubli corrigé le 13 août (le compteur de sons se
+          // mettait à jour, pas le numéro de projet affiché à côté).
+          setDeviceInventory((current) => {
+            const samePads = current?.project === scannedProject;
+            return { readOnly: true, scannedAt: new Date().toISOString(), project: scannedProject as number, projectName: samePads ? current?.projectName : undefined, pads: samePads ? current?.pads ?? [] : [], sounds: samePads ? current?.sounds ?? {} : {} };
+          });
         } catch (error) {
           if (liveOutcome === 'live') liveOutcome = 'project-failed';
           console.warn('SCAN : lecture en direct du projet actif impossible, repli sur le dernier instantané connu.', error);

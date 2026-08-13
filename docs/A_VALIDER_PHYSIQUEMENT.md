@@ -226,14 +226,19 @@
   du Studio doit afficher le même badge vert que la page d'accueil/Test
   Machine/Fiche personnage une fois connecté, et un bouton `CONNECTER
   EP‑133` seulement si déconnecté (plus l'ancien bouton toujours visible).
-- [ ] **SCAN interroge maintenant la machine en direct** (13 août,
-  correctif) — première utilisation navigateur de la commande FILE LIST.
-  Fiche personnage → SCANNER, machine connectée en SysEx : le compteur de
-  sons doit refléter la réalité (528 au moment d'écrire ceci, pas les 527
-  figés du 9 août), et « PROJET SCANNÉ » doit afficher P09 (le projet
-  activé pendant les tests d'écriture précédents), pas P01. Vérifier aussi
-  le repli : sans SysEx actif, SCAN doit continuer à fonctionner comme
-  avant (dernier instantané connu), sans erreur visible.
+- [x] **SCAN interroge maintenant la machine en direct** (13 août,
+  correctif, testé en réel) — première utilisation navigateur de la
+  commande FILE LIST. Premier test : compteur de sons correctement passé
+  à 528 en direct, mais « PROJET P01 » affiché à l'écran alors que le
+  manifeste écrit sur disque montrait bien le projet 9 — `deviceSoundIndex`
+  (compteur) était mis à jour mais pas `deviceInventory` (numéro de projet
+  affiché), deux états React séparés, un oubli. Corrigé le même jour.
+  - [ ] **Reste à reconfirmer après le correctif** : recliquer SCANNER,
+    vérifier que « PROJET P09 » s'affiche cette fois (pas seulement dans
+    le fichier, à l'écran).
+  - [ ] Vérifier aussi le repli sans SysEx actif (doit fonctionner comme
+    avant, dernier instantané connu, sans erreur visible) — pas encore
+    testé séparément.
 - [ ] **Upload d'un son de démo** (13 août) — vérifié par le script Python
   (528 sons en direct, slot 58, taille exacte) mais jamais entendu à
   l'oreille : sur la machine, projet P09 → groupe A → pad 2 doit jouer un

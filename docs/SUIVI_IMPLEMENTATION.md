@@ -1543,6 +1543,29 @@ navigateur** — c'est la toute première fois que ce chemin FILE existe
 côté navigateur, à tester en cliquant SCANNER avec la machine branchée.
 Ajouté à `docs/A_VALIDER_PHYSIQUEMENT.md`.
 
+### Correctifs après le premier test réel (13 août, même jour)
+
+Premier clic SCANNER en vrai : le manifeste écrit sur disque montrait déjà
+528 sons et projet 9, corrects — mais l'écran affichait « PROJET P01 »
+malgré tout. `deviceSoundIndex` (pilote le compteur de sons affiché) était
+mis à jour dans le chemin live, `deviceInventory` (pilote le « PROJET
+Pxx » affiché) ne l'était pas — deux états React distincts, un oubli.
+Corrigé : `setDeviceInventory` mis à jour aussi dans `scanAndSaveMachine`
+avec le numéro de projet lu en direct.
+
+Ajouté au passage : `lastScanSave.liveOutcome` (`'live' | 'no-sysex' |
+'sounds-failed' | 'project-failed'`), affiché juste sous le retour
+habituel dans la Fiche personnage — sans ça, un SCAN qui retombe
+silencieusement sur l'ancien instantané (SysEx pas actif, par exemple)
+était indiscernable à l'écran d'un SCAN qui a vraiment interrogé la
+machine. Trouvé utile dès ce premier test : ça a permis de confirmer que
+le chemin live tournait bien plutôt que de deviner pourquoi le projet
+affiché restait faux.
+
+Vérifié : `npm run typecheck`, `npm test` (10 tests), `npm run build`,
+`npm run test:e2e` (2/2). Reconfirmation à l'écran (pas seulement dans le
+fichier) pas encore faite — ajouté à `docs/A_VALIDER_PHYSIQUEMENT.md`.
+
 ## Règle globale — tout bouton bouge au clic (13 août)
 
 Demande explicite après un test réel des boutons SCAN/CLONER : « il faut
