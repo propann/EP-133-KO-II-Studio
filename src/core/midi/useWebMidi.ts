@@ -69,6 +69,7 @@ export function officialInternalPadFromNote(note: number) {
 interface WebMidiState {
   status: string;
   connected: boolean;
+  sysexEnabled: boolean;
   inputNames: string[];
   outputConnected: boolean;
   outputNames: string[];
@@ -81,6 +82,7 @@ export function useWebMidi(
   const [state, setState] = useState<WebMidiState>({
     status: 'Non connecté',
     connected: false,
+    sysexEnabled: false,
     inputNames: [],
     outputConnected: false,
     outputNames: [],
@@ -100,7 +102,7 @@ export function useWebMidi(
     accessRef.current?.inputs.forEach((input) => { input.onmidimessage = null; });
   }, []);
 
-  const attachInputs = useCallback(async (access: MIDIAccess, monitorAll = monitorAllInputsRef.current) => {
+  const attachInputs = useCallback(async (access: MIDIAccess, monitorAll = monitorAllInputsRef.current, sysexEnabled = false) => {
     const inputs = [...access.inputs.values()].filter((input) => monitorAll || isEp133MidiPort(input.name));
     const handler = (event: MIDIMessageEvent) => {
       const data = event.data;
@@ -165,10 +167,10 @@ export function useWebMidi(
         input.onmidimessage = handler;
       }));
       const inputNames = inputs.map((input) => input.name || 'Entrée MIDI');
-      setState((current) => ({ ...current, status: `Connecté : ${inputNames.join(' + ')}`, connected: true, inputNames }));
+      setState((current) => ({ ...current, status: `${sysexEnabled ? 'Connecté SysEx' : 'Connecté MIDI'} : ${inputNames.join(' + ')}`, connected: true, sysexEnabled, inputNames }));
     } catch (error) {
       const detail = error instanceof Error ? error.message : 'ouverture refusée';
-      setState((current) => ({ ...current, status: `Port MIDI détecté mais impossible à ouvrir : ${detail}`, connected: false, inputNames: [] }));
+      setState((current) => ({ ...current, status: `Port MIDI détecté mais impossible à ouvrir : ${detail}`, connected: false, sysexEnabled: false, inputNames: [] }));
     }
   }, []);
 
@@ -180,6 +182,17 @@ export function useWebMidi(
     } catch {
       setState((current) => ({ ...current, outputConnected: false, outputNames: [] }));
     }
+  }, []);
+
+  /** Initialise le canal d'événements FILE utilisé par l'outil officiel.
+   * Cette séquence active l'observation des événements spontanés (notamment
+   * les contrôles A–D) ; elle ne modifie ni projet, ni sample, ni affectation. */
+  const subscribeToFileEvents = useCallback(() => {
+    accessRef.current?.outputs.forEach((output) => {
+      if (!isEp133MidiPort(output.name)) return;
+      output.send([0xf0, 0x00, 0x20, 0x76, 0x33, 0x40, 0x61, 0x17, 0x01, 0xf7]);
+      output.send([0xf0, 0x00, 0x20, 0x76, 0x33, 0x40, 0x61, 0x18, 0x05, 0x00, 0x01, 0x01, 0x00, 0x40, 0x00, 0x00, 0xf7]);
+    });
   }, []);
 
   const connectWithInputScope = useCallback(async (monitorAll: boolean) => {
@@ -196,16 +209,37 @@ export function useWebMidi(
       // observer uniquement ; aucune de ces données n'est renvoyée par ce hook.
       const access = await navigator.requestMIDIAccess({ sysex: true });
       accessRef.current = access;
-      await Promise.all([attachInputs(access, monitorAll), attachOutputs(access)]);
-      access.onstatechange = () => { void attachInputs(access); void attachOutputs(access); };
+      await Promise.all([attachInputs(access, monitorAll, true), attachOutputs(access)]);
+      subscribeToFileEvents();
+      access.onstatechange = () => { void attachInputs(access, monitorAllInputsRef.current, true); void attachOutputs(access); };
     } catch (error) {
       const detail = error instanceof Error ? error.message : 'autorisation refusée';
       setState((current) => ({ ...current, status: `Connexion MIDI impossible : ${detail}`, connected: false, inputNames: [], outputConnected: false, outputNames: [] }));
     }
-  }, [attachInputs, attachOutputs, detachInputs]);
+  }, [attachInputs, attachOutputs, detachInputs, subscribeToFileEvents]);
 
   const connect = useCallback(() => connectWithInputScope(false), [connectWithInputScope]);
   const connectMonitor = useCallback(() => connectWithInputScope(true), [connectWithInputScope]);
+
+  /** Détection automatique des ports MIDI standard déjà autorisés par le
+   * navigateur. La demande SysEx complète reste déclenchée par le bouton
+   * CONNECTER, mais les pads sont détectés dès l'ouverture de l'application. */
+  useEffect(() => {
+    if (!navigator.requestMIDIAccess) return;
+    let cancelled = false;
+    void navigator.requestMIDIAccess({ sysex: false }).then(async (access) => {
+      if (cancelled || accessRef.current) return;
+      accessRef.current = access;
+      await Promise.all([attachInputs(access, false, false), attachOutputs(access)]);
+      access.onstatechange = () => { void attachInputs(access, false, false); void attachOutputs(access); };
+      if ([...access.inputs.values()].some((input) => isEp133MidiPort(input.name))) {
+        setState((current) => ({ ...current, status: `MIDI standard détecté : ${[...access.inputs.values()].filter((input) => isEp133MidiPort(input.name)).map((input) => input.name || 'EP-133').join(' + ')}` }));
+      }
+    }).catch(() => {
+      // L'autorisation automatique peut être refusée : le bouton manuel reste disponible.
+    });
+    return () => { cancelled = true; };
+  }, [attachInputs, attachOutputs]);
 
   const sendPad = useCallback((pad: number, groupIndex: number, velocity = 100, timestamp = performance.now(), durationMs = 90) => {
     const note = PAD_MIDI_NOTES[pad] + groupIndex * 12;

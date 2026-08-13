@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { MidiObservation } from '../core/midi/useWebMidi';
+import { MIDI_CONTROL_MAP_STORAGE_KEY, midiObservationSignature, loadControlAssignments, type ControlAssignment } from '../core/midi/controlMapping';
 
 interface MachineTestPageProps {
   connected: boolean;
+  sysexEnabled: boolean;
   inputNames: string[];
   observations: MidiObservation[];
   onBack: () => void;
@@ -11,40 +13,20 @@ interface MachineTestPageProps {
   onSelectMachineGroup: (groupIndex: number) => Promise<number>;
 }
 
-const STORAGE_KEY = 'ep133-rhythm-hero:midi-control-map:v1';
-
-interface ControlAssignment {
-  signature: string;
-  data: number[];
-  kind: MidiObservation['kind'];
-}
-
-function loadAssignments(): Record<string, ControlAssignment> {
-  try {
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') as Record<string, ControlAssignment | string>;
-    return Object.fromEntries(Object.entries(stored).flatMap(([key, value]) => typeof value === 'string' ? [] : [[key, value]]));
-  }
-  catch { return {}; }
-}
-
-function signature(message: MidiObservation) {
-  if (message.kind === 'note') return `${message.kind}:ch${message.channel ?? '-'}:${message.note ?? '-'}`;
-  if (message.kind === 'control') return `${message.kind}:ch${message.channel ?? '-'}:${message.data[1] ?? '-'}`;
-  return `${message.kind}:${message.hex}`;
-}
+function loadAssignments(): Record<string, ControlAssignment> { return loadControlAssignments(localStorage); }
 
 function controlId(section: string, label: string) {
   return `${section}:${label}`;
 }
 
-export function MachineTestPage({ connected, inputNames, observations, onBack, onConnect, onSendLearned, onSelectMachineGroup }: MachineTestPageProps) {
+export function MachineTestPage({ connected, sysexEnabled, inputNames, observations, onBack, onConnect, onSendLearned, onSelectMachineGroup }: MachineTestPageProps) {
   const [selectedControl, setSelectedControl] = useState<string | null>(null);
   const [configureMode, setConfigureMode] = useState(false);
   const [sendNotice, setSendNotice] = useState('');
   const [assignments, setAssignments] = useState<Record<string, ControlAssignment>>(loadAssignments);
   const lastCapturedTimestamp = useRef<number | null>(null);
   const newest = observations[0];
-  const newestSignature = newest ? signature(newest) : '';
+  const newestSignature = newest ? midiObservationSignature(newest) : '';
 
   useEffect(() => {
     void fetch('/__midi-capture', {
@@ -68,7 +50,7 @@ export function MachineTestPage({ connected, inputNames, observations, onBack, o
     if (!selectedControl || !newestSignature) return;
     setAssignments((current) => {
       const next = { ...current, [selectedControl]: { signature: newestSignature, data: newest.data, kind: newest.kind } };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      localStorage.setItem(MIDI_CONTROL_MAP_STORAGE_KEY, JSON.stringify(next));
       return next;
     });
     setSelectedControl(null);
@@ -117,7 +99,7 @@ export function MachineTestPage({ connected, inputNames, observations, onBack, o
     <header className="machine-test-header">
       <button className="home-back" onClick={onBack}>← ACCUEIL</button>
       <div><small>DIAGNOSTIC EN LECTURE SEULE</small><h1>TEST MACHINE</h1></div>
-      <button className={connected ? 'connected' : ''} onClick={onConnect}>{connected ? 'MIDI CONNECTÉ ✓' : 'CONNECTER L’EP‑133'}</button>
+      <button className={sysexEnabled ? 'connected' : ''} onClick={onConnect}>{sysexEnabled ? 'MIDI + SYSEX ✓' : connected ? 'ACTIVER MIDI + SYSEX' : 'CONNECTER L’EP‑133'}</button>
     </header>
 
     <section className="machine-test-help">
@@ -178,6 +160,6 @@ export function MachineTestPage({ connected, inputNames, observations, onBack, o
       </aside>
     </div>
 
-    <footer className="machine-test-footer"><span>{Object.keys(assignments).length} CONTRÔLE(S) CARTOGRAPHIÉ(S)</span><button onClick={() => { localStorage.removeItem(STORAGE_KEY); setAssignments({}); setSelectedControl(null); }}>EFFACER LA CARTOGRAPHIE</button></footer>
+    <footer className="machine-test-footer"><span>{Object.keys(assignments).length} CONTRÔLE(S) CARTOGRAPHIÉ(S)</span><button onClick={() => { localStorage.removeItem(MIDI_CONTROL_MAP_STORAGE_KEY); setAssignments({}); setSelectedControl(null); }}>EFFACER LA CARTOGRAPHIE</button></footer>
   </main>;
 }

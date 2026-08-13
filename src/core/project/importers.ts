@@ -390,6 +390,22 @@ export function decodeEp133ProjectTar(data: Uint8Array, path = 'projects/P01.tar
   return { path, pads, patterns, scenes, song, currentScene, bpm, members: tar.members, warnings };
 }
 
+/** Convertit un projet machine décodé en document éditable intermédiaire.
+ * L'archive originale reste intacte et aucune écriture machine n'est déclenchée. */
+export function ep133ArchiveProjectToDocument(project: Ep133ProjectArchive, title: string) {
+  return {
+    schema: 'ep.project.v1', product: 'ep133', metadata: { title },
+    settings: { bpm: Math.round(project.bpm || 120) },
+    pads: project.pads.map((pad) => ({ group: pad.group, pad: pad.pad, slot: pad.slot, playMode: pad.playMode, rootNote: pad.rootNote })),
+    patterns: project.patterns.map((pattern) => ({
+      id: `${pattern.group}${String(pattern.pattern).padStart(2, '0')}`, bars: pattern.bars,
+      events: pattern.notes.map((note) => ({ tick: note.tick, pad: note.pad, note: note.note, velocity: note.velocity, duration: note.duration })),
+    })),
+    scenes: project.scenes.map((scene) => ({ scene: scene.scene, groupPatterns: scene.groupPatterns, timeSignature: scene.timeSignature })),
+    song: project.song, currentScene: project.currentScene,
+  } satisfies Record<string, unknown>;
+}
+
 export function readEp133ProjectDocument(json: string) {
   const value: unknown = JSON.parse(json);
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Projet JSON invalide.');

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Icone originale du Studio : fond noir EP-133 et quatre groupes A-D en
+       orange, dans le meme langage visuel que le reste de l'interface.
+       Aucun element du manuel ou de la machine n'est reproduit. -->
+  <rect width="512" height="512" rx="96" fill="#1A1A1A" />
+  <g>
+    <rect x="72" y="72" width="164" height="164" rx="28" fill="#FF4400" />
+    <rect x="276" y="72" width="164" height="164" rx="28" fill="#FF4400" opacity="0.82" />
+    <rect x="72" y="276" width="164" height="164" rx="28" fill="#FF4400" opacity="0.82" />
+    <rect x="276" y="276" width="164" height="164" rx="28" fill="#FF4400" opacity="0.64" />
+  </g>
+</svg>

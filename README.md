@@ -69,7 +69,9 @@ réels. Il ne définit plus l'identité principale du dépôt.
 
 ## Installation rapide
 
-Prérequis : Node.js récent, npm et Chrome/Chromium pour Web MIDI.
+Prérequis : Node.js 22, npm et Chrome/Chromium pour Web MIDI. La version
+attendue est indiquée dans `.nvmrc` ; Docker et la CI utilisent également
+Node 22.
 
 ```bash
 git clone https://github.com/propann/ep133-ko-ii-studio.git
@@ -80,6 +82,14 @@ npm run dev
 
 Ouvrir ensuite l'adresse indiquée par Vite, généralement
 `http://localhost:5173/`.
+
+## Déploiement web
+
+Le dépôt contient un `Dockerfile` prêt pour Coolify. Il déploie l'interface
+React derrière Nginx et expose `/healthz`. Le MIDI et l'accès USB restent
+locaux à l'ordinateur auquel l'EP-133 est branché ; un serveur hébergé ne peut
+pas accéder au matériel distant. Voir
+[le guide de déploiement Coolify](docs/DEPLOIEMENT_COOLIFY.md).
 
 ```bash
 npm test

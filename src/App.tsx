@@ -17,6 +17,7 @@ import {
   type EditorGroup,
   type EditorPadMode,
 } from './core/project/exporters';
+import { ep133ArchiveProjectToDocument, inspectEp133Archive, readMidiFile } from './core/project/importers';
 import { findMissingDependencies, type DeviceInventory, type DeviceSoundIndex, type MissingDependency } from './core/project/device';
 import {
   DEFAULT_NOTE_DURATION,
@@ -38,11 +39,12 @@ import {
   type PatternBank,
   type SceneDefinition,
 } from './core/project/song';
-import { deleteStudioProject, duplicateStudioProject, loadStudioLibrary, renameStudioProject, storeStudioProject, studioStateFromDocument, summarizeStudioProject, type StudioProjectRecord, type StudioProjectState } from './core/project/studioLibrary';
+import { archiveStudioProject, deleteStudioProject, duplicateStudioProject, loadStudioLibrary, renameStudioProject, storeStudioProject, studioStateFromDocument, summarizeStudioProject, type StudioProjectRecord, type StudioProjectState } from './core/project/studioLibrary';
 import { HomePage } from './pages/HomePage';
 import { SoundsPage } from './pages/SoundsPage';
 import { DocumentationPage } from './pages/DocumentationPage';
 import { MachineTestPage } from './pages/MachineTestPage';
+import { groupForMappedObservation, loadControlAssignments } from './core/midi/controlMapping';
 import { PlayerProfilePage } from './pages/PlayerProfilePage';
 import { addSessionToProfile, emptyMachine, emptyPlayerStats, loadPlayerProfile, savePlayerProfile, type PlayerMachine, type PlayerProfile } from './core/project/playerProfile';
 import { ScoreView } from './components/game/ScoreView';
@@ -59,7 +61,7 @@ import { chooseLocalDirectory, collectLocalFiles, writeCloneManifest, type Local
 import { LOCAL_LIBRARY_FOLDER_KEY, SAMPLE_FOLDER_KEY, hasStoredPermission, loadDirectoryHandle, requestStoredPermission, saveDirectoryHandle } from './core/storage/directoryHandleStore';
 import { createDeviceClone, saveDeviceProfile } from './core/project/deviceProfile';
 import './style.css';
-import { APP_LANGUAGE_KEY, loadAppLanguage, type AppLanguage } from './core/i18n';
+import { useLanguageStore } from './core/store/languageStore';
 
 const STUDIO_DEMOS = [
   { id: 'groove', title: 'DEMO GROOVE', file: 'demo-groove.json' },
@@ -91,7 +93,8 @@ function loadUserExercises(): Exercise[] {
 }
 
 export default function App() {
-  const [language, setLanguage] = useState<AppLanguage>(loadAppLanguage);
+  const language = useLanguageStore((state) => state.language);
+  const changeLanguage = useLanguageStore((state) => state.setLanguage);
   const [workspaceView, setWorkspaceView] = useState<'home' | 'game' | 'sounds' | 'docs' | 'machine-test' | 'profile'>('home');
   const [playerProfile, setPlayerProfile] = useState<PlayerProfile>(() => loadPlayerProfile(localStorage));
   const [practiceLog, setPracticeLog] = useState<PracticeLogEntry[]>(() => loadPracticeLog(localStorage));
@@ -113,6 +116,7 @@ export default function App() {
   const [last, setLast] = useState<{ grade: Grade; deltaMs: number } | null>(null);
   const [lastMidi, setLastMidi] = useState<MidiObservation | null>(null);
   const [midiObservations, setMidiObservations] = useState<MidiObservation[]>([]);
+  const [machineGroup, setMachineGroup] = useState<EditorGroup>('A');
   const [editorMidiHit, setEditorMidiHit] = useState<{ pad: number; group: EditorGroup } | null>(null);
   const [midiRequestedEditorGroup, setMidiRequestedEditorGroup] = useState<EditorGroup | null>(null);
   const [playerNotes, setPlayerNotes] = useState<PlayerNote[]>([]);
@@ -242,6 +246,7 @@ export default function App() {
     // En mode EP-133, la machine produit déjà le son : ne pas le doubler côté PC.
     if (editorOpen && editorMode === 'complete') {
       const receivedGroup = EDITOR_GROUPS[hit.groupIndex ?? 0];
+      setMachineGroup(receivedGroup);
       setEditorMidiHit({ pad: hit.pad, group: receivedGroup });
       setMidiRequestedEditorGroup(receivedGroup);
       if (editorMidiFlashTimer.current !== undefined) window.clearTimeout(editorMidiFlashTimer.current);
@@ -274,6 +279,12 @@ export default function App() {
   const onMidiObservation = useCallback((message: MidiObservation) => {
     setLastMidi(message);
     setMidiObservations((current) => [message, ...current].slice(0, 100));
+    try {
+      const match = groupForMappedObservation(message, loadControlAssignments(localStorage));
+      if (match) setMachineGroup(match);
+    } catch {
+      // Une cartographie locale corrompue ne doit jamais bloquer la réception MIDI.
+    }
   }, []);
 
   const midi = useWebMidi(onHit, onMidiObservation);
@@ -692,6 +703,7 @@ export default function App() {
   const patternsForActiveScene = (): ProjectPatterns => patternsForScene(currentPatternBank(), editorScenes, editorActiveScene);
 
   const changeEditorGroup = (nextGroup: EditorGroup) => {
+    setMachineGroup(nextGroup);
     editorScrollToEnd.current = false;
     setEditorPatternBank((current) => ({ ...current, [editorGroup]: { ...current[editorGroup], [editorPatternNumbers[editorGroup]]: editorTargets } }));
     const nextNotes = editorPatternBank[nextGroup][editorPatternNumbers[nextGroup]] || [];
@@ -699,6 +711,27 @@ export default function App() {
     setEditorTargets(nextNotes);
     setEditorGroup(nextGroup);
     setEditorBars(editorPatternLengths[`${nextGroup}:${editorPatternNumbers[nextGroup]}`] || usedBars(nextNotes));
+  };
+
+  useEffect(() => {
+    if (editorOpen && editorMode === 'complete' && machineGroup !== editorGroup) changeEditorGroup(machineGroup);
+  }, [editorOpen, editorMode, machineGroup, editorGroup]);
+
+  /** Les boutons A–D du Studio changent aussi le groupe actif de la machine,
+   * lorsque l’EP-133 est connecté. Sans MIDI, ils restent une sélection locale. */
+  const changeEditorGroupAndMachine = async (nextGroup: EditorGroup) => {
+    changeEditorGroup(nextGroup);
+    await selectMachineGroupFromComputer(nextGroup);
+  };
+
+  const selectMachineGroupFromComputer = async (nextGroup: EditorGroup) => {
+    setMachineGroup(nextGroup);
+    if (!midi.sysexEnabled || !midi.outputConnected) return;
+    try {
+      await midi.selectMachineGroup(EDITOR_GROUPS.indexOf(nextGroup));
+    } catch (error) {
+      window.alert(`Groupe ${nextGroup} non sélectionné sur l’EP-133 : ${error instanceof Error ? error.message : 'erreur MIDI'}`);
+    }
   };
 
   // Une note jouée sur la machine porte aussi son groupe (A=36–47,
@@ -1143,6 +1176,12 @@ export default function App() {
     setSelectedStudioProject('');
   };
 
+  const archiveSelectedStudioProject = () => {
+    if (!selectedStudioProject) return;
+    setStudioLibrary(archiveStudioProject(localStorage, studioLibrary, selectedStudioProject));
+    setSelectedStudioProject('');
+  };
+
   /** Commun à tous les chargements : ouvre exactement les patterns référencés par la première Song Position, afin que EDIT PATTERN et ARRANGEMENT montrent la même scène. */
   const applyLoadedStudioProject = (loaded: StudioProjectState) => {
     stopEditorTransport();
@@ -1219,10 +1258,46 @@ export default function App() {
     const errors: string[] = [];
     for (const file of Array.from(files)) {
       try {
-        const document = JSON.parse(await file.text()) as Record<string, unknown>;
-        studioStateFromDocument(document); // valide le format ; lève si incompatible
-        library = storeStudioProject(localStorage, library, document).library;
-        imported += 1;
+        const isMidi = /\.(?:mid|midi)$/i.test(file.name);
+        const isArchive = /\.(?:pak|ppak)$/i.test(file.name);
+        const documents: Record<string, unknown>[] = [];
+        if (isMidi) {
+          const imported = readMidiFile(new Uint8Array(await file.arrayBuffer()));
+          const patternBank = emptyPatternBank();
+          const patternLengths: Record<string, number> = {};
+          for (const group of EDITOR_GROUPS) {
+            const notes = imported.patterns[group] || [];
+            patternBank[group][1] = notes;
+            patternLengths[`${group}:1`] = usedBars(notes);
+          }
+          documents.push(createEp133ProjectDocument({
+            title: file.name.replace(/\.(?:mid|midi)$/i, ''),
+            bpm: imported.bpm,
+            patternBank,
+            scenes: [{ scene: 1, groupPatterns: { A: 1, B: 1, C: 1, D: 1 }, timeSignature: [4, 4] }],
+            song: [1],
+            currentScene: 1,
+            pads: deviceInventory?.pads || [],
+            padModes: {},
+            patternLengths,
+          }));
+          if (imported.warnings.length) errors.push(`${file.name} : ${imported.warnings.join(' ')}`);
+        } else if (isArchive) {
+          const summary = inspectEp133Archive(new Uint8Array(await file.arrayBuffer()), file.name);
+          if (!summary.decodedProjects.length) throw new Error('Aucun projet décodable dans cette archive.');
+          summary.decodedProjects.forEach((project) => {
+            const projectName = project.path.match(/P\d{2}/i)?.[0]?.toUpperCase() || 'PROJET';
+            documents.push(ep133ArchiveProjectToDocument(project, `${file.name.replace(/\.(?:pak|ppak)$/i, '')} · ${projectName}`));
+            if (project.warnings.length) errors.push(`${file.name} · ${projectName} : ${project.warnings.join(' ')}`);
+          });
+        } else {
+          documents.push(JSON.parse(await file.text()) as Record<string, unknown>);
+        }
+        documents.forEach((document) => {
+          studioStateFromDocument(document); // valide le format ; lève si incompatible
+          library = storeStudioProject(localStorage, library, document).library;
+          imported += 1;
+        });
       } catch (error) {
         errors.push(`${file.name} : ${error instanceof Error ? error.message : 'fichier illisible'}`);
       }
@@ -1403,15 +1478,13 @@ export default function App() {
     editorScrollToEnd.current = false;
   }, [editorGroup, editorOpen, editorPatternNumbers, studioView]);
 
-  const changeLanguage = (nextLanguage: AppLanguage) => { setLanguage(nextLanguage); localStorage.setItem(APP_LANGUAGE_KEY, nextLanguage); document.documentElement.lang = nextLanguage; };
-
   if (workspaceView === 'home') return <HomePage connected={midi.connected || midi.outputConnected} project={deviceInventory?.project} scannedSoundCount={deviceInventory ? Object.keys(deviceInventory.sounds).length : 0} language={language} onLanguageChange={changeLanguage} onOpenGame={() => setWorkspaceView('game')} onOpenStudio={openCompleteEditor} onOpenSounds={() => setWorkspaceView('sounds')} onOpenDocumentation={() => setWorkspaceView('docs')} onOpenMachineTest={() => setWorkspaceView('machine-test')} onOpenProfile={() => setWorkspaceView('profile')} />;
 
-  if (workspaceView === 'machine-test') return <MachineTestPage connected={midi.connected} inputNames={midi.inputNames} observations={midiObservations} onBack={goHome} onConnect={() => void midi.connectMonitor()} onSendLearned={midi.sendLearnedMessage} onSelectMachineGroup={midi.selectMachineGroup} />;
+  if (workspaceView === 'machine-test') return <MachineTestPage connected={midi.connected} sysexEnabled={midi.sysexEnabled} inputNames={midi.inputNames} observations={midiObservations} onBack={goHome} onConnect={() => void midi.connectMonitor()} onSendLearned={midi.sendLearnedMessage} onSelectMachineGroup={midi.selectMachineGroup} />;
 
-  if (workspaceView === 'sounds') return <SoundsPage inventory={deviceInventory} soundIndex={deviceSoundIndex} midiConnected={midi.outputConnected} liveMidi={lastMidi?.note !== undefined && lastMidi.velocity !== undefined ? { note: lastMidi.note, velocity: lastMidi.velocity, timestamp: lastMidi.timestamp } : null} padModes={editorPadModes} onBack={goHome} onConnectMidi={() => void connectMidi()} onPadModeChange={(group, pad, mode) => setEditorPadModes((current) => ({ ...current, [`${group}:${pad}`]: mode }))} onPadPreview={(group, pad, stagedSlot) => void previewSoundPagePad(group, pad, stagedSlot)} onPreviewSound={(slot) => previewBankSound(slot)} localLibraryHandle={localLibraryHandle} localLibraryFolderName={localLibraryFolderName} localLibraryNeedsReconnect={localLibraryNeedsReconnect} onReconnectLocalLibrary={() => void reconnectLocalLibraryFolder()} />;
+  if (workspaceView === 'sounds') return <SoundsPage inventory={deviceInventory} soundIndex={deviceSoundIndex} midiConnected={midi.outputConnected} machineGroup={machineGroup} onMachineGroupChange={(group) => void selectMachineGroupFromComputer(group)} liveMidi={lastMidi?.note !== undefined && lastMidi.velocity !== undefined ? { note: lastMidi.note, velocity: lastMidi.velocity, timestamp: lastMidi.timestamp } : null} padModes={editorPadModes} onBack={goHome} onConnectMidi={() => void connectMidi()} onPadModeChange={(group, pad, mode) => setEditorPadModes((current) => ({ ...current, [`${group}:${pad}`]: mode }))} onPadPreview={(group, pad, stagedSlot) => void previewSoundPagePad(group, pad, stagedSlot)} onPreviewSound={(slot) => previewBankSound(slot)} localLibraryHandle={localLibraryHandle} localLibraryFolderName={localLibraryFolderName} localLibraryNeedsReconnect={localLibraryNeedsReconnect} onReconnectLocalLibrary={() => void reconnectLocalLibraryFolder()} />;
 
-  if (workspaceView === 'docs') return <DocumentationPage language={language} onBack={goHome} />;
+  if (workspaceView === 'docs') return <DocumentationPage onBack={goHome} />;
 
   if (workspaceView === 'profile') {
     const updateProfile = (updater: (profile: PlayerProfile) => PlayerProfile) => setPlayerProfile((profile) => { const next = updater(profile); savePlayerProfile(localStorage, next); return next; });
@@ -1458,7 +1531,7 @@ export default function App() {
     <GameToolbar difficulty={difficulty} tempo={tempo} activeBpm={activeExercise.bpm} styleId={styleId} styles={STYLES} userExercises={userExercises} phase={phase} sessionActive={sessionActive} midiConnected={midi.connected} onDifficultyChange={setDifficulty} onTempoChange={setTempo} onStyleChange={changeStyle} onHome={goHome} onOpenEditor={openEditor} onConnectMidi={() => void connectMidi()} onPreview={() => void togglePreview()} onPlay={() => void toggle()} />
     {phase === 'countin' && <div className="countdown" aria-live="assertive"><small>1 MESURE POUR SE PRÉPARER</small><b>{countdown}</b></div>}
     {editorOpen && <div className="editor-overlay"><section className="exercise-editor">
-      <EditorToolbar mode={editorMode} name={editorName} group={editorGroup} playing={editorPlaying} loop={editorLoop} exportFormat={editorExportFormat} canSave={Boolean(editorName.trim() && (editorMode === 'complete' || editorTargets.length || EDITOR_GROUPS.some((group) => Object.values(editorPatternBank[group]).some((notes) => notes.length))))} midiConnected={midi.outputConnected} scannedProject={deviceInventory?.project} machineProjectAvailable={Boolean(machineProjectDocument)} machineSampleCount={machineSampleCount} demoProjects={STUDIO_DEMOS} localProjects={studioLibrary.map(summarizeStudioProject)} selectedLocalProject={selectedStudioProject} studioView={studioView} patternNumber={editorPatternNumbers[editorGroup]} patternLength={editorBars} groupPatternLengths={Object.fromEntries(EDITOR_GROUPS.map((group) => { const number = editorPatternNumbers[group]; const notes = group === editorGroup ? editorTargets : editorPatternBank[group][number] || []; return [group, editorPatternLengths[`${group}:${number}`] || usedBars(notes)]; })) as Record<EditorGroup, number>} activeSongPosition={Math.max(1, editorSong.findIndex((scene) => scene === editorActiveScene) + 1)} activeScene={editorActiveScene} onHome={goHome} onNameChange={setEditorName} onGroupChange={changeEditorGroup} onStudioViewChange={setStudioView} onPatternLengthChange={changePatternLength} onCommitScene={commitPatternsToScene} canUndo={editorCanUndo} canRedo={editorCanRedo} onUndo={editorUndo} onRedo={editorRedo} onConnectMidi={() => void connectMidi()} onNew={newStudioProject} onOpenProject={openStudioProject} onOpenDemo={(id) => void openStudioDemo(id)} onImportFiles={(files) => void importStudioProjectFiles(files)} onLoadMachineProject={loadMachineProject} onCloneMachine={() => setMachineCloneOpen(true)} onOpenSampleFolder={() => void openStudioSampleFolder()} onSave={saveEditor} onSaveAs={saveStudioProjectAs} onRename={renameSelectedStudioProject} onDuplicate={duplicateSelectedStudioProject} onDelete={deleteSelectedStudioProject} onPlayback={() => void toggleEditorPlayback()} onLoopChange={setEditorLoop} onExportFormatChange={setEditorExportFormat} onExport={exportEditor} onExportMidi={exportEditorMidi} onExportJson={exportEditorProjectJson} onSendToRhythmHero={sendPatternToRhythmHero} />
+      <EditorToolbar mode={editorMode} name={editorName} group={editorGroup} playing={editorPlaying} loop={editorLoop} exportFormat={editorExportFormat} canSave={Boolean(editorName.trim() && (editorMode === 'complete' || editorTargets.length || EDITOR_GROUPS.some((group) => Object.values(editorPatternBank[group]).some((notes) => notes.length))))} midiConnected={midi.outputConnected} scannedProject={deviceInventory?.project} machineProjectAvailable={Boolean(machineProjectDocument)} machineSampleCount={machineSampleCount} demoProjects={STUDIO_DEMOS} localProjects={studioLibrary.map(summarizeStudioProject)} selectedLocalProject={selectedStudioProject} studioView={studioView} patternNumber={editorPatternNumbers[editorGroup]} patternLength={editorBars} groupPatternLengths={Object.fromEntries(EDITOR_GROUPS.map((group) => { const number = editorPatternNumbers[group]; const notes = group === editorGroup ? editorTargets : editorPatternBank[group][number] || []; return [group, editorPatternLengths[`${group}:${number}`] || usedBars(notes)]; })) as Record<EditorGroup, number>} activeSongPosition={Math.max(1, editorSong.findIndex((scene) => scene === editorActiveScene) + 1)} activeScene={editorActiveScene} onHome={goHome} onNameChange={setEditorName} onGroupChange={changeEditorGroupAndMachine} onStudioViewChange={setStudioView} onPatternLengthChange={changePatternLength} onCommitScene={commitPatternsToScene} canUndo={editorCanUndo} canRedo={editorCanRedo} onUndo={editorUndo} onRedo={editorRedo} onConnectMidi={() => void connectMidi()} onNew={newStudioProject} onOpenProject={openStudioProject} onOpenDemo={(id) => void openStudioDemo(id)} onImportFiles={(files) => void importStudioProjectFiles(files)} onLoadMachineProject={loadMachineProject} onCloneMachine={() => setMachineCloneOpen(true)} onOpenSampleFolder={() => void openStudioSampleFolder()} onSave={saveEditor} onSaveAs={saveStudioProjectAs} onRename={renameSelectedStudioProject} onDuplicate={duplicateSelectedStudioProject} onArchive={archiveSelectedStudioProject} onDelete={deleteSelectedStudioProject} onPlayback={() => void toggleEditorPlayback()} onLoopChange={setEditorLoop} onExportFormatChange={setEditorExportFormat} onExport={exportEditor} onExportMidi={exportEditorMidi} onExportJson={exportEditorProjectJson} onSendToRhythmHero={sendPatternToRhythmHero} />
       {missingDependencies.length > 0 && <p className="studio-missing-dependencies">
         ⚠ {missingDependencies.length} PAD{missingDependencies.length > 1 ? 'S' : ''} SANS SON DANS LA BANQUE ACTUELLE ·{' '}
         {missingDependencies.map((dep) => `${dep.group}${dep.pad} (slot ${dep.slot})`).join(', ')}

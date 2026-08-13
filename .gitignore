@@ -9,3 +9,5 @@ public/audio/*
 vite.config.js
 vite.config.d.ts
 tmp/ep133-midi-capture.ndjson
+playwright-report/
+test-results/

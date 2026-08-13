@@ -18,6 +18,8 @@ interface SoundsPageProps {
   inventory: DeviceInventory | null;
   soundIndex: DeviceSoundIndex | null;
   midiConnected: boolean;
+  machineGroup: EditorGroup;
+  onMachineGroupChange: (group: EditorGroup) => void;
   liveMidi: { note: number; velocity: number; timestamp: number } | null;
   padModes: Record<string, EditorPadMode>;
   onBack: () => void;
@@ -65,7 +67,7 @@ async function readLocalEntries(dir: LocalDirectoryHandle): Promise<LocalEntry[]
 const bankForSlot = (slot: number) => SOUND_BANKS.slice(1).find((bank) => slot >= bank.from && slot <= bank.to) || SOUND_BANKS[10];
 const playModeName = (mode?: number) => mode === 1 ? 'KEYS' : mode === 2 ? 'LEGATO' : 'ONE';
 
-export function SoundsPage({ inventory, soundIndex, midiConnected, liveMidi, padModes, onBack, onConnectMidi, onPadModeChange, onPadPreview, onPreviewSound, localLibraryHandle, localLibraryFolderName, localLibraryNeedsReconnect, onReconnectLocalLibrary }: SoundsPageProps) {
+export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup, onMachineGroupChange, liveMidi, padModes, onBack, onConnectMidi, onPadModeChange, onPadPreview, onPreviewSound, localLibraryHandle, localLibraryFolderName, localLibraryNeedsReconnect, onReconnectLocalLibrary }: SoundsPageProps) {
   // Nom/mémoire/statut affichés en tête de page — réglés depuis la Fiche personnage
   // (plus de formulaire « PROFIL DE LA MACHINE » ici, retiré pour épurer la page).
   const existingProfile = loadDeviceProfile(localStorage);
@@ -84,6 +86,7 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, liveMidi, pad
   const [stagedImports, setStagedImports] = useState<Record<number, StagedLocalFile>>({});
   const [importFeedback, setImportFeedback] = useState<{ status: 'done' | 'error'; message: string } | null>(null);
   const [syncing, setSyncing] = useState(false);
+  useEffect(() => { setActiveGroup(machineGroup); setSelectedPad(1); }, [machineGroup]);
   const usedMb = (soundIndex?.usedBytes || 0) / 1e6;
   const usedPercent = Math.min(100, usedMb / capacityMb * 100);
 
@@ -256,7 +259,7 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, liveMidi, pad
       <div className="sound-machine-workspace">
         <section className="sound-pad-panel">
           <header><div><small>PROJET {inventory?.project || '—'}</small><h2>GROUPES & PADS</h2></div><button className={`sound-keys-toggle ${selectedMode === 'KEYS' ? 'active' : ''}`} onClick={() => onPadModeChange(activeGroup, selectedPad - 1, selectedMode === 'KEYS' ? 'ONE' : 'KEYS')}><b>KEYS</b><small>{activeGroup} · {EP133_PADS[selectedPad - 1].key}</small></button></header>
-          <div className="sound-pad-machine"><nav className="sound-group-tabs" aria-label="Groupes EP-133">{GROUPS.map((group) => <button key={group} className={activeGroup === group ? 'active' : ''} aria-pressed={activeGroup === group} onClick={() => { setActiveGroup(group); setSelectedPad(1); }}><b>{group}</b><small>{inventory?.pads.filter((pad) => pad.group === group).length || 0}/12</small></button>)}</nav>
+          <div className="sound-pad-machine"><nav className="sound-group-tabs" aria-label="Groupes EP-133">{GROUPS.map((group) => <button key={group} className={activeGroup === group ? 'active' : ''} aria-pressed={activeGroup === group} onClick={() => { setActiveGroup(group); setSelectedPad(1); onMachineGroupChange(group); }}><b>{group}</b><small>{inventory?.pads.filter((pad) => pad.group === group).length || 0}/12</small></button>)}</nav>
           <div className="sound-pad-grid">{INTERNAL_PAD_ORDER.map((padNumber) => { const pad = padsByNumber.get(padNumber); const padKey = `${activeGroup}:${padNumber - 1}`; const localFile = stagedLocalPads[padKey]; const stagedSlot = stagedAssignments[padKey]; const slot = stagedSlot ?? pad?.slot; const sound = slot ? inventory?.sounds[String(slot)] : undefined; const bank = slot ? bankForSlot(slot) : null; const visual = EP133_PADS[padNumber - 1]; const changed = stagedSlot !== undefined || Boolean(localFile); return <button key={padNumber} className={`${selectedPad === padNumber ? 'selected' : ''} ${livePad === padNumber ? 'live' : ''} ${changed ? 'changed' : ''} bank-${bank?.id || 'empty'}`} aria-pressed={selectedPad === padNumber}
             onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = 'copy'; }}
             onDrop={(event) => {

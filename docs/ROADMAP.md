@@ -29,7 +29,34 @@ pour ouvrir, écouter ou modifier un projet.
 - Les sons de la machine ne sont pas copiés ou redistribués sans droit explicite.
 - Rhythm Hero reste un module séparé du Studio sur la page d'accueil.
 
-## État consolidé — 11-12 août 2026
+## Stratégie de livraison
+
+Le Studio est développé d'abord comme un produit utile et fiable. Le code
+reste compatible avec un futur déploiement, mais aucun système de comptes,
+paiement, abonnement ou stockage cloud n'est ajouté avant que les fonctions
+principales soient stabilisées et validées.
+
+La piste « service hébergé ou payant » sera réévaluée en fin de cycle produit,
+à partir d'un outil réellement utilisé, d'un périmètre clair et d'un modèle
+économique explicite. Cette séparation évite de mélanger infrastructure
+commerciale et validation du workflow EP-133.
+
+## État consolidé — 11-13 août 2026
+
+Mise à jour du 13 août — étude de l'écosystème externe et des bibliothèques
+techniques (nouveau dossier [`etude/`](../etude/00_INDEX.md)), suivie d'une
+première vague d'intégration d'outillage qui simplifie des chantiers déjà
+actés mais jamais commencés : `vitest` (formalise Q-03), `vite-plugin-pwa`
+(réalise X-12), et un premier domaine d'état (langue FR/EN/ES) sorti
+d'`App.tsx` vers un magasin `zustand` pilote. Détail dans
+[REGISTRE_IDEES.md](REGISTRE_IDEES.md#écosystème-externe-et-bibliothèques-étude-du-13-août-2026)
+(R-04 à R-10) et [SUIVI_IMPLEMENTATION.md](SUIVI_IMPLEMENTATION.md).
+`npm run typecheck`, `npm run build` et `npm test` vérifiés à froid après
+correction de deux vrais problèmes trouvés au passage : un import de type
+oublié dans `DocumentationPage.tsx`, et un `node_modules`/`dist` en partie
+appartenant à `root` dans le bac à sable de cette session (corrigé sans
+toucher aux fichiers root, par renommage puis réinstallation propre) — voir
+`docs/SUIVI_IMPLEMENTATION.md` pour le détail complet.
 
 Mise à jour du 12 août — trois plans avancés dans l'ordre, chacun vérifié
 par `npm run typecheck`/`build`/`test` et un vrai scénario Playwright ou
@@ -127,6 +154,17 @@ dépannage documentée.
 
 ### Expérimental ou incomplet
 
+- **PWA installable** (13 août, X-12) : `vite-plugin-pwa` configuré,
+  icônes originales créées. Build vérifié (`dist/manifest.webmanifest`,
+  `dist/sw.js`, `dist/registerSW.js` bien générés) ; reste à confirmer
+  manuellement l'installation réelle dans Chrome/Chromium et le
+  fonctionnement hors ligne, non testé ce 13 août.
+- **Premier domaine d'état sorti d'`App.tsx`** (13 août, R-08) : la langue
+  FR/EN/ES vit désormais dans un magasin `zustand`
+  (`src/core/store/languageStore.ts`), `DocumentationPage` le lit
+  directement sans prop. Un seul domaine sur un très grand nombre d'états
+  encore locaux à `App.tsx` — pas une découpe complète, une preuve de
+  méthode pour la suite. Typecheck et build vérifiés.
 - Le JSON EP-133 doit encore être compilé et vérifié en `.ppak` sur une copie
   de projet de test.
 - Le mode KEYS écrit les hauteurs MIDI ; les articulations ne disposent pas
@@ -140,10 +178,12 @@ dépannage documentée.
   sections commitées.
 - Les modes ONE, KEYS et LEGATO lus sur la machine ne sont pas tous modifiables
   et persistés de bout en bout.
-- Aucune écriture directe vers l'EP-133 n'existe encore (aucun protocole
-  SysEx d'écriture dans le projet) ; SYNCHRONISER dans Sons & Transfert
-  copie désormais réellement les sons perso choisis vers le dossier de
-  travail local, mais rien n'est jamais envoyé à la machine elle-même.
+- Aucune écriture de sample, pattern ou archive vers l'EP-133 n'existe encore.
+  Une exception strictement limitée est désormais validée : la sélection A–D
+  écrit la métadonnée `active` du groupe via FILE et la relit immédiatement.
+  SYNCHRONISER dans Sons & Transfert copie les sons perso choisis vers le
+  dossier de travail local ; aucun contenu audio ou projet n'est envoyé à la
+  machine.
 - **Correction d'une inexactitude de ce document** : les 5 niveaux de
   Boom-Bap, House, Rock, Reggae et Minimal étaient déjà tous écrits à la
   main, contrairement à ce qu'affirmait cette ligne jusqu'au 12 août — seule
@@ -152,10 +192,18 @@ dépannage documentée.
   styles à 5 niveaux écrits à la main au total, la cible « dix parcours
   pédagogiques finis » du plan P0 est atteinte. Les 29 styles restants
   utilisent encore des partitions générées provisoires.
-- Les tests automatisés restent limités à 3 scripts ciblés (moteur,
-  transport, exports) — toujours aucun test d'intégration ni E2E committé,
-  mais une CI qualité (typecheck + tests + build) tourne désormais sur
-  chaque push/PR (11 août, `.github/workflows/ci.yml`).
+- Les tests automatisés restent fondés sur 4 scripts ciblés (moteur,
+  transport, exports, analyse WAV) — aucun test d'intégration React n'existe
+  encore, mais une CI qualité (typecheck + tests + build) tourne désormais
+  sur chaque push/PR (11 août, `.github/workflows/ci.yml`). Depuis le
+  13 août, `vitest` les enveloppe sans dupliquer leur logique
+  (`npm run test:unit`, voir REGISTRE_IDEES.md R-04) — et un premier vrai
+  test **E2E** existe désormais (`e2e/midi-connection.spec.ts`, Playwright,
+  `npm run test:e2e`, câblé en CI après le build) : Web MIDI simulé via
+  `page.addInitScript()`, deux scénarios vérifiés en exécution réelle
+  (EP-133 détecté vs absent), voir REGISTRE_IDEES.md R-16. La pyramide de
+  tests visée par Q-03 a maintenant ses trois niveaux amorcés ; reste à
+  l'élargir au-delà de l'écran d'accueil (Studio, Sons & Transfert).
 - Les dépendances (`react`, `vite`, `tone`, `@vitejs/plugin-react`) sont
   pinnées en `^` depuis le 11 août (plus de `latest`), lockfile regénéré et
   revérifié avec `npm ci`.
@@ -168,7 +216,11 @@ dépannage documentée.
 
 ## Phase 1 — stabiliser avant d'ajouter
 
-- [x] Découper `App.tsx` en pages et composants visuels isolés.
+- [x] Découper `App.tsx` en pages et composants visuels isolés — le
+  découpage des *vues* (`src/pages/`, `src/components/`, ~1 720 lignes
+  extraites) est fait ; celui de l'*état* ne fait que commencer
+  (`App.tsx` reste à environ 1 550 lignes et 60 `useState`, voir R-08 dans
+  REGISTRE_IDEES.md et PROJECT_CONTEXT.md § Priorités).
 - [x] Définir un modèle canonique pour studio, groupes et notes, avec
   adaptateurs explicites pour les cibles de score du jeu.
 - [x] Ajouter tests du score, des conversions MIDI et de l'extension automatique.
@@ -197,11 +249,18 @@ Transformer `SAVE` en menu de fichiers :
   VALIDATION_SAVE_LOAD_STUDIO.md), couvert par un test de non-régression.
   Reste hors périmètre de cet audit : téléchargement de fichier local et
   autosauvegarde de secours (juste en dessous).
-- [ ] Renommer, dupliquer, archiver et supprimer avec confirmation (tout est
-  opérationnel sauf l'archivage).
-- [ ] Ouvrir et sauvegarder des projets `.pak/.ppak`.
-- [ ] Importer et exporter du MIDI standard.
-- [ ] Garder `ep.project.v1` comme représentation technique intermédiaire.
+- [x] Renommer, dupliquer, archiver et supprimer avec confirmation. L'archivage
+  retire le projet de la liste active sans supprimer son document local.
+- [x] Importer et ouvrir en lecture seule les projets `.pak/.ppak` ; la
+  réécriture/compilation d'archive reste séparée et non promise.
+- [x] Importer et exporter du MIDI standard (import multi-fichiers vers la
+  bibliothèque locale, export du pattern actif ; formats MIDI 0/1 lus).
+- [x] Garder `ep.project.v1` comme représentation technique intermédiaire —
+  décision adoptée le 9 août (`docs/DECISION_FORMATS_PROJET.md`) et déjà
+  respectée dans tout le code (`exporters.ts`, `importers.ts`,
+  `studioLibrary.ts`) ; cette case était restée décochée par erreur alors
+  que ce n'est pas une tâche ponctuelle mais un principe déjà en vigueur —
+  à garder vrai à chaque nouvelle fonctionnalité, pas à recocher un jour.
 - [ ] Lister les exercices officiels du jeu dans la même bibliothèque, en
   lecture seule, avec action « Dupliquer pour modifier ».
 - [ ] Miniatures, date de modification, BPM, longueur et groupes utilisés.
@@ -245,7 +304,13 @@ composition identique sans machine connectée ; échanger ses notes en MIDI.
 - [x] Relier la fenêtre web au moteur par un pont HTTP local.
 - [x] Préparer la synchronisation incrémentale et l'historique des manifestes.
 - [x] Valider un second passage incrémental depuis le bouton sur la machine.
-- [ ] Installer et démarrer automatiquement le pont comme service utilisateur.
+- [ ] Installer et démarrer automatiquement le pont comme service utilisateur
+  — **à reconsidérer avant de le faire** : `etude/02_BIBLIOTHEQUES_TECHNIQUES.md`
+  (13 août, REGISTRE_IDEES.md R-09) propose de porter le moteur de clonage
+  directement en TypeScript navigateur (Web MIDI + File System Access API en
+  écriture, éventuellement `comlink` pour le faire tourner hors du fil
+  principal), ce qui supprimerait le pont Python/venv entièrement plutôt que
+  de finir de l'installer comme service. Étudier cette option en premier.
 - [ ] Créer l'instantané initial immuable.
 - [ ] Calculer un patch entre instantané et copie de travail.
 - [ ] Détecter les conflits avant toute synchronisation.
@@ -326,6 +391,13 @@ de fichiers audio propriétaires au dépôt.
 la cible occupée n'a pas été explicitement confirmée.
 
 ## Phase 5 — projets EP-133 complets
+
+> Avant de commencer cette phase, lire
+> [`etude/01_ECOSYSTEME_EP133.md`](../etude/01_ECOSYSTEME_EP133.md#kmorrillep-series-sysex)
+> (13 août 2026) : `kmorrill/ep-series-sysex` propose désormais une écriture
+> réelle vers l'appareil avec relecture et vérification octet par octet,
+> vérifiée sur firmware 2.5.1 — un socle nettement plus avancé que ce que
+> cette phase supposait à sa rédaction initiale.
 
 - [ ] Compiler le JSON avec `kmorrill/ep-series-sysex` (MIT).
 - [ ] Générer `.ppak` hors ligne avec rapport de validation.

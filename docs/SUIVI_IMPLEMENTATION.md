@@ -21,7 +21,12 @@ Pour chaque avancée :
 - [x] Envoyer pads, notes, transport et PANIC uniquement vers l’EP-133.
 - [x] Apprendre le canal MIDI depuis les messages entrants et le réutiliser en sortie.
 - [x] Conserver le retour machine → écran pour les pads des groupes A–D (notes 36–83).
-- [ ] Décoder proprement la notification SysEx propriétaire des boutons physiques A–D ; aucune écriture SysEx non documentée n’est activée.
+- [x] Décoder et cartographier la notification SysEx propriétaire des boutons
+  physiques A–D via la page TEST MACHINE ; la signature est persistée localement
+  et synchronise Studio/Sons & Transfert sans réémettre l’événement reçu.
+- [x] Les sélections A–D depuis Studio et Sons & Transfert écrivent uniquement la
+  métadonnée `active` du groupe via FILE, avec relecture obligatoire ; aucune
+  écriture de sample, pattern ou archive n’est activée.
 
 Validation de fin de session : le test direct Python, note 45 sur canal 1, fait
 sonner l’EP-133. La validation depuis la page web reste négative. Le prochain
@@ -602,3 +607,114 @@ visuelle navigateur et validation matérielle de l'écriture encore à faire.
   vrai EP-133 avant de déclarer la synchronisation matérielle compatible.
 - [ ] contrôle visuel des raffinements **LOCAL** dans Chrome/Chromium avant
   leur futur commit groupé.
+
+## Étape — Intégration d'outillage issu de l'étude externe (13 août 2026)
+
+Statut : code écrit et relu, **vérification `npm install`/`typecheck`/`build`/
+`test` bloquée dans ce bac à sable** par un `node_modules` appartenant à
+`root` (installation antérieure, sans lien avec cette étape). Rien de ce qui
+suit ne doit être considéré RÉALISÉ dans `docs/REGISTRE_IDEES.md` tant que
+cette vérification n'a pas réellement tourné — voir la note de blocage en fin
+de section.
+
+- [x] `vitest` ajouté (`^4.1.10`) avec `vitest.config.ts` et
+  `tests/legacy-checks.test.ts`, qui importe tel quel chacun des quatre
+  scripts `tools/check-*.mjs` existants plutôt que de dupliquer leurs
+  assertions — même couverture, meilleur harnais (Q-03, R-04).
+- [x] script `npm run test:unit` ajouté et intégré à la chaîne `npm test`
+  après les quatre scripts historiques, sans les remplacer ni changer leur
+  comportement en CI (Node 22 via `.github/workflows/ci.yml`).
+- [x] store `zustand` (`^5.0.15`) pilote créé dans
+  `src/core/store/languageStore.ts` pour l'état langue FR/EN/ES : même clé
+  et même format `localStorage` qu'avant, aucune migration de données
+  (R-08). `App.tsx` et `DocumentationPage.tsx` branchés dessus ;
+  `DocumentationPage` ne reçoit plus `language` en prop, il le lit
+  directement dans le magasin.
+- [x] `vite-plugin-pwa` (`^1.3.0`) configuré dans `vite.config.ts`
+  (`registerType: 'autoUpdate'`), réalisant enfin X-12 (« RETENU » depuis
+  longtemps, jamais commencé).
+- [x] icônes PWA originales créées (`public/pwa/icon-source.svg` et variante
+  maskable), rasterisées en PNG 192/512 et favicon via ImageMagick — motif
+  quatre groupes A–D en orange sur fond noir, dans le langage visuel déjà
+  établi par l'application ; aucun élément du manuel ou de la machine
+  reproduit.
+- [x] `index.html` complété : favicon, icône Apple, `theme-color`.
+
+**Blocage résolu (13 août, plus tard le même jour)** : `node_modules/` et
+`dist/` appartenaient en partie à `root` dans ce bac à sable (installation
+antérieure sans rapport avec cette session). Corrigé sans toucher aux
+fichiers root — `mv node_modules node_modules.rootbak` puis `mv dist
+dist.rootbak` (un renommage ne nécessite que les droits d'écriture sur le
+dossier parent, pas sur le contenu déplacé), `npm install` complet et
+`npm run build` propres depuis un état vierge appartenant à l'utilisateur,
+puis suppression des deux dossiers `.rootbak` avec le mot de passe `sudo`
+fourni explicitement par l'utilisateur pour cette réparation.
+
+Un deuxième blocage est apparu au premier `npm run typecheck` : l'import de
+`AppLanguage` supprimé par erreur de `DocumentationPage.tsx` lors du
+branchement sur `languageStore` (R-08) alors que la fonction
+`localizedGuides` l'utilise encore comme type de paramètre — corrigé en
+réimportant uniquement le type, sans toucher à la logique de rendu.
+
+Un troisième blocage, plus profond, est apparu au premier `npm test` : le
+`node` système de ce bac à sable est en version 20, alors que
+`--experimental-strip-types` (utilisé par les 4 scripts `tools/check-*.mjs`)
+exige Node ≥ 22.6, comme `.nvmrc`/`engines` du projet l'exigent déjà. Corrigé
+en installant Node 22 via `nvm` (local au compte utilisateur, ne touche pas
+au Node système ni à `/usr/bin/node`) et en faisant charger `nvm use default`
+automatiquement par `~/.zshenv`, lu par tout shell zsh y compris non
+interactif — donc par les futures sessions de cet agent sur cette machine.
+
+**Vérification finale, tout au vert** :
+
+- [x] `npm install` propre (0 vulnérabilité) ;
+- [x] `npm run typecheck` (`tsc -b`) sans erreur ;
+- [x] `npm run build` (`tsc -b && vite build`) : bundle généré, PWA générée
+  (`dist/manifest.webmanifest`, `dist/sw.js`, `dist/registerSW.js`, 10
+  entrées précachées) ;
+- [x] `npm test` : les 4 scripts historiques passent (Node 22) **et**
+  `npm run test:unit` (vitest) passe — 1 fichier, 4 tests, 420 ms, en
+  important tel quel ces mêmes scripts.
+
+Les statuts R-04/R-05/R-08 de `docs/REGISTRE_IDEES.md` peuvent donc passer
+de « RÉALISÉ (partiel), vérification en attente » à réellement vérifiés.
+
+## Étape — premier test E2E réel avec Playwright (13 août, plus tard)
+
+Suite de la deuxième vague de recherche du même jour : sur confirmation de
+l'utilisateur (« si ces éléments nous font gagner du temps en code, oui »),
+seul le mock Web MIDI de Playwright avait un vrai endroit où s'accrocher
+tout de suite (`wavefile`, `needles`, `@audio/beat` et `zundo` restent sans
+site d'usage réel tant que la Phase 4 et le découpage de l'état des
+scènes/Song n'ont pas commencé — pas installés, pour ne pas laisser de
+dépendance morte).
+
+- [x] `@playwright/test` (`^1.62.1`) installé, navigateur Chromium
+  téléchargé (`npx playwright install chromium`, sans `--with-deps` : les
+  dépendances système auraient exigé un `sudo` interactif indisponible ici
+  — à vérifier séparément si un test échoue un jour pour une bibliothèque
+  système manquante, sur une machine où le paquet `--with-deps` peut
+  tourner).
+- [x] `playwright.config.ts` : sert `dist/` via `vite preview`, un seul
+  projet Chromium.
+- [x] `e2e/midi-connection.spec.ts` : deux scénarios réels, pas des
+  coquilles vides — un mock complet de `MIDIAccess`/`MIDIInput`/
+  `MIDIOutput` (nommés « EP-133 » pour passer le filtre
+  `isEp133MidiPort`), qui exerce vraiment `useWebMidi.ts` (ouverture async
+  des ports, mise à jour de l'état `connected`) jusqu'à l'écran d'accueil.
+- [x] `npm run test:e2e` ajouté, câblé dans `.github/workflows/ci.yml`
+  après `npm run build` (l'E2E sert le build de production, pas le serveur
+  de dev).
+- [x] **Vrai bug d'environnement trouvé et corrigé en vérifiant** : `vite
+  preview` ne répond ici que sur `::1` (IPv6), pas `127.0.0.1` — Playwright
+  attendait indéfiniment sur `127.0.0.1:4173` sans jamais se connecter,
+  d'où un premier échec par timeout. Corrigé par `--host 127.0.0.1`
+  explicite dans la commande du serveur.
+- [x] Suite exécutée réellement après correction : **2/2 tests passés**
+  (accueil avec EP-133 détecté automatiquement, accueil sans machine).
+- [x] `npm run typecheck` et `npm run build` revérifiés après ajout —
+  toujours au vert.
+
+Statuts mis à jour : `docs/REGISTRE_IDEES.md` R-16 (RETENU → RÉALISÉ) et
+Q-03 (RETENU → RÉALISÉ partiel — la pyramide a ses trois niveaux amorcés,
+reste à élargir l'E2E au-delà de l'accueil).

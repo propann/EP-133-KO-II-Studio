@@ -15,6 +15,8 @@ export const STUDIO_LIBRARY_KEY = 'ep133-rhythm-hero:studio-projects:v1';
 export interface StudioProjectRecord {
   id: string;
   updatedAt: string;
+  /** Présent uniquement pour les projets retirés de la liste active. */
+  archivedAt?: string;
   document: Record<string, unknown>;
 }
 
@@ -90,6 +92,20 @@ export function deleteStudioProject(storage: Pick<Storage, 'setItem'>, library: 
   return writeStudioLibrary(storage, library.filter((record) => record.id !== id));
 }
 
+/** Retire un projet de la liste active sans supprimer son document ; l'opération est réversible. */
+export function archiveStudioProject(storage: Pick<Storage, 'setItem'>, library: StudioProjectRecord[], id: string) {
+  return writeStudioLibrary(storage, library.map((record) => record.id === id ? { ...record, archivedAt: new Date().toISOString() } : record));
+}
+
+/** Réactive un projet archivé dans la bibliothèque locale. */
+export function restoreStudioProject(storage: Pick<Storage, 'setItem'>, library: StudioProjectRecord[], id: string) {
+  return writeStudioLibrary(storage, library.map((record) => {
+    if (record.id !== id) return record;
+    const { archivedAt: _archivedAt, ...active } = record;
+    return active;
+  }));
+}
+
 /** Fiche de recherche affichée dans « Ouvrir… » : le strict nécessaire pour trier/filtrer sans reparser le document ailleurs. */
 export interface StudioProjectSummary {
   id: string;
@@ -98,6 +114,7 @@ export interface StudioProjectSummary {
   /** Nombre de patterns non vides (au moins un événement) — mesure grossière de la taille du projet, pas les mesures réelles. */
   patternCount: number;
   updatedAt: string;
+  archived: boolean;
 }
 
 /**
@@ -119,6 +136,7 @@ export function summarizeStudioProject(record: StudioProjectRecord): StudioProje
     bpm: Math.max(20, Math.min(300, Number(settings.bpm) || 120)),
     patternCount: patterns.filter((pattern) => Array.isArray(pattern.events) && pattern.events.length > 0).length,
     updatedAt: record.updatedAt,
+    archived: Boolean(record.archivedAt),
   };
 }
 

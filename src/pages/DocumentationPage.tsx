@@ -1,4 +1,5 @@
 import type { AppLanguage } from '../core/i18n';
+import { useLanguageStore } from '../core/store/languageStore';
 
 const REPO_DOCS = 'https://github.com/propann/EP-133-KO-II-Studio/blob/main/docs';
 
@@ -17,6 +18,7 @@ const toolGuides: DocLink[] = [
   { title: 'CLONER LA MACHINE', file: 'CLONAGE_COMPLET_MACHINE.md', description: 'Copier projets, métadonnées et samples vers un miroir privé local.', status: 'LECTURE SEULE' },
   { title: 'PONT LOCAL', file: 'PONT_LOCAL_CLONAGE.md', description: 'Installer et utiliser le service local qui relie le navigateur au cloneur.' },
   { title: 'TEST MACHINE & MIDI', file: 'CONNEXION_ET_CALIBRATION_MIDI.md', description: 'Lire le journal MIDI/SysEx, associer les contrôles et tester les deux sens.', status: 'MATÉRIEL' },
+  { title: 'RÉFÉRENCE SYSEX EP‑133', file: 'REFERENCE_SYSEX_EP133.md', description: 'Handshake, identification, FILE, métadonnées, format WAV et opérations dangereuses.', status: 'RECHERCHE' },
   { title: 'RHYTHM HERO', file: 'POINT_JEU_ET_STUDIO.md', description: 'Utiliser le module d’entraînement, ses exercices, son score et ses pads.' },
 ];
 
@@ -32,11 +34,11 @@ const machineGuides: DocLink[] = [
 const guideTranslations: Record<'en' | 'es', Record<string, [string, string, string?]>> = {
   en: {
     'LANCEMENT_LOCAL.md':['START THE STUDIO','Install the app, run it locally and open each tool.'], 'STRUCTURE_SONG_MODE.md':['PATTERN & SONG STUDIO','Understand patterns, scenes, Song Positions and the arranger.'], 'VALIDATION_SAVE_LOAD_STUDIO.md':['SAVE / LOAD','Create, save, reopen and protect Studio projects.'], 'POINT_SONS_ET_TRANSFERT.md':['SOUNDS & TRANSFER','Groups, pads, slots, sound banks and synchronization preparation.'], 'CLONAGE_COMPLET_MACHINE.md':['CLONE THE DEVICE','Copy projects, metadata and samples to a private local mirror.','READ ONLY'], 'PONT_LOCAL_CLONAGE.md':['LOCAL BRIDGE','Connect the browser to the local cloning engine.'], 'CONNEXION_ET_CALIBRATION_MIDI.md':['MACHINE TEST & MIDI','Read MIDI/SysEx logs, map controls and test both directions.','HARDWARE'], 'POINT_JEU_ET_STUDIO.md':['RHYTHM HERO','Use the training module, exercises, scoring and pads.'],
-    'MISE_EN_ROUTE_LINUX.md':['LINUX SETUP','USB, permissions, compatible browser and MIDI checks on Linux.'], 'MISE_EN_ROUTE_WINDOWS.md':['WINDOWS SETUP','Prepare Windows, connect the EP‑133 and start the app.'], 'CHARGEMENT_PROJET_MACHINE.md':['LOAD A DEVICE PROJECT','Read a real project without changing EP‑133 data.','READ ONLY'], 'BANQUE_SAMPLES_STUDIO.md':['SAMPLE LIBRARY','Understand sounds, slots and their use in the Studio.'], 'DECISION_FORMATS_PROJET.md':['EP‑133 FORMATS','.pak/.ppak archives, MIDI, JSON and known compatibility limits.'], 'MODELE_DONNEES_PROJET.md':['DATA MODEL','Groups, pads, notes, velocities, durations and preserved fields.'],
+    'MISE_EN_ROUTE_LINUX.md':['LINUX SETUP','USB, permissions, compatible browser and MIDI checks on Linux.'], 'MISE_EN_ROUTE_WINDOWS.md':['WINDOWS SETUP','Prepare Windows, connect the EP‑133 and start the app.'], 'CHARGEMENT_PROJET_MACHINE.md':['LOAD A DEVICE PROJECT','Read a real project without changing EP‑133 data.','READ ONLY'], 'BANQUE_SAMPLES_STUDIO.md':['SAMPLE LIBRARY','Understand sounds, slots and their use in the Studio.'], 'DECISION_FORMATS_PROJET.md':['EP‑133 FORMATS','.pak/.ppak archives, MIDI, JSON and known compatibility limits.'], 'MODELE_DONNEES_PROJET.md':['DATA MODEL','Groups, pads, notes, velocities, durations and preserved fields.'], 'REFERENCE_SYSEX_EP133.md':['EP‑133 SYSEX REFERENCE','Handshake, identification, FILE, metadata, WAV format and dangerous operations.','RESEARCH'],
   },
   es: {
     'LANCEMENT_LOCAL.md':['INICIAR EL STUDIO','Instala la aplicación, ejecútala localmente y abre sus herramientas.'], 'STRUCTURE_SONG_MODE.md':['PATTERN & SONG STUDIO','Comprende patterns, escenas, Song Positions y el arreglador.'], 'VALIDATION_SAVE_LOAD_STUDIO.md':['SAVE / LOAD','Crea, guarda, vuelve a abrir y protege proyectos del Studio.'], 'POINT_SONS_ET_TRANSFERT.md':['SONIDOS Y TRANSFERENCIA','Grupos, pads, slots, bancos de sonidos y preparación de sincronización.'], 'CLONAGE_COMPLET_MACHINE.md':['CLONAR LA MÁQUINA','Copia proyectos, metadatos y samples a un espejo local privado.','SOLO LECTURA'], 'PONT_LOCAL_CLONAGE.md':['PUENTE LOCAL','Conecta el navegador con el motor local de clonación.'], 'CONNEXION_ET_CALIBRATION_MIDI.md':['PRUEBA DE MÁQUINA Y MIDI','Lee el registro MIDI/SysEx, asigna controles y prueba ambos sentidos.','HARDWARE'], 'POINT_JEU_ET_STUDIO.md':['RHYTHM HERO','Usa el módulo de entrenamiento, sus ejercicios, puntuación y pads.'],
-    'MISE_EN_ROUTE_LINUX.md':['CONFIGURACIÓN LINUX','USB, permisos, navegador compatible y verificación MIDI en Linux.'], 'MISE_EN_ROUTE_WINDOWS.md':['CONFIGURACIÓN WINDOWS','Prepara Windows, conecta el EP‑133 e inicia la aplicación.'], 'CHARGEMENT_PROJET_MACHINE.md':['CARGAR UN PROYECTO','Lee un proyecto real sin modificar los datos del EP‑133.','SOLO LECTURA'], 'BANQUE_SAMPLES_STUDIO.md':['BANCO DE SAMPLES','Comprende sonidos, slots y su uso en el Studio.'], 'DECISION_FORMATS_PROJET.md':['FORMATOS EP‑133','Archivos .pak/.ppak, MIDI, JSON y límites conocidos.'], 'MODELE_DONNEES_PROJET.md':['MODELO DE DATOS','Grupos, pads, notas, velocidades, duraciones y campos preservados.'],
+    'MISE_EN_ROUTE_LINUX.md':['CONFIGURACIÓN LINUX','USB, permisos, navegador compatible y verificación MIDI en Linux.'], 'MISE_EN_ROUTE_WINDOWS.md':['CONFIGURACIÓN WINDOWS','Prepara Windows, conecta el EP‑133 e inicia la aplicación.'], 'CHARGEMENT_PROJET_MACHINE.md':['CARGAR UN PROYECTO','Lee un proyecto real sin modificar los datos del EP‑133.','SOLO LECTURA'], 'BANQUE_SAMPLES_STUDIO.md':['BANCO DE SAMPLES','Comprende sonidos, slots y su uso en el Studio.'], 'DECISION_FORMATS_PROJET.md':['FORMATOS EP‑133','Archivos .pak/.ppak, MIDI, JSON y límites conocidos.'], 'MODELE_DONNEES_PROJET.md':['MODELO DE DATOS','Grupos, pads, notas, velocidades, duraciones y campos preservados.'], 'REFERENCE_SYSEX_EP133.md':['REFERENCIA SYSEX EP‑133','Handshake, identificación, FILE, metadatos, formato WAV y operaciones peligrosas.','INVESTIGACIÓN'],
   },
 };
 
@@ -62,9 +64,12 @@ function DocumentationLibrary({ eyebrow, title, description, links, start, guide
   </section>;
 }
 
-interface DocumentationPageProps { language: AppLanguage; onBack: () => void; }
+interface DocumentationPageProps { onBack: () => void; }
 
-export function DocumentationPage({ language, onBack }: DocumentationPageProps) {
+export function DocumentationPage({ onBack }: DocumentationPageProps) {
+  // Lu directement dans le magasin partagé plutôt que reçu en prop — voir
+  // core/store/languageStore.ts et docs/REGISTRE_IDEES.md R-08.
+  const language = useLanguageStore((state) => state.language);
   const t = ui[language];
   return <main className="documentation-page">
     <header className="module-header docs-header"><button onClick={onBack}>{t.back}</button><div><small>MODULE 05</small><h1>{t.center}</h1></div><span className="ready">{t.badge}</span></header>

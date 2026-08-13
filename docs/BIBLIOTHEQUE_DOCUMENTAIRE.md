@@ -70,3 +70,9 @@ Les projets étudiés (`ep-series-sysex`, `EP133-skill`, export DAW et autres)
 restent recensés dans `ANALYSE_ETUDE_CAHIER_CHARGES.md`. Avant d'afficher ou
 d'intégrer leur contenu, vérifier : licence, version, produit EP-133/EP-40,
 source primaire et niveau de validation sur matériel réel.
+
+Une cartographie plus large et plus récente (dépôts EP-133/EP-40/EP-1320,
+bibliothèques techniques génériques, formats DAW) est disponible dans le
+dossier [`etude/`](../etude/00_INDEX.md) à la racine du dépôt, daté du 13 août
+2026. Les décisions qui en découlent sont tracées dans
+`REGISTRE_IDEES.md` (section « Écosystème externe et bibliothèques »).

@@ -14,6 +14,18 @@ cloner la machine, ouvrir ses projets et ses sons, éditer patterns, scènes et
 Songs hors ligne, puis préparer un retour matériel vérifié. Le coach Rhythm
 Hero reste inclus comme module secondaire d'apprentissage du finger-drumming.
 
+## Décision de méthode — produit avant service
+
+Le projet doit d'abord être professionnalisé comme outil fiable, local et
+déployable : qualité du code, installation reproductible, documentation,
+validation matérielle et expérience utilisateur passent avant la monétisation.
+
+Une évolution vers un service hébergé ou payant reste une possibilité à garder
+en tête, mais elle ne doit pas entraîner prématurément l'ajout de comptes,
+paiements, synchronisation cloud ou collecte de projets/samples. Cette idée
+sera réévaluée à la fin d'un cycle produit stable, avec une décision explicite
+sur le modèle économique, les données et les coûts d'exploitation.
+
 ## Décision de positionnement — 11 août 2026
 
 - Nom produit : **EP-133 KO II Studio**.
@@ -273,14 +285,32 @@ a réussi, mais la validation utilisateur de la communication web reste négativ
 
 ## Priorités
 
-1. Découper `App.tsx`, centraliser le transport et ajouter des tests.
-2. Transformer SAVE en vraie gestion Nouveau/Sauvegarder/Charger/Importer.
-3. Unifier les exercices du jeu et les projets utilisateur dans une bibliothèque.
-4. Concevoir les deux banques sonores : ordinateur et miroir privé EP-133.
-5. Finaliser le préparateur audio et le contrôle de mémoire avant transfert.
-6. Valider la compilation `.ppak` sur un projet brouillon sauvegardé.
-7. Finaliser les cinq niveaux de chaque style pédagogique.
-8. Archiver ou supprimer `Pad-Hero` uniquement après validation et accord.
+Révisées le 13 août 2026 : les deux premiers points de la version précédente
+de cette liste (découper `App.tsx` côté vues, transformer SAVE en menu de
+fichiers) sont en réalité déjà largement faits d'après `docs/ROADMAP.md`
+Phase 1/2 — cette liste avait pris du retard sur le code, elle ne le
+gouvernait plus. Cette liste reste un résumé d'orientation rapide ;
+`docs/ROADMAP.md` fait foi phase par phase en cas de doute.
+
+1. Compiler et vérifier `.ppak` (Phase 5) — encore aucune case cochée,
+   c'est le vrai verrou vers toute écriture matérielle. `etude/01_ECOSYSTEME_EP133.md`
+   documente une avancée notable de `kmorrill/ep-series-sysex` (écriture
+   vérifiée octet à octet sur firmware 2.5.1) à réévaluer en premier.
+2. Finaliser le préparateur audio (Phase 4) : forme d'onde, conversion vers
+   la fréquence cible et jauge de mémoire avant transfert.
+3. Étendre les 5 niveaux écrits à la main aux 29 styles restants (10/39
+   styles faits au 12 août, voir Phase 6).
+4. Continuer à sortir l'état d'`App.tsx` vers des magasins dédiés
+   (`zustand`, un domaine à la fois — la langue FR/EN/ES est le premier
+   sorti le 13 août, voir REGISTRE_IDEES.md R-08). Le découpage des *vues*
+   est fait ; celui de l'*état* ne fait que commencer.
+5. Unifier les exercices du jeu et les projets utilisateur dans une
+   bibliothèque unique (Phase 2, « Song mode »).
+6. Compléter les banques sonores (Phase 3) : tags, favoris, kit de secours,
+   restauration Time Machine.
+7. Archiver ou supprimer `Pad-Hero` sur GitHub, uniquement après validation
+   du déploiement et accord explicite du propriétaire (action externe au
+   dépôt, toujours en attente).
 
 La vision détaillée est dans `docs/ROADMAP.md`, la gestion des données dans
 `docs/GESTION_FICHIERS_ET_SONS.md` et le futur chantier dans
@@ -288,6 +318,12 @@ La vision détaillée est dans `docs/ROADMAP.md`, la gestion des données dans
 
 Toutes les propositions, y compris celles qui ne sont pas encore intégrées,
 sont conservées avec un statut et un motif dans `docs/REGISTRE_IDEES.md`.
+
+Une étude de l'écosystème externe (dépôts EP-133/EP-40/EP-1320 communautaires
+et bibliothèques techniques génériques réutilisables) est disponible dans
+`etude/00_INDEX.md`, datée du 13 août 2026. Elle complète, sans les
+remplacer, `docs/REFERENCE_SYSEX_EP133.md` et
+`docs/ANALYSE_ETUDE_CAHIER_CHARGES.md`.
 
 La présentation GitHub existe en français (`README.md`), anglais
 (`README.en.md`) et espagnol (`README.es.md`). Les trois versions doivent rester
