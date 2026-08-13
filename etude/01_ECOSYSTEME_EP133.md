@@ -198,16 +198,48 @@
   vérifié depuis l'extérieur cette session — à explorer directement avant de
   s'y fier.
 
-### ep133-krate — référencé mais non localisé
+### icherniukh/ep133-krate — localisé (13 août, deuxième session)
 
-- Cité par plusieurs sources (dont `ep133-ppak/PROTOCOL.md`) comme
-  fournissant des « captures brutes de la couche fil SysEx » avec une
-  matrice de confiance, issues d'un sondage USB-MIDI en direct. Aucune URL
-  de dépôt public n'a pu être confirmée cette session (probablement privé,
-  renommé, ou seulement cité en interne par ses pairs).
-- Recommandation : `SURVEILLER`. À rechercher à nouveau lors d'une prochaine
-  étude, en particulier sur GitHub sous l'organisation ou le compte des
-  contributeurs déjà identifiés (`phones24`, `ZacharySBrown`, `kmorrill`).
+- **Résolu** : une étude parallèle indépendante (`etude/codex/`, menée par
+  un autre agent sur ce même dépôt le 13 août) a localisé le dépôt sous
+  <https://github.com/icherniukh/ep133-krate> — confirmé par une recherche
+  séparée avant d'écrire cette ligne, pas repris tel quel. Gestionnaire de
+  samples CLI/TUI, MIT annoncée, actif (188 commits, 486 tests sans
+  matériel selon l'étude parallèle — non revérifié chiffre par chiffre ici).
+- Apports techniques notables, à recouper avant tout code :
+  - confirme que le transfert audio utilise du PCM signé little-endian
+    reconditionné en **Packed7** — cohérent avec nos propres fonctions
+    `pack7`/`unpack7` déjà implémentées dans
+    `src/core/midi/useWebMidi.ts` (validation croisée, pas juste une
+    coïncidence de nom) ;
+  - documente explicitement que **le groupe A est mieux capturé que
+    B/C/D**, plusieurs commandes restant inconnues sur ces groupes — un
+    rappel utile : un mapping validé sur le groupe A ne doit jamais être
+    généralisé automatiquement aux groupes B/C/D sans capture séparée ;
+  - signale que des métadonnées peuvent devenir obsolètes après une
+    suppression, et que l'appareil peut rester dans un état de transfert
+    nécessitant une réinitialisation — utile pour concevoir de futurs
+    tests de robustesse d'écriture, pas pour contourner une protection.
+- Recommandation : `ÉTUDIER`. Source B (corroborée) plutôt que A (observée
+  directement par nous) tant que ses tests n'ont pas été relus ligne à
+  ligne ; à recouper avec `kmorrill/ep-series-sysex` et notre propre
+  décodeur avant tout changement de code.
+
+### gabriel-roth/knockout — toujours introuvable, confirmé par deux recherches indépendantes
+
+- Cité comme antériorité par plusieurs sources communautaires (dont les
+  crédits du fil OP Forums de `kmorrill`), mais son URL historique ne
+  répond pas — vérifié séparément par cette étude et par `etude/codex/`,
+  même conclusion des deux côtés : `SURVEILLER` seulement, ne jamais citer
+  comme une dépendance ou une preuve.
+- **Désambiguïsation trouvée en vérifiant** : un article grand public
+  (Yahoo/MusicRadar, 10 avril 2025) titre « Teenage Engineering drops a
+  knockout update » à propos de la mise à jour **OS 2.0 (« Champions
+  update »)** — resampling, Song Mode, polyphonie 16 voix mono/12 stéréo,
+  MIDI sidechaining. « Knockout » y est un jeu de mots journalistique, pas
+  un nom de firmware ni un dépôt — à ne pas confondre avec le dépôt
+  `gabriel-roth/knockout` introuvable, ni avec le nom du produit K.O. II
+  lui-même.
 
 ## Discussion communautaire de référence
 
@@ -291,6 +323,43 @@
 - Recommandation : `RÉFÉRENCER`. Pas d'action de code — observation
   stratégique et benchmark UX, à citer si l'occasion se présente d'appuyer
   une demande d'ouverture auprès de Teenage Engineering.
+
+### neilbaldwin/KOII-tips-and-tricks — savoir utilisateur, pas une spécification
+
+- Trouvé et confirmé (13 août, deuxième session) :
+  <https://github.com/neilbaldwin/KOII-tips-and-tricks> (miroir Codeberg).
+  Raccourcis, gestes et comportements observés par des utilisateurs — utile
+  pour vérifier le vocabulaire et les attentes d'un musicien, jamais comme
+  preuve d'un format SysEx sans capture instrumentée séparée.
+- Recommandation : `RÉFÉRENCER` pour le vocabulaire UI/documentation.
+
+## Étude parallèle convergente (`etude/codex/`, 13 août)
+
+Une deuxième session a mené sa propre veille en parallèle, dans son propre
+dossier (`etude/codex/`), sans coordination directe avec celle-ci. Comparée
+et vérifiée avant d'en reprendre quoi que ce soit — voir les deux entrées
+ci-dessus (`ep133-krate`, `gabriel-roth/knockout`) pour le résultat de cette
+vérification. Deux apports méthodologiques de cette étude parallèle valent
+la peine d'être cités ici, en complément des statuts déjà utilisés dans
+`docs/REGISTRE_IDEES.md` (RETENU/EXPÉRIMENTER/etc.), pas en remplacement :
+
+- **Niveaux de confiance par source** : A (observé directement dans le
+  code d'un dépôt), B (corroboré par plusieurs projets ou un test
+  documenté), C (hypothèse ou discussion sans reproduction locale),
+  Interdit (action destructive ou ressource non autorisée). Une grille
+  simple, utile pour qualifier une affirmation en une phrase.
+- **Niveaux de risque matériel** : H0 (lecture/capture/export hors
+  machine), H1 (MIDI ordinaire et fonctions officiellement exposées), H2
+  (écriture SysEx avec backup et machine de test), H3 (firmware, DFU,
+  cross-flash, ouverture du boîtier). Le Studio reste H0/H1 par défaut —
+  cohérent avec nos propres règles déjà actées (lecture seule par défaut,
+  DFU/firmware hors périmètre), formulé différemment.
+- Cette étude parallèle a aussi couvert un terrain que la nôtre n'avait pas
+  abordé : mods matériels et firmware (bouton de fader remplacé sur les
+  premières séries, rumeur non vérifiée de cross-flash EP-133/EP-40 via un
+  fil Reddit, DFU/récupération). Classé H3, explicitement hors périmètre
+  produit des deux côtés — aucune action de code, gardé ici comme pointeur
+  de veille uniquement.
 
 ## Ce qui ne change pas
 

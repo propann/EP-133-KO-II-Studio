@@ -83,6 +83,36 @@ et [01_ECOSYSTEME_EP133.md](01_ECOSYSTEME_EP133.md#polyend-tracker--écosystème
   TypeScript officiel pour son Tracker — un précédent concret pour la
   demande d'ouverture du fil OP Forums côté Teenage Engineering.
 
+## Troisième passe — analyse d'une étude parallèle (13 août, soir)
+
+Une deuxième session a mené sa propre veille en parallèle, sans
+coordination directe, dans son propre dossier
+[`etude/codex/`](codex/00_INDEX.md). À la demande explicite de
+l'utilisateur (« on fait une analyse complète du dossier, on réfléchit et
+on agit »), ses conclusions ont été lues intégralement, **revérifiées
+indépendamment avant reprise** (pas simplement recopiées), et les
+éléments confirmés intégrés :
+
+- **`icherniukh/ep133-krate` localisé** — restait « référencé mais non
+  localisé » dans la première vague de cette étude. Confirme nos fonctions
+  `pack7`/`unpack7` déjà en place et documente le groupe A mieux capturé
+  que B/C/D. Voir
+  [01](01_ECOSYSTEME_EP133.md#icherniukhep133-krate--localisé-13-août-deuxième-session)
+  et `docs/REFERENCE_SYSEX_EP133.md`.
+- **`gabriel-roth/knockout` reste introuvable**, confirmé par les deux
+  études indépendamment — et une désambiguïsation trouvée en vérifiant :
+  « Knockout » dans un titre d'article grand public désigne la mise à jour
+  OS 2.0, pas un dépôt.
+- Grille de confiance **A/B/C/Interdit** et niveaux de risque **H0–H3**
+  de l'étude parallèle retenus comme lexique complémentaire, sans remplacer
+  les statuts déjà utilisés dans `docs/REGISTRE_IDEES.md`.
+- Le volet mods matériels/firmware de l'étude parallèle (`etude/codex/08`,
+  `09`) confirme, depuis un angle différent, la même règle déjà actée ici :
+  DFU/firmware hors périmètre produit.
+
+Détail complet et sources vérifiées : R-17 à R-19 dans
+`docs/REGISTRE_IDEES.md`.
+
 ## Ce que ce dossier n'est pas
 
 - Une autorisation d'écrire sur la machine réelle : toutes les règles de

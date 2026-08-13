@@ -966,3 +966,38 @@ Non vérifié à l'œil : ajouté à la même entrée que la conversion/fondu da
 d'onde/trim/silence/gain/conversion/fondu/métadonnées de la Phase 4 est
 livré — reste l'écriture réelle dans un fichier, qui dépend d'abord de la
 Phase 5 (aucun protocole d'écriture SysEx dans ce projet à ce jour).
+
+## Étape — analyse de l'étude parallèle `etude/codex/` (13 août, soir)
+
+À la demande explicite de l'utilisateur (« on fait une analyse complète du
+dossier, on réfléchit et on agit ») après avoir laissé l'autre session
+travailler sans interférer (« il fait des étude, on a le temps, il bosse
+dans son dossier »).
+
+- [x] Les 10 fichiers de `etude/codex/` lus intégralement (catalogue de
+  dépôts, protocole/formats, outils produit/UX, licences/risques, pistes
+  prioritaires, journal de recherche, hacks/mods matériel et firmware).
+- [x] **Rien repris sans vérification séparée** : les affirmations les plus
+  concrètes (existence de `icherniukh/ep133-krate`, statut introuvable de
+  `gabriel-roth/knockout`, existence de `neilbaldwin/KOII-tips-and-tricks`)
+  revérifiées par une recherche indépendante avant toute reprise dans nos
+  documents canoniques — pas un simple copier-coller d'une synthèse
+  produite par une autre session.
+- [x] `icherniukh/ep133-krate` confirmé réel : ajouté à
+  `docs/REFERENCE_SYSEX_EP133.md` § Sources étudiées avec ses deux apports
+  vérifiables (confirmation croisée de notre propre encodage Packed7 déjà
+  implémenté, groupe A mieux capturé que B/C/D).
+- [x] `gabriel-roth/knockout` confirmé introuvable par les deux études
+  indépendamment. Désambiguïsation trouvée en creusant : un titre d'article
+  grand public (avril 2025) utilise « Knockout » comme jeu de mots pour
+  l'annonce de la mise à jour OS 2.0, sans rapport avec un dépôt.
+- [x] Grille de confiance A/B/C/Interdit et niveaux de risque H0–H3 de
+  l'étude parallèle retenus comme lexique complémentaire (R-19) — n'importe
+  aucun changement de statut existant, un outil de qualification en plus.
+- [x] `etude/00_INDEX.md`, `etude/01_ECOSYSTEME_EP133.md` et
+  `docs/REGISTRE_IDEES.md` (R-17 à R-19) mis à jour avec ce qui a été
+  vérifié. Aucun fichier de `etude/codex/` inclus dans les commits de cette
+  session — dossier d'une autre session, laissé intact.
+
+Aucun changement de code cette étape : synthèse et vérification de
+recherche uniquement, pas de nouvelle fonctionnalité.

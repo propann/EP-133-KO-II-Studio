@@ -1,7 +1,7 @@
 # Référence technique EP-133 — MIDI, SysEx et samples
 
 > Document de travail fondé sur les validations effectuées avec un EP-133 réel,
-> le code local du Studio et deux dépôts communautaires publics. Il ne remplace
+> le code local du Studio et plusieurs dépôts communautaires publics. Il ne remplace
 > pas une validation sur la machine. Les opérations d'écriture restent
 > désactivées dans l'application tant qu'elles n'ont pas de checkpoint, de
 > relecture et de restauration vérifiés.
@@ -16,6 +16,16 @@
   mis à jour en mai 2026 et annoncé compatible avec plusieurs appareils EP.
 - Le projet MIT [kmorrill/ep-series-sysex](https://github.com/kmorrill/ep-series-sysex),
   déjà utilisé par le scanner local en lecture seule.
+- [icherniukh/ep133-krate](https://github.com/icherniukh/ep133-krate)
+  (MIT annoncée, localisé et vérifié le 13 août 2026, voir
+  `etude/01_ECOSYSTEME_EP133.md`) : gestionnaire de samples fondé sur des
+  captures USB-MIDI en direct. Confirme que le transfert audio empile du
+  PCM signé little-endian dans le même encodage **Packed7** que nos
+  fonctions `pack7`/`unpack7` (`src/core/midi/useWebMidi.ts`) — validation
+  croisée indépendante, pas juste un nom similaire. Documente aussi
+  explicitement que le groupe A est mieux capturé que B/C/D et que
+  plusieurs commandes y restent inconnues : un mapping validé sur A ne doit
+  jamais être supposé valable sur B/C/D sans capture séparée.
 
 Les dépôts communautaires sont des références d’observation, pas une garantie
 de compatibilité avec toutes les versions de firmware. Les fichiers `.syx`
