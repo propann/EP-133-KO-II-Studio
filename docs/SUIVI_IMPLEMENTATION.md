@@ -1111,3 +1111,31 @@ Vérifié : `npm run typecheck`, `npm test` (9 tests), `npm run build`
 (CSS +2 Ko gzip, bundle JS principal et chunk `wavConvert` isolé
 inchangés) — tous au vert. Rendu réel des trois changements non vérifié à
 l'œil — ajouté à `docs/A_VALIDER_PHYSIQUEMENT.md`.
+
+## Correctif — la pastille restait verte après débranchement (13 août)
+
+Remonté par l'utilisateur en testant en réel : machine débranchée, la
+pastille de statut sur la page d'accueil restait verte. Vrai bug, pas un
+problème d'affichage seul.
+
+**Cause** : `attachInputs`/`attachOutputs` (`useWebMidi.ts`) filtraient les
+ports MIDI **uniquement par nom** (`isEp133MidiPort`). Le navigateur ne
+retire pas un port débranché de `access.inputs`/`access.outputs` — il passe
+juste son `.state` à `'disconnected'`. Le filtre par nom seul laissait donc
+toujours passer le port EP-133 fantôme, et `connected`/`outputConnected`
+restaient bloqués à `true` même après débranchement, alors que
+`access.onstatechange` redéclenchait pourtant bien `attachInputs`/
+`attachOutputs` à chaque changement.
+
+- [x] Ajout de `input.state === 'connected'` / `output.state === 'connected'`
+  dans les deux filtres — un port débranché est désormais exclu, `inputs`/
+  `outputs` tombent à zéro, `connected`/`outputConnected` repassent à
+  `false` et le statut redevient « Entrée EP-133 introuvable ».
+- [x] Le mock Playwright (`e2e/midi-connection.spec.ts`) posait déjà
+  `state = 'connected'` sur ses faux ports — compatible sans modification.
+
+Vérifié : `npm run typecheck`, `npm test` (9 tests), `npm run build`,
+**`npm run test:e2e` (2/2, Chromium réel)** — tous au vert. Le
+débranchement physique réel (est-ce que `onstatechange` se déclenche bien
+sur ce navigateur/cette machine) reste à confirmer par l'utilisateur —
+ajouté à `docs/A_VALIDER_PHYSIQUEMENT.md`.

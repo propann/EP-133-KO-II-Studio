@@ -138,6 +138,14 @@
   sens de l'ombre portée) au clic souris ET quand un message MIDI réel
   correspondant arrive de la machine, pas seulement changer de couleur.
   Jamais vu dans un vrai navigateur ni testé avec la machine branchée.
+- [ ] **Pastille verte après débranchement réel** (13 août, correctif) —
+  brancher l'EP-133, attendre la pastille verte, puis débrancher
+  physiquement le câble : la pastille doit repasser grise/orange en
+  quelques secondes (dépend de `access.onstatechange`, jamais observé sur
+  un vrai débranchement, seulement simulé par Playwright). Si elle reste
+  verte, le souci n'est plus le filtre par nom (corrigé) mais
+  potentiellement `onstatechange` qui ne se déclenche pas sur ce
+  navigateur/cette machine — à investiguer en conditions réelles.
 - [ ] **Passe d'arrondis généralisée** (13 août) — bordures droites
   remplacées par `border-radius` (jetons `--radius`/`--radius-sm`/
   `--radius-xs`) sur ~60 éléments dans tout le Studio (dialogues, boutons,

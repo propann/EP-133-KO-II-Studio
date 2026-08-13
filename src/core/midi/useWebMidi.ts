@@ -103,7 +103,10 @@ export function useWebMidi(
   }, []);
 
   const attachInputs = useCallback(async (access: MIDIAccess, monitorAll = monitorAllInputsRef.current, sysexEnabled = false) => {
-    const inputs = [...access.inputs.values()].filter((input) => monitorAll || isEp133MidiPort(input.name));
+    // Un port débranché reste dans access.inputs (le navigateur ne le
+    // retire pas), seul son .state passe à 'disconnected' — filtrer par nom
+    // seul laissait la pastille « connecté » allumée après débranchement.
+    const inputs = [...access.inputs.values()].filter((input) => input.state === 'connected' && (monitorAll || isEp133MidiPort(input.name)));
     const handler = (event: MIDIMessageEvent) => {
       const data = event.data;
       if (!data?.length) return;
@@ -175,7 +178,9 @@ export function useWebMidi(
   }, []);
 
   const attachOutputs = useCallback(async (access: MIDIAccess) => {
-    const outputs = [...access.outputs.values()].filter((output) => isEp133MidiPort(output.name));
+    // Même correctif que attachInputs : ne garder que les sorties encore
+    // réellement branchées, pas seulement celles qui portent le bon nom.
+    const outputs = [...access.outputs.values()].filter((output) => output.state === 'connected' && isEp133MidiPort(output.name));
     try {
       await Promise.all(outputs.map((output) => output.connection === 'open' ? Promise.resolve(output) : output.open()));
       setState((current) => ({ ...current, outputConnected: outputs.length > 0, outputNames: outputs.map((output) => output.name || 'Sortie MIDI') }));
