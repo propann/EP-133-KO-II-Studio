@@ -1,12 +1,22 @@
-# EP-133 KO II Studio
+<div align="center">
 
-[Français](README.md) · [English](README.en.md) · [Español](README.es.md)
+# EP-133 KO II Studio
 
 **Le studio compagnon open source pour créer avec l'EP-133 K.O. II.**
 
+[Français](README.md) · [English](README.en.md) · [Español](README.es.md)
+
+[![CI](https://github.com/propann/EP-133-KO-II-Studio/actions/workflows/ci.yml/badge.svg)](https://github.com/propann/EP-133-KO-II-Studio/actions/workflows/ci.yml)
+[![Licence MIT](https://img.shields.io/badge/licence-MIT-1A1A1A?labelColor=1A1A1A&color=FF4400)](#licence)
+[![Node 22](https://img.shields.io/badge/node-22-1A1A1A?labelColor=1A1A1A&color=2FAE5B)](.nvmrc)
+
+<img src="docs/screenshots/01-accueil.webp" width="820" alt="Écran d'accueil du Studio : six modules, statut de connexion à l'EP-133." />
+
+</div>
+
 EP-133 KO II Studio transforme la machine en environnement de production
 complet : clone ses projets et ses sons, ouvre les patterns réels, construit
-des scènes et des Songs, travaille hors ligne puis prépare un retour vérifié
+des scènes et des Songs, travaille hors ligne puis écrit un retour vérifié
 vers le matériel. Le tout reste local, inspectable et utilisable sans compte.
 
 > **Machine → Studio → création → machine.** Le projet vise un workflow que
@@ -14,15 +24,69 @@ vers le matériel. Le tout reste local, inspectable et utilisable sans compte.
 > musique contenue dans l'EP-133, pas seulement déplacer des fichiers audio.
 
 > Projet communautaire indépendant. La lecture, le jeu MIDI et la sélection
-> active A–D sont disponibles ; toute écriture persistante de projet ou de
-> sample reste verrouillée jusqu'à la validation des protections de sauvegarde,
-> confirmation et relecture.
+> active A–D sont disponibles. L'écriture réelle vers la machine (upload de
+> son, réaffectation de pad, transfert de projet) est désormais implémentée —
+> checkpoint automatique avant chaque écriture, relecture octet à octet et
+> confirmation explicite systématiques — et testée en conditions réelles sur
+> des cas ciblés. Une campagne de test plus complète reste à faire avant de
+> la considérer pleinement fiable ; voir
+> [À valider physiquement](docs/A_VALIDER_PHYSIQUEMENT.md). La suppression
+> d'un son reste volontairement verrouillée.
 
 ## Reprise par une autre IA
 
 Plusieurs agents travaillent sur ce dépôt. Lire d'abord [la passation
 complète](docs/AI_HANDOFF.md) : état réel, contraintes, matériel et prochaine
 mission, avant toute modification.
+
+## En images
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**Pattern & Song Studio**
+
+Quatre groupes A–D, séquenceur multi-mesures, piano-roll KEYS et Song
+Arranger — la même hiérarchie que la machine, à l'écran.
+
+<img src="docs/screenshots/05-studio.webp" width="100%" alt="Grille de séquenceur du Pattern & Song Studio." />
+
+</td>
+<td width="50%" valign="top">
+
+**Sons & Transfert**
+
+Glisser-déposer de projets, sélecteur de projet cible, écriture réelle de
+sons et de pads — checkpoint et relecture octet à octet à chaque envoi.
+
+<img src="docs/screenshots/02-sons-transfert.webp" width="100%" alt="Sons & Transfert : sélecteur de projet et grille GROUPES & PADS." />
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+**Test Machine**
+
+Façade EP-133 interactive branchée sur le vrai flux MIDI/SysEx, journal en
+direct, groupe A–D réellement pressé sur la machine.
+
+<img src="docs/screenshots/03-test-machine.webp" width="100%" alt="Façade interactive de Test Machine avec journal MIDI en direct." />
+
+</td>
+<td width="50%" valign="top">
+
+**Fiche personnage**
+
+Machine déclarée, bilan cumulé, dossier de travail sur le disque —
+sauvegarde et restauration en dehors du navigateur.
+
+<img src="docs/screenshots/04-fiche-personnage.webp" width="100%" alt="Fiche personnage avec machine déclarée et sauvegarde locale." />
+
+</td>
+</tr>
+</table>
 
 ## Ce que le Studio permet
 
@@ -34,8 +98,12 @@ mission, avant toute modification.
   patterns 01–99, scènes partagées et Song Arranger.
 - **Travailler avec les vrais sons** : EP-133 connecté en MIDI, samples du
   clone hors ligne, ou moteur audio interne de secours.
-- **Préparer le retour matériel** : diff, checkpoint, confirmation et relecture
-  sont conçus avant toute écriture persistante.
+- **Envoyer réellement vers la machine** : glisser-déposer un projet entre
+  la machine et le logiciel, réaffecter un pad, uploader un son perso —
+  checkpoint automatique, écriture, relecture octet à octet et activation.
+- **Choisir explicitement la cible** : sélecteur de projet visible dans
+  Sons & Transfert, peuplé depuis le dernier scan matériel — jamais une
+  détection silencieuse.
 - **Diagnostiquer le matériel** : façade interactive, journal MIDI/SysEx brut
   et cartographie des contrôles de la machine.
 
@@ -61,11 +129,31 @@ La validation réelle du 10 août 2026 a reconnu **9 projets et 527 sons
 inchangés en 30,7 secondes**, sans téléchargement ni erreur. Les 536 hashes ont
 été vérifiés indépendamment.
 
+### Sons & Transfert — écriture réelle vers la machine
+
+- glisser-déposer de projets entre la machine (cartes orange = présentes) et
+  la bibliothèque du logiciel, dans les deux sens ;
+- grille GROUPES & PADS qui suit le vrai projet sélectionné, pas seulement le
+  dernier scan — chaque projet a son propre jeu de 48 pads (12 × 4 groupes
+  A–D) ;
+- SYNCHRONISER : upload de sons perso et réaffectation de pads existants en
+  une seule confirmation, avec checkpoint avant écriture et relecture
+  octet à octet après ;
+- affichage MIDI en direct limité au groupe actuellement affiché, pour
+  rester lisible pendant le jeu.
+
+Le pont local (`tools/local_clone_bridge.py`, s'appuie sur
+[`epsysex`](https://github.com/kmorrill/ep-series-sysex)) sert de
+passerelle entre le navigateur et le protocole FILE de l'EP-133 — voir
+[Pont local de clonage](docs/PONT_LOCAL_CLONAGE.md).
+
 ### Rhythm Hero — module inclus
 
 Le coach historique reste disponible comme outil secondaire : 39 styles,
 cinq niveaux, partition animée, score PERFECT / GOOD / MISS et jeu sur les pads
 réels. Il ne définit plus l'identité principale du dépôt.
+
+<img src="docs/screenshots/06-rhythm-hero.webp" width="640" alt="Rhythm Hero : partition animée jouée sur les pads réels de l'EP-133." />
 
 ## Installation rapide
 
@@ -104,11 +192,13 @@ migration de ses exercices.
 ## État du projet
 
 Le Studio, le Save/Load, la lecture des archives `.pak/.ppak`, le miroir
-hors ligne, le clonage incrémental et la hiérarchie complète Patterns/Scènes/Song
-(vues Pattern Editor et Song Arranger) sont opérationnels. Restent notamment à
-faire : lecture automatique d'une Song Position à la suivante, édition avancée de
-la vélocité/gate, service local automatique, préparation audio et écriture
-matérielle sécurisée.
+hors ligne, le clonage incrémental, la hiérarchie complète Patterns/Scènes/Song
+(vues Pattern Editor et Song Arranger) et l'écriture réelle vers la machine
+(pads, sons, transfert de projets) sont opérationnels. Restent notamment à
+faire : campagne de test complète de l'écriture réelle avant de la considérer
+pleinement fiable, lecture automatique d'une Song Position à la suivante,
+édition avancée de la vélocité/gate, service local automatique et suppression
+de son sécurisée.
 
 - [État détaillé](docs/ETAT_DU_PROJET.md)
 - [À valider physiquement](docs/A_VALIDER_PHYSIQUEMENT.md)
