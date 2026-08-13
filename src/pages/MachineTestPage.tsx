@@ -47,6 +47,13 @@ function controlId(section: string, label: string) {
   return `${section}:${label}`;
 }
 
+/** L'écran OLED de la façade EP-133 (145 px de haut) ne peut pas montrer le
+ * journal complet — on y tronque le hexadécimal, comme le ferait un vrai
+ * petit écran. Le fichier téléchargé, lui, contient toujours tout. */
+function truncateHex(hex: string, max = 21) {
+  return hex.length > max ? `${hex.slice(0, max)}…` : hex;
+}
+
 export function MachineTestPage({ connected, sysexEnabled, inputNames, observations, onBack, onConnect, onSendLearned, onSelectMachineGroup }: MachineTestPageProps) {
   const [selectedControl, setSelectedControl] = useState<string | null>(null);
   const [configureMode, setConfigureMode] = useState(false);
@@ -142,7 +149,14 @@ export function MachineTestPage({ connected, sysexEnabled, inputNames, observati
       <section className="ep133-face" aria-label="Façade de test EP-133">
         <div className="ep133-ports"><span>OUTPUT</span><span className="orange">INPUT</span><span>SYNC</span><span>MIDI</span><span>USB</span><span>POWER</span></div>
         <div className="ep133-brand-panel"><div><b>K.O. II</b><small>サンプラー</small><span>64 MB SAMPLER COMPOSER</span></div><i aria-hidden="true" /></div>
-        <div className="ep133-display"><div className="display-groups">A<br />B<br /><b>C</b><br />D</div><strong>{newest ? newest.kind.toUpperCase() : '1.33'}</strong><span>● ▶　FX　◉</span></div>
+        <div className="ep133-display">
+          <div className="display-groups">A<br />B<br /><b>C</b><br />D</div>
+          <div className="ep133-display-journal" aria-label="Journal MIDI affiché sur l’écran de l’EP-133">
+            {observations.length
+              ? observations.slice(0, 3).map((message, index) => <p className={index === 0 ? 'latest' : ''} key={`${message.timestamp}-${index}`}><b>{message.kind.slice(0, 3).toUpperCase()}</b><code>{truncateHex(message.hex)}</code></p>)
+              : <p className="idle">EN ATTENTE DE SIGNAL MIDI…</p>}
+          </div>
+        </div>
         <div className="ep133-real-controls">
           <div className="control volume-control"><span>VOLUME</span>{machineButton('knob', 'VOLUME', 'knob volume-knob')}</div>
           <div className="control sound-control">{machineButton('function', 'SOUND', 'split-control', 'EDIT')}</div>
@@ -178,15 +192,9 @@ export function MachineTestPage({ connected, sysexEnabled, inputNames, observati
 
       <aside className="midi-event-monitor">
         <header><div><small>TRACES REÇUES</small><h2>JOURNAL MIDI</h2></div><b>{observations.length}</b></header>
+        <p className="midi-event-hint">{observations.length ? 'Les derniers messages s’affichent en direct sur l’écran de l’EP‑133 ci-contre.' : 'Connecte la machine puis actionne un contrôle. Les messages apparaîtront sur l’écran de l’EP‑133, y compris le SysEx autorisé par le navigateur.'}</p>
         <button className="midi-event-export" disabled={!observations.length} onClick={() => downloadDiagnosticLog({ connected, sysexEnabled, inputNames, observations })}>⬇ TÉLÉCHARGER LE JOURNAL DE DIAGNOSTIC</button>
         {Boolean(observations.length) && <small className="machine-test-notice">Relis le fichier avant de le partager — il inclut les noms des ports MIDI détectés.</small>}
-        <div className="midi-event-list">
-          {observations.length ? observations.map((message, index) => <article className={index === 0 ? 'latest' : ''} key={`${message.timestamp}-${index}`}>
-            <span>{message.kind.toUpperCase()}</span>
-            <code>{message.hex}</code>
-            <small>{message.channel ? `CH ${message.channel}` : 'SYSTÈME'}{message.note !== undefined ? ` · NOTE ${message.note}` : ''}{message.velocity !== undefined ? ` · VEL ${message.velocity}` : ''}</small>
-          </article>) : <p>Connecte la machine puis actionne un contrôle. Les messages apparaîtront ici, y compris le SysEx autorisé par le navigateur.</p>}
-        </div>
       </aside>
     </div>
 

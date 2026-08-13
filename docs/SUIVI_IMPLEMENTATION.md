@@ -1064,3 +1064,50 @@ bouton) reflète visuellement l'état — cadre vert quand connecté, rien de pl
 
 Non vérifié dans un vrai navigateur (rendu du `color-mix`, contraste du vert
 sur fond beige) — ajouté à `docs/A_VALIDER_PHYSIQUEMENT.md`.
+
+## Étape — écran EP-133 comme journal MIDI, touches qui bougent, arrondis généralisés (13 août)
+
+Trois demandes distinctes reçues coup sur coup pendant un test réel en
+navigateur (page Test Machine et page d'accueil).
+
+**Écran de la façade = journal MIDI, panneau de droite simplifié**
+
+- [x] `MachineTestPage.tsx` : l'écran OLED simulé (`.ep133-display`)
+  affiche désormais les 3 derniers messages MIDI reçus (type abrégé +
+  hexadécimal tronqué à 21 caractères via `truncateHex`, comme un vrai
+  petit écran ne pourrait pas tout montrer), au lieu du texte statique
+  `1.33`/kind unique. Le fichier téléchargé (`downloadDiagnosticLog`)
+  garde toujours l'intégralité des données, seul l'affichage est tronqué.
+- [x] Le panneau `<aside className="midi-event-monitor">` perd sa longue
+  liste déroulante détaillée (`.midi-event-list`, ~570px de haut) au
+  profit d'un texte court renvoyant vers l'écran de la façade + le
+  compteur + le bouton de téléchargement. CSS mort supprimé
+  (`.midi-event-list` et ses sous-règles, `min-height:620px` fixe).
+
+**Touches qui bougent au clic ou à la réception MIDI**
+
+- [x] `.ep133-face button:active` et `.ep133-face button.received`
+  (message MIDI réellement reçu correspondant à un contrôle mappé)
+  translatent maintenant le bouton dans le sens de son ombre portée
+  (3px pour les boutons standards, 4px pour les knobs ronds), au lieu de
+  rester figés avec juste un changement de couleur. `transition:transform
+  .06s` ajoutée sur la règle de base pour un mouvement net mais pas raide.
+
+**Passe d'arrondis généralisée (au-delà de la page d'accueil déjà faite)**
+
+- [x] ~60 règles CSS supplémentaires (dialogues, boutons, champs, badges,
+  panneaux Documentation/Sons & Transfert/Clone machine/Editor/Test
+  Machine) reçoivent `border-radius` via les jetons existants
+  (`--radius`/`--radius-sm`/`--radius-xs` selon la taille de l'élément),
+  identifiées par un script Python de parsing de blocs CSS (bordure
+  complète sans `border-radius` dans le même bloc). Volontairement laissés
+  carrés : résets `border:0`, séparateurs `border-top`/`border-bottom`
+  seuls (`.file-menu-divider`, `.sound-bank-browser > nav button`), et les
+  cellules à bordure partielle d'une grille tabulaire
+  (`.sound-inventory article`, `border-width:0 1px 1px 0`) où arrondir
+  casserait visuellement le carrelage.
+
+Vérifié : `npm run typecheck`, `npm test` (9 tests), `npm run build`
+(CSS +2 Ko gzip, bundle JS principal et chunk `wavConvert` isolé
+inchangés) — tous au vert. Rendu réel des trois changements non vérifié à
+l'œil — ajouté à `docs/A_VALIDER_PHYSIQUEMENT.md`.

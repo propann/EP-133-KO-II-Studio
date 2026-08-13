@@ -127,6 +127,25 @@
   le numéro MIDI saisi, et que BPM vide affiche bien « INCONNU » plutôt
   qu'un zéro trompeur.
 
+- [ ] **Journal MIDI affiché sur l'écran de la façade EP-133** (13 août,
+  Test Machine) — les 3 derniers messages (type + hexadécimal tronqué)
+  doivent défiler dans le petit écran OLED simulé, mis à jour en direct ;
+  le panneau JOURNAL MIDI à droite est désormais un résumé compact
+  (compteur + bouton de téléchargement), plus la liste détaillée complète.
+  Jamais vu dans un vrai navigateur.
+- [ ] **Touches qui « s'enfoncent » à l'écran** (13 août, Test Machine) —
+  tout bouton de la façade doit visuellement bouger (translation dans le
+  sens de l'ombre portée) au clic souris ET quand un message MIDI réel
+  correspondant arrive de la machine, pas seulement changer de couleur.
+  Jamais vu dans un vrai navigateur ni testé avec la machine branchée.
+- [ ] **Passe d'arrondis généralisée** (13 août) — bordures droites
+  remplacées par `border-radius` (jetons `--radius`/`--radius-sm`/
+  `--radius-xs`) sur ~60 éléments dans tout le Studio (dialogues, boutons,
+  badges, panneaux Documentation/Sons/Clone/Editor). Quelques éléments
+  volontairement laissés carrés (séparateurs `border-top`/`border-bottom`
+  seuls, cellules de grille à bordure partielle) — à relire à l'œil pour
+  confirmer qu'aucun angle ne reste incohérent avec le reste de l'interface.
+
 ## Règle de suivi
 
 Chaque case cochée ici doit pointer vers un vrai rapport si le résultat est
