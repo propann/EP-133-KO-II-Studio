@@ -402,8 +402,20 @@ de fichiers audio propriétaires au dépôt.
   PCM 16 bits avec dither TPDF systématique. Cible explicite LO/MID/HI
   (26 250/32 000/46 875 Hz, firmware 2.5) — plus jamais une fréquence fixe
   supposée. Mono/stéréo : repli par moyenne seulement, pas encore de choix
-  gauche/droite (A-05 partiel). Hauteur racine, BPM et mode ONE/KEYS/LEGATO
-  restent à faire.
+  gauche/droite (A-05 partiel).
+- [x] **Hauteur racine, BPM et mode ONE/KEYS/LEGATO** (13 août) : section
+  « MÉTADONNÉES DE PRÉPARATION » dans `WaveformTrim` — sélecteur
+  ONE/KEYS/LEGATO (réutilise le type `EditorPadMode` déjà validé sur
+  matériel réel, pas une nouvelle notion), hauteur racine 0–127 avec nom de
+  note affiché (`midiNoteName`, même source de vérité que le reste du
+  projet), BPM optionnel (`null` = inconnu, jamais deviné automatiquement —
+  aucune détection de tempo). **Volontairement pas encore écrit dans un
+  en-tête RIFF réel** : le format exact du bloc `LIST/INFO/ITNG`
+  propriétaire n'a jamais été recoupé avec une vraie machine par ce
+  projet (voir `docs/REFERENCE_SYSEX_EP133.md`) — écrire un mauvais layout
+  serait pire que ne rien écrire. Reste une préparation en mémoire, comme
+  le trim et le fondu, en attendant un futur pipeline d'export validé sur
+  matériel.
 - [x] **Pré-écoute avant/après conversion** (13 août) : le bouton `▶ ÉCOUTER`
   de `WaveformTrim` reste l'original, un second lecteur `<audio controls>`
   apparaît une fois la conversion lancée pour comparer le résultat.

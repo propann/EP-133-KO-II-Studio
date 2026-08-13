@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { analyzeWavBuffer, type WavAnalysisReport } from '../core/audio/wavAnalysis';
-import { WaveformTrim, type WaveformTrimSelection } from '../components/shared/WaveformTrim';
+import { WaveformTrim, type WaveformTrimSelection, type SoundPrepMetadata } from '../components/shared/WaveformTrim';
 import type { EditorGroup, EditorPadMode } from '../core/project/exporters';
 import type { DeviceInventory, DeviceSoundIndex } from '../core/project/device';
 import { loadDeviceProfile } from '../core/project/deviceProfile';
@@ -107,6 +107,7 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
   // jamais écrite sur le disque tant qu'aucun pipeline de conversion n'existe.
   const [waveformTarget, setWaveformTarget] = useState<{ name: string; file: File } | null>(null);
   const [trims, setTrims] = useState<Record<string, WaveformTrimSelection>>({});
+  const [soundMetadata, setSoundMetadata] = useState<Record<string, SoundPrepMetadata>>({});
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const objectUrlRef = useRef('');
   const draggingLocalRef = useRef<StagedLocalFile | null>(null);
@@ -344,7 +345,7 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
                     <button className={`waveform-toggle-btn ${waveformTarget?.name === entry.name ? 'active' : ''}`} onClick={() => void toggleWaveform(entry)} aria-label="Forme d'onde et trim" aria-pressed={waveformTarget?.name === entry.name}>〰</button>
                     <button className="local-assign-btn" onClick={() => stageLocalOnPad(activeGroup, selectedPad, { fileName: entry.name, handle: entry.handle })}>→ {activeGroup}{selectedPad}</button>
                   </article>
-                  {waveformTarget?.name === entry.name && <WaveformTrim file={waveformTarget.file} initialTrim={trims[entry.name]} report={audioReports[entry.name]} machineMemory={soundIndex ? { usedBytes: soundIndex.usedBytes, capacityMb } : null} onTrimChange={(selection) => setTrims((current) => ({ ...current, [entry.name]: selection }))} />}
+                  {waveformTarget?.name === entry.name && <WaveformTrim file={waveformTarget.file} initialTrim={trims[entry.name]} report={audioReports[entry.name]} machineMemory={soundIndex ? { usedBytes: soundIndex.usedBytes, capacityMb } : null} metadata={soundMetadata[entry.name]} onMetadataChange={(next) => setSoundMetadata((current) => ({ ...current, [entry.name]: next }))} onTrimChange={(selection) => setTrims((current) => ({ ...current, [entry.name]: selection }))} />}
                 </Fragment>)}
                 {!filteredPersoFiles.length && <p>Aucun son ici.</p>}
               </div>}

@@ -109,6 +109,12 @@
   (MS) » au-dessus des boutons LO/MID/HI — à vérifier à l'oreille que le
   résultat converti fondu bien en douceur (pas de clic/craquement au point
   de jonction) avec des valeurs realistes (ex. 20-50 ms).
+  Ajouté depuis (4) : section « MÉTADONNÉES DE PRÉPARATION » (mode
+  ONE/KEYS/LEGATO, hauteur racine avec nom de note, BPM optionnel) — purement
+  visuel pour l'instant (rien n'est écrit dans un fichier), à vérifier que
+  les boutons de mode bien un seul actif à la fois, que le nom de note suit
+  le numéro MIDI saisi, et que BPM vide affiche bien « INCONNU » plutôt
+  qu'un zéro trompeur.
 
 ## Règle de suivi
 

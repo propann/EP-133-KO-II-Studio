@@ -928,3 +928,41 @@ la Phase 4 avant de passer à autre chose.
 
 Non vérifié à l'oreille : ajouté à la même entrée que la conversion dans
 `docs/A_VALIDER_PHYSIQUEMENT.md`.
+
+## Étape — hauteur racine, BPM, mode ONE/KEYS/LEGATO (13 août, suite)
+
+Dernier point du dernier item Phase 4 restant côté « préparation de son » —
+"non il fait des étude, on a le temps, il bosse dans son dossier, on
+continue le sujet suivant" (une autre session travaille en parallèle dans
+`etude/codex/`, explicitement laissée de côté, aucun de ses fichiers inclus
+ici).
+
+- [x] Réutilisation systématique de l'existant plutôt que d'inventer :
+  `EditorPadMode` (déjà validé sur matériel réel pour les pads) et
+  `midiNoteName` (déjà la seule source de vérité du projet pour les noms de
+  note) importés depuis `src/core/project/exporters.ts`, pas redéfinis.
+- [x] `SoundPrepMetadata` (`WaveformTrim.tsx`) : `rootNote` (0–127, défaut
+  60/C4 — même défaut que celui observé dans les vraies métadonnées RIFF
+  EP-133), `bpm` (`null` = inconnu, **aucune détection automatique de
+  tempo** — une fausse valeur serait pire que l'absence), `playMode`
+  (ONE/KEYS/LEGATO).
+- [x] **Décision explicite de scope** : ces métadonnées restent en mémoire
+  (comme le trim et le fondu), volontairement **pas encore écrites** dans
+  un en-tête RIFF réel — le format exact du bloc `LIST/INFO/ITNG`
+  propriétaire (`docs/REFERENCE_SYSEX_EP133.md`) n'a jamais été recoupé
+  avec du matériel par ce projet ; l'écrire à l'aveugle romprait la règle
+  « ne pas implémenter le layout d'un document secondaire sans
+  recoupement ».
+- [x] `SoundsPage` : nouveau state `soundMetadata` (même schéma que
+  `trims`), branché sur `WaveformTrim`.
+- [x] `npm run typecheck` (a immédiatement attrapé le prop manquant
+  `onMetadataChange` avant tout test manuel), `npm test` (9 tests, aucun
+  nouveau — logique purement UI, pas de nouvelle fonction pure à tester),
+  `npm run test:e2e` (2/2), `npm run build` (chunk de conversion toujours
+  séparé) — tous au vert.
+
+Non vérifié à l'œil : ajouté à la même entrée que la conversion/fondu dans
+`docs/A_VALIDER_PHYSIQUEMENT.md`. Avec ce point, le groupe complet forme
+d'onde/trim/silence/gain/conversion/fondu/métadonnées de la Phase 4 est
+livré — reste l'écriture réelle dans un fichier, qui dépend d'abord de la
+Phase 5 (aucun protocole d'écriture SysEx dans ce projet à ce jour).

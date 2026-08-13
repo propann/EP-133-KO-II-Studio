@@ -67,10 +67,14 @@ machine elle-même (aucun protocole d'écriture SysEx n'est activé).
   bouton LO/MID/HI pendant l'ajustement du trim, comparé à l'occupation et
   la capacité réelles de la machine si elle a déjà été scannée (« TIENT »
   / « NE TIENT PAS »), et un **fondu linéaire en entrée/sortie** (durées en
-  ms, appliqué après resampling). Le module de conversion (~2 Mo, WASM) ne
-  charge qu'au premier clic. **Rien depuis l'auto-trim n'a encore été revu
-  à l'œil ou à l'oreille** — voir `docs/A_VALIDER_PHYSIQUEMENT.md`. Hauteur
-  racine/BPM/ONE-KEYS-LEGATO et écriture de slot restent à faire.
+  ms, appliqué après resampling), plus une section **hauteur racine/BPM/
+  mode ONE-KEYS-LEGATO** en préparation (pas encore écrite dans un en-tête
+  RIFF réel — le format exact de ce bloc n'a jamais été recoupé avec du
+  matériel par ce projet, écrire au hasard serait pire que rien). Le
+  module de conversion (~2 Mo, WASM) ne charge qu'au premier clic. **Rien
+  depuis l'auto-trim n'a encore été revu à l'œil ou à l'oreille** — voir
+  `docs/A_VALIDER_PHYSIQUEMENT.md`. Écriture de slot reste à faire —
+  bloquée par la Phase 5 (aucun protocole d'écriture SysEx dans ce projet).
 - **`App.tsx`** : la vue est découpée (pages + composants, ~1 720 lignes
   sorties), l'état ne l'est presque pas encore (~1 550 lignes, 60 `useState`
   restants). Un premier domaine — la langue — est sorti vers un magasin

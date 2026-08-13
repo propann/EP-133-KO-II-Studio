@@ -6,13 +6,31 @@ import { computeWaveformPeaks, detectSilenceTrim, suggestNormalizationGainDb, ty
 // importer statiquement ici pour afficher un poids en direct. La conversion
 // réelle reste chargée à la demande, voir `runConversion` plus bas.
 import { EP133_TARGET_SAMPLE_RATES, estimateEp133ConversionBytes, estimateEp133MemoryFit, type Ep133TargetRate } from '../../core/audio/ep133Targets';
+// midiNoteName et EditorPadMode : seule source de vérité déjà établie pour
+// ces deux concepts (voir le commentaire sur PAD_MIDI_NOTES dans
+// exporters.ts) — ne pas les redéfinir ici.
+import { midiNoteName, type EditorPadMode } from '../../core/project/exporters';
 
 const EP133_TARGET_LABELS: Record<Ep133TargetRate, string> = { LO: 'LO · 26 250 HZ', MID: 'MID · 32 000 HZ', HI: 'HI · 46 875 HZ' };
+const SOUND_PLAY_MODES: EditorPadMode[] = ['ONE', 'KEYS', 'LEGATO'];
 
 export interface WaveformTrimSelection {
   startSeconds: number;
   endSeconds: number;
 }
+
+export interface SoundPrepMetadata {
+  /** Note MIDI 0–127, défaut 60 (C4) — même défaut que celui observé dans les
+   * métadonnées RIFF réelles de l'EP-133 (`sound.rootnote`, voir
+   * docs/REFERENCE_SYSEX_EP133.md). */
+  rootNote: number;
+  /** `null` = inconnu, jamais deviné automatiquement (pas de détection de
+   * tempo ici — hors scope, et une fausse valeur serait pire que l'absence). */
+  bpm: number | null;
+  playMode: EditorPadMode;
+}
+
+const DEFAULT_SOUND_METADATA: SoundPrepMetadata = { rootNote: 60, bpm: null, playMode: 'ONE' };
 
 interface WaveformTrimProps {
   file: File;
@@ -27,6 +45,14 @@ interface WaveformTrimProps {
    * machine n'a jamais été scannée : pas de jauge affichée, seulement le
    * poids dans l'absolu (jamais un espace disponible supposé). */
   machineMemory?: { usedBytes: number; capacityMb: number } | null;
+  /** Métadonnées de préparation déjà connues pour ce fichier (hauteur
+   * racine, BPM, mode) — `null`/absent affiche les valeurs par défaut sans
+   * les remonter au parent tant que l'utilisateur n'a rien changé. Non
+   * destructif : rien n'est encore écrit dans un en-tête RIFF réel, ça
+   * exigerait de recouper le format exact sur du matériel — voir
+   * `docs/REFERENCE_SYSEX_EP133.md`. */
+  metadata?: SoundPrepMetadata | null;
+  onMetadataChange: (metadata: SoundPrepMetadata) => void;
 }
 
 /**
@@ -43,7 +69,7 @@ interface WaveformTrimProps {
  * région ; la lecture audio passe par son propre élément `<audio>` interne,
  * indépendant de la fiche audio déterministe déjà affichée à côté.
  */
-export function WaveformTrim({ file, initialTrim, onTrimChange, report, machineMemory }: WaveformTrimProps) {
+export function WaveformTrim({ file, initialTrim, onTrimChange, report, machineMemory, metadata, onMetadataChange }: WaveformTrimProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);
   const regionRef = useRef<Region | null>(null);
@@ -149,6 +175,9 @@ export function WaveformTrim({ file, initialTrim, onTrimChange, report, machineM
     else void wavesurfer.play();
   };
 
+  const soundMetadata = metadata ?? DEFAULT_SOUND_METADATA;
+  const updateMetadata = (patch: Partial<SoundPrepMetadata>) => onMetadataChange({ ...soundMetadata, ...patch });
+
   const applySilenceSuggestion = () => {
     const region = regionRef.current;
     if (!region || !silenceSuggestion) return;
@@ -196,6 +225,21 @@ export function WaveformTrim({ file, initialTrim, onTrimChange, report, machineM
         ✂ AUTO-TRIM SILENCE
       </button>
       {peakDb !== null && suggestedGainDb !== null && <small className="waveform-trim-gain">CRÊTE {peakDb.toFixed(1)} DBFS · GAIN SUGGÉRÉ {suggestedGainDb >= 0 ? '+' : ''}{suggestedGainDb.toFixed(1)} DB (CIBLE -1 DBFS)</small>}
+      <div className="waveform-trim-metadata">
+        <small>MÉTADONNÉES DE PRÉPARATION (PAS ENCORE ÉCRITES DANS LE FICHIER)</small>
+        <div className="waveform-trim-metadata-fields">
+          <div className="waveform-trim-mode-buttons">
+            {SOUND_PLAY_MODES.map((mode) => <button key={mode} className={soundMetadata.playMode === mode ? 'active' : ''} aria-pressed={soundMetadata.playMode === mode} onClick={() => updateMetadata({ playMode: mode })}>{mode}</button>)}
+          </div>
+          <label>HAUTEUR RACINE
+            <input type="number" min={0} max={127} value={soundMetadata.rootNote} onChange={(event) => updateMetadata({ rootNote: Math.max(0, Math.min(127, Number(event.target.value) || 0)) })} />
+            <small>{midiNoteName(soundMetadata.rootNote)}</small>
+          </label>
+          <label>BPM
+            <input type="number" min={0} placeholder="INCONNU" value={soundMetadata.bpm ?? ''} onChange={(event) => { const raw = event.target.value; updateMetadata({ bpm: raw === '' ? null : Math.max(0, Number(raw) || 0) }); }} />
+          </label>
+        </div>
+      </div>
       <div className="waveform-trim-convert">
         <small>CONVERSION EP-133 (SÉLECTION UNIQUEMENT)</small>
         <div className="waveform-trim-fade">
