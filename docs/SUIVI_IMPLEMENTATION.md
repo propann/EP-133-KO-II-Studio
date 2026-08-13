@@ -1693,6 +1693,45 @@ dans le navigateur — n'a pas encore été testé** — ajouté à
 `docs/A_VALIDER_PHYSIQUEMENT.md`, pas encore coché dans
 `docs/ROADMAP.md` Phase 4 tant que ce n'est pas confirmé en vrai.
 
+### Premier vrai test : timeout MIDI trouvé et corrigé, deux autres retours (13 août, même jour)
+
+Premier clic réel sur SYNCHRONISER : échec systématique, « PROJET ACTIF
+INTROUVABLE — Délai de réponse EP-133 dépassé » (`onGetActiveProject`,
+`midi.getActiveProjectNumber()`). Diagnostiqué avant de deviner : appel
+Python direct sur le même sous-système FILE (`FileClient.stat`,
+`identity_from_device`) — **réponse instantanée et correcte** depuis la
+machine. La machine n'était donc pas en cause ; la session MIDI du
+navigateur, elle, avait dû devenir périmée après tous les tests de la
+journée.
+
+L'utilisateur en a tiré une meilleure demande plutôt qu'un simple
+correctif de timeout : un **sélecteur de projet cible explicite** dans le
+cadre GROUPES & PADS (« on voit où on les envoie »), peuplé depuis
+`/bridge/projects/list` (même route que `ProjectTransfer`), par défaut le
+dernier projet scanné (`inventory.project` — « on utilise ce qu'on a
+scanné avant »).
+
+- [x] `SoundsPage.tsx` : `targetProject`/`machineProjects` (nouveaux
+  états), `<select>` dans l'en-tête GROUPES & PADS. `requestSync`
+  n'appelle plus `getActiveProjectNumber()` du tout — il utilise
+  directement `targetProject`. **Corrige le timeout par construction** :
+  le chemin d'écriture ne dépend plus d'une requête MIDI live fragile,
+  seulement de `/bridge/projects/write` (déjà fiable, testé plusieurs
+  fois en conditions réelles). `onGetActiveProject` retiré des props
+  (`App.tsx` toujours équipé de `midi.getActiveProjectNumber()` pour
+  SCAN, qui lui n'a jamais échoué).
+- [x] **Affichage live MIDI limité au groupe actif** (remonté dans le même
+  message : « il faudrait afficher seulement les touches du groupe actif
+  [...] sinon c'est n'importe quoi, illisible ») : l'effet qui réagit à
+  `liveMidi` **changeait l'onglet de groupe actif automatiquement** dès
+  qu'une note d'un autre groupe arrivait — corrigé, l'effet ignore
+  maintenant silencieusement toute frappe qui ne concerne pas le groupe
+  actuellement affiché, ne surligne plus jamais un pad hors champ.
+
+Vérifié : `npm run typecheck`, `npm test` (10 tests), `npm run build`,
+`npm run test:e2e` (2/2). Pas encore recliqué en vrai après ce correctif
+— ajouté à `docs/A_VALIDER_PHYSIQUEMENT.md`.
+
 ### Confirmé par l'utilisateur en conditions réelles + ajustements (13 août, même jour)
 
 Premier test réel du glisser-déposer : **succès** (« ça fait bien réagir la

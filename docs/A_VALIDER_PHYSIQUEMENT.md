@@ -256,17 +256,24 @@
   l'import machine → bibliothèque (glisser P01 vers la colonne droite)
   apparaît bien ensuite dans « Ouvrir… » du Studio avec le bon contenu —
   seule la direction logiciel → machine a été testée jusqu'ici.
-- [ ] **SYNCHRONISER pour de vrai** (13 août) — jamais cliqué dans le
-  navigateur, seulement la route `/bridge/sounds/upload` testée via
-  `curl`. Avant le tout premier essai : confirmer que le projet actif de
-  la machine est toujours P09 (c'était le cas juste avant ce chantier).
-  À vérifier : glisser un son perso sur un pad, cliquer SYNCHRONISER, le
-  `window.confirm` doit annoncer le bon projet cible (P09) et le bon
-  décompte ; après confirmation, le son doit être audible sur ce pad sur
-  la machine ; vérifier aussi qu'une réaffectation pure (son déjà sur la
-  machine déplacé vers un autre pad, sans nouveau fichier) fonctionne
-  sans rien uploader. Une fois confirmé, cocher la case correspondante
-  dans `docs/ROADMAP.md` Phase 4.
+- [ ] **SYNCHRONISER pour de vrai, deuxième essai après correctif**
+  (13 août) — premier essai réel : échec systématique avant même
+  d'atteindre l'écriture (`onGetActiveProject` en timeout MIDI côté
+  navigateur, machine diagnostiquée saine en Python en parallèle). Corrigé
+  en retirant cette dépendance : SYNCHRONISER utilise maintenant un
+  **sélecteur de projet explicite** (nouveau `<select>` dans l'en-tête
+  GROUPES & PADS, par défaut le dernier projet scanné). À revérifier :
+  le sélecteur liste bien les 9 projets (présent/vide), le `window.confirm`
+  annonce le bon projet choisi et le bon décompte, glisser un son perso
+  sur un pad puis confirmer rend le son audible sur la machine, une
+  réaffectation pure (son déjà sur la machine déplacé vers un autre pad,
+  sans nouveau fichier) fonctionne aussi. Une fois confirmé, cocher la
+  case correspondante dans `docs/ROADMAP.md` Phase 4.
+- [ ] **Affichage live MIDI limité au groupe actif** (13 août, correctif)
+  — jouer un pad du groupe actuellement affiché doit le surligner
+  brièvement sans rien changer d'autre ; jouer un pad d'un **autre**
+  groupe ne doit plus faire sauter l'onglet actif vers ce groupe (avant :
+  l'affichage changeait de groupe tout seul, jugé illisible).
 - [ ] **Repliement GROUPES & PADS / transfert de projets** (13 août) —
   ajusté juste après le premier test (cartes machine en orange, flèches
   de repliement partageant l'emplacement avec le transfert de projets) —

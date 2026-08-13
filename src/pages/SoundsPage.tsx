@@ -39,9 +39,6 @@ interface SoundsPageProps {
   localProjects: ReadonlyArray<{ id: string; title: string }>;
   onGetProjectDocument: (origin: 'demo' | 'local', id: string) => Promise<Record<string, unknown> | null>;
   onImportMachineProject: (document: Record<string, unknown>, suggestedTitle: string) => void;
-  /** Numéro du projet réellement actif sur la machine — SYNCHRONISER écrit
-   * dedans, jamais un slot arbitraire. Lève si le SysEx n'est pas actif. */
-  onGetActiveProject: () => Promise<number>;
 }
 
 const GROUPS: EditorGroup[] = ['A', 'B', 'C', 'D'];
@@ -87,7 +84,7 @@ async function readLocalEntries(dir: LocalDirectoryHandle): Promise<LocalEntry[]
 const bankForSlot = (slot: number) => SOUND_BANKS.slice(1).find((bank) => slot >= bank.from && slot <= bank.to) || SOUND_BANKS[10];
 const playModeName = (mode?: number) => mode === 1 ? 'KEYS' : mode === 2 ? 'LEGATO' : 'ONE';
 
-export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup, onMachineGroupChange, liveMidi, padModes, onBack, onConnectMidi, onPadModeChange, onPadPreview, onPreviewSound, localLibraryHandle, localLibraryFolderName, localLibraryNeedsReconnect, onReconnectLocalLibrary, demoProjects, localProjects, onGetProjectDocument, onImportMachineProject, onGetActiveProject }: SoundsPageProps) {
+export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup, onMachineGroupChange, liveMidi, padModes, onBack, onConnectMidi, onPadModeChange, onPadPreview, onPreviewSound, localLibraryHandle, localLibraryFolderName, localLibraryNeedsReconnect, onReconnectLocalLibrary, demoProjects, localProjects, onGetProjectDocument, onImportMachineProject }: SoundsPageProps) {
   // Nom/mémoire/statut affichés en tête de page — réglés depuis la Fiche personnage
   // (plus de formulaire « PROFIL DE LA MACHINE » ici, retiré pour épurer la page).
   const existingProfile = loadDeviceProfile(localStorage);
@@ -100,6 +97,15 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
    * emplacement (13 août, demande explicite) — replié via les flèches sur
    * les bords, plutôt qu'une nouvelle section tout en bas de la page. */
   const [padPanelCollapsed, setPadPanelCollapsed] = useState(false);
+  /** Sélecteur de projet cible explicite (13 août, demande explicite : « on
+   * voit où on les envoie ») — SYNCHRONISER écrit ici, plus jamais une
+   * détection live silencieuse (`getActiveProjectNumber`, qui s'est révélée
+   * peu fiable : délai MIDI dépassé de façon répétée en test réel). Liste
+   * peuplée depuis le pont (`/bridge/projects/list`, même route que
+   * ProjectTransfer) ; valeur par défaut = dernier projet scanné
+   * (`inventory.project`) — « ce qu'on a scanné avant ». */
+  const [machineProjects, setMachineProjects] = useState<Array<{ slot: number; present: boolean }>>([]);
+  const [targetProject, setTargetProject] = useState<number | null>(null);
   const [activeBank, setActiveBank] = useState<(typeof SOUND_BANKS)[number]['id']>('all');
   const [query, setQuery] = useState('');
   const [previewMissSlot, setPreviewMissSlot] = useState<number | null>(null);
@@ -154,17 +160,32 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
   const filteredPersoFiles = useMemo(() => persoEntries.filter((entry): entry is LocalEntry & { kind: 'file' } => entry.kind === 'file' && entry.name.toLowerCase().includes(persoQuery.trim().toLowerCase())), [persoEntries, persoQuery]);
 
   useEffect(() => {
+    fetch('/bridge/projects/list', { cache: 'no-store' })
+      .then((response) => response.ok ? response.json() as Promise<{ projects: Array<{ slot: number; present: boolean }> }> : Promise.reject())
+      .then((value) => setMachineProjects(value.projects))
+      .catch(() => setMachineProjects([]));
+  }, []);
+
+  // Valeur par défaut du sélecteur = dernier projet scanné, jamais une
+  // détection live (voir commentaire sur targetProject plus haut).
+  useEffect(() => { if (targetProject === null && inventory?.project) setTargetProject(inventory.project); }, [inventory?.project, targetProject]);
+
+  /** Ne réagit qu'aux frappes du groupe actuellement affiché — avant, une
+   * frappe sur un autre groupe faisait sauter l'onglet actif en plus de
+   * surligner un pad hors champ, rendant l'affichage illisible (13 août,
+   * remonté par l'utilisateur : « affichage n'importe quoi, illisible »). */
+  useEffect(() => {
     if (!liveMidi || performance.now() - liveMidi.timestamp > 1000 || liveMidi.note < 36 || liveMidi.note > 83) return;
     const internalPad = officialInternalPadFromNote(liveMidi.note);
     const groupIndex = officialGroupIndexFromNote(liveMidi.note);
     if (internalPad === undefined || groupIndex === undefined) return;
     const group = GROUPS[groupIndex];
-    setActiveGroup(group);
+    if (group !== activeGroup) return;
     setSelectedPad(internalPad);
     setLivePad(internalPad);
     const timer = window.setTimeout(() => setLivePad(null), 220);
     return () => window.clearTimeout(timer);
-  }, [liveMidi]);
+  }, [liveMidi, activeGroup]);
 
   // Recharge la racine dès que le dossier perso devient disponible/reconnecté (réglé depuis la Fiche personnage).
   useEffect(() => {
@@ -256,27 +277,27 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
 
   /**
    * SYNCHRONISER, reconstruit le 13 août (« on reprend du début et on fait
-   * propre ») : écrit réellement sur la machine, dans le projet
-   * ACTUELLEMENT ACTIF (`onGetActiveProject`, jamais un slot arbitraire).
+   * propre »), puis corrigé le même jour : écrit réellement sur la
+   * machine, dans le **projet choisi explicitement dans le sélecteur**
+   * (`targetProject`) — plus une détection live silencieuse
+   * (`getActiveProjectNumber`, retirée : délai MIDI dépassé de façon
+   * répétée en test réel, alors que la machine répondait instantanément
+   * en direct via Python — la requête FILE du navigateur, pas la machine,
+   * était en cause). L'utilisateur voit et choisit la cible, cohérent
+   * avec « on voit où on les envoie ».
    * Réutilise ce qui vient d'être validé en conditions réelles cette
-   * session : `/bridge/sounds/upload` (checkpoint implicite via la
-   * vérification octet à octet côté pont) pour chaque son perso, puis un
-   * seul `/bridge/projects/write` (checkpoint + compilation patch +
-   * écriture + relecture octet à octet + activation) pour les pads.
-   * Séquentiel, jamais en parallèle — une seule session FILE à la fois.
-   * SUPPRIMER un son reste volontairement verrouillé (voir requestDelete) :
-   * irréversible, pas demandé cette fois, mérite sa propre prudence dédiée.
+   * session : `/bridge/sounds/upload` (vérification octet à octet côté
+   * pont) pour chaque son perso, puis un seul `/bridge/projects/write`
+   * (checkpoint + compilation patch + écriture + relecture octet à octet
+   * + activation) pour les pads. Séquentiel, jamais en parallèle — une
+   * seule session FILE à la fois. SUPPRIMER un son reste volontairement
+   * verrouillé (voir requestDelete) : irréversible, pas demandé cette
+   * fois, mérite sa propre prudence dédiée.
    */
   const requestSync = async () => {
     if (!changeCount || syncing) return;
-
-    let activeProject: number;
-    try {
-      activeProject = await onGetActiveProject();
-    } catch (error) {
-      setImportFeedback({ status: 'error', message: `PROJET ACTIF INTROUVABLE — ${error instanceof Error ? error.message : 'connecte le SysEx.'}` });
-      return;
-    }
+    if (!targetProject) { setImportFeedback({ status: 'error', message: 'CHOISIS D’ABORD UN PROJET CIBLE (sélecteur au-dessus de GROUPES & PADS).' }); return; }
+    const activeProject = targetProject;
 
     const localPadEntries = Object.entries(stagedLocalPads);
     const importEntries = Object.entries(stagedImports);
@@ -356,7 +377,16 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
         {!padPanelCollapsed ? <section className="sound-pad-panel">
           <button className="panel-collapse-arrow left" onClick={() => setPadPanelCollapsed(true)} title="Replier · afficher le transfert de projets" aria-label="Replier les groupes et pads">‹</button>
           <button className="panel-collapse-arrow right" onClick={() => setPadPanelCollapsed(true)} title="Replier · afficher le transfert de projets" aria-label="Replier les groupes et pads">›</button>
-          <header><div><small>PROJET {inventory?.project || '—'}</small><h2>GROUPES & PADS</h2></div><button className={`sound-keys-toggle ${selectedMode === 'KEYS' ? 'active' : ''}`} onClick={() => onPadModeChange(activeGroup, selectedPad - 1, selectedMode === 'KEYS' ? 'ONE' : 'KEYS')}><b>KEYS</b><small>{activeGroup} · {EP133_PADS[selectedPad - 1].key}</small></button></header>
+          <header>
+            <div><small>PROJET CIBLE · SYNCHRONISER</small><h2>GROUPES & PADS</h2></div>
+            <label className="sound-target-project" title="Projet cible pour SYNCHRONISER — pas une détection en direct, un choix explicite (défaut : dernier projet scanné)">
+              <select value={targetProject ?? ''} onChange={(event) => setTargetProject(Number(event.target.value))}>
+                {!machineProjects.length && targetProject && <option value={targetProject}>P{String(targetProject).padStart(2, '0')}</option>}
+                {machineProjects.map((entry) => <option key={entry.slot} value={entry.slot}>P{String(entry.slot).padStart(2, '0')}{entry.present ? '' : ' · VIDE'}</option>)}
+              </select>
+            </label>
+            <button className={`sound-keys-toggle ${selectedMode === 'KEYS' ? 'active' : ''}`} onClick={() => onPadModeChange(activeGroup, selectedPad - 1, selectedMode === 'KEYS' ? 'ONE' : 'KEYS')}><b>KEYS</b><small>{activeGroup} · {EP133_PADS[selectedPad - 1].key}</small></button>
+          </header>
           <div className="sound-pad-machine"><nav className="sound-group-tabs" aria-label="Groupes EP-133">{GROUPS.map((group) => <button key={group} className={activeGroup === group ? 'active' : ''} aria-pressed={activeGroup === group} onClick={() => { setActiveGroup(group); setSelectedPad(1); onMachineGroupChange(group); }}><b>{group}</b><small>{inventory?.pads.filter((pad) => pad.group === group).length || 0}/12</small></button>)}</nav>
           <div className="sound-pad-grid">{INTERNAL_PAD_ORDER.map((padNumber) => { const pad = padsByNumber.get(padNumber); const padKey = `${activeGroup}:${padNumber - 1}`; const localFile = stagedLocalPads[padKey]; const stagedSlot = stagedAssignments[padKey]; const slot = stagedSlot ?? pad?.slot; const sound = slot ? inventory?.sounds[String(slot)] : undefined; const bank = slot ? bankForSlot(slot) : null; const visual = EP133_PADS[padNumber - 1]; const changed = stagedSlot !== undefined || Boolean(localFile); return <button key={padNumber} className={`${selectedPad === padNumber ? 'selected' : ''} ${livePad === padNumber ? 'live' : ''} ${changed ? 'changed' : ''} bank-${bank?.id || 'empty'}`} aria-pressed={selectedPad === padNumber}
             onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = 'copy'; }}

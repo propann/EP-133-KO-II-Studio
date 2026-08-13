@@ -978,6 +978,7 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .sound-pad-machine .sound-group-tabs button { flex:1; min-height:0; padding:7px; }
 .sound-pad-machine .sound-group-tabs button b { font-size:24px; }
 .sound-pad-grid button.live { color:#fff; background:var(--ko-orange); outline:5px solid #fff0ad; outline-offset:2px; transform:translateY(-3px); }
+.sound-target-project select { height:38px; padding:0 10px; border:2px solid var(--ko-black); border-radius:var(--radius-sm); background:var(--ko-orange); color:#fff; font:700 11px inherit; font-weight:900; cursor:pointer; }
 .sound-keys-toggle { display:grid; min-width:92px; padding:7px 12px; border:2px solid var(--ko-black); border-radius:var(--radius-sm); background:#d1cec7; box-shadow:3px 3px 0 #55524d; cursor:pointer; }
 .sound-keys-toggle b { font-size:15px; }
 .sound-keys-toggle small { font-size:6px; }
