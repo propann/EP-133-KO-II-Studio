@@ -40,7 +40,7 @@ body {
   background-size: 24px 24px;
   background-attachment:fixed;
 }
-button { font: inherit; }
+button { font: inherit; transition:transform .06s ease-out,box-shadow .06s ease-out; }
 main { max-width: 1280px; margin: auto; padding: 14px 24px 28px; display:flex; flex-direction:column; }
 .toolbar { order:1; }
 /* Pads à gauche / milieu réservé / partition à droite (11/08) — remplace
@@ -1133,3 +1133,15 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .profile-reset:hover:not(:disabled) { background:#e2a08c; }
 .profile-reset:disabled { opacity:.4; cursor:not-allowed; }
 @media(max-width:720px) { .profile-identity { flex-direction:column; align-items:flex-start; } .profile-identity-fields input { max-width:none; width:100%; } .profile-stats-grid { grid-template-columns:repeat(2,1fr); } .profile-machine-status { margin-left:0; } }
+
+/* Règle globale (13 août, demande explicite : « c'est une règle pour tout
+   les boutons ») — tout bouton doit visuellement s'enfoncer au clic, pas
+   seulement la façade EP-133 (SCAN, CLONER, CONNECTER, etc. n'avaient
+   jusqu'ici qu'un changement de couleur au survol, jamais de mouvement).
+   Spécificité volontairement minimale (élément + pseudo-classe) pour
+   rester un filet de sécurité par défaut, placé en toute fin de feuille de
+   style : tout bouton qui a déjà son propre :active plus spécifique
+   (.pads button:active, .home-card:active, .editor-home-button:active,
+   .ep133-face button:active...) garde son traitement sur mesure, inchangé
+   — seuls les boutons qui n'en avaient aucun sont concernés. */
+button:active { transform:translate(2px,2px); box-shadow:none; }

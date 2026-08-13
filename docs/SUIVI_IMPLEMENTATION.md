@@ -1364,3 +1364,32 @@ inchangé), `npm run test:e2e` (2/2, Chromium réel). **Non vérifié dans un
 vrai navigateur** : l'écriture/lecture réelle de `profile.json` sur disque
 (File System Access API) n'a jamais été testée avec un vrai dossier —
 ajouté à `docs/A_VALIDER_PHYSIQUEMENT.md`.
+
+## Règle globale — tout bouton bouge au clic (13 août)
+
+Demande explicite après un test réel des boutons SCAN/CLONER : « il faut
+aussi qu'il bouge quand on clic dessus, c'est une règle pour tout les
+boutons ». Jusqu'ici, le mouvement au clic n'avait été ajouté qu'au cas
+par cas (`.pads button:active`, `.home-card:active`,
+`.editor-home-button:active`, `.ep133-face button:active` — voir commits
+précédents) ; la grande majorité des boutons de l'app (SCAN, CLONER,
+CONNECTER, RESTAURER, etc.) n'avaient qu'un changement de couleur au
+survol, jamais de mouvement au clic.
+
+- [x] `src/style.css` : règle globale `button:active { transform:translate(2px,2px); box-shadow:none; }`,
+  ajoutée en toute fin de feuille de style avec une spécificité
+  volontairement minimale (élément + pseudo-classe) — sert de filet de
+  sécurité par défaut. Tout bouton qui a déjà son propre `:active` plus
+  spécifique (au moins deux composantes de classe) continue à l'utiliser
+  sans changement ; seuls les boutons jusqu'ici sans traitement en
+  héritent. `transition` déplacée sur la règle de base `button` pour que
+  l'aller ET le retour soient animés, pas seulement l'entrée en `:active`.
+- [x] Vérifié par raisonnement sur la spécificité CSS (pas de test
+  automatisable pour un effet purement visuel) : chaque `:active` déjà
+  existant dans la feuille de style a été recompté à la main pour
+  confirmer qu'il reste prioritaire sur la règle globale.
+
+Vérifié : `npm run build` (CSS compile sans erreur), `npm test` (10
+tests), `npm run test:e2e` (2/2, Chromium réel) — aucun de ces trois ne
+peut confirmer le rendu visuel réel. **Non vérifié à l'œil** — ajouté à
+`docs/A_VALIDER_PHYSIQUEMENT.md`.

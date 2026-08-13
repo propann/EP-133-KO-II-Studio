@@ -91,6 +91,14 @@
   vert avec le texte `CONNECTÉ`, fond légèrement teinté (`color-mix`),
   lisible sur le fond beige de la page ; le point lumineux passe aussi de
   l'orange au vert. Jamais vu dans un vrai navigateur.
+- [ ] **Tout bouton bouge au clic** (13 août, règle globale) — cliquer
+  n'importe quel bouton de l'app (SCAN, CLONER, CONNECTER, RESTAURER,
+  onglets, boutons de dialogue...) doit visiblement l'enfoncer, pas
+  seulement changer sa couleur. Vérifier en particulier les boutons
+  n'ayant jamais eu de traitement dédié avant ce correctif (la plupart),
+  et confirmer qu'aucun bouton à traitement déjà personnalisé (pads du
+  jeu, cartes de la page d'accueil, façade Test Machine) n'a perdu son
+  animation spécifique au passage.
 - [ ] **Sauvegarde de la fiche personnage dans le dossier de travail**
   (13 août) — Fiche personnage → section « SAUVEGARDE DE LA FICHE » →
   bouton `SAUVEGARDER LA FICHE` : doit écrire `profile.json` à la racine
