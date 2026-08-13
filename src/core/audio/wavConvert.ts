@@ -83,6 +83,39 @@ function remixChannels(interleaved: Float32Array, fromChannels: number, toChanne
 }
 
 /**
+ * Fondu linéaire en entrée/sortie, en place sur des trames interleaved déjà à
+ * la fréquence de sortie finale — appliqué après resampling, pas avant, pour
+ * que les durées en secondes restent exactes quelle que soit la cible
+ * (LO/MID/HI). Fondu linéaire (pas à énergie constante) : simple, suffisant
+ * pour un premier jet — voir Roadmap Phase 4. `fadeInSeconds`/
+ * `fadeOutSeconds` à 0 ou négatif ne change rien. Chaque fondu est plafonné à
+ * la moitié des trames disponibles, pour ne jamais réduire tout le signal au
+ * silence sur un fichier très court si les deux durées demandées sont trop
+ * grandes ou se chevauchent.
+ */
+function applyFade(interleaved: Float32Array, channels: number, sampleRate: number, fadeInSeconds: number, fadeOutSeconds: number): Float32Array {
+  const frameCount = channels > 0 ? interleaved.length / channels : 0;
+  if (!frameCount || (fadeInSeconds <= 0 && fadeOutSeconds <= 0)) return interleaved;
+
+  const maxFadeFrames = Math.floor(frameCount / 2);
+  const fadeInFrames = Math.max(0, Math.min(maxFadeFrames, Math.round(fadeInSeconds * sampleRate)));
+  const fadeOutFrames = Math.max(0, Math.min(maxFadeFrames, Math.round(fadeOutSeconds * sampleRate)));
+  if (!fadeInFrames && !fadeOutFrames) return interleaved;
+
+  const out = interleaved.slice();
+  for (let frame = 0; frame < fadeInFrames; frame += 1) {
+    const gain = frame / fadeInFrames;
+    for (let channel = 0; channel < channels; channel += 1) out[frame * channels + channel] *= gain;
+  }
+  for (let frame = 0; frame < fadeOutFrames; frame += 1) {
+    const gain = frame / fadeOutFrames;
+    const targetFrame = frameCount - 1 - frame;
+    for (let channel = 0; channel < channels; channel += 1) out[targetFrame * channels + channel] *= gain;
+  }
+  return out;
+}
+
+/**
  * Encode des trames Float32 interleaved en WAV PCM 16 bits, avec dither TPDF
  * (REGISTRE_IDEES.md A-04) — bruit triangulaire d'environ 1 LSB avant
  * l'arrondi, pour ne jamais tronquer sèchement vers l'entier le plus proche.
@@ -121,7 +154,7 @@ function encodeWavPcm16(samples: Float32Array, channels: number, sampleRate: num
  * ne touche à aucun fichier machine : produit seulement un nouveau tampon en
  * mémoire, à consommer par l'appelant (pré-écoute, futur export).
  */
-export async function convertWavForEp133(sourceBytes: ArrayBuffer, targetSampleRate: number, targetChannels?: 1 | 2, trim?: { startSeconds: number; endSeconds: number }): Promise<WavConversionResult | null> {
+export async function convertWavForEp133(sourceBytes: ArrayBuffer, targetSampleRate: number, targetChannels?: 1 | 2, trim?: { startSeconds: number; endSeconds: number }, fade?: { fadeInSeconds: number; fadeOutSeconds: number }): Promise<WavConversionResult | null> {
   const format = parseWavFormat(sourceBytes);
   if (!format || !format.frameCount) return null;
 
@@ -153,6 +186,7 @@ export async function convertWavForEp133(sourceBytes: ArrayBuffer, targetSampleR
     outSampleRate = targetSampleRate;
   }
 
-  const bytes = encodeWavPcm16(resampled, outChannels, outSampleRate);
+  const faded = fade ? applyFade(resampled, outChannels, outSampleRate, fade.fadeInSeconds, fade.fadeOutSeconds) : resampled;
+  const bytes = encodeWavPcm16(faded, outChannels, outSampleRate);
   return { bytes, sampleRate: outSampleRate, channels: outChannels, bitDepth: 16, durationSeconds: resampled.length / outChannels / outSampleRate };
 }

@@ -26,6 +26,13 @@ function buildWav({ sampleRate, channels, frames }) {
   return buffer;
 }
 
+/** Relit les échantillons int16 bruts d'un WAV PCM 16 bits produit par convertWavForEp133 (en-tête 44 octets fixe, mêmes hypothèses que buildWav ci-dessus). */
+function readInt16Samples(bytes) {
+  const view = new DataView(bytes);
+  const count = (bytes.byteLength - 44) / 2;
+  return Array.from({ length: count }, (_, i) => view.getInt16(44 + i * 2, true));
+}
+
 const sineFrames = (sampleRate, seconds, freq, amplitude = 20000) => {
   const count = Math.round(sampleRate * seconds);
   return Array.from({ length: count }, (_, i) => Math.round(Math.sin((2 * Math.PI * freq * i) / sampleRate) * amplitude));
@@ -93,5 +100,32 @@ for (const [label, targetRate] of Object.entries(EP133_TARGET_SAMPLE_RATES)) {
   assert.ok(real, `conversion réelle attendue pour ${label}`);
   assert.equal(estimated, real.bytes.byteLength, `estimation ${label} (${estimated} o) doit égaler le poids réel (${real.bytes.byteLength} o)`);
 }
+
+// 7) Fondu en entrée/sortie : rampe linéaire, appliquée après resampling (ici identité,
+// même fréquence source et cible, pour isoler le fondu du resampling).
+const constantWav = buildWav({ sampleRate: 1000, channels: 1, frames: Array(40).fill(20000) });
+const faded = await convertWavForEp133(constantWav, 1000, 1, undefined, { fadeInSeconds: 0.01, fadeOutSeconds: 0.01 });
+assert.ok(faded);
+const fadedSamples = readInt16Samples(faded.bytes);
+assert.ok(Math.abs(fadedSamples[0]) <= 2, `premier échantillon quasi silencieux (fondu d'entrée) : ${fadedSamples[0]}`);
+assert.ok(Math.abs(fadedSamples[9] - 18000) <= 5, `90% de la rampe d'entrée (trame 9/10) : ${fadedSamples[9]}`);
+assert.ok(Math.abs(fadedSamples[20] - 20000) <= 5, 'échantillon central hors zone de fondu -> pleine échelle');
+assert.ok(Math.abs(fadedSamples[29] - 20000) <= 5, 'juste avant la zone de fondu de sortie -> encore pleine échelle');
+assert.ok(Math.abs(fadedSamples[35] - 8000) <= 5, `40% de la rampe de sortie (trame 4/10 en partant de la fin) : ${fadedSamples[35]}`);
+assert.ok(Math.abs(fadedSamples[39]) <= 2, `dernier échantillon quasi silencieux (fondu de sortie) : ${fadedSamples[39]}`);
+
+// Pas de fondu demandé (fadeInSeconds/fadeOutSeconds à 0) -> signal inchangé, aucune rampe.
+const unfaded = await convertWavForEp133(constantWav, 1000, 1, undefined, { fadeInSeconds: 0, fadeOutSeconds: 0 });
+assert.ok(unfaded);
+const unfadedSamples = readInt16Samples(unfaded.bytes);
+assert.ok(Math.abs(unfadedSamples[0] - 20000) <= 5, 'fondu à 0 -> premier échantillon toujours à pleine échelle');
+
+// Fichier très court avec des fondus demandés bien trop longs : jamais un signal totalement
+// réduit au silence (plafond à la moitié des trames de chaque côté).
+const tinyWav = buildWav({ sampleRate: 1000, channels: 1, frames: Array(4).fill(20000) });
+const tinyFaded = await convertWavForEp133(tinyWav, 1000, 1, undefined, { fadeInSeconds: 1, fadeOutSeconds: 1 });
+assert.ok(tinyFaded);
+const tinySamples = readInt16Samples(tinyFaded.bytes);
+assert.ok(tinySamples.some((value) => Math.abs(value) > 100), 'un fichier de 4 trames avec des fondus de 1 s chacun ne doit jamais finir totalement silencieux');
 
 console.log('Conversion EP-133 (resampling libsamplerate-js, dither TPDF, downmix) : OK');

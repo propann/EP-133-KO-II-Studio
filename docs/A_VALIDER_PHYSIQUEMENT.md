@@ -105,6 +105,10 @@
   RESTANTS » ou « NE TIENT PAS · DÉPASSE DE X KO » sous le poids — à vérifier
   avec une vraie machine scannée, dans les deux cas (ça tient / ça ne tient
   pas), pas seulement le cas où il y a de la place.
+  Ajouté depuis (3) : deux champs « FONDU ENTRÉE (MS) »/« FONDU SORTIE
+  (MS) » au-dessus des boutons LO/MID/HI — à vérifier à l'oreille que le
+  résultat converti fondu bien en douceur (pas de clic/craquement au point
+  de jonction) avec des valeurs realistes (ex. 20-50 ms).
 
 ## Règle de suivi
 

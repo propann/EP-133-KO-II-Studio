@@ -62,6 +62,10 @@ export function WaveformTrim({ file, initialTrim, onTrimChange, report, machineM
   const [converting, setConverting] = useState<Ep133TargetRate | null>(null);
   const [convertError, setConvertError] = useState<string | null>(null);
   const [convertedPreview, setConvertedPreview] = useState<{ target: Ep133TargetRate; url: string; sampleRate: number; durationSeconds: number } | null>(null);
+  // Fondu linéaire (Roadmap Phase 4) : durées en ms, converties en secondes à
+  // l'appel. 0 par défaut = pas de fondu, comportement inchangé.
+  const [fadeInMs, setFadeInMs] = useState(0);
+  const [fadeOutMs, setFadeOutMs] = useState(0);
 
   // Remonte une sélection au parent (sauvegarde) et au composant lui-même
   // (recalcul immédiat du poids estimé affiché sur les boutons LO/MID/HI).
@@ -163,7 +167,7 @@ export function WaveformTrim({ file, initialTrim, onTrimChange, report, machineM
     setConvertError(null);
     try {
       const { convertWavForEp133 } = await import('../../core/audio/wavConvert');
-      const result = await convertWavForEp133(bytes, EP133_TARGET_SAMPLE_RATES[target], undefined, { startSeconds: region.start, endSeconds: region.end });
+      const result = await convertWavForEp133(bytes, EP133_TARGET_SAMPLE_RATES[target], undefined, { startSeconds: region.start, endSeconds: region.end }, { fadeInSeconds: fadeInMs / 1000, fadeOutSeconds: fadeOutMs / 1000 });
       if (!result) { setConvertError('CONVERSION IMPOSSIBLE (FORMAT NON PRIS EN CHARGE OU SÉLECTION VIDE)'); return; }
       const url = URL.createObjectURL(new Blob([result.bytes], { type: 'audio/wav' }));
       setConvertedPreview({ target, url, sampleRate: result.sampleRate, durationSeconds: result.durationSeconds });
@@ -194,6 +198,10 @@ export function WaveformTrim({ file, initialTrim, onTrimChange, report, machineM
       {peakDb !== null && suggestedGainDb !== null && <small className="waveform-trim-gain">CRÊTE {peakDb.toFixed(1)} DBFS · GAIN SUGGÉRÉ {suggestedGainDb >= 0 ? '+' : ''}{suggestedGainDb.toFixed(1)} DB (CIBLE -1 DBFS)</small>}
       <div className="waveform-trim-convert">
         <small>CONVERSION EP-133 (SÉLECTION UNIQUEMENT)</small>
+        <div className="waveform-trim-fade">
+          <label>FONDU ENTRÉE (MS)<input type="number" min={0} step={5} value={fadeInMs} onChange={(event) => setFadeInMs(Math.max(0, Number(event.target.value) || 0))} /></label>
+          <label>FONDU SORTIE (MS)<input type="number" min={0} step={5} value={fadeOutMs} onChange={(event) => setFadeOutMs(Math.max(0, Number(event.target.value) || 0))} /></label>
+        </div>
         <div className="waveform-trim-convert-buttons">
           {(Object.keys(EP133_TARGET_LABELS) as Ep133TargetRate[]).map((target) => {
             const estimatedBytes = estimateEp133ConversionBytes(trimDurationSeconds, outChannels, EP133_TARGET_SAMPLE_RATES[target]);

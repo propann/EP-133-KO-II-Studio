@@ -893,3 +893,38 @@ Non vérifié à l'œil : ajouté à la même entrée de
 `docs/A_VALIDER_PHYSIQUEMENT.md` que la conversion, avec la précision de
 tester les deux cas (ça tient / ça ne tient pas), pas seulement le cas
 optimiste.
+
+## Étape — fondu en entrée/sortie (13 août, suite)
+
+Choisi par l'utilisateur ("oki continu" après une question ouverte sur la
+suite) — dernier point restant du groupe forme d'onde/trim/conversion de
+la Phase 4 avant de passer à autre chose.
+
+- [x] `applyFade` ajoutée à `wavConvert.ts` : rampe linéaire, appliquée
+  après resampling (pas avant) pour que les durées en secondes restent
+  exactes quelle que soit la fréquence cible LO/MID/HI. Chaque fondu
+  plafonné à la moitié des trames disponibles, pour ne jamais réduire un
+  fichier très court au silence total si les durées demandées sont trop
+  grandes.
+- [x] `convertWavForEp133` accepte un 5ᵉ paramètre optionnel `fade`
+  (`{fadeInSeconds, fadeOutSeconds}`), rétrocompatible (absent = comportement
+  inchangé, déjà couvert par tous les tests existants).
+- [x] `tools/check-wav-convert.mjs` : nouveau petit lecteur d'échantillons
+  int16 bruts (`readInt16Samples`) pour vérifier la forme exacte de la
+  rampe (premier/dernier échantillon quasi silencieux, valeurs
+  intermédiaires à 40%/90% de la rampe, zone centrale inchangée à pleine
+  échelle) — pas seulement une vérification globale du niveau. Cas du
+  fichier très court avec fondus démesurés testé aussi (jamais totalement
+  silencieux). Tous ces tests sont passés du premier coup.
+- [x] `WaveformTrim` : deux champs « FONDU ENTRÉE (MS) » / « FONDU SORTIE
+  (MS) », UI simple (pas de poignées à glisser sur la forme d'onde pour
+  cette première version — noté comme amélioration possible, pas
+  nécessaire pour livrer la fonction).
+- [x] Build revérifié : le point critique (chunk de conversion séparé)
+  tient toujours.
+- [x] `npm run typecheck`, `npm test` (9 tests, la suite `test:convert`
+  s'enrichit de 3 nouveaux scénarios), `npm run test:e2e` (2/2),
+  `npm run build` — tous au vert.
+
+Non vérifié à l'oreille : ajouté à la même entrée que la conversion dans
+`docs/A_VALIDER_PHYSIQUEMENT.md`.

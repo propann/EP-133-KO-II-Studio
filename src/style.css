@@ -1039,6 +1039,9 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .waveform-trim-gain { flex-basis:100%; font-variant-numeric:tabular-nums; color:#57544e; }
 .waveform-trim-convert { flex-basis:100%; padding-top:8px; border-top:1px solid #d8d4cc; display:flex; flex-direction:column; gap:6px; }
 .waveform-trim-convert > small { font-weight:900; color:#57544e; }
+.waveform-trim-fade { display:flex; flex-wrap:wrap; gap:12px; }
+.waveform-trim-fade label { display:flex; flex-direction:column; gap:2px; font-size:7px; font-weight:900; color:#57544e; }
+.waveform-trim-fade input { width:70px; padding:4px 6px; border:1px solid var(--ko-black); border-radius:4px; font:inherit; font-size:9px; }
 .waveform-trim-convert-buttons { display:flex; flex-wrap:wrap; gap:6px; }
 .waveform-trim-convert-buttons button { display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 10px; border:1px solid var(--ko-black); border-radius:6px; background:#d8d4cc; cursor:pointer; }
 .waveform-trim-convert-buttons button b { font-size:8px; font-weight:900; }

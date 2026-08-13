@@ -388,7 +388,13 @@ de fichiers audio propriétaires au dépôt.
   voir REGISTRE_IDEES.md A-06/A-08) : bouton `AUTO-TRIM SILENCE` et ligne
   `CRÊTE … · GAIN SUGGÉRÉ …` dans `WaveformTrim`. Le gain reste une
   suggestion affichée, pas encore appliqué au signal.
-- [ ] Fondu (fade in/out) — pas commencé.
+- [x] **Fondu (fade in/out)** (13 août) : rampe linéaire appliquée après
+  resampling (durées en secondes exactes quelle que soit la cible LO/MID/HI),
+  plafonnée à la moitié des trames de chaque côté pour ne jamais réduire un
+  fichier très court au silence total. UI simple — deux champs de durée en
+  ms dans `WaveformTrim`, pas encore de poignées à glisser sur la forme
+  d'onde (amélioration possible plus tard, pas nécessaire pour livrer la
+  fonction).
 - [x] **Conversion native vers la fréquence cible EP-133 avec dither TPDF**
   (13 août, voir REGISTRE_IDEES.md A-03/A-04/R-07) :
   `src/core/audio/wavConvert.ts`, resampling par `@alexanderolsen/libsamplerate-js`
