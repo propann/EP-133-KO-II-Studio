@@ -76,24 +76,27 @@ function scanSamples(view: DataView, dataStart: number, dataLength: number, bitD
   return { peakLevel: Math.min(1, peak), clipped: clippedCount > 0, clippedSampleCount: clippedCount };
 }
 
-export interface WaveformPeaks {
+interface ParsedWavFormat {
+  view: DataView;
   channels: number;
   sampleRate: number;
-  durationSeconds: number;
-  /** Un seul canal, crête max entre tous les canaux source par point — suffisant
-   * pour l'affichage (Phase 4, forme d'onde/trim), pas une réduction utilisable
-   * pour l'export final. */
-  values: Float32Array;
+  bitDepth: number;
+  isFloat: boolean;
+  bytesPerSample: number;
+  bytesPerFrame: number;
+  dataStart: number;
+  frameCount: number;
+  maxCode: number;
 }
 
 /**
- * Crêtes réduites à `targetPoints` valeurs, pour dessiner une forme d'onde sans
- * charger un `AudioContext` ni dépendre de `decodeAudioData()` (même piège que
- * `analyzeWavBuffer` : rééchantillonnage silencieux possible). Lit les mêmes
- * octets PCM bruts, par un chemin séparé pour ne jamais risquer de régression
- * sur `analyzeWavBuffer` — testé indépendamment.
+ * En-tête + trames décrites une seule fois, partagé par `computeWaveformPeaks`
+ * et `detectSilenceTrim` (ajoutés après coup) — `analyzeWavBuffer` garde
+ * volontairement son propre chemin de lecture séparé, déjà testé, pour ne
+ * jamais risquer de régression dessus en le faisant dépendre de ce code plus
+ * récent.
  */
-export function computeWaveformPeaks(bytes: ArrayBuffer, targetPoints = 1000): WaveformPeaks | null {
+function parseWavFormat(bytes: ArrayBuffer): ParsedWavFormat | null {
   if (bytes.byteLength < 44) return null;
   const view = new DataView(bytes);
   const riff = String.fromCharCode(view.getUint8(0), view.getUint8(1), view.getUint8(2), view.getUint8(3));
@@ -112,37 +115,60 @@ export function computeWaveformPeaks(bytes: ArrayBuffer, targetPoints = 1000): W
   if (!channels || !sampleRate || ![8, 16, 24, 32].includes(bitDepth)) return null;
   if (audioFormat !== 1 && audioFormat !== 3) return null;
   if (audioFormat === 3 && bitDepth !== 32) return null;
-  const isFloat = audioFormat === 3;
 
   const bytesPerSample = bitDepth / 8;
   const bytesPerFrame = channels * bytesPerSample;
   const dataLength = Math.min(dataChunk.length, bytes.byteLength - dataChunk.start);
   const frameCount = bytesPerFrame > 0 ? Math.floor(dataLength / bytesPerFrame) : 0;
-  if (!frameCount) return null;
-
   const maxCode = bitDepth === 8 ? 127 : bitDepth === 16 ? 32767 : bitDepth === 24 ? 8388607 : 2147483647;
-  const frameMagnitude = (frameIndex: number) => {
-    let peak = 0;
-    const frameStart = dataChunk.start + frameIndex * bytesPerFrame;
-    for (let channel = 0; channel < channels; channel += 1) {
-      const byteOffset = frameStart + channel * bytesPerSample;
-      let magnitude: number;
-      if (isFloat) magnitude = Math.abs(view.getFloat32(byteOffset, true));
-      else if (bitDepth === 8) magnitude = Math.abs(view.getUint8(byteOffset) - 128) / 128;
-      else if (bitDepth === 16) magnitude = Math.abs(view.getInt16(byteOffset, true)) / (maxCode + 1);
-      else if (bitDepth === 24) {
-        const b0 = view.getUint8(byteOffset); const b1 = view.getUint8(byteOffset + 1); const b2 = view.getUint8(byteOffset + 2);
-        let raw = b0 | (b1 << 8) | (b2 << 16);
-        if (raw & 0x800000) raw -= 0x1000000; // complément à deux sur 24 bits
-        magnitude = Math.abs(raw) / (maxCode + 1);
-      } else magnitude = Math.abs(view.getInt32(byteOffset, true)) / (maxCode + 1);
-      if (magnitude > peak) peak = magnitude;
-    }
-    return Math.min(1, peak);
-  };
 
-  const points = Math.max(1, Math.min(targetPoints, frameCount));
-  const framesPerPoint = frameCount / points;
+  return { view, channels, sampleRate, bitDepth, isFloat: audioFormat === 3, bytesPerSample, bytesPerFrame, dataStart: dataChunk.start, frameCount, maxCode };
+}
+
+/** Crête normalisée 0–1, tous canaux confondus, d'une seule trame. */
+function frameMagnitude(format: ParsedWavFormat, frameIndex: number): number {
+  let peak = 0;
+  const frameStart = format.dataStart + frameIndex * format.bytesPerFrame;
+  for (let channel = 0; channel < format.channels; channel += 1) {
+    const byteOffset = frameStart + channel * format.bytesPerSample;
+    let magnitude: number;
+    if (format.isFloat) magnitude = Math.abs(format.view.getFloat32(byteOffset, true));
+    else if (format.bitDepth === 8) magnitude = Math.abs(format.view.getUint8(byteOffset) - 128) / 128;
+    else if (format.bitDepth === 16) magnitude = Math.abs(format.view.getInt16(byteOffset, true)) / (format.maxCode + 1);
+    else if (format.bitDepth === 24) {
+      const b0 = format.view.getUint8(byteOffset); const b1 = format.view.getUint8(byteOffset + 1); const b2 = format.view.getUint8(byteOffset + 2);
+      let raw = b0 | (b1 << 8) | (b2 << 16);
+      if (raw & 0x800000) raw -= 0x1000000; // complément à deux sur 24 bits
+      magnitude = Math.abs(raw) / (format.maxCode + 1);
+    } else magnitude = Math.abs(format.view.getInt32(byteOffset, true)) / (format.maxCode + 1);
+    if (magnitude > peak) peak = magnitude;
+  }
+  return Math.min(1, peak);
+}
+
+export interface WaveformPeaks {
+  channels: number;
+  sampleRate: number;
+  durationSeconds: number;
+  /** Un seul canal, crête max entre tous les canaux source par point — suffisant
+   * pour l'affichage (Phase 4, forme d'onde/trim), pas une réduction utilisable
+   * pour l'export final. */
+  values: Float32Array;
+}
+
+/**
+ * Crêtes réduites à `targetPoints` valeurs, pour dessiner une forme d'onde sans
+ * charger un `AudioContext` ni dépendre de `decodeAudioData()` (même piège que
+ * `analyzeWavBuffer` : rééchantillonnage silencieux possible). Lit les mêmes
+ * octets PCM bruts, par un chemin séparé pour ne jamais risquer de régression
+ * sur `analyzeWavBuffer` — testé indépendamment.
+ */
+export function computeWaveformPeaks(bytes: ArrayBuffer, targetPoints = 1000): WaveformPeaks | null {
+  const format = parseWavFormat(bytes);
+  if (!format || !format.frameCount) return null;
+
+  const points = Math.max(1, Math.min(targetPoints, format.frameCount));
+  const framesPerPoint = format.frameCount / points;
   const values = new Float32Array(points);
   for (let point = 0; point < points; point += 1) {
     const start = Math.floor(point * framesPerPoint);
@@ -152,13 +178,62 @@ export function computeWaveformPeaks(bytes: ArrayBuffer, targetPoints = 1000): W
     const step = Math.max(1, Math.floor((end - start) / 400));
     let peak = 0;
     for (let frame = start; frame < end; frame += step) {
-      const magnitude = frameMagnitude(frame);
+      const magnitude = frameMagnitude(format, frame);
       if (magnitude > peak) peak = magnitude;
     }
     values[point] = peak;
   }
 
-  return { channels, sampleRate, durationSeconds: frameCount / sampleRate, values };
+  return { channels: format.channels, sampleRate: format.sampleRate, durationSeconds: format.frameCount / format.sampleRate, values };
+}
+
+export interface SilenceTrimSuggestion {
+  startSeconds: number;
+  endSeconds: number;
+}
+
+/**
+ * Suggestion d'auto-trim par seuil (REGISTRE_IDEES.md A-08) : cherche la
+ * première et la dernière trame dont le niveau dépasse `thresholdDb`, avec
+ * `guardMs` conservés avant/après pour ne jamais couper pile sur une attaque
+ * ou un relâchement. `null` si tout le fichier reste sous le seuil (silence
+ * total) ou si ce n'est pas un WAV exploitable — jamais une plage vide ou
+ * inversée. Seulement une suggestion : n'écrit rien, ne modifie aucune
+ * sélection tant que l'appelant ne l'applique pas explicitement.
+ */
+export function detectSilenceTrim(bytes: ArrayBuffer, thresholdDb = -40, guardMs = 10): SilenceTrimSuggestion | null {
+  const format = parseWavFormat(bytes);
+  if (!format || !format.frameCount) return null;
+
+  const threshold = 10 ** (thresholdDb / 20);
+  let firstLoud = -1;
+  for (let frame = 0; frame < format.frameCount; frame += 1) {
+    if (frameMagnitude(format, frame) >= threshold) { firstLoud = frame; break; }
+  }
+  if (firstLoud === -1) return null; // silence total : rien à suggérer
+
+  let lastLoud = firstLoud;
+  for (let frame = format.frameCount - 1; frame >= firstLoud; frame -= 1) {
+    if (frameMagnitude(format, frame) >= threshold) { lastLoud = frame; break; }
+  }
+
+  const guardFrames = Math.round((guardMs / 1000) * format.sampleRate);
+  const startFrame = Math.max(0, firstLoud - guardFrames);
+  const endFrame = Math.min(format.frameCount - 1, lastLoud + guardFrames);
+  return { startSeconds: startFrame / format.sampleRate, endSeconds: (endFrame + 1) / format.sampleRate };
+}
+
+/**
+ * Gain (dB) à appliquer pour amener un `peakLevel` déjà mesuré (0–1, par
+ * `analyzeWavBuffer`) à `targetDb` sous le plein code numérique — marge de
+ * sécurité par défaut (REGISTRE_IDEES.md A-06/A-07 : Peak d'abord, jamais au-delà
+ * de 0 dBFS). Silence total (`peakLevel` 0) renvoie `null` : aucun gain fini ne
+ * le « normalise ». Calcul seulement — n'applique aucun traitement au signal.
+ */
+export function suggestNormalizationGainDb(peakLevel: number, targetDb = -1): number | null {
+  if (!(peakLevel > 0)) return null;
+  const targetLinear = 10 ** (targetDb / 20);
+  return 20 * Math.log10(targetLinear / peakLevel);
 }
 
 /** `null` pour tout ce qui n'est pas un WAV PCM/float exploitable — jamais une exception. */

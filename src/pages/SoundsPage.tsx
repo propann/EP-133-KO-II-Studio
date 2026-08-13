@@ -167,6 +167,16 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
     setPersoStack(newStack);
     readLocalEntries(handle).then(setPersoEntries).finally(() => setPersoLoading(false));
   };
+  // Fiche audio calculée une seule fois par fichier — même File, pas de second accès disque
+  // (createObjectURL() ne consomme pas le contenu). Partagée par l'écoute et la forme d'onde,
+  // pour que le gain de normalisation suggéré s'affiche même sans avoir cliqué ▶ d'abord.
+  const ensureAudioReport = async (name: string, file: File) => {
+    if (name in audioReports) return;
+    const bytes = await file.arrayBuffer();
+    const report = analyzeWavBuffer(bytes, file.size);
+    setAudioReports((current) => ({ ...current, [name]: report ?? 'unsupported' }));
+  };
+
   const previewPerso = async (entry: LocalEntry & { kind: 'file' }) => {
     if (playingName === entry.name) { audioRef.current?.pause(); setPlayingName(null); return; }
     const file = await entry.handle.getFile();
@@ -175,19 +185,14 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
     objectUrlRef.current = url;
     if (audioRef.current) { audioRef.current.src = url; void audioRef.current.play(); }
     setPlayingName(entry.name);
-    // Fiche audio calculée une seule fois par fichier, à la première écoute — même File, pas de
-    // second accès disque : createObjectURL() ci-dessus ne consomme pas le contenu.
-    if (!(entry.name in audioReports)) {
-      const bytes = await file.arrayBuffer();
-      const report = analyzeWavBuffer(bytes, file.size);
-      setAudioReports((current) => ({ ...current, [entry.name]: report ?? 'unsupported' }));
-    }
+    void ensureAudioReport(entry.name, file);
   };
 
   const toggleWaveform = async (entry: LocalEntry & { kind: 'file' }) => {
     if (waveformTarget?.name === entry.name) { setWaveformTarget(null); return; }
     const file = await entry.handle.getFile();
     setWaveformTarget({ name: entry.name, file });
+    void ensureAudioReport(entry.name, file);
   };
 
   const requestDelete = (slot: number) => {
@@ -339,7 +344,7 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
                     <button className={`waveform-toggle-btn ${waveformTarget?.name === entry.name ? 'active' : ''}`} onClick={() => void toggleWaveform(entry)} aria-label="Forme d'onde et trim" aria-pressed={waveformTarget?.name === entry.name}>〰</button>
                     <button className="local-assign-btn" onClick={() => stageLocalOnPad(activeGroup, selectedPad, { fileName: entry.name, handle: entry.handle })}>→ {activeGroup}{selectedPad}</button>
                   </article>
-                  {waveformTarget?.name === entry.name && <WaveformTrim file={waveformTarget.file} initialTrim={trims[entry.name]} onTrimChange={(selection) => setTrims((current) => ({ ...current, [entry.name]: selection }))} />}
+                  {waveformTarget?.name === entry.name && <WaveformTrim file={waveformTarget.file} initialTrim={trims[entry.name]} report={audioReports[entry.name]} onTrimChange={(selection) => setTrims((current) => ({ ...current, [entry.name]: selection }))} />}
                 </Fragment>)}
                 {!filteredPersoFiles.length && <p>Aucun son ici.</p>}
               </div>}

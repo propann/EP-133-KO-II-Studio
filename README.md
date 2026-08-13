@@ -111,6 +111,7 @@ la vélocité/gate, service local automatique, préparation audio et écriture
 matérielle sécurisée.
 
 - [État détaillé](docs/ETAT_DU_PROJET.md)
+- [À valider physiquement](docs/A_VALIDER_PHYSIQUEMENT.md)
 - [Feuille de route](docs/ROADMAP.md)
 - [Journal d'implémentation](docs/SUIVI_IMPLEMENTATION.md)
 - [Suivi des traductions FR / EN / ES](docs/SUIVI_TRADUCTIONS.md)

@@ -1031,7 +1031,12 @@ footer { display:flex; justify-content:space-between; color:#65625d; font-size:1
 .waveform-trim { margin:2px 0 10px; padding:10px 12px; border:2px solid var(--ko-black); border-radius:var(--radius-sm); background:#fff; }
 .waveform-trim-canvas { width:100%; }
 .waveform-trim-status { margin:6px 0 0; font-size:8px; font-weight:700; color:#57544e; }
-.waveform-trim-play { margin-top:8px; padding:6px 12px; border:1px solid var(--ko-black); border-radius:999px; background:var(--ko-orange); color:#fff; font-size:8px; font-weight:900; cursor:pointer; }
+.waveform-trim-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:8px; }
+.waveform-trim-play,.waveform-trim-autotrim { padding:6px 12px; border:1px solid var(--ko-black); border-radius:999px; font-size:8px; font-weight:900; cursor:pointer; }
+.waveform-trim-play { background:var(--ko-orange); color:#fff; }
+.waveform-trim-autotrim { background:#d8d4cc; }
+.waveform-trim-autotrim:disabled { opacity:.5; cursor:default; }
+.waveform-trim-gain { flex-basis:100%; font-variant-numeric:tabular-nums; color:#57544e; }
 @media(max-width:720px) { .local-entries { grid-template-columns:1fr; } .local-browser-controls { flex-direction:column; align-items:stretch; } .local-search { width:100%; } }
 
 /* Fiche personnage — module de l'écosystème Studio (accessible depuis

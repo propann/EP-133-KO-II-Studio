@@ -319,6 +319,11 @@ La vision détaillée est dans `docs/ROADMAP.md`, la gestion des données dans
 Toutes les propositions, y compris celles qui ne sont pas encore intégrées,
 sont conservées avec un statut et un motif dans `docs/REGISTRE_IDEES.md`.
 
+Tout ce qui exige l'EP-133 branché ou un vrai geste navigateur qu'un agent
+ne peut pas faire seul est rassemblé dans
+`docs/A_VALIDER_PHYSIQUEMENT.md` — liste vivante, à cocher au fur et à
+mesure plutôt qu'un rapport figé.
+
 Une étude de l'écosystème externe (dépôts EP-133/EP-40/EP-1320 communautaires
 et bibliothèques techniques génériques réutilisables) est disponible dans
 `etude/00_INDEX.md`, datée du 13 août 2026. Elle complète, sans les

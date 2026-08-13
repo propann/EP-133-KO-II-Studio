@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { analyzeWavBuffer, computeWaveformPeaks } from '../src/core/audio/wavAnalysis.ts';
+import { analyzeWavBuffer, computeWaveformPeaks, detectSilenceTrim, suggestNormalizationGainDb } from '../src/core/audio/wavAnalysis.ts';
 
 /** Construit un WAV PCM/float minimal valide à partir de trames déjà encodées en octets (LE), pour tester `analyzeWavBuffer` sans dépendre d'un vrai fichier. */
 function buildWav({ sampleRate, channels, bitDepth, audioFormat = 1, frames }) {
@@ -120,5 +120,27 @@ assert.equal(stereoPeaks.values.length, 4, 'réduit aux 4 trames stéréo, pas a
 
 assert.equal(computeWaveformPeaks(new ArrayBuffer(10)), null, 'tampon trop court');
 assert.equal(computeWaveformPeaks(notWav), null, 'en-tête RIFF absent');
+
+// detectSilenceTrim (A-08) : 20 trames de silence, 10 trames à pleine échelle, 20 trames de
+// silence, à 1000 Hz pour des calculs de garde ronds (guard 10 ms = 10 trames à cette fréquence).
+const silenceFrames = Array.from({ length: 20 }, () => 0);
+const loudFrames = Array.from({ length: 10 }, () => 32000);
+const silenceWav = buildWav({ sampleRate: 1000, channels: 1, bitDepth: 16, frames: [...silenceFrames, ...loudFrames, ...silenceFrames] });
+const silenceTrim = detectSilenceTrim(silenceWav, -40, 10);
+assert.ok(silenceTrim);
+assert.equal(silenceTrim.startSeconds, 0.01, 'première trame forte (index 20) moins 10 trames de garde = 0,01 s');
+assert.equal(silenceTrim.endSeconds, 0.04, 'dernière trame forte (index 29) plus 10 trames de garde, bornée à la fin réelle');
+
+const totalSilenceWav = buildWav({ sampleRate: 1000, channels: 1, bitDepth: 16, frames: [0, 0, 0, 0] });
+assert.equal(detectSilenceTrim(totalSilenceWav), null, 'silence total -> rien à suggérer, jamais une plage vide');
+assert.equal(detectSilenceTrim(new ArrayBuffer(10)), null, 'tampon trop court');
+
+// suggestNormalizationGainDb (A-06/A-07) : cible -1 dBFS par défaut, jamais au-delà de 0 dBFS.
+const fullScaleGain = suggestNormalizationGainDb(1, -1);
+assert.ok(Math.abs(fullScaleGain - -1) < 1e-9, 'crête déjà au plein code numérique -> gain égal à la cible (-1 dB)');
+const halfScaleGain = suggestNormalizationGainDb(0.5, -1);
+assert.ok(halfScaleGain > 0, 'crête à moitié -> gain positif suggéré');
+assert.ok(Math.abs(halfScaleGain - 5.0205999) < 1e-4);
+assert.equal(suggestNormalizationGainDb(0), null, 'silence total (crête 0) -> aucun gain fini ne le normalise');
 
 console.log('Analyse WAV déterministe (poids, durée, fréquence, écrêtage) : OK');
