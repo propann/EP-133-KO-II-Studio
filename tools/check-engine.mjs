@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { classifyHit, emptyScore, scoreHit } from '../src/core/engine/scoring.ts';
-import { barsAfterStepEdit, measureFromGlobalStep, nudgeSelectedNotes, stepKeyFromBeat, usedBars } from '../src/core/project/editor.ts';
+import { barsAfterStepEdit, duplicateSelectedNotes, measureFromGlobalStep, moveSelectedNotes, nudgeSelectedNotes, quantizeSelectedNotes, selectNotesInGridRectangle, stepKeyFromBeat, transposeSelectedNotes, usedBars } from '../src/core/project/editor.ts';
 import { adviseTempo, buildPadReport } from '../src/core/engine/report.ts';
 import { buildPracticePlan } from '../src/core/engine/practicePlan.ts';
 
@@ -16,6 +16,15 @@ const exercise = {
   targets: [{ id: 'first', beat: 1, pad: 0 }, { id: 'second', beat: 1.5, pad: 0 }],
 };
 const targets = exercise.targets.map((target) => ({ ...target }));
+const rectangleNotes = [
+  { id: 'r1', group: 'A', beat: 0, pad: 0, velocity: 100, duration: 1 },
+  { id: 'r2', group: 'A', beat: 0.25, pad: 1, velocity: 100, duration: 1 },
+  { id: 'r3', group: 'A', beat: 4, pad: 0, velocity: 100, duration: 1 },
+];
+assert.deepEqual([...selectNotesInGridRectangle(rectangleNotes, 0, 0, 0, 0, 1, 1)].sort(), ['0:0:0', '0:1:1'], 'sélection rectangulaire : bornes mesure/pad/pas inclusives');
+const movedRectangle = moveSelectedNotes(rectangleNotes, new Set(['0:0:0', '0:1:1']), 4, 1);
+assert.ok(movedRectangle);
+assert.deepEqual([...movedRectangle.selectedKeys].sort(), ['0:1:4', '0:2:5'], 'déplacement Ctrl+glisser : temps et pad conservés ensemble');
 const perfect = scoreHit(exercise, { pad: 0, velocity: 100, timestamp: 0 }, 1.1, targets, emptyScore());
 assert.equal(perfect.grade, 'GOOD');
 assert.equal(Math.round(perfect.deltaMs), 50);
@@ -108,6 +117,18 @@ const overwriteNudge = nudgeSelectedNotes(
   new Set(['0:0:0']),
   1,
 );
+
+const melodicNotes = [
+  { id: 'c4', group: 'A', beat: 0, pad: 0, note: 60, velocity: 100, duration: 0.25 },
+  { id: 'e4', group: 'A', beat: 1, pad: 0, note: 64, velocity: 100, duration: 0.25 },
+  { id: 'one', group: 'A', beat: 2, pad: 1, velocity: 100, duration: 0.25 },
+];
+assert.deepEqual(transposeSelectedNotes(melodicNotes, new Set(['0:0:0', '0:0:4']), 12)?.map((note) => note.note), [72, 76, undefined], 'transpose les notes KEYS par octave');
+assert.equal(transposeSelectedNotes([{ ...melodicNotes[0], note: 120 }], new Set(['0:0:0']), 12), null, 'refuse une transposition hors plage MIDI');
+const duplicated = duplicateSelectedNotes(melodicNotes, new Set(['0:0:0', '0:0:4']));
+assert.deepEqual(duplicated?.notes.map((note) => note.beat).sort((a, b) => a - b), [0, 1, 1.25, 2, 2.25], 'duplique le bloc sélectionné à la suite');
+const offGrid = [{ ...melodicNotes[0], beat: 0.13 }, { ...melodicNotes[1], beat: 1.11 }];
+assert.deepEqual(quantizeSelectedNotes(offGrid, new Set(['0:0:1', '0:0:4']))?.notes.map((note) => note.beat), [0.25, 1], 'quantifie les notes sélectionnées au 1/16');
 assert.equal(overwriteNudge.notes.length, 1, 'la note déplacée remplace la note immobile déjà présente à la position d’arrivée, jamais de doublon');
 assert.equal(overwriteNudge.notes[0].id, 'moving', 'la note déplacée doit gagner, pas celle qui était déjà là');
 

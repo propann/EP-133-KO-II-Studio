@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { analyzeWavBuffer, type WavAnalysisReport } from '../core/audio/wavAnalysis';
+import { analyzeAiffBuffer, analyzeWavBuffer, type WavAnalysisReport } from '../core/audio/wavAnalysis';
 import { WaveformTrim, type WaveformTrimSelection, type SoundPrepMetadata } from '../components/shared/WaveformTrim';
 import { ProjectTransfer } from '../components/shared/ProjectTransfer';
 import { decodeEp133ProjectTar, type Ep133PadRecord } from '../core/project/importers';
@@ -7,6 +7,7 @@ import type { EditorGroup, EditorPadMode } from '../core/project/exporters';
 import type { DeviceInventory, DeviceSoundIndex } from '../core/project/device';
 import { loadDeviceProfile } from '../core/project/deviceProfile';
 import { EP133_PADS } from '../core/project/pads';
+import type { Ep133TargetRate } from '../core/audio/ep133Targets';
 import { officialGroupIndexFromNote, officialInternalPadFromNote } from '../core/midi/useWebMidi';
 import type { LocalDirectoryHandle } from '../core/storage/localFolders';
 
@@ -15,6 +16,7 @@ type LocalEntry =
   | { kind: 'directory'; name: string; handle: LocalDirectoryHandle }
   | { kind: 'file'; name: string; handle: FileEntryHandle };
 interface StagedLocalFile { fileName: string; handle: FileEntryHandle }
+interface PreparedAudio { bytes: ArrayBuffer; target: Ep133TargetRate; sampleRate: number; channels: number; durationSeconds: number }
 
 interface SoundsPageProps {
   inventory: DeviceInventory | null;
@@ -161,6 +163,7 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
   const [waveformTarget, setWaveformTarget] = useState<{ name: string; file: File } | null>(null);
   const [trims, setTrims] = useState<Record<string, WaveformTrimSelection>>({});
   const [soundMetadata, setSoundMetadata] = useState<Record<string, SoundPrepMetadata>>({});
+  const [preparedAudio, setPreparedAudio] = useState<Record<string, PreparedAudio>>({});
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const objectUrlRef = useRef('');
   const draggingLocalRef = useRef<StagedLocalFile | null>(null);
@@ -277,7 +280,7 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
   const ensureAudioReport = async (name: string, file: File) => {
     if (name in audioReports) return;
     const bytes = await file.arrayBuffer();
-    const report = analyzeWavBuffer(bytes, file.size);
+    const report = /\.(aif|aiff)$/i.test(name) ? analyzeAiffBuffer(bytes, file.size) : analyzeWavBuffer(bytes, file.size);
     setAudioReports((current) => ({ ...current, [name]: report ?? 'unsupported' }));
   };
 
@@ -361,6 +364,13 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
     const localPadEntries = Object.entries(stagedLocalPads);
     const importEntries = Object.entries(stagedImports);
     const assignmentEntries = Object.entries(stagedAssignments);
+    const missingPreparation = [...localPadEntries, ...importEntries.map(([, file]) => ['', file] as const)]
+      .map(([, file]) => file.fileName)
+      .filter((fileName, index, names) => !preparedAudio[fileName] && names.indexOf(fileName) === index);
+    if (missingPreparation.length) {
+      setImportFeedback({ status: 'error', message: `CONVERSION EP-133 REQUISE AVANT TRANSFERT : ${missingPreparation.join(', ')}` });
+      return;
+    }
     const uploadCount = localPadEntries.length + importEntries.length;
     const overwriteCount = importEntries.filter(([slot]) => soundIndex?.sounds.some((sound) => sound.slot === Number(slot))).length;
     const summaryLines = [
@@ -379,7 +389,9 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
       const padNumber = Number(padIndexRaw) + 1;
       try {
         const wavFile = await file.handle.getFile();
-        const wavBase64 = await fileToBase64(wavFile);
+        const prepared = preparedAudio[file.fileName];
+        const uploadFile = new File([prepared.bytes], `${file.fileName.replace(AUDIO_PATTERN, '')}-${prepared.target}.wav`, { type: 'audio/wav' });
+        const wavBase64 = await fileToBase64(uploadFile);
         const response = await fetch('/bridge/sounds/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ wavBase64, name: file.fileName.replace(AUDIO_PATTERN, '').slice(0, 20) }) });
         const body = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(body.error || `Échec (${response.status}).`);
@@ -393,7 +405,9 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
       const slot = Number(slotRaw);
       try {
         const wavFile = await file.handle.getFile();
-        const wavBase64 = await fileToBase64(wavFile);
+        const prepared = preparedAudio[file.fileName];
+        const uploadFile = new File([prepared.bytes], `${file.fileName.replace(AUDIO_PATTERN, '')}-${prepared.target}.wav`, { type: 'audio/wav' });
+        const wavBase64 = await fileToBase64(uploadFile);
         const response = await fetch('/bridge/sounds/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slot, wavBase64, name: file.fileName.replace(AUDIO_PATTERN, '').slice(0, 20) }) });
         const body = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(body.error || `Échec (${response.status}).`);
@@ -521,11 +535,12 @@ export function SoundsPage({ inventory, soundIndex, midiConnected, machineGroup,
                       {audioReports[entry.name] === 'unsupported' && <small>FORMAT NON WAV · PAS DE FICHE AUDIO</small>}
                       {audioReports[entry.name] && audioReports[entry.name] !== 'unsupported' && (() => { const report = audioReports[entry.name] as WavAnalysisReport; return <small className={`local-audio-report ${report.clipped ? 'clipped' : ''}`}>{(report.weightBytes / 1024).toFixed(0)} KO · {report.durationSeconds.toFixed(2)} S · {report.sampleRate} HZ · {report.bitDepth} BITS{report.clipped ? ` · ÉCRÊTAGE (${report.clippedSampleCount})` : ''}</small>; })()}
                       {trims[entry.name] && <small className="waveform-trim-summary">TRIM {trims[entry.name].startSeconds.toFixed(2)}S → {trims[entry.name].endSeconds.toFixed(2)}S</small>}
+                      {preparedAudio[entry.name] && <small className="waveform-trim-prepared">PRÊT EP-133 · {preparedAudio[entry.name].target} · {preparedAudio[entry.name].sampleRate} HZ · {preparedAudio[entry.name].channels === 1 ? 'MONO' : 'STÉRÉO'}</small>}
                     </div>
                     <button className={`waveform-toggle-btn ${waveformTarget?.name === entry.name ? 'active' : ''}`} onClick={() => void toggleWaveform(entry)} aria-label="Forme d'onde et trim" aria-pressed={waveformTarget?.name === entry.name}>〰</button>
                     <button className="local-assign-btn" onClick={() => stageLocalOnPad(activeGroup, selectedPad, { fileName: entry.name, handle: entry.handle })}>→ {activeGroup}{selectedPad}</button>
                   </article>
-                  {waveformTarget?.name === entry.name && <WaveformTrim file={waveformTarget.file} initialTrim={trims[entry.name]} report={audioReports[entry.name]} machineMemory={soundIndex ? { usedBytes: soundIndex.usedBytes, capacityMb } : null} metadata={soundMetadata[entry.name]} onMetadataChange={(next) => setSoundMetadata((current) => ({ ...current, [entry.name]: next }))} onTrimChange={(selection) => setTrims((current) => ({ ...current, [entry.name]: selection }))} />}
+                  {waveformTarget?.name === entry.name && <WaveformTrim file={waveformTarget.file} initialTrim={trims[entry.name]} report={audioReports[entry.name]} machineMemory={soundIndex ? { usedBytes: soundIndex.usedBytes, capacityMb } : null} metadata={soundMetadata[entry.name]} onMetadataChange={(next) => setSoundMetadata((current) => ({ ...current, [entry.name]: next }))} onTrimChange={(selection) => { setTrims((current) => ({ ...current, [entry.name]: selection })); setPreparedAudio((current) => { if (!(entry.name in current)) return current; const next = { ...current }; delete next[entry.name]; return next; }); }} onConversionReady={(prepared) => setPreparedAudio((current) => ({ ...current, [entry.name]: prepared }))} />}
                 </Fragment>)}
                 {!filteredPersoFiles.length && <p>Aucun son ici.</p>}
               </div>}

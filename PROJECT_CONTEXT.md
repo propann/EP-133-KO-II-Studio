@@ -36,6 +36,9 @@ sur le modèle économique, les données et les coûts d'exploitation.
   de préserver les projets et mappings déjà enregistrés dans les navigateurs.
 - Le suivi des interfaces et documents FR/EN/ES est centralisé dans
   `docs/SUIVI_TRADUCTIONS.md` et doit être mis à jour avec chaque traduction.
+- Au 13 août 2026, dix-neuf guides anglais et dix-neuf guides espagnols sont
+  disponibles avec ouverture automatique depuis le centre de documentation ;
+  les autres guides complets restent à traduire.
 - Point local non publié du 11 août 2026 : finitions de la grille Pattern
   (focus horizontal conservé, menu de bloc `•••`, longueurs LN indépendantes
   visibles sous A/B/C/D). Ne pas perdre ni publier ces changements avant la
@@ -172,8 +175,11 @@ a réussi, mais la validation utilisateur de la communication web reste négativ
   appeler d'opération d'écriture.
 - Le cache `public/ep133-device.json` contient uniquement les métadonnées du
   projet de test, jamais les fichiers audio de la machine.
-- L'export MIDI fonctionne. L'export JSON suit le contrat `ep.project.v1` ; la
-  compilation `.ppak` et l'écriture matérielle restent à valider.
+- L'export MIDI fonctionne. L'export JSON suit le contrat `ep.project.v1`.
+  L'écriture d'un projet et d'un son est désormais validée sur machine réelle
+  via `epsysex` et le pont local ; l'export `.ppak` autonome est maintenant
+  disponible hors ligne, mais sa compatibilité firmware et les scénarios
+  complets restent à finaliser.
 - Le lecteur TypeScript ouvre MIDI, `.pak/.ppak` et le TAR interne. Il décode
   pads, patterns, automations, scènes, song et tempo en conservant les octets
   bruts. Le projet 1 réel a été relu sans avertissement ; voir
@@ -261,9 +267,10 @@ a réussi, mais la validation utilisateur de la communication web reste négativ
   groupe et le pad à l'écran ; ONE/KEYS ne modifie que le projet local.
 - Les réaffectations son → pad sont préparées par glisser-déposer et restent
   orange jusqu'à synchronisation. Les taux d'occupation et la mémoire théorique
-  font partie du diff. `SYNCHRONISER` ne doit écrire qu'après compilation depuis
-  une archive réelle, checkpoint, confirmation et relecture binaire ; tant que
-  ce cycle n'est pas validé, le bouton confirme seulement le plan local.
+  font partie du diff. `SYNCHRONISER` écrit désormais après compilation depuis
+  une archive réelle, checkpoint, confirmation et relecture binaire ; ce cycle
+  est validé par le pont local sur machine réelle. La suppression de slot reste
+  verrouillée séparément.
 - Revue de code indépendante du 10 août : le chargement d'un projet Studio
   (local ou scanné sur la machine) est protégé par `try/catch` — un document
   incompatible affiche un message au lieu de bloquer l'éditeur en silence.
@@ -292,12 +299,12 @@ Phase 1/2 — cette liste avait pris du retard sur le code, elle ne le
 gouvernait plus. Cette liste reste un résumé d'orientation rapide ;
 `docs/ROADMAP.md` fait foi phase par phase en cas de doute.
 
-1. Compiler et vérifier `.ppak` (Phase 5) — encore aucune case cochée,
-   c'est le vrai verrou vers toute écriture matérielle. `etude/01_ECOSYSTEME_EP133.md`
-   documente une avancée notable de `kmorrill/ep-series-sysex` (écriture
-   vérifiée octet à octet sur firmware 2.5.1) à réévaluer en premier.
-2. Finaliser le préparateur audio (Phase 4) : forme d'onde, conversion vers
-   la fréquence cible et jauge de mémoire avant transfert.
+1. Finaliser la Phase 5 : générer un `.ppak` autonome, envoyer un vrai projet
+   Studio complet avec scènes/Song/automation et tester la restauration.
+   L'écriture ciblée de projet/son, le checkpoint, la relecture binaire et le
+   pont local sont déjà validés sur machine réelle.
+2. Fermer la validation physique du préparateur audio : revoir à l'œil et à
+   l'oreille le trim, les fades et les conversions LO/MID/HI avant transfert.
 3. Étendre les 5 niveaux écrits à la main aux 29 styles restants (10/39
    styles faits au 12 août, voir Phase 6).
 4. Continuer à sortir l'état d'`App.tsx` vers des magasins dédiés

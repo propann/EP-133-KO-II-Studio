@@ -12,9 +12,9 @@
 ## En une phrase
 
 Le Studio ouvre, lit, édite et rejoue de vrais projets EP-133 hors ligne,
-clone la machine sans risque (lecture seule), et sait maintenant parler à
-l'EP-133 en MIDI temps réel — mais ne sait **encore rien écrire** sur la
-machine elle-même (aucun protocole d'écriture SysEx n'est activé).
+clone la machine en lecture seule, et sait maintenant lire et écrire des
+projets/sons avec checkpoint et relecture vérifiée — l'export `.ppak`
+autonome est disponible hors ligne, mais reste à confirmer sur machine.
 
 ## Ce qui marche aujourd'hui, validé sur machine réelle
 
@@ -42,18 +42,27 @@ machine elle-même (aucun protocole d'écriture SysEx n'est activé).
   glisser-déposer dans les deux sens, lecture PCM locale hors ligne, fiche
   audio déterministe (poids/durée/fréquence/écrêtage lue dans l'en-tête RIFF,
   jamais rééchantillonnée par le navigateur).
+- **Écriture matérielle ciblée** : `tools/send_project_to_machine.py` et le
+  pont local écrivent un projet ou un son après confirmation, checkpoint,
+  relecture octet à octet et activation. P09, les slots sons 58/59 et la
+  copie P01 → P09 ont été confirmés sur machine réelle ; la suppression reste
+  verrouillée.
 - **Rhythm Hero** (module pédagogique inclus) : 39 styles, dont 10 avec leurs
   5 niveaux écrits à la main (les 29 autres restent en génération
   procédurale) ; rapport de progression par pad avec détection de
   « pad confondu » ; parcours 7/30 jours avec répétition sur MISS élevé.
 - **FR/EN/ES** : accueil et centre documentaire traduits, choix mémorisé.
-  Les autres modules restent en français (suivi dans `SUIVI_TRADUCTIONS.md`).
+  Dix-neuf guides techniques disposent maintenant d’une version anglaise et
+  dix-neuf d’une version espagnole ; les autres modules et guides restent en français (suivi dans
+  `SUIVI_TRADUCTIONS.md`).
 
 ## Ce qui est expérimental ou partiel
 
-- **Écriture matérielle : rien n'est activé.** Ni `.ppak`, ni sample, ni
-  affectation son→pad. `SYNCHRONISER` prépare un plan local, jamais un envoi
-  à la machine. C'est la limite structurante du produit aujourd'hui.
+- **Écriture matérielle complète : partielle.** L'écriture ciblée de projets,
+  de sons et d'affectations via le CLI/pont est active et vérifiée. Il manque
+  encore la validation firmware du `.ppak` autonome, un export Studio complet
+  avec scènes/Song/automation, la restauration testée en réel et une campagne
+  exhaustive du bouton web.
 - **Time Machine** : chronologie et comparaison des clones successifs, oui ;
   restauration (locale ou matérielle), pas commencée.
 - **Piano-roll KEYS** : hauteurs éditables, articulations pas encore.
@@ -74,7 +83,8 @@ machine elle-même (aucun protocole d'écriture SysEx n'est activé).
   module de conversion (~2 Mo, WASM) ne charge qu'au premier clic. **Rien
   depuis l'auto-trim n'a encore été revu à l'œil ou à l'oreille** — voir
   `docs/A_VALIDER_PHYSIQUEMENT.md`. Écriture de slot reste à faire —
-  bloquée par la Phase 5 (aucun protocole d'écriture SysEx dans ce projet).
+  Le transfert de slot est désormais possible via le pont, mais sa validation
+  physique avec les conversions préparées reste à mener.
 - **`App.tsx`** : la vue est découpée (pages + composants, ~1 720 lignes
   sorties), l'état ne l'est presque pas encore (~1 550 lignes, 60 `useState`
   restants). Un premier domaine — la langue — est sorti vers un magasin
@@ -127,10 +137,12 @@ R-16).
 
 Dans l'ordre où `ROADMAP.md` et `PROJECT_CONTEXT.md` les posent aujourd'hui :
 
-1. **Phase 5 — `.ppak`** : encore aucune case cochée, c'est le vrai verrou
-   avant toute écriture matérielle. Réévaluer `kmorrill/ep-series-sysex` en
-   premier plutôt que de repartir de zéro.
-2. **Phase 4 — préparateur audio** : forme d'onde, conversion, jauge mémoire.
+1. **Phase 5 — projet complet et `.ppak` autonome** : l'écriture ciblée est
+   validée ; restent le vrai export Studio complet, le conteneur autonome et
+   la restauration réelle.
+2. **Phase 4 — validation physique du préparateur audio** : forme d'onde,
+   trim, fades, conversion et jauge mémoire sont codés ; il faut les revoir
+   avec l'œil et l'oreille avant transfert.
 3. **Contenu pédagogique** : étendre les 5 niveaux aux 29 styles restants
    (10/39 faits).
 4. **Suite du découpage d'état d'`App.tsx`**, un domaine à la fois.

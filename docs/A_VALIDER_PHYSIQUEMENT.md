@@ -14,6 +14,17 @@
 
 ## 1. Nécessite l'EP-133 physiquement branché
 
+### Campagne SysEx et contrôleur — nouvelle étude du 14 août
+
+Voir le protocole détaillé dans [`ETUDE_SYSEX_CONTROLE_EP133.md`](ETUDE_SYSEX_CONTROLE_EP133.md).
+
+- [ ] Capturer les pads A–D avec note, canal, vélocité et éventuel SysEx associé.
+- [ ] Capturer PLAY/STOP/CONTINUE, Clock et Song Position séparément.
+- [ ] Capturer A, B, C et D deux fois chacun, dans plusieurs patterns.
+- [ ] Capturer fader, knobs X/Y, TEMPO, SOUND et MAIN ; noter explicitement les contrôles silencieux.
+- [ ] Tester les canaux 1, 2 et 16 en modes ALL, canal fixe et canal assigné au pad.
+- [ ] Exporter le journal brut avant débranchement et joindre firmware, ports et projet actif.
+
 ### Déjà validé (pour mémoire — ne pas refaire)
 
 - Mapping MIDI des pads, groupes A–D, notification SysEx des boutons
@@ -24,6 +35,27 @@
   pads d'une machine branchée (Q-13).
 - Lecture du projet 1 réel (48 pads, 11 patterns, 125 notes, 3 scènes) —
   voir `VALIDATION_LECTEUR_PROJET_EP133.md`.
+- **Checkpoint lecture seule du 14 août 2026** : `scan_ep133_readonly.py`
+  a relu le projet 1 sur le port réel `EP-133` sans écriture : 32 pads
+  affectés et 32 sons référencés. Les métadonnées exposent bien un mélange
+  mono/stéréo, avec des fréquences 44 100 et 46 875 Hz, et les modes
+  `oneshot`, `key` et `legato`. Le résultat brut est resté dans
+  `/tmp/ep133-project-scan.json` et n'est pas versionné.
+- **Inventaire global lecture seule du 14 août 2026** : 529 slots sonores,
+  pour 56 260 884 octets (56,26 Mo), récupérés via
+  `scan_ep133_library_readonly.py` sans audio téléchargé ni écriture. Le
+  snapshot précédent indiquait 527 sons et 56 214 010 octets : écart de
+  +2 sons et +46 874 octets, conservé dans `/tmp/ep133-sound-index-fresh.json`
+  pour comparaison avant synchronisation.
+- **Recoupement des neuf projets lecture seule du 14 août 2026** : P01
+  référence 32 pads/32 sons, P02 48 pads/36 sons et P09 32 pads/32 sons ;
+  P03 à P08 répondent mais sont vides. Les slots 58 et 59 ne sont affectés
+  dans aucun de ces projets non vides : l'écart d'inventaire concerne donc
+  des sons présents en bibliothèque mais non utilisés par ces projets.
+- **Métadonnées des deux slots** : le slot 58 est `DEMO TONE` et le slot 59
+  `TEST UPLOAD` ; tous deux sont mono, PCM signé 16 bits, 46 875 Hz,
+  `oneshot`, racine MIDI 60, sans boucle. L'écart est donc explicable et ne
+  justifie pas de synchronisation automatique.
 
 ### Reste à faire
 
@@ -55,17 +87,34 @@
   `docs/SUIVI_IMPLEMENTATION.md`. Reste ouvert (Phase 5, `docs/ROADMAP.md`) :
   - [ ] écrire un vrai projet Studio complet (pas seulement une note de test) ;
   - [ ] scènes/Song mode/automation ;
-  - [ ] conteneur `.ppak` autonome (`build_ppak()`, pas encore branché) ;
+  - [x] conteneur `.ppak` autonome généré hors ligne (`buildEp133Ppak()`),
+    vérifié par relecture locale ; reste à tester sur un projet complet réel ;
   - [ ] tester la commande `restore` en conditions réelles (jamais exercée,
     seule `write` l'a été) ;
   - [ ] un chemin depuis l'app web plutôt qu'un script CLI manuel.
-- [ ] **Synchroniser les affectations son→pad** après checkpoint,
-  compilation et relecture (Phase 3) — débloqué en principe (le
-  compilateur a maintenant une première écriture réelle validée), pas
-  encore fait.
-- [ ] **Conversion et écriture d'un slot** (fin de Phase 4) : estimation de
-  poids, choix de slot libre, sauvegarde du slot remplacé, écriture
-  sérialisée, lecture de vérification.
+- [x] **Écriture puis restauration contrôlée de P09** (14 août) — identité
+  réelle, checkpoint local, écriture, relecture octet à octet et
+  `reload_project` réussis. La compilation conservait les tailles de membres
+  mais modifiait réellement le contenu du pad A1 (slot 127 remplacé par 30) :
+  le contrôle par tailles du préflight était insuffisant. Le checkpoint a donc
+  été restauré immédiatement ; le SHA-256 final correspond au checkpoint
+  (`2e7f7c…e284d4b0e`) et le scan retrouve 32 sons. Aucun changement durable
+  n'a été conservé sur P09. Le préflight de
+  `tools/send_project_to_machine.py` compare désormais les payloads complets
+  et le document minimal reprend explicitement le slot existant avant toute
+  nouvelle écriture.
+- [x] **Synchroniser les affectations son→pad** après checkpoint,
+  compilation et relecture — chaîne CLI, pont et premier clic navigateur
+  confirmés le 13 août ; la suppression de slot reste verrouillée.
+- [ ] **Conversion préparée puis écriture d'un slot** (fin de Phase 4) :
+  l'upload d'un son WAV de test et sa relecture ont été validés ; restent la
+  conversion LO/MID/HI préparée dans l'interface et sa vérification physique.
+- [x] **Premier upload issu du Studio validé** (14 août) : `BASS_002.wav`
+  converti puis envoyé par `SYNCHRONISER` ; les slots 60 et 61 relus sur la
+  machine sont mono PCM 16 bits à 46 875 Hz, avec CRC identique. P01 a été
+  relu après écriture : A1→60 et A2→61. La qualité à l'écoute et le choix
+  d'un seul upload quand un même fichier est affecté à plusieurs pads restent
+  à optimiser.
 - [ ] **Suivi du fader physique** (P-12) : capturer les messages CC réels
   avant de concevoir l'interface — rien de codé, juste une supposition à
   vérifier.

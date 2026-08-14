@@ -71,6 +71,23 @@ const monoReport = analyzeWavBuffer(mono.bytes);
 assert.ok(monoReport);
 assert.ok(Math.abs(monoReport.peakLevel - 30000 / 32768 / 2) < 0.02, 'downmix = moyenne des deux canaux (un plein, un silencieux -> moitié)');
 
+// 3b) Sélection explicite d'un canal stéréo -> mono, sans mélange avec l'autre.
+const opposedStereo = buildWav({
+  sampleRate: 22050,
+  channels: 2,
+  frames: leftLoud.flatMap((value) => [value, -value]),
+});
+const leftOnly = await convertWavForEp133(opposedStereo, 22050, undefined, undefined, undefined, 'left');
+const rightOnly = await convertWavForEp133(opposedStereo, 22050, undefined, undefined, undefined, 'right');
+assert.ok(leftOnly && rightOnly);
+assert.equal(leftOnly.channels, 1);
+assert.equal(rightOnly.channels, 1);
+const leftOnlyReport = analyzeWavBuffer(leftOnly.bytes);
+const rightOnlyReport = analyzeWavBuffer(rightOnly.bytes);
+assert.ok(leftOnlyReport && rightOnlyReport);
+assert.ok(Math.abs(leftOnlyReport.peakLevel - 30000 / 32768) < 0.02, 'GAUCHE sélectionne le premier canal');
+assert.ok(Math.abs(rightOnlyReport.peakLevel - 30000 / 32768) < 0.02, 'DROITE sélectionne le second canal');
+
 // 4) Entrée invalide : jamais d'exception, toujours null — et sans même tenter de charger le WASM.
 assert.equal(await convertWavForEp133(new ArrayBuffer(10), 46875), null, 'tampon trop court');
 
@@ -128,4 +145,4 @@ assert.ok(tinyFaded);
 const tinySamples = readInt16Samples(tinyFaded.bytes);
 assert.ok(tinySamples.some((value) => Math.abs(value) > 100), 'un fichier de 4 trames avec des fondus de 1 s chacun ne doit jamais finir totalement silencieux');
 
-console.log('Conversion EP-133 (resampling libsamplerate-js, dither TPDF, downmix) : OK');
+console.log('Conversion EP-133 (resampling libsamplerate-js, dither TPDF, mix/canal, trim, fondu) : OK');

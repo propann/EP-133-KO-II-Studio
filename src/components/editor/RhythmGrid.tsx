@@ -1,4 +1,4 @@
-import { useEffect, type RefObject } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import type { SequencerNote } from '../../core/project/model';
 import { midiNoteName, type EditorGroup, type EditorPadMode } from '../../core/project/exporters';
 import { EP133_PADS, EP133_SCORE_TRACKS } from '../../core/project/pads';
@@ -32,6 +32,8 @@ interface RhythmGridProps {
   onAdjustDuration?: (measure: number, pad: number, step: number, delta: number) => void;
   /** Ctrl/Cmd+clic sur un pas rempli : bascule sa sélection multiple, plutôt que de le supprimer. */
   onToggleSelectStep?: (measure: number, pad: number, step: number) => void;
+  onSelectRectangle?: (startMeasure: number, startPad: number, startStep: number, endMeasure: number, endPad: number, endStep: number) => void;
+  onMoveSelection?: (startMeasure: number, startPad: number, startStep: number, endMeasure: number, endPad: number, endStep: number, selectedKeys: Set<string>) => Set<string> | void;
   selectedSteps?: Set<string>;
 }
 
@@ -41,6 +43,30 @@ export function RhythmGrid(props: RhythmGridProps) {
   const committedSections = props.committedSections || [];
   const committedBars = committedSections.reduce((total, section) => total + section.bars, 0);
   const totalBars = committedBars + props.bars;
+  const rectangleDrag = useRef<{ mode: 'rectangle' | 'move'; startMeasure: number; startPad: number; startStep: number; anchorMeasure: number; anchorPad: number; anchorStep: number; endMeasure: number; endPad: number; endStep: number; moved: boolean; selectedKeys?: Set<string> } | null>(null);
+  const suppressNextClick = useRef(false);
+  const [dragPreview, setDragPreview] = useState<{ startMeasure: number; startPad: number; startStep: number; endMeasure: number; endPad: number; endStep: number } | null>(null);
+  useEffect(() => {
+    const updateFromMouse = (event: MouseEvent) => {
+      if (!rectangleDrag.current) return;
+      const cell = document.elementFromPoint(event.clientX, event.clientY)?.closest('button[data-step]') as HTMLElement | null;
+      const grid = props.gridRef.current;
+      if (cell && grid?.contains(cell)) updateDragCell(cell);
+    };
+    const finishRectangle = () => {
+      const drag = rectangleDrag.current;
+      if (!drag) return;
+      rectangleDrag.current = null;
+      setDragPreview(null);
+      if (drag.moved) {
+        suppressNextClick.current = true;
+        if (drag.mode === 'rectangle') props.onSelectRectangle?.(drag.startMeasure, drag.startPad, drag.startStep, drag.endMeasure, drag.endPad, drag.endStep);
+      }
+    };
+    window.addEventListener('mousemove', updateFromMouse);
+    window.addEventListener('mouseup', finishRectangle);
+    return () => { window.removeEventListener('mousemove', updateFromMouse); window.removeEventListener('mouseup', finishRectangle); };
+  }, [props.onSelectRectangle, props.onMoveSelection]);
   // Le KO-II allonge le pattern réel, puis l'éditeur garde une réserve blanche
   // après celui-ci. Une réserve globale de 8 mesures masquait LN.1 → LN.4.
   const canvasBars = props.mode === 'complete' ? totalBars + 8 : totalBars;
@@ -83,7 +109,32 @@ export function RhythmGrid(props: RhythmGridProps) {
     el.addEventListener('wheel', handleWheel, { passive: false });
     return () => el.removeEventListener('wheel', handleWheel);
   }, [props.gridRef, props.onAdjustVelocity, props.onAdjustCommittedVelocity, props.onAdjustDuration]);
-  return <div className="editor-grid" ref={props.gridRef} onWheelCapture={horizontalWheelScroll}><div className="editor-horizontal" style={{ width: `${160 + canvasBars * STEPS_PER_BAR * STEP_WIDTH}px` }}>
+  const updateDragCell = (cell: HTMLElement | null) => {
+    const drag = rectangleDrag.current;
+    if (!drag || !cell || cell.dataset.measure === undefined || cell.dataset.pad === undefined || cell.dataset.step === undefined) return;
+    const measure = Number(cell.dataset.measure); const pad = Number(cell.dataset.pad); const step = Number(cell.dataset.step);
+    if (drag.endMeasure === measure && drag.endPad === pad && drag.endStep === step) return;
+    drag.moved = true;
+    if (drag.mode === 'move') {
+      const movedKeys = props.onMoveSelection?.(drag.anchorMeasure, drag.anchorPad, drag.anchorStep, measure, pad, step, drag.selectedKeys || new Set());
+      if (movedKeys) drag.selectedKeys = movedKeys;
+      drag.startMeasure = measure;
+      drag.startPad = pad;
+      drag.startStep = step;
+      drag.anchorMeasure = measure;
+      drag.anchorPad = pad;
+      drag.anchorStep = step;
+    }
+    drag.endMeasure = measure; drag.endPad = pad; drag.endStep = step;
+    if (drag.mode === 'rectangle') setDragPreview({ startMeasure: drag.startMeasure, startPad: drag.startPad, startStep: drag.startStep, endMeasure: measure, endPad: pad, endStep: step });
+  };
+  const isInDragPreview = (measure: number, pad: number, step: number) => {
+    if (!dragPreview) return false;
+    const firstGlobalStep = Math.min(dragPreview.startMeasure * STEPS_PER_BAR + dragPreview.startStep, dragPreview.endMeasure * STEPS_PER_BAR + dragPreview.endStep);
+    const lastGlobalStep = Math.max(dragPreview.startMeasure * STEPS_PER_BAR + dragPreview.startStep, dragPreview.endMeasure * STEPS_PER_BAR + dragPreview.endStep);
+    return measure * STEPS_PER_BAR + step >= firstGlobalStep && measure * STEPS_PER_BAR + step <= lastGlobalStep && pad >= Math.min(dragPreview.startPad, dragPreview.endPad) && pad <= Math.max(dragPreview.startPad, dragPreview.endPad);
+  };
+  return <div className="editor-grid" ref={props.gridRef} onWheelCapture={horizontalWheelScroll} onMouseMove={(event) => updateDragCell((event.target as HTMLElement).closest('button[data-step]'))}><div className="editor-horizontal" style={{ width: `${160 + canvasBars * STEPS_PER_BAR * STEP_WIDTH}px` }}>
     {props.playing && <i className="editor-playhead" style={{ left: `${160 + props.playbackBeat / 4 * STEP_WIDTH}px` }} />}
     <div className="editor-measure-line"><span className="editor-corner">PISTES</span><div className="editor-measure-heads" style={{ gridTemplateColumns: `repeat(${canvasBars}, 1fr)` }}>{Array.from({ length: canvasBars }, (_, measure) => {
       const committed = sectionAtMeasure(measure);
@@ -114,9 +165,10 @@ export function RhythmGrid(props: RhythmGridProps) {
         if (avgVelocity !== undefined) titleParts.push(`Vélocité ${avgVelocity}/127 · Maj+molette pour ajuster`);
         if (!committed && avgDuration !== undefined) titleParts.push(`Durée ${avgDuration.toFixed(2)} temps · Alt+molette pour ajuster`);
         return <button
-          className={`${!committed && localMeasure >= props.bars ? 'outside-length' : ''} ${stepTargets.length ? 'checked' : ''} ${selected ? 'selected' : ''} ${globalStep % 16 === 0 ? 'bar-line' : globalStep % 4 === 0 ? 'beat-line' : ''} ${committed ? 'committed' : ''} ${committed?.localMeasure === 0 && step === 0 ? 'section-start' : ''} ${committed && committed.localMeasure === committed.section.bars - 1 && step === 15 ? 'section-end' : ''}`}
+          className={`${!committed && localMeasure >= props.bars ? 'outside-length' : ''} ${stepTargets.length ? 'checked' : ''} ${selected ? 'selected' : ''} ${!committed && isInDragPreview(localMeasure, track.pad, step) ? 'drag-selecting' : ''} ${globalStep % 16 === 0 ? 'bar-line' : globalStep % 4 === 0 ? 'beat-line' : ''} ${committed ? 'committed' : ''} ${committed?.localMeasure === 0 && step === 0 ? 'section-start' : ''} ${committed && committed.localMeasure === committed.section.bars - 1 && step === 15 ? 'section-end' : ''}`}
           style={avgVelocity !== undefined ? { opacity: 0.4 + 0.6 * (avgVelocity / 127), borderBottomWidth: avgDuration !== undefined ? `${Math.min(8, 2 + avgDuration * 2)}px` : undefined } : undefined}
           onClick={(event) => {
+            if (suppressNextClick.current) { suppressNextClick.current = false; return; }
             if (!committed && stepTargets.length && (event.ctrlKey || event.metaKey)) { props.onToggleSelectStep?.(localMeasure, track.pad, step); return; }
             if (committed) props.onToggleCommittedStep?.(committed.section.key, localMeasure, track.pad, step);
             else if (melodic) { props.onSelectPad(track.pad); props.onOpenKeys(); }
@@ -128,6 +180,20 @@ export function RhythmGrid(props: RhythmGridProps) {
           data-pad={track.pad}
           data-step={step}
           data-section-key={committed ? committed.section.key : undefined}
+          onMouseDown={(event) => {
+            if (event.button !== 0 || committed || !event.ctrlKey) return;
+            const key = selectionKey;
+            const selectedKeys = props.selectedSteps?.has(key) ? new Set(props.selectedSteps) : new Set([key]);
+            const selectedTargets = props.targets.filter((target) => selectedKeys.has(`${Math.floor(target.beat / 4)}:${target.pad}:${Math.round((target.beat - Math.floor(target.beat / 4) * 4) * 4)}`));
+            const anchorTarget = selectedTargets.reduce<{ measure: number; pad: number; step: number } | null>((anchor, target) => {
+              const measure = Math.floor(target.beat / 4); const targetStep = Math.round((target.beat - measure * 4) * 4);
+              if (!anchor || measure * 16 + targetStep < anchor.measure * 16 + anchor.step || (measure * 16 + targetStep === anchor.measure * 16 + anchor.step && target.pad < anchor.pad)) return { measure, pad: target.pad, step: targetStep };
+              return anchor;
+            }, null) || { measure: localMeasure, pad: track.pad, step };
+            rectangleDrag.current = { mode: stepTargets.length ? 'move' : 'rectangle', startMeasure: localMeasure, startPad: track.pad, startStep: step, anchorMeasure: anchorTarget.measure, anchorPad: anchorTarget.pad, anchorStep: anchorTarget.step, endMeasure: localMeasure, endPad: track.pad, endStep: step, moved: false, selectedKeys };
+            if (!stepTargets.length) setDragPreview({ startMeasure: localMeasure, startPad: track.pad, startStep: step, endMeasure: localMeasure, endPad: track.pad, endStep: step });
+            event.preventDefault();
+          }}
           key={globalStep}
         >{stepTargets.length ? noteLabel || EP133_PADS[track.pad].key : ''}</button>;
       })}</div></div>;

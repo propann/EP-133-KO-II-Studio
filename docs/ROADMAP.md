@@ -116,7 +116,8 @@ dépannage documentée.
 - Accueil modulaire : Rhythm Hero, Studio EP-133, Sons & Transfert, Fiche
   personnage, Test machine, Documentation.
 - Jeu avec 39 styles, cinq difficultés, compte à rebours, score et Web MIDI ;
-  niveau 1 de Boom-Bap, House, Rock, Reggae et Minimal écrit à la main.
+  dix styles disposent de cinq niveaux écrits à la main, les 29 autres restent
+  en génération procédurale.
 - Éditeur du jeu à mesures extensibles et sauvegarde locale.
 - Studio quatre groupes A–D, 12 pads par groupe et piano-roll KEYS.
 - Lecture des sons par l'ordinateur ou par la sortie MIDI de l'EP-133.
@@ -165,8 +166,9 @@ dépannage documentée.
   directement sans prop. Un seul domaine sur un très grand nombre d'états
   encore locaux à `App.tsx` — pas une découpe complète, une preuve de
   méthode pour la suite. Typecheck et build vérifiés.
-- Le JSON EP-133 doit encore être compilé et vérifié en `.ppak` sur une copie
-  de projet de test.
+- Le JSON EP-133 est compilé et écrit sur machine via le pont local avec
+  checkpoint et relecture ; il reste à produire et vérifier un `.ppak`
+  autonome sur une copie de projet de test.
 - Le mode KEYS écrit les hauteurs MIDI ; les articulations ne disposent pas
   encore de leur éditeur. L'édition de vélocité (Maj+molette) couvre la
   grille rythmique et le piano-roll KEYS note à note (12 août — voir
@@ -178,12 +180,10 @@ dépannage documentée.
   sections commitées.
 - Les modes ONE, KEYS et LEGATO lus sur la machine ne sont pas tous modifiables
   et persistés de bout en bout.
-- Aucune écriture de sample, pattern ou archive vers l'EP-133 n'existe encore.
-  Une exception strictement limitée est désormais validée : la sélection A–D
-  écrit la métadonnée `active` du groupe via FILE et la relit immédiatement.
-  SYNCHRONISER dans Sons & Transfert copie les sons perso choisis vers le
-  dossier de travail local ; aucun contenu audio ou projet n'est envoyé à la
-  machine.
+- L'écriture de sample, pattern et projet vers l'EP-133 existe désormais via
+  le CLI et le pont local, avec checkpoint, confirmation, relecture binaire et
+  activation. `SYNCHRONISER` dispose du même chemin ; la suppression de slot,
+  le `.ppak` autonome et la validation physique exhaustive restent ouverts.
 - **Correction d'une inexactitude de ce document** : les 5 niveaux de
   Boom-Bap, House, Rock, Reggae et Minimal étaient déjà tous écrits à la
   main, contrairement à ce qu'affirmait cette ligne jusqu'au 12 août — seule
@@ -207,14 +207,35 @@ dépannage documentée.
 - Les dépendances (`react`, `vite`, `tone`, `@vitejs/plugin-react`) sont
   pinnées en `^` depuis le 11 août (plus de `latest`), lockfile regénéré et
   revérifié avec `npm ci`.
-- Annuler/Rétablir (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z) existe désormais pour
-  l'édition d'un pattern (11 août) — pas encore pour les scènes/Song ni de
-  vraie autosauvegarde de secours.
+- Annuler/Rétablir (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z) existe pour l'édition d'un
+  pattern et, depuis le 14 août, pour les gestes du Song Arranger (affectation
+  de cellule, réordonnancement, duplication et suppression de Song Position).
+  L'autosauvegarde de secours est maintenant disponible ; les changements de
+  tempo et de nom du Studio sont désormais inclus dans l'historique structurel.
+  Les flèches haut/bas transposent maintenant les notes KEYS sélectionnées,
+  avec Shift pour l'octave ; les notes ONE restent inchangées.
 - La Song Position affichée avance désormais avec la lecture (11 août),
   mais reste basée sur le numéro de scène — deux positions consécutives de
   la même scène ne sont pas encore distinguées visuellement.
 
 ## Phase 1 — stabiliser avant d'ajouter
+
+### Nouveau chantier — étude contrôleur EP-133 (14 août 2026)
+
+L'étude complète est dans [`ETUDE_SYSEX_CONTROLE_EP133.md`](ETUDE_SYSEX_CONTROLE_EP133.md).
+La prochaine brique est l'instrumentation et l'apprentissage des contrôles
+réellement émis par la machine : pads, transport, A–D, fader et knobs. Les
+16 canaux MIDI sont désormais distingués des quatre groupes ; aucune commande
+SysEx inconnue ne sera envoyée pour « essayer ». La campagne physique devra
+séparer les messages documentés, les observations communautaires et les
+hypothèses propres au firmware testé.
+
+- [ ] Journal MIDI directionnel avec signatures, port, canal et export de campagne.
+- [ ] Capture séparée des réponses FILE et événements SysEx spontanés.
+- [ ] Mode APPRENDRE UN CONTRÔLE pour mapper une entrée réelle à une action Studio.
+- [ ] Capturer fader, knobs, PLAY, TEMPO, SOUND et MAIN sur l'EP-133 réel.
+- [ ] Tester les canaux 1, 2 et 16 avec mode ALL, canal fixe et canal par pad.
+- [ ] N'autoriser les écritures SysEx qu'après checkpoint, diff, relecture et preuve.
 
 - [x] Découper `App.tsx` en pages et composants visuels isolés — le
   découpage des *vues* (`src/pages/`, `src/components/`, ~1 720 lignes
@@ -263,12 +284,16 @@ Transformer `SAVE` en menu de fichiers :
   à garder vrai à chaque nouvelle fonctionnalité, pas à recocher un jour.
 - [ ] Lister les exercices officiels du jeu dans la même bibliothèque, en
   lecture seule, avec action « Dupliquer pour modifier ».
-- [ ] Miniatures, date de modification, BPM, longueur et groupes utilisés.
-- [x] Historique Annuler/Rétablir du pattern actif (Ctrl/Cmd+Z, boutons
-  ANNULER/RÉTABLIR) — rafales d'édition coalescées, 50 entrées max par
-  pattern. Limite connue : scènes/Song/tempo/nom ne sont pas encore
-  couverts, une prochaine étape si le besoin se confirme.
-- [ ] Autosauvegarde de secours.
+- [x] Miniatures, date de modification, BPM, longueur maximale et groupes
+  utilisés dans la bibliothèque locale.
+- [x] Historique Annuler/Rétablir du pattern actif et du Song Arranger
+  (Ctrl/Cmd+Z, boutons ANNULER/RÉTABLIR) — rafales d'édition coalescées, 50
+  entrées max par pattern et 50 gestes structurels. Scènes/Song couvrent les
+  affectations, réordonnancements, duplications et suppressions ; le tempo et
+  le nom du Studio sont aussi restaurés, tandis que l'autosauvegarde reste
+  séparée.
+- [x] Autosauvegarde de secours locale distincte de la bibliothèque : brouillon
+  différé, récupération explicite et effacement après SAVE/Nouveau/Ouvrir.
 
 **Validation :** quitter, rouvrir une sauvegarde machine et retrouver une
 composition identique sans machine connectée ; échanger ses notes en MIDI.
@@ -277,9 +302,13 @@ composition identique sans machine connectée ; échanger ses notes en MIDI.
 
 - [x] Afficher les repères machine `L.01`, `S.01`, `A01–D01`.
 - [x] Calculer la longueur d'une position depuis le pattern le plus long.
-- [ ] Gérer réellement les patterns A01–D99.
-- [ ] Créer et éditer les scènes S.01–S.99.
-- [ ] Ordonner les Song Positions L.01–L.99.
+- [x] Gérer les patterns A01–D99 dans le Studio hors ligne — navigation,
+  édition, longueurs LN.1–LN.99 et sauvegarde JSON ; compatibilité firmware
+  complète encore à valider sur machine.
+- [x] Créer et éditer les scènes S.01–S.99 hors ligne, avec COMMIT et
+  historique structurel ; écriture réelle de l'arrangement encore à valider.
+- [x] Ordonner les Song Positions L.01–L.99 hors ligne, avec duplication,
+  suppression et réordonnancement ; même réserve de validation matérielle.
 - [x] Faire suivre la Song Position active par le transport pendant la
   lecture d'un Song multi-positions (`editorActiveScene` avance en temps
   réel avec la scène qui sonne, vérifié par un vrai scénario Playwright sur
@@ -288,7 +317,8 @@ composition identique sans machine connectée ; échanger ses notes en MIDI.
   consécutives qui pointent vers la même scène (ex. `[1, 1, 2, 3]`, L.01 et
   L.02) affichent la même étiquette — distinguer les positions par leur
   index plutôt que par leur scène reste à faire si nécessaire.
-- [ ] Faire suivre la Song Position dans l'export.
+- [x] Faire suivre la Song Position dans l'export JSON/MIDI/.ppak ; la
+  compatibilité de l'arrangement exporté avec le firmware reste à confirmer.
 
 ## Phase 3 — deux banques de sons hors ligne
 
@@ -340,7 +370,9 @@ composition identique sans machine connectée ; échanger ses notes en MIDI.
   (`a-importer/`) — une vraie préparation sur disque, jamais une écriture
   machine.
 - [ ] Sons libres ou créés par l'utilisateur, versionnés par identifiant et hash.
-- [ ] Tags, favoris et recherche avancée (recherche par nom déjà disponible).
+- [ ] Miniatures avancées ; miniatures compactes, favoris et tags persistants,
+  avec recherche par nom ou tag, sont maintenant disponibles dans la
+  bibliothèque Studio.
 - [ ] Kit de secours permettant de jouer tous les projets hors ligne.
 
 ### Banque miroir EP-133
@@ -367,7 +399,8 @@ de fichiers audio propriétaires au dépôt.
 
 ## Phase 4 — éditeur et préparateur de sons
 
-- [ ] Import WAV/AIFF, puis MP3/FLAC/OGG si le décodeur retenu le permet.
+- [x] Import/analyse déterministe WAV et AIFF PCM non compressé ; MP3/FLAC/OGG
+  restent dépendants d'un décodeur à choisir.
 - [x] Analyse déterministe du WAV (12 août, P2 — voir REGISTRE_IDEES.md
   Q-15) : poids, durée, fréquence source (lue dans l'en-tête, jamais
   rééchantillonnée par le navigateur), canaux, profondeur et détection
@@ -380,8 +413,9 @@ de fichiers audio propriétaires au dépôt.
   d'onde. Les crêtes affichées viennent de `computeWaveformPeaks`
   (`src/core/audio/wavAnalysis.ts`, testé), lecture directe des octets PCM —
   même précaution que l'analyse déterministe, jamais le décodeur intégré de
-  `wavesurfer.js`. La sélection ne fait encore que s'afficher (`TRIM x,xxS →
-  y,yyS`) : aucun pipeline de conversion ne la consomme pour l'instant.
+  `wavesurfer.js`. La sélection s'affiche (`TRIM x,xxS → y,yyS`) et la
+  conversion préparée est consommée par `SYNCHRONISER`, qui refuse désormais
+  d'envoyer le fichier original non converti.
   Vérifié visuellement par l'utilisateur dans Chrome : forme d'onde,
   région glissable et lecture fonctionnent.
 - [x] Détection du silence + gain de normalisation Peak suggéré (13 août,
@@ -401,8 +435,9 @@ de fichiers audio propriétaires au dépôt.
   (qualité maximale) plutôt qu'un ré-échantillonnage linéaire maison, encodage
   PCM 16 bits avec dither TPDF systématique. Cible explicite LO/MID/HI
   (26 250/32 000/46 875 Hz, firmware 2.5) — plus jamais une fréquence fixe
-  supposée. Mono/stéréo : repli par moyenne seulement, pas encore de choix
-  gauche/droite (A-05 partiel).
+  supposée. Mono/stéréo : choix MIX/GAUCHE/DROITE dans la préparation audio ;
+  GAUCHE/DROITE produit un mono explicite (A-05). Contrôle de phase et
+  validation sur appareil restent à faire.
 - [x] **Hauteur racine, BPM et mode ONE/KEYS/LEGATO** (13 août) : section
   « MÉTADONNÉES DE PRÉPARATION » dans `WaveformTrim` — sélecteur
   ONE/KEYS/LEGATO (réutilise le type `EditorPadMode` déjà validé sur
@@ -438,7 +473,8 @@ de fichiers audio propriétaires au dépôt.
   DÉPASSE DE X KO ». Ne s'affiche que si la machine a déjà été scannée une
   fois ; sinon le poids reste affiché seul, jamais un espace supposé
   disponible.
-- [ ] Choix prioritaire d'un slot libre.
+- [x] Choix prioritaire d'un slot libre — le pont attribue le premier slot
+  disponible et relit le PCM uploadé octet à octet.
 - [ ] Paquet de sons préparé, manifeste et contrôles d'intégrité.
 - [ ] Analyse des doublons et sons orphelins en mode proposition uniquement.
 - [ ] Sauvegarde du slot remplacé, confirmation explicite, écriture sérialisée
@@ -459,24 +495,26 @@ la cible occupée n'a pas été explicitement confirmée.
 - [x] Compiler le JSON avec `kmorrill/ep-series-sysex` (MIT) — 13 août,
   `tools/send_project_to_machine.py`, `compile_project()` réel, vérifié
   écrit et relu sur le firmware (voir Validation ci-dessous).
-- [ ] Générer `.ppak` hors ligne avec rapport de validation (le script du
-  13 août écrit directement le TAR sur la machine via `FileClient`, pas
-  encore le conteneur `.ppak`/ZIP autonome — `build_ppak()` existe dans la
-  bibliothèque, pas encore branché).
+- [x] Générer `.ppak` hors ligne avec rapport de validation — 14 août,
+  export autonome depuis FICHIER → `buildEp133Ppak()` : 48 pads, patterns,
+  scènes, Song et réglages empaquetés en ZIP/TAR puis relus par
+  `inspectEp133Archive()` sans avertissement. La compatibilité firmware de
+  cet export sans archive de base reste à confirmer sur une machine réelle.
 - [x] Charger une sauvegarde existante comme base afin de préserver les champs
   inconnus et réglages non édités — 13 août, `compile_project(doc,
   base_archive=<TAR relu en direct>)`, vérifié réel (P09 relu avant
   compilation, membres non décrits préservés).
-- [ ] Gérer patterns, scènes, song mode, vélocité, durée et automation
-  (seul un pattern à un seul événement a été écrit pour l'instant — pas
-  scènes/Song/automation).
-- [ ] Ajouter l'historique Annuler/Rétablir avant les gestes destructifs.
-- [ ] Piano-roll : sélection multiple, déplacement, redimensionnement du gate,
-  quantification et édition de vélocité.
+- [ ] Écriture matérielle complète des patterns, scènes, Song, vélocité, durée
+  et automation — le Studio hors ligne couvre déjà ces données, mais le
+  chemin d'écriture réel reste limité et doit encore être validé.
+- [x] Historique Annuler/Rétablir avant les gestes destructifs dans l'éditeur
+  hors ligne.
+- [x] Piano-roll : sélection multiple par clic, déplacement, gate, quantification
+  et édition de vélocité ; la sélection par rectangle reste une extension.
 - [ ] Navigation longue partition : pan molette, zoom centré et défilement
   horizontal, avec équivalents clavier accessibles.
-- [ ] Raccourcis limités à la grille ayant le focus : lecture, duplication,
-  déplacement, transposition et résolution de grille.
+- [x] Raccourcis limités à la grille : duplication, déplacement et transposition
+  ; la résolution de grille reste à ajouter.
 - [ ] Associer les dépendances sonores et détecter les slots absents.
 - [ ] Écrire uniquement dans un projet brouillon choisi par l'utilisateur
   (fait manuellement le 13 août — slot P09 choisi explicitement par
@@ -485,8 +523,8 @@ la cible occupée n'a pas été explicitement confirmée.
 - [x] Checkpoint avant écriture, relecture binaire et restauration
   possible — 13 août, `tools/send_project_to_machine.py` : checkpoint
   disque avant chaque écriture, comparaison octet à octet post-écriture
-  avant toute activation, commande `restore` dédiée (pas encore testée
-  en conditions réelles, seulement la voie `write` l'a été).
+  avant toute activation, commande `restore` dédiée, exercée en conditions
+  réelles le 14 août avec vérification SHA-256 finale.
 
 **Validation :** projet de test exporté, chargé, joué et relu sur le firmware de
 la machine sans toucher aux autres projets.
@@ -531,7 +569,9 @@ complet (pas seulement une note de test), les scènes/Song, et le chemin
   sélectionnés) devient un exercice USER immédiatement jouable, sans
   quitter le Studio. Limite assumée : un seul pattern à la fois (pas
   encore toute une scène/Song), et pas de sélection de mesures.
-- [ ] Dupliquer un exercice officiel vers USER sans modifier l'original.
+- [x] Dupliquer un exercice officiel vers USER sans modifier l'original ; la
+  copie locale reçoit un nouvel identifiant et devient immédiatement
+  sélectionnable dans le jeu.
 
 ## Phase 7 — extension OP-1
 

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { analyzeWavBuffer, computeWaveformPeaks, detectSilenceTrim, suggestNormalizationGainDb } from '../src/core/audio/wavAnalysis.ts';
+import { analyzeAiffBuffer, analyzeWavBuffer, computeWaveformPeaks, detectSilenceTrim, suggestNormalizationGainDb } from '../src/core/audio/wavAnalysis.ts';
 
 /** Construit un WAV PCM/float minimal valide à partir de trames déjà encodées en octets (LE), pour tester `analyzeWavBuffer` sans dépendre d'un vrai fichier. */
 function buildWav({ sampleRate, channels, bitDepth, audioFormat = 1, frames }) {
@@ -86,6 +86,12 @@ assert.equal(Math.round(stereo.durationSeconds * 44100), 4, '8 échantillons ent
 // Poids surchargé explicitement (taille réelle du fichier source, pas celle du tampon lu).
 const withExplicitWeight = analyzeWavBuffer(cleanWav, 123456);
 assert.equal(withExplicitWeight.weightBytes, 123456);
+
+// AIFF PCM 16 bits big-endian : COMM + SSND, fréquence 44.1 kHz en extended 80 bits.
+const aiff = new ArrayBuffer(62); const aiffView = new DataView(aiff); const put = (at, value) => { for (let i = 0; i < value.length; i += 1) aiffView.setUint8(at + i, value.charCodeAt(i)); }; const be16 = (at, value) => aiffView.setUint16(at, value, false); const be32 = (at, value) => aiffView.setUint32(at, value, false);
+put(0, 'FORM'); be32(4, 54); put(8, 'AIFF'); put(12, 'COMM'); be32(16, 18); be16(20, 1); be32(22, 2); be16(26, 16); be16(28, 16398); be32(30, 0x2C440000); be32(34, 0); put(38, 'SSND'); be32(42, 16); be32(46, 0); be32(50, 0); be16(54, 32767); be16(56, -32768); be32(58, 0);
+const aiffReport = analyzeAiffBuffer(aiff);
+assert.ok(aiffReport); assert.equal(aiffReport.sampleRate, 44100); assert.equal(aiffReport.channels, 1); assert.equal(aiffReport.durationSeconds, 2 / 44100); assert.equal(aiffReport.clippedSampleCount, 2);
 
 // Entrées invalides : jamais d’exception, toujours `null`.
 assert.equal(analyzeWavBuffer(new ArrayBuffer(10)), null, 'tampon trop court');

@@ -31,6 +31,7 @@ from send_project_to_machine import checkpoint_project, now_stamp, write_project
 from epsysex import FileClient, compile_project  # noqa: E402
 from epsysex.dependencies import wav_to_pcm16  # noqa: E402
 from epsysex.fileclient import project_fid  # noqa: E402
+from epsysex.tar import iter_members  # noqa: E402
 
 
 class CloneState:
@@ -143,6 +144,30 @@ def upload_sound_from_wav(root: Path, slot: int | None, wav_bytes: bytes, name: 
     return {"slot": slot, "bytes": len(pcm), "wasOccupied": was_occupied}
 
 
+def archive_pad_slots(tar_bytes: bytes) -> dict[str, int]:
+    """Lit les slots réellement compilés dans les membres pads, sans
+    interpréter ni réécrire les autres octets de l'archive."""
+    slots = {}
+    for name, start, size, typeflag in iter_members(tar_bytes):
+        if typeflag == "5" or not name.startswith("pads/") or size < 3:
+            continue
+        slots[name] = int.from_bytes(tar_bytes[start + 1:start + 3], "little")
+    return slots
+
+
+def verify_document_pad_slots(document: dict, tar_bytes: bytes) -> dict[str, int]:
+    expected = {
+        f"pads/{str(pad.get('group', '')).lower()}/p{int(pad.get('pad', 0)):02d}": int(pad.get("slot", 0))
+        for pad in document.get("pads", [])
+        if isinstance(pad, dict) and pad.get("group") and int(pad.get("pad", 0)) > 0
+    }
+    actual = archive_pad_slots(tar_bytes)
+    mismatches = {name: {"expected": slot, "actual": actual.get(name)} for name, slot in expected.items() if actual.get(name) != slot}
+    if mismatches:
+        raise RuntimeError(f"affectations pad compilées différentes de la demande: {mismatches}")
+    return {name: actual[name] for name in expected if name in actual}
+
+
 def write_project(root: Path, slot: int, document: dict) -> dict:
     """Même séquence que `send_project_to_machine.py write` (checkpoint,
     compile_project avec base réelle, écriture, relecture octet à octet,
@@ -151,9 +176,12 @@ def write_project(root: Path, slot: int, document: dict) -> dict:
     client = FileClient()
     current_bytes, checkpoint_path = checkpoint_project(client, slot, checkpoints_dir, tag="bridge")
     compiled = compile_project(document, base_archive=current_bytes)
+    verified_pads = verify_document_pad_slots(document, compiled)
     write_project_verified(client, slot, compiled)  # lève RuntimeError si la relecture diverge
+    readback, _meta = client.read_project_archive(slot)
+    verify_document_pad_slots(document, readback)
     reload_result = client.reload_project(slot)
-    return {"slot": slot, "checkpoint": str(checkpoint_path), "bytesWritten": len(compiled), "reload": reload_result}
+    return {"slot": slot, "checkpoint": str(checkpoint_path), "bytesWritten": len(compiled), "verifiedPads": verified_pads, "reload": reload_result}
 
 
 def handler_factory(state: CloneState):

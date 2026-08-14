@@ -1,0 +1,1416 @@
+{
+  "format": "ep133-midi-capture.v1",
+  "exportedAt": "2026-08-14T18:20:36.235Z",
+  "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+  "connected": true,
+  "sysexEnabled": true,
+  "inputNames": [
+    "Midi Through Port-0",
+    "EP-133 MIDI 1"
+  ],
+  "machineGroup": "A",
+  "assignments": {},
+  "observationCount": 100,
+  "observations": [
+    {
+      "channel": 1,
+      "note": 46,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        46,
+        0
+      ],
+      "hex": "90 2E 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 117729.19999999925
+    },
+    {
+      "channel": 1,
+      "note": 46,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        46,
+        0
+      ],
+      "hex": "90 2E 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 117729.19999999925
+    },
+    {
+      "channel": 1,
+      "note": 44,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        44,
+        0
+      ],
+      "hex": "90 2C 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 117659.89999999851
+    },
+    {
+      "channel": 1,
+      "note": 44,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        44,
+        0
+      ],
+      "hex": "90 2C 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 117659.89999999851
+    },
+    {
+      "channel": 1,
+      "note": 45,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        45,
+        0
+      ],
+      "hex": "90 2D 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 117640.59999999776
+    },
+    {
+      "channel": 1,
+      "note": 45,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        45,
+        0
+      ],
+      "hex": "90 2D 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 117640.59999999776
+    },
+    {
+      "channel": 1,
+      "note": 47,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        47,
+        0
+      ],
+      "hex": "90 2F 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 117474.19999999925
+    },
+    {
+      "channel": 1,
+      "note": 47,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        47,
+        0
+      ],
+      "hex": "90 2F 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 117474.19999999925
+    },
+    {
+      "channel": 1,
+      "note": 44,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        44,
+        0
+      ],
+      "hex": "90 2C 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 117444.09999999776
+    },
+    {
+      "channel": 1,
+      "note": 44,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        44,
+        0
+      ],
+      "hex": "90 2C 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 117444.09999999776
+    },
+    {
+      "channel": 1,
+      "note": 42,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        42,
+        0
+      ],
+      "hex": "90 2A 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 117285.80000000075
+    },
+    {
+      "channel": 1,
+      "note": 42,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        42,
+        0
+      ],
+      "hex": "90 2A 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 117285.80000000075
+    },
+    {
+      "channel": 1,
+      "note": 43,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        43,
+        0
+      ],
+      "hex": "90 2B 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 117144.89999999851
+    },
+    {
+      "channel": 1,
+      "note": 43,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        43,
+        0
+      ],
+      "hex": "90 2B 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 117144.89999999851
+    },
+    {
+      "channel": 1,
+      "note": 41,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        41,
+        0
+      ],
+      "hex": "90 29 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 117133
+    },
+    {
+      "channel": 1,
+      "note": 41,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        41,
+        0
+      ],
+      "hex": "90 29 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 117133
+    },
+    {
+      "channel": 1,
+      "note": 38,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        38,
+        0
+      ],
+      "hex": "90 26 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 117115.19999999925
+    },
+    {
+      "channel": 1,
+      "note": 38,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        38,
+        0
+      ],
+      "hex": "90 26 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 117115.19999999925
+    },
+    {
+      "channel": 1,
+      "note": 38,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        38,
+        0
+      ],
+      "hex": "90 26 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116907.30000000075
+    },
+    {
+      "channel": 1,
+      "note": 38,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        38,
+        0
+      ],
+      "hex": "90 26 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116907.30000000075
+    },
+    {
+      "channel": 1,
+      "note": 36,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        36,
+        0
+      ],
+      "hex": "90 24 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116695.89999999851
+    },
+    {
+      "channel": 1,
+      "note": 36,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        36,
+        0
+      ],
+      "hex": "90 24 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116695.89999999851
+    },
+    {
+      "channel": 1,
+      "note": 38,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        38,
+        0
+      ],
+      "hex": "90 26 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116638.89999999851
+    },
+    {
+      "channel": 1,
+      "note": 38,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        38,
+        0
+      ],
+      "hex": "90 26 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116638.89999999851
+    },
+    {
+      "channel": 1,
+      "note": 37,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        37,
+        0
+      ],
+      "hex": "90 25 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116622.19999999925
+    },
+    {
+      "channel": 1,
+      "note": 37,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        37,
+        0
+      ],
+      "hex": "90 25 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116622.19999999925
+    },
+    {
+      "channel": 1,
+      "note": 36,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        36,
+        100
+      ],
+      "hex": "90 24 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116561.89999999851
+    },
+    {
+      "channel": 1,
+      "note": 36,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        36,
+        100
+      ],
+      "hex": "90 24 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116561.89999999851
+    },
+    {
+      "channel": 1,
+      "note": 36,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        36,
+        0
+      ],
+      "hex": "90 24 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116519.89999999851
+    },
+    {
+      "channel": 1,
+      "note": 36,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        36,
+        0
+      ],
+      "hex": "90 24 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116519.89999999851
+    },
+    {
+      "channel": 1,
+      "note": 37,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        37,
+        100
+      ],
+      "hex": "90 25 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116492.39999999851
+    },
+    {
+      "channel": 1,
+      "note": 37,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        37,
+        100
+      ],
+      "hex": "90 25 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116492.39999999851
+    },
+    {
+      "channel": 1,
+      "note": 38,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        38,
+        100
+      ],
+      "hex": "90 26 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116471.80000000075
+    },
+    {
+      "channel": 1,
+      "note": 38,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        38,
+        100
+      ],
+      "hex": "90 26 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116471.80000000075
+    },
+    {
+      "channel": 1,
+      "note": 37,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        37,
+        0
+      ],
+      "hex": "90 25 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116419.09999999776
+    },
+    {
+      "channel": 1,
+      "note": 37,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        37,
+        0
+      ],
+      "hex": "90 25 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116419.09999999776
+    },
+    {
+      "channel": 1,
+      "note": 36,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        36,
+        100
+      ],
+      "hex": "90 24 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116348.89999999851
+    },
+    {
+      "channel": 1,
+      "note": 36,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        36,
+        100
+      ],
+      "hex": "90 24 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116348.89999999851
+    },
+    {
+      "channel": 1,
+      "note": 37,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        37,
+        100
+      ],
+      "hex": "90 25 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116286.59999999776
+    },
+    {
+      "channel": 1,
+      "note": 37,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        37,
+        100
+      ],
+      "hex": "90 25 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116286.59999999776
+    },
+    {
+      "channel": 1,
+      "note": 36,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        36,
+        0
+      ],
+      "hex": "90 24 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116196
+    },
+    {
+      "channel": 1,
+      "note": 36,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        36,
+        0
+      ],
+      "hex": "90 24 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116196
+    },
+    {
+      "channel": 1,
+      "note": 37,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        37,
+        0
+      ],
+      "hex": "90 25 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116119.59999999776
+    },
+    {
+      "channel": 1,
+      "note": 37,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        37,
+        0
+      ],
+      "hex": "90 25 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 116119.59999999776
+    },
+    {
+      "channel": 1,
+      "note": 39,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        39,
+        0
+      ],
+      "hex": "90 27 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115999.5
+    },
+    {
+      "channel": 1,
+      "note": 38,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        38,
+        0
+      ],
+      "hex": "90 26 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115999.5
+    },
+    {
+      "channel": 1,
+      "note": 40,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        40,
+        0
+      ],
+      "hex": "90 28 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115999.5
+    },
+    {
+      "channel": 1,
+      "note": 37,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        37,
+        100
+      ],
+      "hex": "90 25 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115999.5
+    },
+    {
+      "channel": 1,
+      "note": 41,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        41,
+        0
+      ],
+      "hex": "90 29 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115999.30000000075
+    },
+    {
+      "channel": 1,
+      "note": 38,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        38,
+        100
+      ],
+      "hex": "90 26 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115999.30000000075
+    },
+    {
+      "channel": 1,
+      "note": 36,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        36,
+        100
+      ],
+      "hex": "90 24 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115999.30000000075
+    },
+    {
+      "channel": 1,
+      "note": 39,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        39,
+        0
+      ],
+      "hex": "90 27 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115999.5
+    },
+    {
+      "channel": 1,
+      "note": 38,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        38,
+        0
+      ],
+      "hex": "90 26 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115999.5
+    },
+    {
+      "channel": 1,
+      "note": 40,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        40,
+        0
+      ],
+      "hex": "90 28 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115999.5
+    },
+    {
+      "channel": 1,
+      "note": 37,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        37,
+        100
+      ],
+      "hex": "90 25 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115999.5
+    },
+    {
+      "channel": 1,
+      "note": 41,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        41,
+        0
+      ],
+      "hex": "90 29 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115999.30000000075
+    },
+    {
+      "channel": 1,
+      "note": 38,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        38,
+        100
+      ],
+      "hex": "90 26 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115999.30000000075
+    },
+    {
+      "channel": 1,
+      "note": 36,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        36,
+        100
+      ],
+      "hex": "90 24 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115999.30000000075
+    },
+    {
+      "channel": 1,
+      "note": 38,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        38,
+        0
+      ],
+      "hex": "90 26 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115998.69999999925
+    },
+    {
+      "channel": 1,
+      "note": 43,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        43,
+        0
+      ],
+      "hex": "90 2B 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115998.69999999925
+    },
+    {
+      "channel": 1,
+      "note": 42,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        42,
+        0
+      ],
+      "hex": "90 2A 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115998.5
+    },
+    {
+      "channel": 1,
+      "note": 38,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        38,
+        0
+      ],
+      "hex": "90 26 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115998.69999999925
+    },
+    {
+      "channel": 1,
+      "note": 43,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        43,
+        0
+      ],
+      "hex": "90 2B 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115998.69999999925
+    },
+    {
+      "channel": 1,
+      "note": 42,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        42,
+        0
+      ],
+      "hex": "90 2A 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115998.5
+    },
+    {
+      "channel": 1,
+      "note": 46,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        46,
+        0
+      ],
+      "hex": "90 2E 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115998.5
+    },
+    {
+      "channel": 1,
+      "note": 46,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        46,
+        0
+      ],
+      "hex": "90 2E 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115998.5
+    },
+    {
+      "channel": 1,
+      "note": 47,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        47,
+        0
+      ],
+      "hex": "90 2F 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115644.89999999851
+    },
+    {
+      "channel": 1,
+      "note": 47,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        47,
+        0
+      ],
+      "hex": "90 2F 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115644.89999999851
+    },
+    {
+      "channel": 1,
+      "note": 45,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        45,
+        0
+      ],
+      "hex": "90 2D 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115444.89999999851
+    },
+    {
+      "channel": 1,
+      "note": 45,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        45,
+        0
+      ],
+      "hex": "90 2D 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115444.89999999851
+    },
+    {
+      "channel": 1,
+      "note": 46,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        46,
+        0
+      ],
+      "hex": "90 2E 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115433
+    },
+    {
+      "channel": 1,
+      "note": 47,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        47,
+        0
+      ],
+      "hex": "90 2F 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115433
+    },
+    {
+      "channel": 1,
+      "note": 46,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        46,
+        0
+      ],
+      "hex": "90 2E 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115433
+    },
+    {
+      "channel": 1,
+      "note": 47,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        47,
+        0
+      ],
+      "hex": "90 2F 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115433
+    },
+    {
+      "channel": 1,
+      "note": 44,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        44,
+        0
+      ],
+      "hex": "90 2C 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115426.39999999851
+    },
+    {
+      "channel": 1,
+      "note": 44,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        44,
+        0
+      ],
+      "hex": "90 2C 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115426.39999999851
+    },
+    {
+      "channel": 1,
+      "note": 43,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        43,
+        0
+      ],
+      "hex": "90 2B 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115426.39999999851
+    },
+    {
+      "channel": 1,
+      "note": 43,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        43,
+        0
+      ],
+      "hex": "90 2B 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 115426.39999999851
+    },
+    {
+      "channel": 1,
+      "note": 43,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        43,
+        0
+      ],
+      "hex": "90 2B 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 114594.69999999925
+    },
+    {
+      "channel": 1,
+      "note": 43,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        43,
+        0
+      ],
+      "hex": "90 2B 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 114594.69999999925
+    },
+    {
+      "channel": 1,
+      "note": 43,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        43,
+        0
+      ],
+      "hex": "90 2B 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 114330.19999999925
+    },
+    {
+      "channel": 1,
+      "note": 43,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        43,
+        0
+      ],
+      "hex": "90 2B 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 114330.19999999925
+    },
+    {
+      "channel": 1,
+      "note": 72,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        72,
+        0
+      ],
+      "hex": "90 48 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 95974.89999999851
+    },
+    {
+      "channel": 1,
+      "note": 72,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        72,
+        0
+      ],
+      "hex": "90 48 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 95974.89999999851
+    },
+    {
+      "channel": 1,
+      "note": 72,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        72,
+        100
+      ],
+      "hex": "90 48 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 95915
+    },
+    {
+      "channel": 1,
+      "note": 72,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        72,
+        100
+      ],
+      "hex": "90 48 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 95915
+    },
+    {
+      "channel": 1,
+      "note": 29,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        29,
+        0
+      ],
+      "hex": "90 1D 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 95891.80000000075
+    },
+    {
+      "channel": 1,
+      "note": 29,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        29,
+        0
+      ],
+      "hex": "90 1D 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 95891.80000000075
+    },
+    {
+      "channel": 1,
+      "note": 48,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        48,
+        0
+      ],
+      "hex": "90 30 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 95864.5
+    },
+    {
+      "channel": 1,
+      "note": 48,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        48,
+        0
+      ],
+      "hex": "90 30 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 95864.5
+    },
+    {
+      "channel": 1,
+      "note": 48,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        48,
+        0
+      ],
+      "hex": "90 30 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 95794.80000000075
+    },
+    {
+      "channel": 1,
+      "note": 48,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        48,
+        0
+      ],
+      "hex": "90 30 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 95794.80000000075
+    },
+    {
+      "channel": 1,
+      "note": 48,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        48,
+        100
+      ],
+      "hex": "90 30 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 95729.5
+    },
+    {
+      "channel": 1,
+      "note": 48,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        48,
+        100
+      ],
+      "hex": "90 30 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 95729.39999999851
+    },
+    {
+      "channel": 1,
+      "note": 48,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        48,
+        100
+      ],
+      "hex": "90 30 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 95729.5
+    },
+    {
+      "channel": 1,
+      "note": 48,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        48,
+        100
+      ],
+      "hex": "90 30 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 95729.39999999851
+    },
+    {
+      "channel": 1,
+      "note": 29,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        29,
+        100
+      ],
+      "hex": "90 1D 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 95729.39999999851
+    },
+    {
+      "channel": 1,
+      "note": 29,
+      "velocity": 100,
+      "kind": "note",
+      "data": [
+        144,
+        29,
+        100
+      ],
+      "hex": "90 1D 64",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 95729.39999999851
+    },
+    {
+      "channel": 1,
+      "note": 48,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        48,
+        0
+      ],
+      "hex": "90 30 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 95693.80000000075
+    },
+    {
+      "channel": 1,
+      "note": 48,
+      "velocity": 0,
+      "kind": "note",
+      "data": [
+        144,
+        48,
+        0
+      ],
+      "hex": "90 30 00",
+      "inputName": "EP-133 MIDI 1",
+      "timestamp": 95693.80000000075
+    }
+  ]
+}

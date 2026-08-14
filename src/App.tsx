@@ -17,6 +17,7 @@ import {
   type EditorGroup,
   type EditorPadMode,
 } from './core/project/exporters';
+import { buildEp133Ppak } from './core/project/archives';
 import { ep133ArchiveProjectToDocument, inspectEp133Archive, readMidiFile } from './core/project/importers';
 import { findMissingDependencies, type DeviceInventory, type DeviceSoundIndex, type MissingDependency } from './core/project/device';
 import {
@@ -27,7 +28,7 @@ import {
   type ProjectPatterns,
   type SequencerNote,
 } from './core/project/model';
-import { barsAfterStepEdit, measureFromGlobalStep, nudgeSelectedNotes, stepKeyFromBeat, usedBars } from './core/project/editor';
+import { barsAfterStepEdit, duplicateSelectedNotes, measureFromGlobalStep, moveSelectedNotes, nudgeSelectedNotes, quantizeSelectedNotes, selectNotesInGridRectangle, stepKeyFromBeat, transposeSelectedNotes, usedBars } from './core/project/editor';
 import {
   emptyPatternBank,
   emptyScene,
@@ -40,6 +41,7 @@ import {
   type SceneDefinition,
 } from './core/project/song';
 import { archiveStudioProject, deleteStudioProject, duplicateStudioProject, loadStudioLibrary, renameStudioProject, storeStudioProject, studioStateFromDocument, summarizeStudioProject, type StudioProjectRecord, type StudioProjectState } from './core/project/studioLibrary';
+import { clearStudioAutosave, loadStudioAutosave, saveStudioAutosave } from './core/project/studioAutosave';
 import { HomePage } from './pages/HomePage';
 import { SoundsPage } from './pages/SoundsPage';
 import { DocumentationPage } from './pages/DocumentationPage';
@@ -83,6 +85,20 @@ interface PlayerNote {
   deltaMs: number;
   /** « Pad confondu » (12 août) : sur un MISS, pad qui avait une cible non jouée au même instant — voir scoring.ts. */
   confusedPad?: number | null;
+}
+
+interface EditorStructureSnapshot {
+  patternBank: PatternBank;
+  patternLengths: Record<string, number>;
+  scenes: SceneDefinition[];
+  song: number[];
+  activeScene: number;
+  patternNumbers: Record<EditorGroup, number>;
+  group: EditorGroup;
+  targets: SequencerNote[];
+  bars: number;
+  tempo: number;
+  name: string;
 }
 
 const USER_EXERCISES_KEY = 'ep133-rhythm-hero:user-exercises:v1';
@@ -151,6 +167,8 @@ export default function App() {
   const [editorExportFormat, setEditorExportFormat] = useState<'midi' | 'json'>('midi');
   const [studioLibrary, setStudioLibrary] = useState<StudioProjectRecord[]>(() => loadStudioLibrary(localStorage));
   const [selectedStudioProject, setSelectedStudioProject] = useState('');
+  useEffect(() => { const refresh = () => setStudioLibrary(loadStudioLibrary(localStorage)); window.addEventListener('studio-library-changed', refresh); return () => window.removeEventListener('studio-library-changed', refresh); }, []);
+  const [studioAutosaveAt, setStudioAutosaveAt] = useState<string | null>(() => loadStudioAutosave(localStorage)?.savedAt ?? null);
   const [machineProjectDocument, setMachineProjectDocument] = useState<Record<string, unknown> | null>(null);
   const [machineCloneOpen, setMachineCloneOpen] = useState(false);
   const [machineSampleCount, setMachineSampleCount] = useState(0);
@@ -194,6 +212,11 @@ export default function App() {
    * registre des idées). Rafales d'édition coalescées par un court silence (voir l'effet
    * plus bas) plutôt qu'une entrée par frappe de pas. */
   const editorHistory = useRef<Record<string, { past: SequencerNote[][]; future: SequencerNote[][] }>>({});
+  /** Historique structurel du Song Arranger : une entrée par geste de scène ou
+   * de Song Position, indépendant de l'historique des notes d'un pattern. */
+  const editorStructureHistory = useRef<{ past: EditorStructureSnapshot[]; future: EditorStructureSnapshot[] }>({ past: [], future: [] });
+  const editorHistoryDomain = useRef<'pattern' | 'structure'>('pattern');
+  const editorNameEditTimer = useRef<number | null>(null);
   /** Référence exacte (pas un booléen) du prochain `editorTargets` à traiter comme un
    * chargement plutôt qu'une édition — comparaison par identité, idempotente si l'effet
    * ci-dessous est invoqué deux fois pour la même valeur (StrictMode en développement
@@ -766,6 +789,7 @@ export default function App() {
     editorHistoryTimer.current = window.setTimeout(() => {
       const bucket = editorHistory.current[key] || { past: [], future: [] };
       editorHistory.current[key] = { past: [...bucket.past, previous].slice(-50), future: [] };
+      editorHistoryDomain.current = 'pattern';
       editorHistoryBaseline.current = editorTargets;
       setEditorHistoryVersion((version) => version + 1);
     }, 500);
@@ -773,6 +797,7 @@ export default function App() {
   }, [editorTargets]);
 
   const editorUndo = () => {
+    if (studioView === 'arrangement' || editorHistoryDomain.current === 'structure') { editorStructureUndo(); return; }
     const key = editorPatternKey;
     const bucket = editorHistory.current[key];
     if (!bucket || !bucket.past.length) return;
@@ -785,6 +810,7 @@ export default function App() {
     setEditorHistoryVersion((version) => version + 1);
   };
   const editorRedo = () => {
+    if (studioView === 'arrangement' || editorHistoryDomain.current === 'structure') { editorStructureRedo(); return; }
     const key = editorPatternKey;
     const bucket = editorHistory.current[key];
     if (!bucket || !bucket.future.length) return;
@@ -796,8 +822,12 @@ export default function App() {
     setEditorPatternBank((current) => ({ ...current, [editorGroup]: { ...current[editorGroup], [editorPatternNumbers[editorGroup]]: next } }));
     setEditorHistoryVersion((version) => version + 1);
   };
-  const editorCanUndo = Boolean(editorHistory.current[editorPatternKey]?.past.length);
-  const editorCanRedo = Boolean(editorHistory.current[editorPatternKey]?.future.length);
+  const editorCanUndo = studioView === 'arrangement' || editorHistoryDomain.current === 'structure'
+    ? Boolean(editorStructureHistory.current.past.length)
+    : Boolean(editorHistory.current[editorPatternKey]?.past.length);
+  const editorCanRedo = studioView === 'arrangement' || editorHistoryDomain.current === 'structure'
+    ? Boolean(editorStructureHistory.current.future.length)
+    : Boolean(editorHistory.current[editorPatternKey]?.future.length);
   void editorHistoryVersion; // force le recalcul de editorCanUndo/editorCanRedo à chaque changement d'historique
 
   /** Raccourcis clavier — seulement quand l'éditeur complet a la grille de pattern à l'écran
@@ -813,12 +843,35 @@ export default function App() {
     setEditorSelectedSteps(result.selectedKeys);
   };
 
-  const editorHotkeyState = useRef({ editorOpen, editorMode, studioView, editorUndo, editorRedo, editorSelectedSteps, nudgeEditorSelection });
-  editorHotkeyState.current = { editorOpen, editorMode, studioView, editorUndo, editorRedo, editorSelectedSteps, nudgeEditorSelection };
+  const transposeEditorSelection = (semitones: number) => {
+    const result = transposeSelectedNotes(editorTargets, editorSelectedSteps, semitones);
+    if (!result) return;
+    setEditorTargets(result);
+    setEditorPatternBank((current) => ({ ...current, [editorGroup]: { ...current[editorGroup], [editorPatternNumbers[editorGroup]]: result } }));
+  };
+
+  const duplicateEditorSelection = () => {
+    const result = duplicateSelectedNotes(editorTargets, editorSelectedSteps);
+    if (!result) return;
+    setEditorTargets(result.notes);
+    setEditorSelectedSteps(result.selectedKeys);
+    setEditorPatternBank((current) => ({ ...current, [editorGroup]: { ...current[editorGroup], [editorPatternNumbers[editorGroup]]: result.notes } }));
+  };
+
+  const quantizeEditorSelection = () => {
+    const result = quantizeSelectedNotes(editorTargets, editorSelectedSteps);
+    if (!result) return;
+    setEditorTargets(result.notes);
+    setEditorSelectedSteps(result.selectedKeys);
+    setEditorPatternBank((current) => ({ ...current, [editorGroup]: { ...current[editorGroup], [editorPatternNumbers[editorGroup]]: result.notes } }));
+  };
+
+  const editorHotkeyState = useRef({ editorOpen, editorMode, studioView, editorUndo, editorRedo, editorSelectedSteps, nudgeEditorSelection, transposeEditorSelection, duplicateEditorSelection, quantizeEditorSelection });
+  editorHotkeyState.current = { editorOpen, editorMode, studioView, editorUndo, editorRedo, editorSelectedSteps, nudgeEditorSelection, transposeEditorSelection, duplicateEditorSelection, quantizeEditorSelection };
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const state = editorHotkeyState.current;
-      if (!state.editorOpen || state.editorMode !== 'complete' || state.studioView !== 'pattern') return;
+      if (!state.editorOpen || state.editorMode !== 'complete') return;
       const target = event.target as HTMLElement | null;
       if (target && /^(input|textarea|select)$/i.test(target.tagName)) return;
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
@@ -826,12 +879,29 @@ export default function App() {
         if (event.shiftKey) state.editorRedo(); else state.editorUndo();
         return;
       }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'd' && state.studioView === 'pattern' && state.editorSelectedSteps.size) {
+        event.preventDefault();
+        state.duplicateEditorSelection();
+        return;
+      }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'q' && state.studioView === 'pattern' && state.editorSelectedSteps.size) {
+        event.preventDefault();
+        state.quantizeEditorSelection();
+        return;
+      }
+      if (state.studioView !== 'pattern') return;
       // Flèches gauche/droite : déplace la sélection multiple d'un pas (E-18) — seulement si
       // quelque chose est sélectionné, pour ne jamais voler le défilement/la navigation par
       // défaut du clavier quand la grille n'a rien de particulier à faire de cette touche.
       if ((event.key === 'ArrowLeft' || event.key === 'ArrowRight') && state.editorSelectedSteps.size) {
         event.preventDefault();
         state.nudgeEditorSelection(event.key === 'ArrowLeft' ? -1 : 1);
+        return;
+      }
+      if ((event.key === 'ArrowUp' || event.key === 'ArrowDown') && state.editorSelectedSteps.size) {
+        event.preventDefault();
+        const octave = event.shiftKey ? 12 : 1;
+        state.transposeEditorSelection(event.key === 'ArrowUp' ? octave : -octave);
       }
     };
     window.addEventListener('keydown', onKeyDown);
@@ -843,6 +913,105 @@ export default function App() {
     ...editorPatternBank,
     [editorGroup]: { ...editorPatternBank[editorGroup], [editorPatternNumbers[editorGroup]]: editorTargets },
   });
+
+  const currentStudioDocument = (title = editorName) => createEp133ProjectDocument({
+    title,
+    bpm: tempo,
+    patternBank: currentPatternBank(),
+    scenes: editorScenes,
+    song: editorSong,
+    currentScene: editorActiveScene,
+    pads: deviceInventory?.pads || [],
+    padModes: editorPadModes,
+    patternLengths: editorPatternLengths,
+  });
+
+  useEffect(() => {
+    if (!editorOpen || editorMode !== 'complete') return;
+    const hasNotes = EDITOR_GROUPS.some((group) => Object.values(currentPatternBank()[group]).some((notes) => notes.length));
+    if (!hasNotes && !editorScenes.length && !editorSong.length) return;
+    const timer = window.setTimeout(() => {
+      const record = saveStudioAutosave(localStorage, currentStudioDocument());
+      setStudioAutosaveAt(record.savedAt);
+    }, 700);
+    return () => window.clearTimeout(timer);
+    // Les états musicaux sont volontairement les déclencheurs de la sauvegarde,
+    // tandis que les fonctions de construction restent locales au rendu courant.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editorOpen, editorMode, editorName, tempo, editorPatternBank, editorTargets, editorScenes, editorSong, editorActiveScene, editorPadModes, editorPatternLengths, deviceInventory?.pads]);
+
+  const captureEditorStructure = (): EditorStructureSnapshot => ({
+    patternBank: currentPatternBank(),
+    patternLengths: { ...editorPatternLengths },
+    scenes: editorScenes.map((scene) => ({ ...scene, groupPatterns: { ...scene.groupPatterns }, timeSignature: [...scene.timeSignature] as [number, number] })),
+    song: [...editorSong],
+    activeScene: editorActiveScene,
+    patternNumbers: { ...editorPatternNumbers },
+    group: editorGroup,
+    targets: [...editorTargets],
+    bars: editorBars,
+    tempo,
+    name: editorName,
+  });
+
+  const recordEditorStructureSnapshot = (snapshot: EditorStructureSnapshot = captureEditorStructure()) => {
+    const history = editorStructureHistory.current;
+    editorHistoryDomain.current = 'structure';
+    history.past = [...history.past, snapshot].slice(-50);
+    history.future = [];
+    setEditorHistoryVersion((version) => version + 1);
+  };
+
+  const recordEditorStructure = () => recordEditorStructureSnapshot();
+
+  const restoreEditorStructure = (snapshot: EditorStructureSnapshot) => {
+    setEditorPatternBank(snapshot.patternBank);
+    setEditorPatternLengths(snapshot.patternLengths);
+    setEditorScenes(snapshot.scenes);
+    setEditorSong(snapshot.song);
+    setEditorActiveScene(snapshot.activeScene);
+    setEditorPatternNumbers(snapshot.patternNumbers);
+    setEditorGroup(snapshot.group);
+    editorHistorySkipTarget.current = snapshot.targets;
+    setEditorTargets(snapshot.targets);
+    setEditorBars(snapshot.bars);
+    setTempo(snapshot.tempo);
+    setEditorName(snapshot.name);
+    setEditorSelectedSteps(new Set());
+  };
+
+  const changeEditorName = (name: string) => {
+    if (editorMode === 'complete' && editorNameEditTimer.current === null) recordEditorStructure();
+    setEditorName(name);
+    if (editorNameEditTimer.current !== null) window.clearTimeout(editorNameEditTimer.current);
+    editorNameEditTimer.current = window.setTimeout(() => { editorNameEditTimer.current = null; }, 700);
+  };
+
+  const changeEditorTempo = (nextTempo: number) => {
+    const boundedTempo = Math.max(40, Math.min(240, Math.round(nextTempo)));
+    if (editorMode === 'complete' && boundedTempo !== tempo) recordEditorStructure();
+    setTempo(boundedTempo);
+  };
+
+  const editorStructureUndo = () => {
+    const history = editorStructureHistory.current;
+    if (!history.past.length) return;
+    const previous = history.past[history.past.length - 1];
+    history.past = history.past.slice(0, -1);
+    history.future = [captureEditorStructure(), ...history.future].slice(0, 50);
+    restoreEditorStructure(previous);
+    setEditorHistoryVersion((version) => version + 1);
+  };
+
+  const editorStructureRedo = () => {
+    const history = editorStructureHistory.current;
+    if (!history.future.length) return;
+    const [next, ...rest] = history.future;
+    history.future = rest;
+    history.past = [...history.past, captureEditorStructure()].slice(-50);
+    restoreEditorStructure(next);
+    setEditorHistoryVersion((version) => version + 1);
+  };
 
   const patternsForActiveScene = (): ProjectPatterns => patternsForScene(currentPatternBank(), editorScenes, editorActiveScene);
 
@@ -936,6 +1105,14 @@ export default function App() {
     link.click(); URL.revokeObjectURL(link.href);
   };
 
+  const exportEditorPpak = () => {
+    const projectDocument = createEp133ProjectDocument({ title: editorName, bpm: tempo, patternBank: currentPatternBank(), scenes: editorScenes, song: editorSong, currentScene: editorActiveScene, pads: deviceInventory?.pads || [], padModes: editorPadModes, patternLengths: editorPatternLengths });
+    const blob = new Blob([buildEp133Ppak(projectDocument)], { type: 'application/zip' });
+    const link = window.document.createElement('a'); link.href = URL.createObjectURL(blob);
+    link.download = `${(editorName.trim() || 'ep133-project').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.ppak`;
+    link.click(); URL.revokeObjectURL(link.href);
+  };
+
   const exportEditor = () => editorExportFormat === 'midi' ? exportEditorMidi() : exportEditorProjectJson();
 
   /** Routage unique des préécoutes Studio : machine, puis clone PCM, puis synthèse interne. */
@@ -997,6 +1174,19 @@ export default function App() {
     });
   };
 
+  const selectEditorRectangle = (startMeasure: number, startPad: number, startStep: number, endMeasure: number, endPad: number, endStep: number) => {
+    setEditorSelectedSteps(selectNotesInGridRectangle(editorTargets, startMeasure, startPad, startStep, endMeasure, endPad, endStep));
+  };
+
+  const moveEditorSelection = (startMeasure: number, startPad: number, startStep: number, endMeasure: number, endPad: number, endStep: number, selectedKeys: Set<string>) => {
+    const deltaSteps = (endMeasure - startMeasure) * 16 + endStep - startStep;
+    const result = moveSelectedNotes(editorTargets, selectedKeys, deltaSteps, endPad - startPad);
+    if (!result) return undefined;
+    setEditorTargets(result.notes);
+    setEditorSelectedSteps(result.selectedKeys);
+    return result.selectedKeys;
+  };
+
   const adjustCommittedEditorVelocity = (sectionKey: string, measure: number, pad: number, step: number, delta: number) => {
     const section = editorCommittedSections.find((candidate) => candidate.key === sectionKey);
     if (!section || section.patternNumber === null || section.patternNumber === undefined) return;
@@ -1015,6 +1205,13 @@ export default function App() {
     const beat = globalStep / 4;
     setEditorTargets((current) => current.map((target) => target.pad === editorSelectedPad && target.beat === beat && target.note === note
       ? { ...target, velocity: clampVelocity(target.velocity + delta) }
+      : target));
+  };
+
+  const adjustKeyDuration = (note: number, globalStep: number, delta: number) => {
+    const beat = globalStep / 4;
+    setEditorTargets((current) => current.map((target) => target.pad === editorSelectedPad && target.beat === beat && target.note === note
+      ? { ...target, duration: clampDuration(target.duration + delta) }
       : target));
   };
 
@@ -1221,6 +1418,17 @@ export default function App() {
     stopEditorTransport();
   };
 
+  const duplicateOfficialExercise = () => {
+    if (styleId.startsWith('user:')) return;
+    const source = activeExercise;
+    const copy: Exercise = { ...source, id: `user-${Date.now()}`, title: `COPIE · ${source.title}`, description: `${source.description} · Copie utilisateur`, targets: source.targets.map((target, index) => ({ ...target, id: `target-copy-${index}` })) };
+    const next = [...userExercises, copy];
+    localStorage.setItem(USER_EXERCISES_KEY, JSON.stringify(next));
+    setUserExercises(next);
+    setStyleId(`user:${copy.id}`);
+    window.alert(`« ${copy.title} » a été ajouté à EXERCICES USER.`);
+  };
+
   /**
    * Conversion Projet → Exercice — P1 (12 août, voir docs/ROADMAP.md et
    * docs/REGISTRE_IDEES.md). Convertit le pattern actif du Studio (groupe et
@@ -1254,6 +1462,8 @@ export default function App() {
     setEditorName('NOUVEAU PROJET');
     setEditorGroup('A');
     editorHistory.current = {};
+    editorStructureHistory.current = { past: [], future: [] };
+    editorHistoryDomain.current = 'pattern';
     const emptyTargets: SequencerNote[] = [];
     editorHistorySkipTarget.current = emptyTargets;
     setEditorTargets(emptyTargets);
@@ -1269,27 +1479,33 @@ export default function App() {
     setStudioView('pattern');
     setSelectedStudioProject('');
     setMissingDependencies([]);
+    clearStudioAutosave(localStorage);
+    setStudioAutosaveAt(null);
   };
 
   const saveStudioProject = () => {
     const patternBank = currentPatternBank();
     setEditorPatternBank(patternBank);
-    const document = createEp133ProjectDocument({ title: editorName, bpm: tempo, patternBank, scenes: editorScenes, song: editorSong, currentScene: editorActiveScene, pads: deviceInventory?.pads || [], padModes: editorPadModes, patternLengths:editorPatternLengths });
+    const document = currentStudioDocument();
     const stored = storeStudioProject(localStorage, studioLibrary, document, selectedStudioProject);
     updateStudioLibrary(stored.library);
     setSelectedStudioProject(stored.id);
+    clearStudioAutosave(localStorage);
+    setStudioAutosaveAt(null);
   };
 
   const saveStudioProjectAs = () => {
     const title = window.prompt('Nom de la nouvelle copie :', editorName);
     if (!title?.trim()) return;
     const patternBank = currentPatternBank();
-    const document = createEp133ProjectDocument({ title, bpm: tempo, patternBank, scenes: editorScenes, song: editorSong, currentScene: editorActiveScene, pads: deviceInventory?.pads || [], padModes: editorPadModes, patternLengths:editorPatternLengths });
+    const document = currentStudioDocument(title);
     const stored = storeStudioProject(localStorage, studioLibrary, document);
     setEditorName(title.trim().toUpperCase());
     setEditorPatternBank(patternBank);
     updateStudioLibrary(stored.library);
     setSelectedStudioProject(stored.id);
+    clearStudioAutosave(localStorage);
+    setStudioAutosaveAt(null);
   };
 
   const renameSelectedStudioProject = () => {
@@ -1347,6 +1563,8 @@ export default function App() {
     setEditorGroup(startingGroup);
     const startingNotes = loaded.patternBank[startingGroup][startingNumbers[startingGroup]] || [];
     editorHistory.current = {};
+    editorStructureHistory.current = { past: [], future: [] };
+    editorHistoryDomain.current = 'pattern';
     editorHistorySkipTarget.current = startingNotes;
     setEditorTargets(startingNotes);
     setEditorPadModes(loaded.padModes);
@@ -1357,6 +1575,20 @@ export default function App() {
     setStudioView('arrangement');
     setKeyEditorOpen(false);
     setMissingDependencies(findMissingDependencies(loaded.pads, deviceSoundIndex));
+  };
+
+  const recoverStudioAutosave = () => {
+    const record = loadStudioAutosave(localStorage);
+    if (!record) { setStudioAutosaveAt(null); return; }
+    if (!window.confirm(`Récupérer la sauvegarde de secours du ${new Date(record.savedAt).toLocaleString('fr-FR')} ?`)) return;
+    try {
+      applyLoadedStudioProject(studioStateFromDocument(record.document));
+      setSelectedStudioProject('');
+      clearStudioAutosave(localStorage);
+      setStudioAutosaveAt(null);
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : 'La sauvegarde de secours est illisible.');
+    }
   };
 
   /** Ouvre directement le projet cliqué dans le menu FICHIER — un seul clic, pas de sélection préalable dans un menu séparé qui pouvait laisser croire qu'OUVRIR ne faisait rien. */
@@ -1372,6 +1604,8 @@ export default function App() {
     }
     applyLoadedStudioProject(loaded);
     setSelectedStudioProject(id);
+    clearStudioAutosave(localStorage);
+    setStudioAutosaveAt(null);
   };
 
   /** Charge une composition d'exemple versionnée avec l'application. Elle reste indépendante de la bibliothèque locale jusqu'à un Enregistrer sous. */
@@ -1384,6 +1618,8 @@ export default function App() {
       const document = await response.json() as Record<string, unknown>;
       applyLoadedStudioProject(studioStateFromDocument(document));
       setSelectedStudioProject('');
+      clearStudioAutosave(localStorage);
+      setStudioAutosaveAt(null);
     } catch (error) {
       window.alert(error instanceof Error ? error.message : 'Cette démonstration est illisible.');
     }
@@ -1531,14 +1767,18 @@ export default function App() {
   // Vue Song Arranger — la Scène reste une ressource partagée (comme sur la machine réelle) :
   // modifier un bloc dans une Song Position modifie toutes celles qui pointent vers la même scène.
   const assignSceneGroupPattern = (sceneNumber: number, group: EditorGroup, patternNumber: number | null) => {
+    const scene = editorScenes.find((candidate) => candidate.scene === sceneNumber);
+    if (!scene || scene.groupPatterns[group] === patternNumber) return;
+    recordEditorStructure();
     setEditorScenes((current) => current.map((scene) => scene.scene === sceneNumber
       ? { ...scene, groupPatterns: { ...scene.groupPatterns, [group]: patternNumber } }
       : scene));
   };
 
   const reorderEditorSong = (fromIndex: number, toIndex: number) => {
+    if (fromIndex < 0 || fromIndex >= editorSong.length || toIndex < 0 || toIndex >= editorSong.length || fromIndex === toIndex) return;
+    recordEditorStructure();
     setEditorSong((current) => {
-      if (fromIndex < 0 || fromIndex >= current.length || toIndex < 0 || toIndex >= current.length || fromIndex === toIndex) return current;
       const next = [...current];
       const [moved] = next.splice(fromIndex, 1);
       next.splice(toIndex, 0, moved);
@@ -1550,6 +1790,7 @@ export default function App() {
   const duplicateSongPosition = (index: number) => {
     const sourceSceneNumber = editorSong[index];
     if (sourceSceneNumber === undefined) return;
+    recordEditorStructure();
     const source = editorScenes.find((scene) => scene.scene === sourceSceneNumber);
     const newSceneNumber = nextFreeSceneNumber(editorScenes);
     const newScene: SceneDefinition = source ? { ...source, scene: newSceneNumber, groupPatterns: { ...source.groupPatterns } } : emptyScene(newSceneNumber);
@@ -1559,6 +1800,8 @@ export default function App() {
 
   const deleteSongPosition = (index: number) => {
     if (!window.confirm('Retirer cette Song Position de la structure du morceau ?')) return;
+    if (index < 0 || index >= editorSong.length) return;
+    recordEditorStructure();
     setEditorSong((current) => current.filter((_, position) => position !== index));
   };
 
@@ -1577,6 +1820,7 @@ export default function App() {
       return;
     }
 
+    recordEditorStructure();
     const committedSceneNumber = editorActiveScene;
     const sceneExists = editorScenes.some((scene) => scene.scene === committedSceneNumber);
     const scenesWithCommit = sceneExists
@@ -1700,10 +1944,11 @@ export default function App() {
   }
 
   return <main className={last ? `impact impact-${last.grade.toLowerCase()}` : ''}>
-    <GameToolbar difficulty={difficulty} tempo={tempo} activeBpm={activeExercise.bpm} styleId={styleId} styles={STYLES} userExercises={userExercises} phase={phase} sessionActive={sessionActive} midiConnected={midiReady} onDifficultyChange={setDifficulty} onTempoChange={setTempo} onStyleChange={changeStyle} onHome={goHome} onOpenEditor={openEditor} onConnectMidi={() => void connectMidi()} onPreview={() => void togglePreview()} onPlay={() => void toggle()} />
+    <GameToolbar difficulty={difficulty} tempo={tempo} activeBpm={activeExercise.bpm} styleId={styleId} styles={STYLES} userExercises={userExercises} phase={phase} sessionActive={sessionActive} midiConnected={midiReady} onDifficultyChange={setDifficulty} onTempoChange={setTempo} onStyleChange={changeStyle} onDuplicateOfficial={duplicateOfficialExercise} onHome={goHome} onOpenEditor={openEditor} onConnectMidi={() => void connectMidi()} onPreview={() => void togglePreview()} onPlay={() => void toggle()} />
     {phase === 'countin' && <div className="countdown" aria-live="assertive"><small>1 MESURE POUR SE PRÉPARER</small><b>{countdown}</b></div>}
     {editorOpen && <div className="editor-overlay"><section className="exercise-editor">
-      <EditorToolbar mode={editorMode} name={editorName} group={editorGroup} playing={editorPlaying} loop={editorLoop} exportFormat={editorExportFormat} canSave={Boolean(editorName.trim() && (editorMode === 'complete' || editorTargets.length || EDITOR_GROUPS.some((group) => Object.values(editorPatternBank[group]).some((notes) => notes.length))))} midiConnected={midiReady} scannedProject={deviceInventory?.project} machineProjectAvailable={Boolean(machineProjectDocument)} machineSampleCount={machineSampleCount} demoProjects={STUDIO_DEMOS} localProjects={studioLibrary.map(summarizeStudioProject)} selectedLocalProject={selectedStudioProject} studioView={studioView} patternNumber={editorPatternNumbers[editorGroup]} patternLength={editorBars} groupPatternLengths={Object.fromEntries(EDITOR_GROUPS.map((group) => { const number = editorPatternNumbers[group]; const notes = group === editorGroup ? editorTargets : editorPatternBank[group][number] || []; return [group, editorPatternLengths[`${group}:${number}`] || usedBars(notes)]; })) as Record<EditorGroup, number>} activeSongPosition={Math.max(1, editorSong.findIndex((scene) => scene === editorActiveScene) + 1)} activeScene={editorActiveScene} onHome={goHome} onNameChange={setEditorName} onGroupChange={changeEditorGroupAndMachine} onStudioViewChange={setStudioView} onPatternLengthChange={changePatternLength} onCommitScene={commitPatternsToScene} canUndo={editorCanUndo} canRedo={editorCanRedo} onUndo={editorUndo} onRedo={editorRedo} onConnectMidi={() => void connectMidi()} onNew={newStudioProject} onOpenProject={openStudioProject} onOpenDemo={(id) => void openStudioDemo(id)} onImportFiles={(files) => void importStudioProjectFiles(files)} onLoadMachineProject={loadMachineProject} onCloneMachine={() => setMachineCloneOpen(true)} onOpenSampleFolder={() => void openStudioSampleFolder()} onSave={saveEditor} onSaveAs={saveStudioProjectAs} onRename={renameSelectedStudioProject} onDuplicate={duplicateSelectedStudioProject} onArchive={archiveSelectedStudioProject} onDelete={deleteSelectedStudioProject} onPlayback={() => void toggleEditorPlayback()} onLoopChange={setEditorLoop} onExportFormatChange={setEditorExportFormat} onExport={exportEditor} onExportMidi={exportEditorMidi} onExportJson={exportEditorProjectJson} onSendToRhythmHero={sendPatternToRhythmHero} />
+      <EditorToolbar mode={editorMode} name={editorName} tempo={tempo} group={editorGroup} playing={editorPlaying} loop={editorLoop} exportFormat={editorExportFormat} canSave={Boolean(editorName.trim() && (editorMode === 'complete' || editorTargets.length || EDITOR_GROUPS.some((group) => Object.values(editorPatternBank[group]).some((notes) => notes.length))))} midiConnected={midiReady} scannedProject={deviceInventory?.project} machineProjectAvailable={Boolean(machineProjectDocument)} machineSampleCount={machineSampleCount} demoProjects={STUDIO_DEMOS} localProjects={studioLibrary.map(summarizeStudioProject)} selectedLocalProject={selectedStudioProject} studioView={studioView} patternNumber={editorPatternNumbers[editorGroup]} patternLength={editorBars} groupPatternLengths={Object.fromEntries(EDITOR_GROUPS.map((group) => { const number = editorPatternNumbers[group]; const notes = group === editorGroup ? editorTargets : editorPatternBank[group][number] || []; return [group, editorPatternLengths[`${group}:${number}`] || usedBars(notes)]; })) as Record<EditorGroup, number>} activeSongPosition={Math.max(1, editorSong.findIndex((scene) => scene === editorActiveScene) + 1)} activeScene={editorActiveScene} onHome={goHome} onNameChange={changeEditorName} onTempoChange={changeEditorTempo} onGroupChange={changeEditorGroupAndMachine} onStudioViewChange={setStudioView} onPatternLengthChange={changePatternLength} onCommitScene={commitPatternsToScene} canUndo={editorCanUndo} canRedo={editorCanRedo} onUndo={editorUndo} onRedo={editorRedo} onConnectMidi={() => void connectMidi()} onNew={newStudioProject} onOpenProject={openStudioProject} onOpenDemo={(id) => void openStudioDemo(id)} onImportFiles={(files) => void importStudioProjectFiles(files)} onLoadMachineProject={loadMachineProject} onCloneMachine={() => setMachineCloneOpen(true)} onOpenSampleFolder={() => void openStudioSampleFolder()} onSave={saveEditor} onSaveAs={saveStudioProjectAs} onRename={renameSelectedStudioProject} onDuplicate={duplicateSelectedStudioProject} onArchive={archiveSelectedStudioProject} onDelete={deleteSelectedStudioProject} onPlayback={() => void toggleEditorPlayback()} onLoopChange={setEditorLoop} onExportFormatChange={setEditorExportFormat} onExport={exportEditor} onExportMidi={exportEditorMidi} onExportJson={exportEditorProjectJson} onExportPpak={exportEditorPpak} onSendToRhythmHero={sendPatternToRhythmHero} />
+      {studioAutosaveAt && <button className="studio-autosave-recover" onClick={recoverStudioAutosave}>RÉCUPÉRER LA SAUVEGARDE DE SECOURS</button>}
       {missingDependencies.length > 0 && <p className="studio-missing-dependencies">
         ⚠ {missingDependencies.length} PAD{missingDependencies.length > 1 ? 'S' : ''} SANS SON DANS LA BANQUE ACTUELLE ·{' '}
         {missingDependencies.map((dep) => `${dep.group}${dep.pad} (slot ${dep.slot})`).join(', ')}
@@ -1713,8 +1958,8 @@ export default function App() {
       {(editorMode !== 'complete' || studioView === 'pattern') && <>
         {editorMode === 'complete' && <PadStrip group={editorGroup} selectedPad={editorSelectedPad} livePad={editorMidiHit?.pad} liveGroup={editorMidiHit?.group} padModes={editorPadModes} padName={devicePadName} padSlot={(pad) => devicePadInfo(pad)?.slot} onSelect={(pad) => { setEditorSelectedPad(pad); setKeyEditorOpen((editorPadModes[`${editorGroup}:${pad}`] || 'ONE') === 'KEYS'); }} onPreview={(pad) => void previewEditorPad(editorGroup, pad)} onModeChange={(pad, mode) => { setEditorPadModes((current) => ({ ...current, [`${editorGroup}:${pad}`]: mode })); setKeyEditorOpen(mode === 'KEYS'); }} onOpenKeys={() => setKeyEditorOpen(true)} />}
         {keyEditorOpen && editorMode === 'complete'
-          ? <PianoRoll gridRef={editorGrid} group={editorGroup} selectedPad={editorSelectedPad} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} targets={editorTargets} onClose={() => setKeyEditorOpen(false)} onPreviewNote={(note) => void previewEditorPad(editorGroup, editorSelectedPad, note)} onToggleNote={toggleKeyStep} onAdjustVelocity={adjustKeyVelocity} />
-          : <RhythmGrid gridRef={editorGrid} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} mode={editorMode} group={editorGroup} selectedPad={editorSelectedPad} targets={editorTargets} committedSections={editorCommittedSections} padModes={editorPadModes} padName={devicePadName} scannedPlayMode={(pad) => devicePadInfo(pad)?.playMode} onSelectPad={setEditorSelectedPad} onOpenKeys={() => setKeyEditorOpen(true)} onToggleStep={toggleEditorStep} patternLength={editorBars} onPatternLengthChange={changePatternLength} onCopyBlock={copyPatternBlock} onDeleteBlock={deletePatternBlock} onToggleCommittedStep={toggleCommittedEditorStep} onAdjustVelocity={adjustEditorVelocity} onAdjustCommittedVelocity={adjustCommittedEditorVelocity} onAdjustDuration={adjustEditorDuration} onToggleSelectStep={toggleSelectEditorStep} selectedSteps={editorSelectedSteps} />}
+          ? <PianoRoll gridRef={editorGrid} group={editorGroup} selectedPad={editorSelectedPad} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} targets={editorTargets} onClose={() => setKeyEditorOpen(false)} onPreviewNote={(note) => void previewEditorPad(editorGroup, editorSelectedPad, note)} onToggleNote={toggleKeyStep} onAdjustVelocity={adjustKeyVelocity} onAdjustDuration={adjustKeyDuration} />
+          : <RhythmGrid gridRef={editorGrid} bars={editorBars} playing={editorPlaying} playbackBeat={editorPlaybackBeat} mode={editorMode} group={editorGroup} selectedPad={editorSelectedPad} targets={editorTargets} committedSections={editorCommittedSections} padModes={editorPadModes} padName={devicePadName} scannedPlayMode={(pad) => devicePadInfo(pad)?.playMode} onSelectPad={setEditorSelectedPad} onOpenKeys={() => setKeyEditorOpen(true)} onToggleStep={toggleEditorStep} patternLength={editorBars} onPatternLengthChange={changePatternLength} onCopyBlock={copyPatternBlock} onDeleteBlock={deletePatternBlock} onToggleCommittedStep={toggleCommittedEditorStep} onAdjustVelocity={adjustEditorVelocity} onAdjustCommittedVelocity={adjustCommittedEditorVelocity} onAdjustDuration={adjustEditorDuration} onToggleSelectStep={toggleSelectEditorStep} onSelectRectangle={selectEditorRectangle} onMoveSelection={moveEditorSelection} selectedSteps={editorSelectedSteps} />}
       </>}
       <footer><span>{editorMode === 'complete' ? `${midi.outputConnected ? `SON EP‑133 · ${midi.outputNames.join(' + ')}` : 'EP‑133 NON CONNECTÉ'} · PATTERN ${editorGroup}${String(editorPatternNumbers[editorGroup]).padStart(2, '0')} · LN.${effectiveEditorBars} · ` : ''}GROUPE {editorGroup} · {editorTargets.length} FRAPPE(S) · {tempo} BPM{editorMode === 'game' ? ' · AJOUT AUTOMATIQUE ACTIF' : ''}</span></footer>
       {machineCloneOpen && <MachineCloneDialog inventory={deviceInventory} soundIndex={deviceSoundIndex} onClose={() => setMachineCloneOpen(false)} />}

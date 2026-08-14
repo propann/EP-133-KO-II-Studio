@@ -36,6 +36,8 @@ export interface WavConversionResult {
   durationSeconds: number;
 }
 
+export type ChannelMode = 'mix' | 'left' | 'right';
+
 /** Trames interleaved en Float32 [-1, 1], valeurs réelles (pas seulement leur
  * magnitude) — c'est ce que `libsamplerate-js` attend en entrée. */
 function extractInterleavedFloat32(format: ParsedWavFormat): Float32Array {
@@ -60,17 +62,19 @@ function cropInterleaved(interleaved: Float32Array, channels: number, startFrame
   return interleaved.slice(safeStart * channels, safeEnd * channels);
 }
 
-/**
- * Repli mono/stéréo (REGISTRE_IDEES.md A-05, partiel — pas encore de choix
- * gauche/droite explicite, seulement moyenne pour le downmix). `fromChannels`
- * === `toChannels` renvoie l'entrée telle quelle, sans copie.
- */
-function remixChannels(interleaved: Float32Array, fromChannels: number, toChannels: number): Float32Array {
+/** Repli mono/stéréo. En mode gauche/droite, le canal choisi devient un mono
+ * explicite ; le mode mix conserve la moyenne des canaux. */
+function remixChannels(interleaved: Float32Array, fromChannels: number, toChannels: number, channelMode: ChannelMode = 'mix'): Float32Array {
   if (fromChannels === toChannels) return interleaved;
   const frameCount = interleaved.length / fromChannels;
   const out = new Float32Array(frameCount * toChannels);
   for (let frame = 0; frame < frameCount; frame += 1) {
     if (toChannels === 1) {
+      if (channelMode === 'left' || channelMode === 'right') {
+        const sourceChannel = channelMode === 'right' ? Math.min(1, fromChannels - 1) : 0;
+        out[frame] = interleaved[frame * fromChannels + sourceChannel];
+        continue;
+      }
       let sum = 0;
       for (let channel = 0; channel < fromChannels; channel += 1) sum += interleaved[frame * fromChannels + channel];
       out[frame] = sum / fromChannels;
@@ -154,7 +158,7 @@ function encodeWavPcm16(samples: Float32Array, channels: number, sampleRate: num
  * ne touche à aucun fichier machine : produit seulement un nouveau tampon en
  * mémoire, à consommer par l'appelant (pré-écoute, futur export).
  */
-export async function convertWavForEp133(sourceBytes: ArrayBuffer, targetSampleRate: number, targetChannels?: 1 | 2, trim?: { startSeconds: number; endSeconds: number }, fade?: { fadeInSeconds: number; fadeOutSeconds: number }): Promise<WavConversionResult | null> {
+export async function convertWavForEp133(sourceBytes: ArrayBuffer, targetSampleRate: number, targetChannels?: 1 | 2, trim?: { startSeconds: number; endSeconds: number }, fade?: { fadeInSeconds: number; fadeOutSeconds: number }, channelMode: ChannelMode = 'mix'): Promise<WavConversionResult | null> {
   const format = parseWavFormat(sourceBytes);
   if (!format || !format.frameCount) return null;
 
@@ -166,8 +170,8 @@ export async function convertWavForEp133(sourceBytes: ArrayBuffer, targetSampleR
     if (!extracted.length) return null; // sélection vide (start >= end) : rien à convertir
   }
 
-  const outChannels = targetChannels ?? (format.channels >= 2 ? 2 : 1);
-  const remixed = remixChannels(extracted, format.channels, outChannels);
+  const outChannels = targetChannels ?? (channelMode === 'mix' && format.channels >= 2 ? 2 : 1);
+  const remixed = remixChannels(extracted, format.channels, outChannels, channelMode);
 
   let resampled = remixed;
   let outSampleRate = format.sampleRate;

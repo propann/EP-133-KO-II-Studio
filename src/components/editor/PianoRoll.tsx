@@ -17,9 +17,11 @@ interface PianoRollProps {
   onToggleNote: (note: number, globalStep: number) => void;
   /** Maj+molette sur une note remplie : ajuste sa vélocité (delta signé, ±8 par cran) — même mécanisme que la grille rythmique. */
   onAdjustVelocity?: (note: number, globalStep: number, delta: number) => void;
+  /** Alt+molette sur une note remplie : ajuste sa durée/gate (delta signé en temps). */
+  onAdjustDuration?: (note: number, globalStep: number, delta: number) => void;
 }
 
-export function PianoRoll({ gridRef, group, selectedPad, bars, playing, playbackBeat, targets, onClose, onPreviewNote, onToggleNote, onAdjustVelocity }: PianoRollProps) {
+export function PianoRoll({ gridRef, group, selectedPad, bars, playing, playbackBeat, targets, onClose, onPreviewNote, onToggleNote, onAdjustVelocity, onAdjustDuration }: PianoRollProps) {
   const STEP_WIDTH = 60;
   const STEPS_PER_BAR = 16;
   // La réserve d'édition vient après la longueur native, afin que LN.1, LN.2,
@@ -35,16 +37,17 @@ export function PianoRoll({ gridRef, group, selectedPad, bars, playing, playback
     const el = gridRef.current;
     if (!el) return;
     const handleWheel = (event: WheelEvent) => {
-      if (!event.shiftKey) return;
+      if (!event.shiftKey && !event.altKey) return;
       const cell = (event.target as HTMLElement).closest('button.checked') as HTMLElement | null;
       if (!cell || !el.contains(cell) || cell.dataset.note === undefined) return;
       event.preventDefault();
-      const delta = event.deltaY < 0 ? 8 : -8;
-      onAdjustVelocity?.(Number(cell.dataset.note), Number(cell.dataset.step), delta);
+      const delta = event.deltaY < 0 ? 1 : -1;
+      if (event.shiftKey) onAdjustVelocity?.(Number(cell.dataset.note), Number(cell.dataset.step), delta * 8);
+      else onAdjustDuration?.(Number(cell.dataset.note), Number(cell.dataset.step), delta * 0.0625);
     };
     el.addEventListener('wheel', handleWheel, { passive: false });
     return () => el.removeEventListener('wheel', handleWheel);
-  }, [gridRef, onAdjustVelocity]);
+  }, [gridRef, onAdjustVelocity, onAdjustDuration]);
 
   return <div className="key-editor"><div className="key-editor-title"><span>GROUPE {group} · PAD {EP133_PADS[selectedPad].key} · {EP133_PADS[selectedPad].name}</span><b>MODE KEYS · PIANO-ROLL</b><button onClick={onClose}>RETOUR AUX 12 PADS</button></div><div className="editor-grid key-grid" ref={gridRef} onWheelCapture={horizontalWheelScroll}><div className="key-roll" style={{ width: `${160 + canvasBars * STEPS_PER_BAR * STEP_WIDTH}px` }}>
     {playing && <i className="editor-playhead" style={{ left: `${160 + playbackBeat / 4 * STEP_WIDTH}px` }} />}
@@ -59,7 +62,7 @@ export function PianoRoll({ gridRef, group, selectedPad, bars, playing, playback
         onClick={() => onToggleNote(note, globalStep)}
         data-note={note}
         data-step={globalStep}
-        title={target ? `Vélocité ${target.velocity}/127 · Maj+molette pour ajuster` : undefined}
+        title={target ? `Vélocité ${target.velocity}/127 · Durée ${target.duration.toFixed(2)} temps · Maj+molette vélocité · Alt+molette durée` : undefined}
         key={globalStep}
       >{checked ? '●' : ''}</button>;
     })}</div></div>; })}

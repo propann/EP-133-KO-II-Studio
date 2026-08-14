@@ -1,6 +1,6 @@
 # Suivi des traductions — EP-133 KO II Studio
 
-Dernière mise à jour : **11 août 2026**.
+Dernière mise à jour : **13 août 2026**.
 
 ## Règles de suivi
 
@@ -39,7 +39,7 @@ Dernière mise à jour : **11 août 2026**.
 | Ensemble | Français | Anglais | Espagnol | Remarque |
 |---|---|---|---|---|
 | Fiches visibles dans l'application | Complet | Complet | Complet | Les résumés des cartes sont traduits |
-| Guides complets du dossier `docs/` | Complet | À faire | À faire | Les liens ouvrent actuellement les sources françaises |
+| Guides complets du dossier `docs/` | Complet | Partiel | Partiel | Dix-neuf guides anglais et dix-neuf guides espagnols ajoutés ; les autres liens restent sur les sources françaises |
 | Guide officiel Teenage Engineering | Lien externe | Lien externe | Lien externe | Aucun contenu constructeur n'est redistribué |
 | Player historique `docs/ep133-pad-player.html` | Complet | À faire | À faire | À préserver jusqu'à migration des 39 exercices |
 
@@ -55,6 +55,22 @@ Dernière mise à jour : **11 août 2026**.
 
 ## Journal
 
+- **13 août 2026** — traduction anglaise ajoutée pour `LANCEMENT_LOCAL.md`,
+  `CONNEXION_ET_CALIBRATION_MIDI.md` et `CLONAGE_COMPLET_MACHINE.md`. Le centre
+  de documentation ouvre désormais ces fichiers lorsqu'English est sélectionné.
+- **13 août 2026** — poursuite de la traduction pour `STRUCTURE_SONG_MODE.md`,
+  `VALIDATION_SAVE_LOAD_STUDIO.md`, `POINT_SONS_ET_TRANSFERT.md` et
+  `PONT_LOCAL_CLONAGE.md`, en anglais et en espagnol. Le centre de documentation
+  ouvre automatiquement les fichiers localisés disponibles.
+- **13 août 2026** — traduction de `MISE_EN_ROUTE_LINUX.md`,
+  `MISE_EN_ROUTE_WINDOWS.md`, `CHARGEMENT_PROJET_MACHINE.md`,
+  `BANQUE_SAMPLES_STUDIO.md`, `DECISION_FORMATS_PROJET.md` et
+  `MODELE_DONNEES_PROJET.md`, en anglais et en espagnol. Le routage EN/ES couvre
+  désormais tous les guides affichés dans la bibliothèque principale.
+- **13 août 2026** — traduction de `REFERENCE_SYSEX_EP133.md`,
+  `POINT_JEU_ET_STUDIO.md`, `GESTION_FICHIERS_ET_SONS.md`,
+  `ARCHITECTURE_MIROIR_MACHINE.md`, `VALIDATION_CLONE_REEL.md` et
+  `VALIDATION_LECTEUR_PROJET_EP133.md`, en anglais et en espagnol.
 - **11 août 2026** — création du système `FR / EN / ES`, mémorisation locale,
   traduction complète de l'accueil et du centre documentaire, traduction des
   trois README et création de ce registre.

@@ -64,6 +64,60 @@ Décisions :
 
 ## Étapes suivantes
 
+## Étape 5.1 — export `.ppak` autonome hors ligne (14 août 2026)
+
+Statut : terminé pour le périmètre logiciel et la relecture locale.
+
+- [x] Construire un TAR de projet autonome avec les 48 pads, patterns, scènes,
+  Song et réglages à partir de `ep.project.v1`.
+- [x] Empaqueter ce TAR avec `meta.json` et les sons optionnels dans un ZIP
+  `.ppak` via `buildEp133Ppak()`.
+- [x] Ajouter l'action `FICHIER → Exporter une archive EP-133 (.ppak)`.
+- [x] Ajouter un test de round-trip : génération → `inspectEp133Archive()` →
+  zéro avertissement, 48 pads, 3 patterns, 2 scènes et Song conservée.
+- [ ] Vérifier cet export autonome sur un projet complet d'une machine réelle.
+
+Limite importante : cet export ne réécrit pas les membres binaires inconnus
+d'une archive existante et n'envoie rien au matériel. Pour préserver ces
+octets, le chemin d'écriture via le pont continue d'utiliser une archive de
+base relue sur la machine.
+
+## Étape 5.2 — historique du Song Arranger hors ligne (14 août 2026)
+
+Statut : terminé pour les gestes structurels de l'arrangement.
+
+- [x] Historique séparé des notes : 50 snapshots structurels maximum, sans
+  mélanger les frappes d'un pattern avec les scènes et Song Positions.
+- [x] Annuler/Rétablir les affectations de cellule, le réordonnancement, la
+  duplication et la suppression d'une Song Position.
+- [x] Restauration de la banque de patterns, longueurs LN, scènes, Song,
+  scène active et pattern affiché après Annuler/Rétablir.
+- [x] Raccourcis Ctrl/Cmd+Z et Ctrl/Cmd+Shift+Z actifs dans la vue SONG.
+- [x] Test Playwright hors machine : duplication d'une Song Position,
+  annulation puis rétablissement, avec retour de 4 à 5 positions.
+- [x] COMMIT traité comme une transaction structurelle : création de scène,
+  duplication des patterns et ajout de Song Position annulables/rétablissables.
+
+Le nom et le tempo du Studio sont inclus dans cet historique structurel ;
+l'autosauvegarde reste séparée. Le COMMIT est une transaction structurelle
+distincte de l'historique des frappes du pattern.
+
+## Étape 5.3 — autosauvegarde de secours locale (14 août 2026)
+
+Statut : terminé pour le brouillon Studio.
+
+- [x] Écrire un document `ep.project.v1` différé après 700 ms d'inactivité
+  dans une clé locale séparée de la bibliothèque de projets.
+- [x] Afficher une récupération explicite dans l'éditeur lorsqu'un brouillon
+  existe, avec confirmation avant remplacement du projet affiché.
+- [x] Effacer la sauvegarde de secours après récupération, SAVE, Nouveau ou
+  ouverture d'un autre projet.
+- [x] Tester le round-trip de stockage et la récupération dans Playwright,
+  sans machine ni pont local.
+
+Limites : ce mécanisme reste local au navigateur, ne remplace pas SAVE et ne
+crée aucun fichier machine automatiquement.
+
 - 1.4a : pages Accueil et Sons. **Terminée.**
 - 1.4b : composants visuels du Jeu. **Terminée.**
 - 1.4c : isolation visuelle de l'éditeur Studio. **Terminée.**
@@ -293,7 +347,9 @@ Statut : première intégration terminée le 9 août 2026.
 - [x] longueur de chaque pattern calculée ;
 - [x] longueur de la position alignée sur le pattern le plus long ;
 - [x] sélection du groupe directement depuis la structure du morceau ;
-- [ ] vrais patterns, scènes et positions multiples de 01 à 99.
+- [x] patterns, scènes et positions multiples de 01 à 99 supportés hors ligne
+  par le Studio ; la validation d'écriture/relecture firmware reste dans la
+  Phase 5 matérielle.
 
 Voir `docs/STRUCTURE_SONG_MODE.md`.
 
@@ -1454,7 +1510,7 @@ l'exécution du script.
 **`tools/send_project_to_machine.py`** (nouveau, script CLI autonome —
 pas de bouton web, geste humain explicite à chaque étape) : trois
 commandes, `checkpoint` (lecture seule), `write --confirm` (écriture
-réelle), `restore --from <checkpoint>` (jamais testée cette session).
+réelle), `restore --from <checkpoint>` (exercée en réel le 14 août 2026).
 
 - [x] **Étape A (lecture seule)** : identité machine confirmée
   (Teenage Engineering, family 32/member 1), lecture réelle du slot P09
@@ -1479,7 +1535,7 @@ réelle), `restore --from <checkpoint>` (jamais testée cette session).
 **Ce qui reste** (voir `docs/ROADMAP.md` Phase 5 et
 `docs/A_VALIDER_PHYSIQUEMENT.md`) : un vrai projet Studio complet plutôt
 qu'une note de test, scènes/Song/automation, le conteneur `.ppak`
-autonome, la commande `restore` jamais exercée en réel, et un chemin
+autonome et un chemin
 depuis l'app web plutôt qu'un script CLI manuel — délibérément pas
 construit cette session, le risque d'une action en un clic était jugé
 prématuré avant ce premier aller-retour réussi.
@@ -1865,3 +1921,18 @@ devenu périmé par l'écriture elle-même, sans que rien ne le sache.
 Vérifié : `npm run typecheck`, `npm test` (10 tests), `npm run build`,
 `npm run test:e2e` (2/2). Pas encore reclique en vrai après ce correctif —
 ajouté à `docs/A_VALIDER_PHYSIQUEMENT.md`.
+
+## Étape 5.4 — transposition KEYS par clavier (14 août 2026)
+
+Statut : terminé hors machine.
+
+- [x] flèches gauche/droite : déplacement temporel déjà existant conservé ;
+- [x] flèches haut/bas : transposition d'un demi-ton des notes KEYS
+  sélectionnées ;
+- [x] `Shift` + haut/bas : transposition d'une octave ;
+- [x] opération atomique, bornée MIDI 0–127, avec historique Annuler/Rétablir ;
+- [x] les notes ONE sans champ `note` restent inchangées ;
+- [x] tests moteur et typecheck passés.
+
+Ce comportement est validé par le moteur et le navigateur simulé uniquement ;
+la réponse sonore d'un vrai pad en mode KEYS reste à confirmer sur EP‑133.

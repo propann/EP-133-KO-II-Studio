@@ -6,6 +6,7 @@ import { computeWaveformPeaks, detectSilenceTrim, suggestNormalizationGainDb, ty
 // importer statiquement ici pour afficher un poids en direct. La conversion
 // réelle reste chargée à la demande, voir `runConversion` plus bas.
 import { EP133_TARGET_SAMPLE_RATES, estimateEp133ConversionBytes, estimateEp133MemoryFit, type Ep133TargetRate } from '../../core/audio/ep133Targets';
+import type { ChannelMode } from '../../core/audio/wavConvert';
 // midiNoteName et EditorPadMode : seule source de vérité déjà établie pour
 // ces deux concepts (voir le commentaire sur PAD_MIDI_NOTES dans
 // exporters.ts) — ne pas les redéfinir ici.
@@ -53,6 +54,9 @@ interface WaveformTrimProps {
    * `docs/REFERENCE_SYSEX_EP133.md`. */
   metadata?: SoundPrepMetadata | null;
   onMetadataChange: (metadata: SoundPrepMetadata) => void;
+  /** Résultat prêt à transférer : le parent ne doit jamais envoyer le fichier
+   * original après qu'une conversion EP-133 a été demandée. */
+  onConversionReady?: (prepared: { bytes: ArrayBuffer; target: Ep133TargetRate; sampleRate: number; channels: number; durationSeconds: number }) => void;
 }
 
 /**
@@ -69,7 +73,7 @@ interface WaveformTrimProps {
  * région ; la lecture audio passe par son propre élément `<audio>` interne,
  * indépendant de la fiche audio déterministe déjà affichée à côté.
  */
-export function WaveformTrim({ file, initialTrim, onTrimChange, report, machineMemory, metadata, onMetadataChange }: WaveformTrimProps) {
+export function WaveformTrim({ file, initialTrim, onTrimChange, report, machineMemory, metadata, onMetadataChange, onConversionReady }: WaveformTrimProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);
   const regionRef = useRef<Region | null>(null);
@@ -92,6 +96,7 @@ export function WaveformTrim({ file, initialTrim, onTrimChange, report, machineM
   // l'appel. 0 par défaut = pas de fondu, comportement inchangé.
   const [fadeInMs, setFadeInMs] = useState(0);
   const [fadeOutMs, setFadeOutMs] = useState(0);
+  const [channelMode, setChannelMode] = useState<ChannelMode>('mix');
 
   // Remonte une sélection au parent (sauvegarde) et au composant lui-même
   // (recalcul immédiat du poids estimé affiché sur les boutons LO/MID/HI).
@@ -196,10 +201,11 @@ export function WaveformTrim({ file, initialTrim, onTrimChange, report, machineM
     setConvertError(null);
     try {
       const { convertWavForEp133 } = await import('../../core/audio/wavConvert');
-      const result = await convertWavForEp133(bytes, EP133_TARGET_SAMPLE_RATES[target], undefined, { startSeconds: region.start, endSeconds: region.end }, { fadeInSeconds: fadeInMs / 1000, fadeOutSeconds: fadeOutMs / 1000 });
+      const result = await convertWavForEp133(bytes, EP133_TARGET_SAMPLE_RATES[target], undefined, { startSeconds: region.start, endSeconds: region.end }, { fadeInSeconds: fadeInMs / 1000, fadeOutSeconds: fadeOutMs / 1000 }, channelMode);
       if (!result) { setConvertError('CONVERSION IMPOSSIBLE (FORMAT NON PRIS EN CHARGE OU SÉLECTION VIDE)'); return; }
       const url = URL.createObjectURL(new Blob([result.bytes], { type: 'audio/wav' }));
       setConvertedPreview({ target, url, sampleRate: result.sampleRate, durationSeconds: result.durationSeconds });
+      onConversionReady?.({ bytes: result.bytes, target, sampleRate: result.sampleRate, channels: result.channels, durationSeconds: result.durationSeconds });
     } catch (error) {
       setConvertError((error as Error)?.message || 'ÉCHEC DE LA CONVERSION');
     } finally {
@@ -210,9 +216,9 @@ export function WaveformTrim({ file, initialTrim, onTrimChange, report, machineM
   const peakLevel = report && report !== 'unsupported' ? report.peakLevel : null;
   const peakDb = peakLevel && peakLevel > 0 ? 20 * Math.log10(peakLevel) : null;
   const suggestedGainDb = peakLevel !== null ? suggestNormalizationGainDb(peakLevel) : null;
-  // Même règle de repli que `convertWavForEp133` (targetChannels non fourni) —
-  // l'estimation doit correspondre à ce que la conversion produira par défaut.
-  const outChannels: 1 | 2 = report && report !== 'unsupported' && report.channels >= 2 ? 2 : 1;
+  // Même règle que `convertWavForEp133` (targetChannels non fourni) —
+  // l'estimation doit correspondre à ce que la conversion produira.
+  const outChannels: 1 | 2 = channelMode === 'mix' && report && report !== 'unsupported' && report.channels >= 2 ? 2 : 1;
   const trimDurationSeconds = currentTrim ? Math.max(0, currentTrim.endSeconds - currentTrim.startSeconds) : 0;
 
   return <div className="waveform-trim">
@@ -245,6 +251,9 @@ export function WaveformTrim({ file, initialTrim, onTrimChange, report, machineM
         <div className="waveform-trim-fade">
           <label>FONDU ENTRÉE (MS)<input type="number" min={0} step={5} value={fadeInMs} onChange={(event) => setFadeInMs(Math.max(0, Number(event.target.value) || 0))} /></label>
           <label>FONDU SORTIE (MS)<input type="number" min={0} step={5} value={fadeOutMs} onChange={(event) => setFadeOutMs(Math.max(0, Number(event.target.value) || 0))} /></label>
+        </div>
+        <div className="waveform-trim-channel-buttons" aria-label="Canal stéréo">
+          {(['mix', 'left', 'right'] as ChannelMode[]).map((mode) => <button key={mode} className={channelMode === mode ? 'active' : ''} aria-pressed={channelMode === mode} onClick={() => setChannelMode(mode)}>{mode === 'mix' ? 'MIX' : mode === 'left' ? 'GAUCHE' : 'DROITE'}</button>)}
         </div>
         <div className="waveform-trim-convert-buttons">
           {(Object.keys(EP133_TARGET_LABELS) as Ep133TargetRate[]).map((target) => {

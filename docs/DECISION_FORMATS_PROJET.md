@@ -41,8 +41,10 @@ compiler un projet ; ce n'est pas un nouveau format musical concurrent.
 - Les exercices du jeu seront convertibles vers MIDI et projet EP-133.
 - Les informations pédagogiques restent dans le catalogue interne et ne
   contaminent pas le fichier machine.
-- Aucun `.ppak` n'est annoncé valide avant compilation, contrôle et essai sur un
-  emplacement de projet sauvegardé.
+- L'export `.ppak` autonome est maintenant généré et contrôlé localement par
+  round-trip. Il n'est pas annoncé compatible firmware avant essai sur un
+  emplacement de projet sauvegardé ; l'écriture conserve donc une archive de
+  base réelle pour préserver les membres inconnus.
 
 ## État du lecteur
 

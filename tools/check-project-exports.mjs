@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { createEp133ProjectDocument, createMidiFile } from '../src/core/project/exporters.ts';
-import { decodeEp133ProjectTar, inspectEp133Archive, readEp133ProjectDocument, readMidiFile } from '../src/core/project/importers.ts';
+import { buildEp133Ppak } from '../src/core/project/archives.ts';
+import { decodeEp133ProjectTar, ep133ArchiveProjectToDocument, inspectEp133Archive, readEp133ProjectDocument, readMidiFile } from '../src/core/project/importers.ts';
 import { exerciseTargetsToNotes, normalizeSequencerNote, notesToExerciseTargets } from '../src/core/project/model.ts';
-import { deleteStudioProject, duplicateStudioProject, loadStudioLibrary, renameStudioProject, storeStudioProject, studioStateFromDocument } from '../src/core/project/studioLibrary.ts';
+import { deleteStudioProject, duplicateStudioProject, loadStudioLibrary, renameStudioProject, setStudioProjectTags, storeStudioProject, studioStateFromDocument, toggleStudioProjectFavorite } from '../src/core/project/studioLibrary.ts';
+import { clearStudioAutosave, loadStudioAutosave, saveStudioAutosave } from '../src/core/project/studioAutosave.ts';
 import { createDeviceClone, describeCloneDelta, DEVICE_CLONE_KEY, loadDeviceClone, loadDeviceProfile, saveDeviceProfile } from '../src/core/project/deviceProfile.ts';
 import { findMissingDependencies } from '../src/core/project/device.ts';
 import { zipSync, strToU8 } from 'fflate';
@@ -160,6 +162,10 @@ assert.equal(migratedClone.history.length, 2, 'le point historique existant doit
 assert.ok(!migratedClone.history[1].label.includes('NaN'), `pas de "NaN" dans l’étiquette migrée : ${migratedClone.history[1].label}`);
 
 const storedStudio = storeStudioProject(memoryStorage, [], project);
+const favoriteLibrary = toggleStudioProjectFavorite(memoryStorage, storedStudio.id);
+assert.equal(favoriteLibrary.find((record) => record.id === storedStudio.id)?.favorite, true, 'le favori Studio est persistant');
+const taggedLibrary = setStudioProjectTags(memoryStorage, storedStudio.id, ['Live', ' groove ', 'Live']);
+assert.deepEqual(taggedLibrary.find((record) => record.id === storedStudio.id)?.tags, ['live', 'groove'], 'les tags Studio sont normalisés');
 assert.equal(loadStudioLibrary(memoryStorage).length, 1);
 const restoredStudio = studioStateFromDocument(storedStudio.library[0].document);
 assert.equal(restoredStudio.title, 'TEST');
@@ -170,6 +176,20 @@ assert.equal(restoredStudio.patternBank.A[1][0].note, undefined, 'round-trip via
 assert.equal(restoredStudio.patternBank.B[2][0].note, 48);
 assert.equal(restoredStudio.padModes['B:10'], 'KEYS');
 assert.deepEqual(restoredStudio.pads, [{ group: 'B', pad: 11, slot: 444 }], 'affectations son -> pad conservées pour la détection de dépendances, un round-trip localStorage complet, pas juste le document en mémoire');
+
+const autosaveStorage = (() => {
+  const store = new Map();
+  return {
+    getItem: (key) => store.has(key) ? store.get(key) : null,
+    setItem: (key, value) => store.set(key, value),
+    removeItem: (key) => store.delete(key),
+  };
+})();
+const autosave = saveStudioAutosave(autosaveStorage, project, '2026-08-14T15:30:00.000Z');
+assert.equal(loadStudioAutosave(autosaveStorage).savedAt, autosave.savedAt);
+assert.equal(loadStudioAutosave(autosaveStorage).document.metadata.title, 'TEST');
+clearStudioAutosave(autosaveStorage);
+assert.equal(loadStudioAutosave(autosaveStorage), null, 'la sauvegarde de secours doit pouvoir être effacée après récupération');
 
 // Détection des dépendances manquantes (plan P1, REGISTRE_IDEES.md Q-13).
 assert.deepEqual(findMissingDependencies(restoredStudio.pads, null), [], 'aucune machine scannée -> jamais de faux avertissement');
@@ -279,5 +299,22 @@ assert.equal(archiveSummary.projects[0], 'projects/P01.tar');
 assert.equal(archiveSummary.sounds.length, 1);
 assert.equal(archiveSummary.meta?.product, 'ep133');
 assert.equal(archiveSummary.decodedProjects[0].patterns[0].notes.length, 1);
+
+const standalonePpak = buildEp133Ppak(project);
+const standaloneSummary = inspectEp133Archive(standalonePpak, 'standalone.ppak');
+assert.equal(standaloneSummary.kind, 'ppak');
+assert.deepEqual(standaloneSummary.projects, ['projects/P01.tar']);
+assert.equal(standaloneSummary.decodedProjects[0].pads.length, 48, 'un .ppak autonome doit contenir les 48 pads');
+assert.equal(standaloneSummary.decodedProjects[0].patterns.length, 3);
+assert.equal(standaloneSummary.decodedProjects[0].scenes.length, 2);
+assert.deepEqual(standaloneSummary.decodedProjects[0].song, [1, 2]);
+assert.equal(standaloneSummary.warnings.length, 0, 'le .ppak autonome doit être relisible sans avertissement');
+assert.equal(standaloneSummary.decodedProjects[0].pads.find((pad) => pad.group === 'B' && pad.pad === 11)?.slot, 444);
+assert.equal(standaloneSummary.decodedProjects[0].pads.find((pad) => pad.group === 'B' && pad.pad === 11)?.playMode, 1);
+assert.equal(standaloneSummary.decodedProjects[0].pads.find((pad) => pad.group === 'B' && pad.pad === 11)?.rootNote, 26);
+const standaloneDocument = ep133ArchiveProjectToDocument(standaloneSummary.decodedProjects[0], 'ROUNDTRIP');
+assert.equal(standaloneDocument.settings.bpm, 120);
+assert.equal(standaloneDocument.patterns.find((pattern) => pattern.id === 'B02').events[0].duration, 24);
+assert.deepEqual(standaloneDocument.scenes[1].groupPatterns, [2, 2, 0, 0]);
 
 console.log('MIDI, ep.project.v1 et décodage lecture seule .pak/.ppak/TAR : OK');

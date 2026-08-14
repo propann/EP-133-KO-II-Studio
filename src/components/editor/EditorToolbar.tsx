@@ -1,9 +1,11 @@
 import { useRef, useState, type CSSProperties } from 'react';
 import { EDITOR_GROUPS, type EditorGroup } from '../../core/project/exporters';
+import { restoreStudioProjectById, setStudioProjectTags, toggleStudioProjectFavorite } from '../../core/project/studioLibrary';
 
 interface EditorToolbarProps {
   mode: 'game' | 'complete';
   name: string;
+  tempo: number;
   group: EditorGroup;
   playing: boolean;
   loop: boolean;
@@ -15,7 +17,7 @@ interface EditorToolbarProps {
   machineSampleCount: number;
   demoProjects: ReadonlyArray<{ id: string; title: string }>;
   /** Bibliothèque locale résumée (titre, BPM, nombre de patterns non vides, date) — voir `summarizeStudioProject`. Déjà triée par date de modification décroissante. */
-  localProjects: Array<{ id: string; title: string; bpm: number; patternCount: number; updatedAt: string; archived: boolean }>;
+  localProjects: Array<{ id: string; title: string; bpm: number; patternCount: number; updatedAt: string; archived: boolean; favorite: boolean; tags: string[]; previewSteps: boolean[]; groups: string[]; lengthBars: number }>;
   selectedLocalProject: string;
   /** Vue Studio active — PATTERNS (édition multi-mesures) ou SONG (scènes et Song Positions). */
   studioView: 'pattern' | 'arrangement';
@@ -26,12 +28,13 @@ interface EditorToolbarProps {
   activeScene: number;
   onHome: () => void;
   onNameChange: (name: string) => void;
+  onTempoChange: (tempo: number) => void;
   onGroupChange: (group: EditorGroup) => void;
   onStudioViewChange: (view: 'pattern' | 'arrangement') => void;
   onPatternLengthChange: (length: number) => void;
   /** Crée une nouvelle scène avec les patterns A–D actuellement sélectionnés. */
   onCommitScene: () => void;
-  /** Historique Annuler/Rétablir du pattern actif (groupe:numéro) — pas encore les scènes/Song. */
+  /** Historique Annuler/Rétablir du pattern actif ou de la structure Song selon la vue. */
   canUndo: boolean;
   canRedo: boolean;
   onUndo: () => void;
@@ -59,6 +62,7 @@ interface EditorToolbarProps {
   onExport: () => void;
   onExportMidi: () => void;
   onExportJson: () => void;
+  onExportPpak: () => void;
   /** Convertit le pattern actif (groupe/numéro sélectionnés) en exercice Rhythm Hero USER — P1, voir docs/ROADMAP.md. */
   onSendToRhythmHero: () => void;
 }
@@ -70,9 +74,14 @@ export function EditorToolbar(props: EditorToolbarProps) {
   const [openProjectWindow, setOpenProjectWindow] = useState(false);
   const [machineProjectsWindow, setMachineProjectsWindow] = useState(false);
   const [projectQuery, setProjectQuery] = useState('');
+  const [favoriteOnly, setFavoriteOnly] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [gaze, setGaze] = useState({ x: 0, y: 0 });
   const closeFileMenu = () => { if (fileMenuRef.current) fileMenuRef.current.open = false; };
-  const filteredProjects = props.localProjects.filter((project) => !project.archived && project.title.toLocaleLowerCase().includes(projectQuery.trim().toLocaleLowerCase()));
+  const filteredProjects = props.localProjects.filter((project) => (showArchived || !project.archived) && (!favoriteOnly || project.favorite) && `${project.title} ${project.tags.join(' ')}`.toLocaleLowerCase().includes(projectQuery.trim().toLocaleLowerCase()));
+  const toggleFavorite = (id: string) => { toggleStudioProjectFavorite(localStorage, id); window.dispatchEvent(new Event('studio-library-changed')); };
+  const editTags = (id: string) => { const project = props.localProjects.find((item) => item.id === id); const value = window.prompt('Tags du projet (séparés par des virgules)', project?.tags.join(', ') || ''); if (value === null) return; setStudioProjectTags(localStorage, id, value.split(',')); window.dispatchEvent(new Event('studio-library-changed')); };
+  const restoreArchived = (id: string) => { restoreStudioProjectById(localStorage, id); window.dispatchEvent(new Event('studio-library-changed')); };
   const formatProjectDate = (iso: string) => { const date = new Date(iso); return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }); };
   return <>
     <header><button className="editor-home-button" onClick={props.onHome}>← ACCUEIL</button><div><small>{props.mode === 'game' ? 'ÉDITEUR JEU' : 'ÉDITEUR EP‑133 COMPLET'}</small><input value={props.name} maxLength={32} onChange={(event) => props.onNameChange(event.target.value.toUpperCase())} aria-label="Nom de l'exercice" /></div>{props.mode === 'complete' && <><div className="editor-groups" aria-label="Groupes EP-133">{EDITOR_GROUPS.map((group) => <button className={props.group === group ? 'active' : ''} onClick={() => props.onGroupChange(group)} key={group}><b>{group}</b><small>LN.{props.groupPatternLengths[group]}</small></button>)}</div><div className="studio-view-switch" aria-label="Vue du Studio"><button className={props.studioView === 'pattern' ? 'active' : ''} onClick={() => props.onStudioViewChange('pattern')}>PATTERNS</button><button className={props.studioView === 'arrangement' ? 'active' : ''} onClick={() => props.onStudioViewChange('arrangement')}>SONG</button></div>{props.midiConnected ? <span className="editor-midi-status online"><i />MIDI OUT</span> : <button className="editor-midi-out" onClick={props.onConnectMidi}>CONNECTER EP‑133</button>}</>}<div className="editor-vu" aria-label="VU stéréo gauche droite" onMouseMove={(event) => { const box = event.currentTarget.getBoundingClientRect(); setGaze({ x: Math.max(-1, Math.min(1, (event.clientX - (box.left + box.width / 2)) / (box.width / 2))), y: Math.max(-1, Math.min(1, (event.clientY - (box.top + box.height / 2)) / (box.height / 2))) }); }} onMouseLeave={() => setGaze({ x: 0, y: 0 })} style={{ '--gaze-x': gaze.x, '--gaze-y': gaze.y } as CSSProperties}>{['L', 'R'].map((channel) => <span className={`editor-channel-vu ${props.playing ? 'active' : ''}`} key={channel}><i /><b>{channel}</b></span>)}</div></header>
@@ -94,10 +103,14 @@ export function EditorToolbar(props: EditorToolbarProps) {
             <button className="file-row" disabled={!props.selectedLocalProject} onClick={props.onRename}>Renommer</button>
             <button className="file-row" disabled={!props.selectedLocalProject} onClick={props.onDuplicate}>Dupliquer</button>
             <button className="file-row" disabled={!props.selectedLocalProject} onClick={props.onArchive}>Archiver</button>
+            {props.localProjects.find((project) => project.id === props.selectedLocalProject)?.archived && <button className="file-row" onClick={() => { restoreArchived(props.selectedLocalProject); closeFileMenu(); }}>Restaurer</button>}
+            <button className="file-row" disabled={!props.selectedLocalProject} onClick={() => { toggleFavorite(props.selectedLocalProject); closeFileMenu(); }}>★ {props.localProjects.find((project) => project.id === props.selectedLocalProject)?.favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}</button>
+            <button className="file-row" disabled={!props.selectedLocalProject} onClick={() => { editTags(props.selectedLocalProject); closeFileMenu(); }}>Étiqueter…</button>
             <button className="file-row danger" disabled={!props.selectedLocalProject} onClick={props.onDelete}>Supprimer</button>
             <hr className="file-menu-divider" />
             <button className="file-row" onClick={() => { props.onExportMidi(); closeFileMenu(); }}>Exporter en MIDI (.mid)</button>
             <button className="file-row" onClick={() => { props.onExportJson(); closeFileMenu(); }}>Exporter en projet EP‑133 (.json)</button>
+            <button className="file-row" onClick={() => { props.onExportPpak(); closeFileMenu(); }}>Exporter une archive EP‑133 (.ppak)</button>
             {props.mode === 'complete' && <><hr className="file-menu-divider" /><button className="file-row" onClick={() => { props.onSendToRhythmHero(); closeFileMenu(); }}>Envoyer le pattern vers Rhythm Hero</button></>}
           </div>
         </details>
@@ -105,8 +118,9 @@ export function EditorToolbar(props: EditorToolbarProps) {
         <button className="clone-machine" onClick={props.onCloneMachine} title="Cloner la machine (miroir hors ligne)">▣ CLONER</button>
         <button className="studio-sample-folder" onClick={props.onOpenSampleFolder} title="Ouvrir la banque de samples locale">▤ SAMPLES{props.machineSampleCount ? ` · ${props.machineSampleCount}` : ''}</button>
         {props.studioView === 'pattern' && <><button className="studio-commit-scene" onClick={props.onCommitScene}>COMMIT · CRÉER SCÈNE</button><button className="studio-undo" disabled={!props.canUndo} title="Annuler (Ctrl/Cmd+Z)" onClick={props.onUndo}>↶ ANNULER</button><button className="studio-redo" disabled={!props.canRedo} title="Rétablir (Ctrl/Cmd+Shift+Z)" onClick={props.onRedo}>↷ RÉTABLIR</button><span className="studio-pattern-context">SONG POSITION L.{String(props.activeSongPosition).padStart(2, '0')} · SCÈNE S.{String(props.activeScene).padStart(2, '0')} · PATTERN {props.group}{String(props.patternNumber).padStart(2, '0')}</span></>}
+        {props.studioView === 'arrangement' && <><button className="studio-undo" disabled={!props.canUndo} title="Annuler la modification du Song (Ctrl/Cmd+Z)" onClick={props.onUndo}>↶ ANNULER SONG</button><button className="studio-redo" disabled={!props.canRedo} title="Rétablir la modification du Song (Ctrl/Cmd+Shift+Z)" onClick={props.onRedo}>↷ RÉTABLIR SONG</button><span className="studio-pattern-context">SONG · {props.activeSongPosition} POSITION{props.activeSongPosition > 1 ? 'S' : ''} · SCÈNE S.{String(props.activeScene).padStart(2, '0')}</span></>}
       </> : <><button className="save" disabled={!props.canSave} onClick={props.onSave}>● SAVE</button><label className="export-select">EXPORT <select value={props.exportFormat} onChange={(event) => props.onExportFormatChange(event.target.value as 'midi' | 'json')}><option value="midi">MIDI (.mid)</option><option value="json">PROJET EP‑133 (.json)</option></select></label><button className="midi-export" onClick={props.onExport}>⇩ EXPORTER</button></>}
-      <button className="transport-play" onClick={props.onPlayback}>{props.playing ? '■ STOP' : '▶ LECTURE'}</button><button className={`loop-toggle ${props.loop ? 'active' : ''}`} disabled={props.mode !== 'complete' || props.playing} onClick={() => props.onLoopChange(!props.loop)}>↻ BOUCLE {props.loop ? 'ON' : 'OFF'}</button>{props.mode === 'complete' && props.studioView === 'pattern' && <div className="pattern-length-control" aria-label="Longueur du pattern"><button disabled={props.patternLength <= 1} title={props.patternLength <= 1 ? 'Longueur minimale : LN.1' : 'Réduire la longueur du pattern'} onClick={() => props.onPatternLengthChange(props.patternLength - 1)}>−</button><b>LN.{props.patternLength}</b><button disabled={props.patternLength >= 99} title={props.patternLength >= 99 ? 'Longueur maximale : LN.99' : 'Augmenter la longueur du pattern'} onClick={() => props.onPatternLengthChange(props.patternLength + 1)}>＋</button></div>}
+      <button className="transport-play" onClick={props.onPlayback}>{props.playing ? '■ STOP' : '▶ LECTURE'}</button><button className={`loop-toggle ${props.loop ? 'active' : ''}`} disabled={props.mode !== 'complete' || props.playing} onClick={() => props.onLoopChange(!props.loop)}>↻ BOUCLE {props.loop ? 'ON' : 'OFF'}</button>{props.mode === 'complete' && <div className="studio-tempo-control" aria-label="Tempo du Studio"><button aria-label="Diminuer le tempo" disabled={props.tempo <= 40} onClick={() => props.onTempoChange(props.tempo - 1)}>−</button><b>{props.tempo} BPM</b><button aria-label="Augmenter le tempo" disabled={props.tempo >= 240} onClick={() => props.onTempoChange(props.tempo + 1)}>＋</button></div>}{props.mode === 'complete' && props.studioView === 'pattern' && <div className="pattern-length-control" aria-label="Longueur du pattern"><button disabled={props.patternLength <= 1} title={props.patternLength <= 1 ? 'Longueur minimale : LN.1' : 'Réduire la longueur du pattern'} onClick={() => props.onPatternLengthChange(props.patternLength - 1)}>−</button><b>LN.{props.patternLength}</b><button disabled={props.patternLength >= 99} title={props.patternLength >= 99 ? 'Longueur maximale : LN.99' : 'Augmenter la longueur du pattern'} onClick={() => props.onPatternLengthChange(props.patternLength + 1)}>＋</button></div>}
     </div>
     {openProjectWindow && <div className="project-open-overlay" role="dialog" aria-modal="true" aria-labelledby="project-open-title" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpenProjectWindow(false); }}>
       <section className="project-open-dialog">
@@ -114,8 +128,8 @@ export function EditorToolbar(props: EditorToolbarProps) {
         <div className="project-open-content">
           <section><h3>PROJETS DE DÉMONSTRATION</h3><p>Compositions fournies pour tester les patterns, les scènes et l’arrangement.</p><div className="project-open-list">{props.demoProjects.map((project) => <button key={project.id} onClick={() => { props.onOpenDemo(project.id); setOpenProjectWindow(false); }}><span>▶</span><b>{project.title}</b><small>PROJET D’EXEMPLE</small></button>)}</div></section>
           <section><h3>MES PROJETS</h3><p>Projets enregistrés dans la bibliothèque locale de ce navigateur.</p>
-            {props.localProjects.length > 1 && <input className="project-search" type="search" value={projectQuery} onChange={(event) => setProjectQuery(event.target.value)} placeholder="Rechercher par titre…" aria-label="Rechercher un projet personnel" />}
-            <div className="project-open-list">{filteredProjects.length ? filteredProjects.map((project) => <button key={project.id} className={project.id === props.selectedLocalProject ? 'active' : ''} onClick={() => { props.onOpenProject(project.id); setOpenProjectWindow(false); }}><span>▤</span><b>{project.title}</b><small>{project.id === props.selectedLocalProject ? 'PROJET ACTUEL · ' : ''}{project.bpm} BPM · {project.patternCount} pattern{project.patternCount > 1 ? 's' : ''} · {formatProjectDate(project.updatedAt)}</small></button>) : <div className="project-open-empty">{props.localProjects.length ? 'Aucun projet ne correspond à cette recherche.' : 'Aucun projet personnel enregistré.'}</div>}</div>
+            <button className={`project-favorites-filter ${favoriteOnly ? 'active' : ''}`} onClick={() => setFavoriteOnly((value) => !value)}>★ FAVORIS {favoriteOnly ? 'ON' : 'OFF'}</button><button className={`project-favorites-filter ${showArchived ? 'active' : ''}`} onClick={() => setShowArchived((value) => !value)}>ARCHIVES {showArchived ? 'ON' : 'OFF'}</button>{props.localProjects.length > 1 && <input className="project-search" type="search" value={projectQuery} onChange={(event) => setProjectQuery(event.target.value)} placeholder="Rechercher par titre…" aria-label="Rechercher un projet personnel" />}
+            <div className="project-open-list">{filteredProjects.length ? filteredProjects.map((project) => <button key={project.id} className={project.id === props.selectedLocalProject ? 'active' : ''} onClick={() => { props.onOpenProject(project.id); setOpenProjectWindow(false); }}><span>▤</span><b>{project.favorite ? '★ ' : ''}{project.title}</b><small>{project.id === props.selectedLocalProject ? 'PROJET ACTUEL · ' : ''}{project.bpm} BPM · LN.{project.lengthBars} · {project.groups.join('·') || '—'} · {project.patternCount} pattern{project.patternCount > 1 ? 's' : ''} · {project.tags.length ? `#${project.tags.join(' #')} · ` : ''}{formatProjectDate(project.updatedAt)}</small><span className="project-mini-preview" aria-label="Aperçu du pattern">{project.previewSteps.map((on, index) => <i className={on ? 'on' : ''} key={index} />)}</span></button>) : <div className="project-open-empty">{props.localProjects.length ? 'Aucun projet ne correspond à cette recherche.' : 'Aucun projet personnel enregistré.'}</div>}</div>
           </section>
           <section className="project-open-machine"><h3>PROJET MACHINE</h3><p>Instantané du projet EP-133 scanné en lecture seule.</p><div className="project-open-list"><button disabled={!props.machineProjectAvailable} onClick={() => { props.onLoadMachineProject(); setOpenProjectWindow(false); }}><span>↓</span><b>{props.machineProjectAvailable ? `PROJET ${props.scannedProject ?? 'EP-133'}` : 'AUCUN PROJET SCANNÉ'}</b><small>{props.machineProjectAvailable ? 'CHARGER SANS ÉCRIRE SUR LA MACHINE' : 'CONNECTEZ ET SCANNEZ LA MACHINE'}</small></button></div></section>
         </div>

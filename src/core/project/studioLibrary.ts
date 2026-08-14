@@ -18,6 +18,8 @@ export interface StudioProjectRecord {
   /** Présent uniquement pour les projets retirés de la liste active. */
   archivedAt?: string;
   document: Record<string, unknown>;
+  favorite?: boolean;
+  tags?: string[];
 }
 
 export interface StudioProjectState {
@@ -97,6 +99,22 @@ export function archiveStudioProject(storage: Pick<Storage, 'setItem'>, library:
   return writeStudioLibrary(storage, library.map((record) => record.id === id ? { ...record, archivedAt: new Date().toISOString() } : record));
 }
 
+/** Bascule le favori sans modifier le document musical ni sa date de contenu. */
+export function toggleStudioProjectFavorite(storage: Pick<Storage, 'getItem' | 'setItem'>, id: string) {
+  const library = loadStudioLibrary(storage);
+  const next = library.map((record) => record.id === id ? { ...record, favorite: !record.favorite } : record);
+  writeStudioLibrary(storage, next);
+  return next;
+}
+
+/** Remplace les tags libres d'un projet ; les tags vides sont supprimés. */
+export function setStudioProjectTags(storage: Pick<Storage, 'getItem' | 'setItem'>, id: string, tags: string[]) {
+  const library = loadStudioLibrary(storage);
+  const next = library.map((record) => record.id === id ? { ...record, tags: [...new Set(tags.map((tag) => tag.trim().toLocaleLowerCase()).filter(Boolean))].slice(0, 12) } : record);
+  writeStudioLibrary(storage, next);
+  return next;
+}
+
 /** Réactive un projet archivé dans la bibliothèque locale. */
 export function restoreStudioProject(storage: Pick<Storage, 'setItem'>, library: StudioProjectRecord[], id: string) {
   return writeStudioLibrary(storage, library.map((record) => {
@@ -104,6 +122,12 @@ export function restoreStudioProject(storage: Pick<Storage, 'setItem'>, library:
     const { archivedAt: _archivedAt, ...active } = record;
     return active;
   }));
+}
+
+/** Réactive directement un projet archivé depuis une vue qui ne possède que son identifiant. */
+export function restoreStudioProjectById(storage: Pick<Storage, 'getItem' | 'setItem'>, id: string) {
+  const library = loadStudioLibrary(storage);
+  return restoreStudioProject(storage, library, id);
 }
 
 /** Fiche de recherche affichée dans « Ouvrir… » : le strict nécessaire pour trier/filtrer sans reparser le document ailleurs. */
@@ -115,6 +139,11 @@ export interface StudioProjectSummary {
   patternCount: number;
   updatedAt: string;
   archived: boolean;
+  favorite: boolean;
+  tags: string[];
+  previewSteps: boolean[];
+  groups: string[];
+  lengthBars: number;
 }
 
 /**
@@ -130,6 +159,15 @@ export function summarizeStudioProject(record: StudioProjectRecord): StudioProje
   const metadata = record.document.metadata && typeof record.document.metadata === 'object' ? record.document.metadata as Record<string, unknown> : {};
   const settings = record.document.settings && typeof record.document.settings === 'object' ? record.document.settings as Record<string, unknown> : {};
   const patterns = Array.isArray(record.document.patterns) ? record.document.patterns as Array<{ events?: unknown[] }> : [];
+  const previewSteps = Array.from({ length: 16 }, () => false);
+  const previewPattern = patterns.find((pattern) => Array.isArray(pattern.events) && pattern.events.length > 0);
+  const groups = [...new Set(patterns.filter((pattern) => Array.isArray(pattern.events) && pattern.events.length > 0).map((pattern) => String((pattern as { id?: unknown }).id || '').slice(0, 1)).filter((group) => /^[A-D]$/.test(group)))];
+  const lengthBars = patterns.reduce((max, pattern) => Math.max(max, Number((pattern as { bars?: unknown }).bars) || 1), 1);
+  (previewPattern?.events || []).forEach((event) => {
+    if (!event || typeof event !== 'object') return;
+    const tick = Number((event as { tick?: unknown }).tick);
+    if (Number.isFinite(tick)) previewSteps[Math.max(0, Math.min(15, Math.floor((tick % 384) / 24)))] = true;
+  });
   return {
     id: record.id,
     title: String(metadata.title || 'PROJET SANS NOM'),
@@ -137,6 +175,11 @@ export function summarizeStudioProject(record: StudioProjectRecord): StudioProje
     patternCount: patterns.filter((pattern) => Array.isArray(pattern.events) && pattern.events.length > 0).length,
     updatedAt: record.updatedAt,
     archived: Boolean(record.archivedAt),
+    favorite: Boolean(record.favorite),
+    tags: Array.isArray(record.tags) ? record.tags.filter((tag): tag is string => typeof tag === 'string') : [],
+    previewSteps,
+    groups,
+    lengthBars,
   };
 }
 

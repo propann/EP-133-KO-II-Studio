@@ -98,6 +98,11 @@ export function useWebMidi(
   const channelRef = useRef(0);
   const hitRef = useRef(onPadHit);
   const observationRef = useRef(onObservation);
+  // Une reconnexion rapide (notamment après l'autorisation SysEx) peut laisser
+  // deux attaches Web MIDI transitoires sur le même port. Les deux callbacks
+  // portent alors le même timestamp et le même paquet. On élimine uniquement
+  // ce doublon exact ; deux frappes distinctes restent conservées.
+  const lastObservationKeyRef = useRef<string | null>(null);
 
   useEffect(() => { hitRef.current = onPadHit; }, [onPadHit]);
   useEffect(() => { observationRef.current = onObservation; }, [onObservation]);
@@ -133,6 +138,11 @@ export function useWebMidi(
       const channelMessage = status < 0xf0;
       const channel = channelMessage ? (status & 0x0f) + 1 : undefined;
       if (channel !== undefined) channelRef.current = channel - 1;
+      const inputName = (event.target as MIDIInput | null)?.name || 'Entrée MIDI';
+      const timestamp = event.timeStamp || performance.now();
+      const duplicateKey = `${inputName}|${timestamp}|${bytes.join(',')}`;
+      if (lastObservationKeyRef.current === duplicateKey) return;
+      lastObservationKeyRef.current = duplicateKey;
       const kind: MidiObservation['kind'] = status === 0xf0 ? 'sysex'
         : status >= 0xf0 ? 'system'
           : command === 0x80 || command === 0x90 ? 'note'
@@ -143,8 +153,6 @@ export function useWebMidi(
                     : 'unknown';
       const note = kind === 'note' ? bytes[1] : undefined;
       const velocity = kind === 'note' ? bytes[2] : undefined;
-      const inputName = (event.target as MIDIInput | null)?.name || 'Entrée MIDI';
-      const timestamp = event.timeStamp || performance.now();
       const observation: MidiObservation = {
         channel,
         note,

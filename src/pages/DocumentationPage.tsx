@@ -47,16 +47,31 @@ function localizedGuides(guides: DocLink[], language: AppLanguage): DocLink[] {
   return guides.map((guide) => { const translated = guideTranslations[language][guide.file]; return translated ? { ...guide, title:translated[0], description:translated[1], status:translated[2] } : guide; });
 }
 
+function localizedGuideFile(file: string, language: AppLanguage): string {
+  const translatedFiles = new Set([
+    'LANCEMENT_LOCAL.md', 'CONNEXION_ET_CALIBRATION_MIDI.md', 'CLONAGE_COMPLET_MACHINE.md',
+    'STRUCTURE_SONG_MODE.md', 'VALIDATION_SAVE_LOAD_STUDIO.md', 'POINT_SONS_ET_TRANSFERT.md',
+    'PONT_LOCAL_CLONAGE.md', 'MISE_EN_ROUTE_LINUX.md', 'MISE_EN_ROUTE_WINDOWS.md',
+    'CHARGEMENT_PROJET_MACHINE.md', 'BANQUE_SAMPLES_STUDIO.md', 'DECISION_FORMATS_PROJET.md',
+    'MODELE_DONNEES_PROJET.md', 'REFERENCE_SYSEX_EP133.md', 'POINT_JEU_ET_STUDIO.md',
+    'GESTION_FICHIERS_ET_SONS.md', 'ARCHITECTURE_MIROIR_MACHINE.md', 'VALIDATION_CLONE_REEL.md',
+    'VALIDATION_LECTEUR_PROJET_EP133.md',
+  ]);
+  return translatedFiles.has(file) && language !== 'fr'
+    ? file.replace('.md', `.${language}.md`)
+    : file;
+}
+
 const ui = {
   fr: { back:'← ACCUEIL', center:'CENTRE DE DOCUMENTATION', badge:'OUTILS · MACHINE · FR', hero:'MAÎTRISER LE STUDIO.', hero2:'COMPRENDRE LA MACHINE.', lead:'Tous les guides de nos outils sont réunis ici, avec les procédures de connexion et les références de l’EP‑133.', tools:'NOS OUTILS', toolsSub:'Studio, clone, sons, MIDI et entraînement', machine:'LA MACHINE', machineSub:'Connexion, formats, projets et samples', official:'GUIDE OFFICIEL', officialSub:'Référence constructeur Teenage Engineering', software:'DOCUMENTATION DU LOGICIEL', softwareText:'Les procédures pratiques pour utiliser chaque module d’EP‑133 KO II Studio.', hardware:'DOCUMENTATION MATÉRIELLE', hardwareText:'Nos notes techniques et procédures vérifiées pour travailler avec la vraie machine.', guides:'GUIDES', open:'OUVRIR ↗', source:'SOURCE CONSTRUCTEUR', officialTitle:'GUIDE OFFICIEL EP‑133', sourceText:'La référence pour toutes les commandes et fonctions de la machine. Le manuel reste la propriété de Teenage Engineering et n’est pas redistribué par ce projet.', online:'GUIDE EN LIGNE ↗', downloads:'TÉLÉCHARGEMENTS ↗' },
   en: { back:'← HOME', center:'DOCUMENTATION CENTER', badge:'TOOLS · DEVICE · EN', hero:'MASTER THE STUDIO.', hero2:'UNDERSTAND THE DEVICE.', lead:'All guides for our tools are gathered here, together with connection procedures and EP‑133 references.', tools:'OUR TOOLS', toolsSub:'Studio, clone, sounds, MIDI and training', machine:'THE DEVICE', machineSub:'Connection, formats, projects and samples', official:'OFFICIAL GUIDE', officialSub:'Teenage Engineering manufacturer reference', software:'SOFTWARE DOCUMENTATION', softwareText:'Practical procedures for every EP‑133 KO II Studio module.', hardware:'DEVICE DOCUMENTATION', hardwareText:'Our technical notes and verified procedures for working with the real device.', guides:'GUIDES', open:'OPEN ↗', source:'MANUFACTURER SOURCE', officialTitle:'OFFICIAL EP‑133 GUIDE', sourceText:'The reference for all device controls and functions. The manual remains the property of Teenage Engineering and is not redistributed by this project.', online:'ONLINE GUIDE ↗', downloads:'DOWNLOADS ↗' },
   es: { back:'← INICIO', center:'CENTRO DE DOCUMENTACIÓN', badge:'HERRAMIENTAS · MÁQUINA · ES', hero:'DOMINAR EL STUDIO.', hero2:'COMPRENDER LA MÁQUINA.', lead:'Todas las guías de nuestras herramientas están reunidas aquí, junto con los procedimientos de conexión y las referencias del EP‑133.', tools:'NUESTRAS HERRAMIENTAS', toolsSub:'Studio, clon, sonidos, MIDI y entrenamiento', machine:'LA MÁQUINA', machineSub:'Conexión, formatos, proyectos y samples', official:'GUÍA OFICIAL', officialSub:'Referencia del fabricante Teenage Engineering', software:'DOCUMENTACIÓN DEL SOFTWARE', softwareText:'Procedimientos prácticos para cada módulo de EP‑133 KO II Studio.', hardware:'DOCUMENTACIÓN DE LA MÁQUINA', hardwareText:'Notas técnicas y procedimientos verificados para trabajar con la máquina real.', guides:'GUÍAS', open:'ABRIR ↗', source:'FUENTE DEL FABRICANTE', officialTitle:'GUÍA OFICIAL EP‑133', sourceText:'La referencia para todos los controles y funciones de la máquina. El manual pertenece a Teenage Engineering y este proyecto no lo redistribuye.', online:'GUÍA EN LÍNEA ↗', downloads:'DESCARGAS ↗' },
 } as const;
 
-function DocumentationLibrary({ eyebrow, title, description, links, start, guidesLabel, openLabel }: { eyebrow: string; title: string; description: string; links: DocLink[]; start: number; guidesLabel: string; openLabel: string }) {
+function DocumentationLibrary({ eyebrow, title, description, links, start, guidesLabel, openLabel, language }: { eyebrow: string; title: string; description: string; links: DocLink[]; start: number; guidesLabel: string; openLabel: string; language: AppLanguage }) {
   return <section className="docs-library">
     <header><div><small>{eyebrow}</small><h2>{title}</h2><p>{description}</p></div><span>{links.length} {guidesLabel}</span></header>
-    <div>{links.map((guide, index) => <a href={`${REPO_DOCS}/${guide.file}`} target="_blank" rel="noreferrer" key={guide.file}>
+    <div>{links.map((guide, index) => <a href={`${REPO_DOCS}/${localizedGuideFile(guide.file, language)}`} target="_blank" rel="noreferrer" key={guide.file}>
       <b>{String(start + index).padStart(2, '0')}</b>
       <div><strong>{guide.title}</strong><p>{guide.description}</p>{guide.status && <em>{guide.status}</em>}</div>
       <span>{openLabel}</span>
@@ -78,8 +93,8 @@ export function DocumentationPage({ onBack }: DocumentationPageProps) {
 
     <nav className="docs-index" aria-label="Documentation index"><a href="#outils"><b>01</b><span>{t.tools}<small>{t.toolsSub}</small></span></a><a href="#machine"><b>02</b><span>{t.machine}<small>{t.machineSub}</small></span></a><a href="#officiel"><b>03</b><span>{t.official}<small>{t.officialSub}</small></span></a></nav>
 
-    <div id="outils"><DocumentationLibrary eyebrow={t.software} title={t.tools} description={t.softwareText} links={localizedGuides(toolGuides, language)} start={1} guidesLabel={t.guides} openLabel={t.open} /></div>
-    <div id="machine"><DocumentationLibrary eyebrow={t.hardware} title="EP‑133 K.O. II" description={t.hardwareText} links={localizedGuides(machineGuides, language)} start={toolGuides.length + 1} guidesLabel={t.guides} openLabel={t.open} /></div>
+    <div id="outils"><DocumentationLibrary eyebrow={t.software} title={t.tools} description={t.softwareText} links={localizedGuides(toolGuides, language)} start={1} guidesLabel={t.guides} openLabel={t.open} language={language} /></div>
+    <div id="machine"><DocumentationLibrary eyebrow={t.hardware} title="EP‑133 K.O. II" description={t.hardwareText} links={localizedGuides(machineGuides, language)} start={toolGuides.length + 1} guidesLabel={t.guides} openLabel={t.open} language={language} /></div>
 
     <section className="docs-sources" id="officiel"><div><small>{t.source}</small><h2>{t.officialTitle}</h2><p>{t.sourceText}</p></div><div className="docs-source-actions"><a href="https://teenage.engineering/guides/ep-133" target="_blank" rel="noreferrer">{t.online}</a><a className="secondary" href="https://teenage.engineering/downloads/ep-133" target="_blank" rel="noreferrer">{t.downloads}</a></div></section>
   </main>;

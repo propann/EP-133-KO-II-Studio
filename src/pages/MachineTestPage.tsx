@@ -35,13 +35,16 @@ function loadAssignments(): Record<string, ControlAssignment> { return loadContr
  * (`/__midi-capture`, vite.config.ts), ceci fonctionne aussi en production
  * et donne un fichier que l'utilisateur choisit explicitement de partager.
  */
-function downloadDiagnosticLog(context: { connected: boolean; sysexEnabled: boolean; inputNames: string[]; observations: MidiObservation[] }) {
+function downloadDiagnosticLog(context: { connected: boolean; sysexEnabled: boolean; inputNames: string[]; observations: MidiObservation[]; assignments: Record<string, ControlAssignment>; machineGroup: EditorGroup }) {
   const payload = {
+    format: 'ep133-midi-capture.v1',
     exportedAt: new Date().toISOString(),
     userAgent: navigator.userAgent,
     connected: context.connected,
     sysexEnabled: context.sysexEnabled,
     inputNames: context.inputNames,
+    machineGroup: context.machineGroup,
+    assignments: context.assignments,
     observationCount: context.observations.length,
     observations: context.observations,
   };
@@ -49,7 +52,7 @@ function downloadDiagnosticLog(context: { connected: boolean; sysexEnabled: bool
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `ep133-diagnostic-${payload.exportedAt.replace(/[:.]/g, '-')}.json`;
+  link.download = `ep133-capture-${payload.exportedAt.replace(/[:.]/g, '-')}.json`;
   link.click();
   URL.revokeObjectURL(url);
 }
@@ -63,6 +66,12 @@ function controlId(section: string, label: string) {
  * petit écran. Le fichier téléchargé, lui, contient toujours tout. */
 function truncateHex(hex: string, max = 21) {
   return hex.length > max ? `${hex.slice(0, max)}…` : hex;
+}
+
+function displayMessageLabel(message: MidiObservation) {
+  const kind = message.kind === 'sysex' ? 'SYX' : message.kind.slice(0, 3).toUpperCase();
+  const channel = message.channel === undefined ? '' : ` C${message.channel}`;
+  return `${kind}${channel}`;
 }
 
 export function MachineTestPage({ connected, sysexEnabled, inputNames, observations, machineGroup, onBack, onConnect, onSendLearned, onSelectMachineGroup }: MachineTestPageProps) {
@@ -190,7 +199,7 @@ export function MachineTestPage({ connected, sysexEnabled, inputNames, observati
           <div className="display-groups">{(['A', 'B', 'C', 'D'] as const).map((label) => <span key={label}>{label === machineGroup ? <b>{label}</b> : label}</span>)}</div>
           <div className="ep133-display-journal" aria-label="Journal MIDI affiché sur l’écran de l’EP-133">
             {observations.length
-              ? observations.slice(0, 3).map((message, index) => <p className={index === 0 ? 'latest' : ''} key={`${message.timestamp}-${index}`}><b>{message.kind.slice(0, 3).toUpperCase()}</b><code>{truncateHex(message.hex)}</code></p>)
+              ? observations.slice(0, 12).map((message, index) => <p className={index === 0 ? 'latest' : ''} title={`${message.inputName} · ${message.hex}`} key={`${message.timestamp}-${index}`}><b>{displayMessageLabel(message)}</b><code>{truncateHex(message.hex, 34)}</code></p>)
               : <p className="idle">EN ATTENTE DE SIGNAL MIDI…</p>}
           </div>
         </div>
@@ -231,7 +240,7 @@ export function MachineTestPage({ connected, sysexEnabled, inputNames, observati
     <footer className="machine-test-footer">
       <span>{Object.keys(assignments).length} CONTRÔLE(S) CARTOGRAPHIÉ(S)</span>
       <div className="machine-test-footer-actions">
-        <button disabled={!observations.length} title="Relis le fichier avant de le partager — il inclut les noms des ports MIDI détectés." onClick={() => downloadDiagnosticLog({ connected, sysexEnabled, inputNames, observations })}>⬇ JOURNAL DE DIAGNOSTIC · {observations.length}</button>
+        <button disabled={!observations.length} title="Enregistre toute la session MIDI sur l’ordinateur : messages, ports, groupe et cartographies." onClick={() => downloadDiagnosticLog({ connected, sysexEnabled, inputNames, observations, assignments, machineGroup })}>⬇ SAUVEGARDER LA CAPTURE · {observations.length}</button>
         <button onClick={() => { localStorage.removeItem(MIDI_CONTROL_MAP_STORAGE_KEY); setAssignments({}); setSelectedControl(null); }}>EFFACER LA CARTOGRAPHIE</button>
       </div>
     </footer>

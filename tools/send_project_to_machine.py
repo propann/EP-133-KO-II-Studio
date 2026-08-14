@@ -81,25 +81,41 @@ def write_project_verified(client: "FileClient", slot: int, tar_bytes: bytes) ->
         raise RuntimeError("relecture différente de ce qui a été écrit — abandon avant toute activation")
 
 
-def describe_archive(tar_bytes: bytes) -> dict[str, int]:
-    """Nom -> taille pour chaque membre fichier (ignore les entrées répertoire, typeflag '5')."""
+def describe_archive(tar_bytes: bytes) -> dict[str, bytes]:
+    """Nom -> contenu pour chaque membre fichier.
+
+    La taille seule est insuffisante : un pad peut changer de slot tout en
+    conservant exactement le même nombre d'octets. Le préflight doit donc
+    comparer les payloads complets, même pour un petit TAR.
+    """
     members = {}
     for name, start, size, typeflag in iter_members(tar_bytes):
         if typeflag != "5":
-            members[name] = size
+            members[name] = tar_bytes[start:start + size]
     return members
 
 
-def minimal_test_document(slot: int) -> dict:
+def minimal_test_document(slot: int, base_archive: bytes | None = None) -> dict:
     """Document ep.project.v1 délibérément minimal : un seul pad, un seul
     événement dans le pattern A01 — pas un vrai projet Studio à ce stade
     (voir le plan : un vrai projet n'est tenté qu'après un premier
     aller-retour réussi sur ce document-ci)."""
+    # Le compilateur attribue une valeur par défaut si le slot est absent du
+    # document. Pour un test basé sur un projet réel, cette valeur implicite
+    # pourrait déplacer le son du pad A1 sans changer la taille du membre.
+    # Reprendre explicitement le slot du checkpoint rend le diff voulu
+    # déterministe et évite toute réaffectation silencieuse.
+    pad_slot = 0
+    if base_archive is not None:
+        for name, start, size, typeflag in iter_members(base_archive):
+            if name == "pads/a/p01" and typeflag != "5" and size >= 3:
+                pad_slot = int.from_bytes(base_archive[start + 1:start + 3], "little")
+                break
     return {
         "schema": "ep.project.v1",
         "product": "ep133",
         "pads": [
-            {"group": "A", "pad": 1},
+            {"group": "A", "pad": 1, "slot": pad_slot},
         ],
         "patterns": [
             {
@@ -274,7 +290,7 @@ def cmd_checkpoint(args: argparse.Namespace) -> None:
     print(f"3) Checkpoint écrit : {checkpoint_path}")
 
     print("4) Compilation hors ligne d'un document de test minimal (base = checkpoint)…")
-    doc = minimal_test_document(args.slot)
+    doc = minimal_test_document(args.slot, tar_bytes)
     compiled = compile_project(doc, base_archive=tar_bytes)
     print(f"   -> {len(compiled)} octets compilés")
 
@@ -285,8 +301,8 @@ def cmd_checkpoint(args: argparse.Namespace) -> None:
     print("5) Comparaison hors ligne (aucun trafic vers la machine à cette étape) :")
     print(f"   Membres modifiés/ajoutés : {changed or '(aucun)'}")
     print(f"   Membres supprimés        : {removed or '(aucun)'}")
-    print(f"   Total avant : {len(before)} membres, {sum(before.values())} octets")
-    print(f"   Total après : {len(after)} membres, {sum(after.values())} octets")
+    print(f"   Total avant : {len(before)} membres, {sum(len(payload) for payload in before.values())} octets")
+    print(f"   Total après : {len(after)} membres, {sum(len(payload) for payload in after.values())} octets")
     print()
     print("Étape A terminée. Aucune écriture n'a été envoyée à la machine.")
     print(f"Checkpoint de restauration : {checkpoint_path}")
@@ -311,7 +327,7 @@ def cmd_write(args: argparse.Namespace) -> None:
     print(f"   -> Checkpoint : {checkpoint_path}")
 
     print("2) Compilation du document de test (base = état actuel du slot)…")
-    doc = minimal_test_document(args.slot)
+    doc = minimal_test_document(args.slot, current_bytes)
     compiled = compile_project(doc, base_archive=current_bytes)
     print(f"   -> {len(compiled)} octets")
 

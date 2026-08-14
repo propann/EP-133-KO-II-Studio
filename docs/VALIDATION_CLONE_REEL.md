@@ -36,6 +36,15 @@ système Time Machine. Elle reste privée et n'est pas versionnée dans Git.
 
 ## Évolution postérieure
 
+### Inventaire lecture seule du 14 août 2026
+
+Un inventaire global séparé, sans téléchargement audio ni écriture, a relu la
+machine actuellement branchée sur le port `EP-133` : **529 sons** et
+**56 260 884 octets**. Le snapshot précédent restait à 527 sons et
+56 214 010 octets ; les deux nouveaux slots doivent être comparés avant de
+relancer une synchronisation ou de publier un nouvel index. Le résultat brut
+est conservé temporairement dans `/tmp/ep133-sound-index-fresh.json`.
+
 Le premier clone décrit ci-dessus a été lancé hors interface. Depuis le commit
 `61e9812`, le bouton du Studio est raccordé au moteur par un pont local et
 affiche le manifeste en direct. Une synchronisation incrémentale avec historique
